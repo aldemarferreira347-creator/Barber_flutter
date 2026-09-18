@@ -58,6 +58,11 @@ class Appointment {
   final String? paymentId;
   final List<RescheduleEntry> rescheduleHistory;
 
+  /// Cierre de tienda por evento externo (spec 3.4): descuenta 1 estrella
+  /// obligatoriamente al calificar, aunque no sea culpa de la barbería.
+  /// Solo lo marca closeShopForExternalEvent en el backend.
+  final bool forcedRatingPenalty;
+
   const Appointment({
     required this.id,
     required this.barbershopId,
@@ -75,6 +80,7 @@ class Appointment {
     this.paid = false,
     this.paymentId,
     this.rescheduleHistory = const [],
+    this.forcedRatingPenalty = false,
   });
 
   factory Appointment.fromMap(String id, Map<String, dynamic> map) {
@@ -101,6 +107,7 @@ class Appointment {
               ?.map((e) => RescheduleEntry.fromMap(Map<String, dynamic>.from(e as Map)))
               .toList() ??
           const [],
+      forcedRatingPenalty: map['forcedRatingPenalty'] as bool? ?? false,
     );
   }
 

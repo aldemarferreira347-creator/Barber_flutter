@@ -15,12 +15,14 @@ import 'repositories/product_repository.dart';
 import 'repositories/purchase_repository.dart';
 import 'repositories/refund_request_repository.dart';
 import 'repositories/service_repository.dart';
+import 'repositories/shop_closure_repository.dart';
 import 'repositories/storage_repository.dart';
 import 'repositories/user_repository.dart';
 import 'routes/app_router.dart';
 import 'services/cloud_barber_availability_service.dart';
 import 'services/cloud_purchase_service.dart';
 import 'services/cloud_refund_request_service.dart';
+import 'services/cloud_shop_closure_service.dart';
 import 'services/firebase_auth_service.dart';
 import 'services/firebase_storage_service.dart';
 import 'services/firestore_appointment_service.dart';
@@ -61,6 +63,7 @@ class BarberApp extends StatelessWidget {
         Provider<PurchaseRepository>(create: (_) => CloudPurchaseService()),
         Provider<RefundRequestRepository>(create: (_) => CloudRefundRequestService()),
         Provider<BarberAvailabilityRepository>(create: (_) => CloudBarberAvailabilityService()),
+        Provider<ShopClosureRepository>(create: (_) => CloudShopClosureService()),
         ProxyProvider<StorageRepository, ProductRepository>(
           update: (_, storage, _) => FirestoreProductService(storage: storage),
         ),

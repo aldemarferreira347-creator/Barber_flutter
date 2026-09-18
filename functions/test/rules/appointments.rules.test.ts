@@ -106,6 +106,22 @@ describe('firestore.rules — appointments/{id} (paid)', () => {
     await assertFails(updateDoc(doc(db, 'appointments/appt1'), { status: 'accepted', paid: false }));
     await assertSucceeds(updateDoc(doc(db, 'appointments/appt1'), { status: 'accepted' }));
   });
+
+  it('ni el dueño puede quitarse la penalización forzada de calificación (spec 3.4)', async () => {
+    await testEnv.withSecurityRulesDisabled(async (context) => {
+      await setDoc(doc(context.firestore(), 'appointments/appt2'), {
+        clientId: CLIENT_UID,
+        barbershopId: SHOP_ID,
+        barberId: BARBER_UID,
+        status: 'postponed',
+        paid: true,
+        paymentId: 'payment1',
+        forcedRatingPenalty: true,
+      });
+    });
+    const db = testEnv.authenticatedContext(OWNER_UID).firestore();
+    await assertFails(updateDoc(doc(db, 'appointments/appt2'), { forcedRatingPenalty: false }));
+  });
 });
 
 describe('firestore.rules — appointmentSlots/{id}', () => {

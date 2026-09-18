@@ -146,6 +146,10 @@ service cloud.firestore {
       allow update: if isSignedIn()
         && request.resource.data.paid == resource.data.paid
         && request.resource.data.paymentId == resource.data.paymentId
+        // forcedRatingPenalty (spec 3.4) solo lo marca closeShopForExternalEvent
+        // — ni el dueño ni el barbero de esa cita pueden quitárselo o
+        // ponérselo por su cuenta editando el documento.
+        && request.resource.data.forcedRatingPenalty == resource.data.forcedRatingPenalty
         && (
           resource.data.barberId == request.auth.uid ||
           isOwnerOfShop(resource.data.barbershopId) ||
@@ -169,6 +173,14 @@ service cloud.firestore {
     // Function que intenta reservarlo simplemente falla con un error claro.
     match /appointmentSlots/{id} {
       allow read, write: if false;
+    }
+
+    // shopClosures/{id}: registro de auditoría de cierres por evento
+    // externo (spec 3.4) — solo lo crea closeShopForExternalEvent (Admin
+    // SDK). El dueño de esa barbería (o el admin) puede consultarlo.
+    match /shopClosures/{id} {
+      allow read: if isSignedIn() && (isOwnerOfShop(resource.data.barbershopId) || isAdmin());
+      allow write: if false;
     }
 
     // refundRequests/{id}: la ÚNICA vía de escritura es el backend

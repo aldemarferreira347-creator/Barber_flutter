@@ -18,3 +18,4 @@ export { sendAppointmentReminders } from './triggers/scheduled/sendAppointmentRe
 export { markBarberAway } from './triggers/https/markBarberAway';
 export { markBarberReturned } from './triggers/https/markBarberReturned';
 export { processOverdueBarbers } from './triggers/scheduled/processOverdueBarbers';
+export { closeShopForExternalEvent } from './triggers/https/closeShopForExternalEvent';

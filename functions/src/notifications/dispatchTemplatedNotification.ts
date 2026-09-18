@@ -1,6 +1,7 @@
 import { dispatchNotification } from './notificationDispatcher';
 import { renderBarberBack, renderRescheduleInvite } from './templates/barberAvailabilityTemplates';
 import { renderAppointmentReminder, ReminderTemplateData } from './templates/appointmentReminderTemplates';
+import { renderShopClosureNotice } from './templates/shopClosureTemplates';
 import { fetchNotificationRecipient } from './userDirectory';
 
 /**
@@ -44,4 +45,12 @@ export async function dispatchBarberBack(input: { toUserId: string; serviceName:
   const tone = recipient?.notificationTone ?? 'normal';
   const { title, body } = renderBarberBack(tone, { serviceName: input.serviceName, time: input.time });
   await dispatchNotification({ toUserId: input.toUserId, title, body, category: 'barber_back_on_time' });
+}
+
+/** La barbería cerró por un evento externo y la cita pagada del cliente quedó aplazada (spec 3.4). */
+export async function dispatchShopClosureNotice(input: { toUserId: string; barbershopName: string; serviceName: string }): Promise<void> {
+  const recipient = await fetchNotificationRecipient(input.toUserId);
+  const tone = recipient?.notificationTone ?? 'normal';
+  const { title, body } = renderShopClosureNotice(tone, { barbershopName: input.barbershopName, serviceName: input.serviceName });
+  await dispatchNotification({ toUserId: input.toUserId, title, body, category: 'shop_closure' });
 }

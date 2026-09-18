@@ -41,7 +41,8 @@ export type NotificationCategory =
   | 'auto_payment_overdue'
   | 'appointment_reminder'
   | 'barber_reschedule_invite'
-  | 'barber_back_on_time';
+  | 'barber_back_on_time'
+  | 'shop_closure';
 
 export interface DispatchNotificationInput {
   toUserId: string;
