@@ -1,5 +1,8 @@
+import 'dart:typed_data';
+
 import 'package:flutter/material.dart';
 import 'package:geolocator/geolocator.dart';
+import 'package:image_picker/image_picker.dart';
 import 'package:provider/provider.dart';
 
 import '../../controllers/auth_controller.dart';
@@ -23,9 +26,12 @@ class _AddBarbershopViewState extends State<AddBarbershopView> {
   final _emailController = TextEditingController();
   final _descriptionController = TextEditingController();
   final _locationService = LocationService();
+  final _picker = ImagePicker();
   bool _saving = false;
   bool _locating = false;
   Position? _position;
+  Uint8List? _photoBytes;
+  String? _photoName;
 
   @override
   void dispose() {
@@ -35,6 +41,45 @@ class _AddBarbershopViewState extends State<AddBarbershopView> {
     _emailController.dispose();
     _descriptionController.dispose();
     super.dispose();
+  }
+
+  Future<void> _pickPhoto(ImageSource source) async {
+    final file = await _picker.pickImage(source: source, maxWidth: 1280, imageQuality: 85);
+    if (file == null) return;
+    final bytes = await file.readAsBytes();
+    setState(() {
+      _photoBytes = bytes;
+      _photoName = file.name;
+    });
+  }
+
+  void _showPhotoOptions() {
+    showModalBottomSheet(
+      context: context,
+      builder: (context) => SafeArea(
+        child: Column(
+          mainAxisSize: MainAxisSize.min,
+          children: [
+            ListTile(
+              leading: const Icon(Icons.photo_camera_outlined),
+              title: const Text('Tomar foto'),
+              onTap: () {
+                Navigator.of(context).pop();
+                _pickPhoto(ImageSource.camera);
+              },
+            ),
+            ListTile(
+              leading: const Icon(Icons.photo_library_outlined),
+              title: const Text('Elegir de galería'),
+              onTap: () {
+                Navigator.of(context).pop();
+                _pickPhoto(ImageSource.gallery);
+              },
+            ),
+          ],
+        ),
+      ),
+    );
   }
 
   Future<void> _useCurrentLocation() async {
@@ -58,18 +103,22 @@ class _AddBarbershopViewState extends State<AddBarbershopView> {
     final repo = context.read<BarbershopRepository>();
     try {
       final id = await repo.create(
-            Barbershop(
-              id: '',
-              name: _nameController.text.trim(),
-              ownerId: ownerId,
-              address: _addressController.text.trim(),
-              phone: _phoneController.text.trim(),
-              email: _emailController.text.trim(),
-              description: _descriptionController.text.trim(),
-            ),
-          );
+        Barbershop(
+          id: '',
+          name: _nameController.text.trim(),
+          ownerId: ownerId,
+          address: _addressController.text.trim(),
+          phone: _phoneController.text.trim(),
+          email: _emailController.text.trim(),
+          description: _descriptionController.text.trim(),
+        ),
+      );
       if (_position != null) {
         await repo.updateLocation(id, _position!.latitude, _position!.longitude);
+      }
+      if (_photoBytes != null) {
+        final fileName = '${DateTime.now().millisecondsSinceEpoch}_${_photoName ?? 'foto.jpg'}';
+        await repo.uploadPhoto(id, fileName: fileName, bytes: _photoBytes!);
       }
       if (mounted) Navigator.of(context).pop();
     } catch (e) {
@@ -89,9 +138,39 @@ class _AddBarbershopViewState extends State<AddBarbershopView> {
         padding: const EdgeInsets.all(16),
         child: Form(
           key: _formKey,
-          child: Column(
-            crossAxisAlignment: CrossAxisAlignment.stretch,
+          child: ListView(
             children: [
+              Center(
+                child: GestureDetector(
+                  onTap: _showPhotoOptions,
+                  child: Container(
+                    width: double.infinity,
+                    height: 140,
+                    decoration: BoxDecoration(
+                      color: AppColors.surface,
+                      borderRadius: BorderRadius.circular(16),
+                      border: Border.all(color: AppColors.border),
+                      image: _photoBytes != null
+                          ? DecorationImage(image: MemoryImage(_photoBytes!), fit: BoxFit.cover)
+                          : null,
+                    ),
+                    child: _photoBytes == null
+                        ? const Column(
+                            mainAxisAlignment: MainAxisAlignment.center,
+                            children: [
+                              Icon(Icons.add_a_photo_outlined, color: AppColors.textSecondary),
+                              SizedBox(height: 6),
+                              Text(
+                                'Añadir foto de portada',
+                                style: TextStyle(color: AppColors.textSecondary, fontSize: 12),
+                              ),
+                            ],
+                          )
+                        : null,
+                  ),
+                ),
+              ),
+              const SizedBox(height: 20),
               TextFormField(
                 controller: _nameController,
                 decoration: const InputDecoration(labelText: 'Nombre', prefixIcon: Icon(Icons.storefront_outlined)),
@@ -113,7 +192,10 @@ class _AddBarbershopViewState extends State<AddBarbershopView> {
               TextFormField(
                 controller: _emailController,
                 keyboardType: TextInputType.emailAddress,
-                decoration: const InputDecoration(labelText: 'Correo de contacto', prefixIcon: Icon(Icons.mail_outline)),
+                decoration: const InputDecoration(
+                  labelText: 'Correo de contacto',
+                  prefixIcon: Icon(Icons.mail_outline),
+                ),
               ),
               const SizedBox(height: 14),
               TextFormField(
@@ -126,14 +208,21 @@ class _AddBarbershopViewState extends State<AddBarbershopView> {
                 onPressed: _locating ? null : _useCurrentLocation,
                 icon: _locating
                     ? const SizedBox(height: 16, width: 16, child: CircularProgressIndicator(strokeWidth: 2))
-                    : Icon(_position == null ? Icons.my_location_outlined : Icons.check_circle, color: _position == null ? null : AppColors.success),
+                    : Icon(
+                        _position == null ? Icons.my_location_outlined : Icons.check_circle,
+                        color: _position == null ? null : AppColors.success,
+                      ),
                 label: Text(_position == null ? 'Usar mi ubicación actual' : 'Ubicación guardada ✓'),
               ),
               const SizedBox(height: 24),
               FilledButton(
                 onPressed: _saving ? null : _submit,
                 child: _saving
-                    ? const SizedBox(height: 18, width: 18, child: CircularProgressIndicator(strokeWidth: 2, color: Colors.white))
+                    ? const SizedBox(
+                        height: 18,
+                        width: 18,
+                        child: CircularProgressIndicator(strokeWidth: 2, color: Colors.white),
+                      )
                     : const Text('Guardar barbería'),
               ),
             ],

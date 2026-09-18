@@ -56,8 +56,10 @@ class BarberApp extends StatelessWidget {
         // Firebase directamente (Dependency Inversion).
         Provider<AuthRepository>(create: (_) => FirebaseAuthService()),
         Provider<UserRepository>(create: (_) => FirestoreUserService()),
-        Provider<BarbershopRepository>(create: (_) => FirestoreBarbershopService()),
         Provider<StorageRepository>(create: (_) => FirebaseStorageService()),
+        ProxyProvider<StorageRepository, BarbershopRepository>(
+          update: (_, storage, _) => FirestoreBarbershopService(storage: storage),
+        ),
         ProxyProvider<StorageRepository, ServiceRepository>(
           update: (_, storage, _) => FirestoreServiceService(storage: storage),
         ),

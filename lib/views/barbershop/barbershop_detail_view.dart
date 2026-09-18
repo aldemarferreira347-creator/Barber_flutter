@@ -75,9 +75,15 @@ class BarbershopDetailView extends StatelessWidget {
               children: [
                 Container(
                   height: 160,
-                  decoration: BoxDecoration(color: AppColors.primary, borderRadius: BorderRadius.circular(16)),
+                  decoration: BoxDecoration(
+                    color: AppColors.primary,
+                    borderRadius: BorderRadius.circular(16),
+                    image: shop.photoUrl != null
+                        ? DecorationImage(image: NetworkImage(shop.photoUrl!), fit: BoxFit.cover)
+                        : null,
+                  ),
                   alignment: Alignment.center,
-                  child: const Icon(Icons.storefront, color: Colors.white, size: 48),
+                  child: shop.photoUrl == null ? const Icon(Icons.storefront, color: Colors.white, size: 48) : null,
                 ),
                 const SizedBox(height: 16),
                 Row(

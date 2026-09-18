@@ -41,6 +41,12 @@ service firebase.storage {
       allow write: if (isOwnerOfShop(shopId) || isAdmin()) && isImageUnder5MB();
     }
 
+    // Foto de portada de la propia barbería (catálogo/detalle): mismo criterio.
+    match /barbershops/{shopId}/profile/{fileName} {
+      allow read: if isSignedIn();
+      allow write: if (isOwnerOfShop(shopId) || isAdmin()) && isImageUnder5MB();
+    }
+
     match /{allPaths=**} {
       allow read, write: if false;
     }

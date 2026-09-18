@@ -73,9 +73,9 @@ class _ManageBarbershopsViewState extends State<ManageBarbershopsView> {
                       final shop = shops[index];
                       return InkWell(
                         borderRadius: BorderRadius.circular(14),
-                        onTap: () => Navigator.of(context).push(
-                          MaterialPageRoute(builder: (_) => BarbershopDetailView(barbershopId: shop.id)),
-                        ),
+                        onTap: () =>
+                            Navigator.of(context)
+                                .push(MaterialPageRoute(builder: (_) => BarbershopDetailView(barbershopId: shop.id))),
                         child: Container(
                           padding: const EdgeInsets.all(12),
                           decoration: BoxDecoration(
@@ -88,8 +88,16 @@ class _ManageBarbershopsViewState extends State<ManageBarbershopsView> {
                               Container(
                                 width: 48,
                                 height: 48,
-                                decoration: BoxDecoration(color: AppColors.primary, borderRadius: BorderRadius.circular(10)),
-                                child: const Icon(Icons.storefront, color: Colors.white, size: 22),
+                                decoration: BoxDecoration(
+                                  color: AppColors.primary,
+                                  borderRadius: BorderRadius.circular(10),
+                                  image: shop.photoUrl != null
+                                      ? DecorationImage(image: NetworkImage(shop.photoUrl!), fit: BoxFit.cover)
+                                      : null,
+                                ),
+                                child: shop.photoUrl == null
+                                    ? const Icon(Icons.storefront, color: Colors.white, size: 22)
+                                    : null,
                               ),
                               const SizedBox(width: 12),
                               Expanded(
@@ -97,7 +105,10 @@ class _ManageBarbershopsViewState extends State<ManageBarbershopsView> {
                                   crossAxisAlignment: CrossAxisAlignment.start,
                                   children: [
                                     Text(shop.name, style: const TextStyle(fontWeight: FontWeight.w700)),
-                                    Text(shop.address ?? '', style: const TextStyle(color: AppColors.textSecondary, fontSize: 12)),
+                                    Text(
+                                      shop.address ?? '',
+                                      style: const TextStyle(color: AppColors.textSecondary, fontSize: 12),
+                                    ),
                                   ],
                                 ),
                               ),

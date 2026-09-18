@@ -1,3 +1,5 @@
+import 'dart:typed_data';
+
 import '../models/barbershop.dart';
 import '../models/day_schedule.dart';
 
@@ -10,6 +12,9 @@ abstract class BarbershopRepository {
   Stream<Barbershop?> watchOne(String id);
 
   Future<String> create(Barbershop barbershop);
+
+  /// Sube la foto de portada de la barbería y guarda su URL.
+  Future<void> uploadPhoto(String id, {required String fileName, required Uint8List bytes});
 
   /// Bloqueo/desbloqueo selectivo — reservado al rol admin (impuesto también
   /// en firestore.rules, no solo en el cliente).

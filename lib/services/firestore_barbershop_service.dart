@@ -1,28 +1,35 @@
+import 'dart:typed_data';
+
 import 'package:cloud_firestore/cloud_firestore.dart';
 
 import '../models/barbershop.dart';
 import '../models/day_schedule.dart';
 import '../repositories/barbershop_repository.dart';
+import '../repositories/storage_repository.dart';
 
 class FirestoreBarbershopService implements BarbershopRepository {
   final FirebaseFirestore _firestore;
+  final StorageRepository _storage;
 
-  FirestoreBarbershopService({FirebaseFirestore? firestore}) : _firestore = firestore ?? FirebaseFirestore.instance;
+  FirestoreBarbershopService({required this._storage, FirebaseFirestore? firestore})
+    : _firestore = firestore ?? FirebaseFirestore.instance;
 
   CollectionReference<Map<String, dynamic>> get _barbershops => _firestore.collection('barbershops');
 
   @override
   Stream<List<Barbershop>> watchAll() {
-    return _barbershops.orderBy('name').snapshots().map(
-          (snapshot) => snapshot.docs.map((doc) => Barbershop.fromMap(doc.id, doc.data())).toList(),
-        );
+    return _barbershops
+        .orderBy('name')
+        .snapshots()
+        .map((snapshot) => snapshot.docs.map((doc) => Barbershop.fromMap(doc.id, doc.data())).toList());
   }
 
   @override
   Stream<List<Barbershop>> watchByOwner(String ownerId) {
-    return _barbershops.where('ownerId', isEqualTo: ownerId).snapshots().map(
-          (snapshot) => snapshot.docs.map((doc) => Barbershop.fromMap(doc.id, doc.data())).toList(),
-        );
+    return _barbershops
+        .where('ownerId', isEqualTo: ownerId)
+        .snapshots()
+        .map((snapshot) => snapshot.docs.map((doc) => Barbershop.fromMap(doc.id, doc.data())).toList());
   }
 
   @override
@@ -58,5 +65,11 @@ class FirestoreBarbershopService implements BarbershopRepository {
   @override
   Future<void> updateLocation(String id, double latitude, double longitude) {
     return _barbershops.doc(id).update({'location': GeoPoint(latitude, longitude)});
+  }
+
+  @override
+  Future<void> uploadPhoto(String id, {required String fileName, required Uint8List bytes}) async {
+    final url = await _storage.uploadBytes(path: 'barbershops/$id/profile/$fileName', bytes: bytes);
+    await _barbershops.doc(id).update({'photoUrl': url});
   }
 }

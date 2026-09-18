@@ -29,10 +29,7 @@ class _LoginViewState extends State<LoginView> {
 
   Future<void> _submit(AuthController auth) async {
     if (!_formKey.currentState!.validate()) return;
-    final ok = await auth.signIn(
-      email: _emailController.text.trim(),
-      password: _passwordController.text,
-    );
+    final ok = await auth.signIn(email: _emailController.text.trim(), password: _passwordController.text);
     if (!ok && mounted && auth.errorMessage != null) {
       ScaffoldMessenger.of(context).showSnackBar(SnackBar(content: Text(auth.errorMessage!)));
     }
@@ -70,7 +67,9 @@ class _LoginViewState extends State<LoginView> {
           mainAxisSize: MainAxisSize.min,
           crossAxisAlignment: CrossAxisAlignment.start,
           children: [
-            Text('Ya existe una cuenta registrada con $email usando correo y contraseña. Confírmala para vincular tu cuenta de Google a ella.'),
+            Text(
+              'Ya existe una cuenta registrada con $email usando correo y contraseña. Confírmala para vincular tu cuenta de Google a ella.',
+            ),
             const SizedBox(height: 14),
             TextField(
               controller: passwordController,
@@ -83,7 +82,10 @@ class _LoginViewState extends State<LoginView> {
         ),
         actions: [
           TextButton(onPressed: () => Navigator.of(context).pop(), child: const Text('Cancelar')),
-          FilledButton(onPressed: () => Navigator.of(context).pop(passwordController.text), child: const Text('Vincular')),
+          FilledButton(
+            onPressed: () => Navigator.of(context).pop(passwordController.text),
+            child: const Text('Vincular'),
+          ),
         ],
       ),
     );
@@ -122,126 +124,178 @@ class _LoginViewState extends State<LoginView> {
     if (email == null || email.isEmpty || !mounted) return;
     final ok = await auth.sendPasswordResetEmail(email);
     if (!mounted) return;
-    ScaffoldMessenger.of(context).showSnackBar(SnackBar(
-      content: Text(ok ? 'Te enviamos un enlace a $email para restablecer tu contraseña.' : (auth.errorMessage ?? 'No se pudo enviar el correo')),
-    ));
+    ScaffoldMessenger.of(context).showSnackBar(
+      SnackBar(
+        content: Text(
+          ok
+              ? 'Te enviamos un enlace a $email para restablecer tu contraseña.'
+              : (auth.errorMessage ?? 'No se pudo enviar el correo'),
+        ),
+      ),
+    );
   }
 
   @override
   Widget build(BuildContext context) {
     final auth = context.watch<AuthController>();
     return Scaffold(
-      body: SafeArea(
-        child: Center(
-          child: SingleChildScrollView(
-            padding: const EdgeInsets.symmetric(horizontal: 24, vertical: 16),
-            child: ConstrainedBox(
-              constraints: const BoxConstraints(maxWidth: 400),
-              child: Form(
-                key: _formKey,
-                child: Column(
-                  crossAxisAlignment: CrossAxisAlignment.stretch,
-                  children: [
-                    const SizedBox(height: 24),
-                    Center(
-                      child: Container(
-                        padding: const EdgeInsets.all(16),
-                        decoration: const BoxDecoration(color: AppColors.primary, shape: BoxShape.circle),
-                        child: const Icon(Icons.content_cut, color: Colors.white, size: 30),
-                      ),
-                    ),
-                    const SizedBox(height: 12),
-                    const Center(
-                      child: Text('BarberFlow', style: TextStyle(fontSize: 24, fontWeight: FontWeight.w800, color: AppColors.textPrimary)),
-                    ),
-                    const SizedBox(height: 32),
-                    const Text('Iniciar sesión', style: TextStyle(fontSize: 22, fontWeight: FontWeight.w800)),
-                    const SizedBox(height: 4),
-                    const Text('Accede a tu cuenta para continuar', style: TextStyle(color: AppColors.textSecondary)),
-                    const SizedBox(height: 24),
-                    TextFormField(
-                      controller: _emailController,
-                      keyboardType: TextInputType.emailAddress,
-                      decoration: const InputDecoration(
-                        labelText: 'Correo electrónico',
-                        prefixIcon: Icon(Icons.mail_outline),
-                      ),
-                      validator: (value) => (value == null || !value.contains('@')) ? 'Correo inválido' : null,
-                    ),
-                    const SizedBox(height: 14),
-                    TextFormField(
-                      controller: _passwordController,
-                      obscureText: _obscurePassword,
-                      decoration: InputDecoration(
-                        labelText: 'Contraseña',
-                        prefixIcon: const Icon(Icons.lock_outline),
-                        suffixIcon: IconButton(
-                          icon: Icon(_obscurePassword ? Icons.visibility_outlined : Icons.visibility_off_outlined),
-                          onPressed: () => setState(() => _obscurePassword = !_obscurePassword),
+      backgroundColor: AppColors.surface,
+      body: Column(
+        children: [
+          const _LoginHero(),
+          Expanded(
+            child: SingleChildScrollView(
+              padding: const EdgeInsets.fromLTRB(24, 24, 24, 16),
+              child: Center(
+                child: ConstrainedBox(
+                  constraints: const BoxConstraints(maxWidth: 400),
+                  child: Form(
+                    key: _formKey,
+                    child: Column(
+                      crossAxisAlignment: CrossAxisAlignment.stretch,
+                      children: [
+                        const Text('Iniciar sesión', style: TextStyle(fontSize: 22, fontWeight: FontWeight.w800)),
+                        const SizedBox(height: 4),
+                        const Text(
+                          'Accede a tu cuenta para continuar',
+                          style: TextStyle(color: AppColors.textSecondary),
                         ),
-                      ),
-                      validator: (value) => (value == null || value.length < 6) ? 'Mínimo 6 caracteres' : null,
-                    ),
-                    Align(
-                      alignment: Alignment.centerRight,
-                      child: TextButton(
-                        onPressed: auth.isBusy ? null : () => _forgotPassword(auth),
-                        child: const Text('¿Olvidaste tu contraseña?'),
-                      ),
-                    ),
-                    const SizedBox(height: 8),
-                    FilledButton(
-                      onPressed: auth.isBusy ? null : () => _submit(auth),
-                      child: auth.isBusy
-                          ? const SizedBox(height: 18, width: 18, child: CircularProgressIndicator(strokeWidth: 2, color: Colors.white))
-                          : const Text('Iniciar sesión'),
-                    ),
-                    const SizedBox(height: 12),
-                    Center(
-                      child: TextButton(
-                        onPressed: () => Navigator.of(context).push(
-                          MaterialPageRoute(builder: (_) => const RegisterView()),
+                        const SizedBox(height: 24),
+                        TextFormField(
+                          controller: _emailController,
+                          keyboardType: TextInputType.emailAddress,
+                          decoration: const InputDecoration(
+                            labelText: 'Correo electrónico',
+                            prefixIcon: Icon(Icons.mail_outline),
+                          ),
+                          validator: (value) => (value == null || !value.contains('@')) ? 'Correo inválido' : null,
                         ),
-                        child: RichText(
-                          text: const TextSpan(
-                            style: TextStyle(color: AppColors.textSecondary),
-                            children: [
-                              TextSpan(text: '¿No tienes una cuenta? '),
-                              TextSpan(text: 'Regístrate', style: TextStyle(color: AppColors.accent, fontWeight: FontWeight.w600)),
-                            ],
+                        const SizedBox(height: 14),
+                        TextFormField(
+                          controller: _passwordController,
+                          obscureText: _obscurePassword,
+                          decoration: InputDecoration(
+                            labelText: 'Contraseña',
+                            prefixIcon: const Icon(Icons.lock_outline),
+                            suffixIcon: IconButton(
+                              icon: Icon(_obscurePassword ? Icons.visibility_outlined : Icons.visibility_off_outlined),
+                              onPressed: () => setState(() => _obscurePassword = !_obscurePassword),
+                            ),
+                          ),
+                          validator: (value) => (value == null || value.length < 6) ? 'Mínimo 6 caracteres' : null,
+                        ),
+                        Align(
+                          alignment: Alignment.centerRight,
+                          child: TextButton(
+                            onPressed: auth.isBusy ? null : () => _forgotPassword(auth),
+                            child: const Text('¿Olvidaste tu contraseña?'),
                           ),
                         ),
-                      ),
-                    ),
-                    const SizedBox(height: 12),
-                    Row(
-                      children: const [
-                        Expanded(child: Divider()),
-                        Padding(padding: EdgeInsets.symmetric(horizontal: 10), child: Text('o', style: TextStyle(color: AppColors.textSecondary))),
-                        Expanded(child: Divider()),
+                        const SizedBox(height: 8),
+                        FilledButton(
+                          onPressed: auth.isBusy ? null : () => _submit(auth),
+                          child: auth.isBusy
+                              ? const SizedBox(
+                                  height: 18,
+                                  width: 18,
+                                  child: CircularProgressIndicator(strokeWidth: 2, color: Colors.white),
+                                )
+                              : const Text('Iniciar sesión'),
+                        ),
+                        const SizedBox(height: 12),
+                        Center(
+                          child: TextButton(
+                            onPressed: () =>
+                                Navigator.of(context).push(MaterialPageRoute(builder: (_) => const RegisterView())),
+                            child: RichText(
+                              text: const TextSpan(
+                                style: TextStyle(color: AppColors.textSecondary),
+                                children: [
+                                  TextSpan(text: '¿No tienes una cuenta? '),
+                                  TextSpan(
+                                    text: 'Regístrate',
+                                    style: TextStyle(color: AppColors.accent, fontWeight: FontWeight.w600),
+                                  ),
+                                ],
+                              ),
+                            ),
+                          ),
+                        ),
+                        const SizedBox(height: 12),
+                        Row(
+                          children: const [
+                            Expanded(child: Divider()),
+                            Padding(
+                              padding: EdgeInsets.symmetric(horizontal: 10),
+                              child: Text('o', style: TextStyle(color: AppColors.textSecondary)),
+                            ),
+                            Expanded(child: Divider()),
+                          ],
+                        ),
+                        const SizedBox(height: 12),
+                        OutlinedButton.icon(
+                          onPressed: auth.isBusy ? null : () => _submitGoogle(auth),
+                          icon: const Icon(Icons.g_mobiledata, size: 26),
+                          label: const Text('Continuar con Google'),
+                        ),
+                        const SizedBox(height: 10),
+                        OutlinedButton.icon(
+                          onPressed: auth.isBusy
+                              ? null
+                              : () =>
+                                    Navigator.of(context)
+                                        .push(MaterialPageRoute(builder: (_) => const PhoneLoginView())),
+                          icon: const Icon(Icons.phone_outlined),
+                          label: const Text('Continuar con teléfono'),
+                        ),
+                        const SizedBox(height: 24),
                       ],
                     ),
-                    const SizedBox(height: 12),
-                    OutlinedButton.icon(
-                      onPressed: auth.isBusy ? null : () => _submitGoogle(auth),
-                      icon: const Icon(Icons.g_mobiledata, size: 26),
-                      label: const Text('Continuar con Google'),
-                    ),
-                    const SizedBox(height: 10),
-                    OutlinedButton.icon(
-                      onPressed: auth.isBusy
-                          ? null
-                          : () => Navigator.of(context).push(MaterialPageRoute(builder: (_) => const PhoneLoginView())),
-                      icon: const Icon(Icons.phone_outlined),
-                      label: const Text('Continuar con teléfono'),
-                    ),
-                    const SizedBox(height: 24),
-                  ],
+                  ),
                 ),
               ),
             ),
           ),
+        ],
+      ),
+    );
+  }
+}
+
+class _LoginHero extends StatelessWidget {
+  const _LoginHero();
+
+  @override
+  Widget build(BuildContext context) {
+    return Container(
+      width: double.infinity,
+      padding: const EdgeInsets.fromLTRB(24, 56, 24, 32),
+      decoration: const BoxDecoration(
+        gradient: LinearGradient(
+          begin: Alignment.topCenter,
+          end: Alignment.bottomCenter,
+          colors: [AppColors.primary, Color(0xFF1E293B)],
         ),
+      ),
+      child: Column(
+        mainAxisSize: MainAxisSize.min,
+        children: [
+          Container(
+            padding: const EdgeInsets.all(16),
+            decoration: BoxDecoration(color: Colors.white.withValues(alpha: 0.1), shape: BoxShape.circle),
+            child: const Icon(Icons.content_cut, color: Colors.white, size: 30),
+          ),
+          const SizedBox(height: 14),
+          const Text(
+            'BarberFlow',
+            style: TextStyle(color: Colors.white, fontSize: 26, fontWeight: FontWeight.w800),
+          ),
+          const SizedBox(height: 4),
+          Text(
+            'Tu barbería, siempre conectada',
+            style: TextStyle(color: Colors.white.withValues(alpha: 0.7), fontSize: 13),
+          ),
+        ],
       ),
     );
   }
