@@ -13,7 +13,15 @@ interface DocHandle {
   get(): Promise<{ exists: boolean; data: () => DocData | undefined; ref: DocHandle; id: string }>;
   set(data: DocData): Promise<void>;
   update(patch: DocData): Promise<void>;
+  delete(): Promise<void>;
   collection(name: string): CollectionHandle;
+}
+
+interface TransactionHandle {
+  get(ref: DocHandle): Promise<{ exists: boolean; data: () => DocData | undefined; ref: DocHandle; id: string }>;
+  set(ref: DocHandle, data: DocData): void;
+  update(ref: DocHandle, patch: DocData): void;
+  delete(ref: DocHandle): void;
 }
 
 interface CollectionHandle {
@@ -25,6 +33,38 @@ interface CollectionHandle {
 interface QueryHandle {
   where(field: string, op: string, value: unknown): QueryHandle;
   get(): Promise<{ empty: boolean; size: number; docs: Array<{ ref: DocHandle; data: () => DocData; id: string }> }>;
+}
+
+const ARRAY_UNION = Symbol('fakeFirestore.arrayUnion');
+
+interface ArrayUnionSentinel {
+  [ARRAY_UNION]: true;
+  values: unknown[];
+}
+
+function isArrayUnion(value: unknown): value is ArrayUnionSentinel {
+  return typeof value === 'object' && value !== null && ARRAY_UNION in value;
+}
+
+/** Compañero de createFakeFirestore(): mockea FieldValue en el mismo jest.mock. */
+export function createFakeFieldValue() {
+  return {
+    serverTimestamp: () => 'SERVER_TIMESTAMP',
+    arrayUnion: (...values: unknown[]): ArrayUnionSentinel => ({ [ARRAY_UNION]: true, values }),
+  };
+}
+
+function resolvePatch(existing: DocData, patch: DocData): DocData {
+  const resolved: DocData = { ...existing };
+  for (const [key, value] of Object.entries(patch)) {
+    if (isArrayUnion(value)) {
+      const current = Array.isArray(existing[key]) ? (existing[key] as unknown[]) : [];
+      resolved[key] = [...current, ...value.values];
+    } else {
+      resolved[key] = value;
+    }
+  }
+  return resolved;
 }
 
 function matches(actual: unknown, op: string, expected: unknown): boolean {
@@ -59,7 +99,10 @@ export function createFakeFirestore() {
       },
       update: async (patch: DocData) => {
         if (!store.has(path)) throw new Error(`No document to update: ${path}`);
-        store.set(path, { ...store.get(path), ...patch });
+        store.set(path, resolvePatch(store.get(path)!, patch));
+      },
+      delete: async () => {
+        store.delete(path);
       },
       collection: (name: string) => collectionHandle(`${path}/${name}`),
     };
@@ -93,6 +136,31 @@ export function createFakeFirestore() {
   return {
     collection: (name: string) => collectionHandle(name),
     doc: (path: string) => docHandle(path),
+    /**
+     * No simula aislamiento real entre transacciones concurrentes (los
+     * tests corren secuencialmente) — sí reproduce la propiedad que
+     * importa: si el callback lanza antes de terminar, ninguna de sus
+     * escrituras queda aplicada.
+     */
+    runTransaction: async <T>(fn: (tx: TransactionHandle) => Promise<T>): Promise<T> => {
+      const pendingWrites: Array<() => Promise<void>> = [];
+      const tx: TransactionHandle = {
+        get: (ref: DocHandle) => ref.get(),
+        set: (ref: DocHandle, data: DocData) => {
+          pendingWrites.push(() => ref.set(data));
+        },
+        update: (ref: DocHandle, patch: DocData) => {
+          pendingWrites.push(() => ref.update(patch));
+        },
+        delete: (ref: DocHandle) => {
+          pendingWrites.push(() => ref.delete());
+        },
+      };
+
+      const result = await fn(tx);
+      for (const write of pendingWrites) await write();
+      return result;
+    },
     batch: () => {
       const pending: Array<() => Promise<void>> = [];
       return {

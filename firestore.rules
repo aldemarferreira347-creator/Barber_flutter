@@ -117,11 +117,12 @@ service cloud.firestore {
       }
     }
 
-    // appointments/{id}: el cliente crea su propia cita (status 'pending').
-    // El cliente y el barbero involucrados pueden leerla, igual que el
-    // dueño de la barbería y el admin. Actualizaciones de estado/fecha
-    // quedan para el barbero de la cita, el dueño de esa barbería o el
-    // admin; el cliente solo puede cancelar la suya (pending → cancelled).
+    // appointments/{id}: el cliente crea su propia cita SIN pago (status
+    // 'pending', paid false) — las citas PAGADAS solo las crea
+    // bookPaidAppointment (Admin SDK, bloquea el horario en transacción,
+    // spec 6.1/6.2), nunca un create() directo del cliente. 'paid' y
+    // 'paymentId' quedan congelados para el cliente una vez creada la cita
+    // (solo el backend los toca, vía las Cloud Functions de esta fase).
     match /appointments/{appointmentId} {
       allow read: if isSignedIn() && (
         resource.data.clientId == request.auth.uid ||
@@ -132,18 +133,49 @@ service cloud.firestore {
 
       allow create: if isSignedIn()
         && request.resource.data.clientId == request.auth.uid
-        && request.resource.data.status == 'pending';
+        && request.resource.data.status == 'pending'
+        && request.resource.data.paid == false;
 
-      allow update: if isSignedIn() && (
-        resource.data.barberId == request.auth.uid ||
-        isOwnerOfShop(resource.data.barbershopId) ||
-        isAdmin() ||
-        (resource.data.clientId == request.auth.uid &&
-          resource.data.status == 'pending' &&
-          request.resource.data.status == 'cancelled')
-      );
+      allow update: if isSignedIn()
+        && request.resource.data.paid == resource.data.paid
+        && request.resource.data.paymentId == resource.data.paymentId
+        && (
+          resource.data.barberId == request.auth.uid ||
+          isOwnerOfShop(resource.data.barbershopId) ||
+          isAdmin() ||
+          // El cliente solo puede cancelar directamente una cita SIN pago
+          // (pending → cancelled); una cita pagada pasa por
+          // requestAppointmentRefund (spec 6.3).
+          (resource.data.clientId == request.auth.uid &&
+            resource.data.paid == false &&
+            resource.data.status == 'pending' &&
+            request.resource.data.status == 'cancelled')
+        );
 
       allow delete: if false;
+    }
+
+    // appointmentSlots/{id}: bloqueo de horario de una cita pagada — lo
+    // crea/borra únicamente bookPaidAppointment/postponeAppointment/
+    // resolveAppointmentRefund (Admin SDK, dentro de una transacción). El
+    // cliente no necesita leerlo: si el horario ya está tomado, la Cloud
+    // Function que intenta reservarlo simplemente falla con un error claro.
+    match /appointmentSlots/{id} {
+      allow read, write: if false;
+    }
+
+    // refundRequests/{id}: la ÚNICA vía de escritura es el backend
+    // (requestAppointmentRefund/resolveAppointmentRefund, Admin SDK) — ni
+    // el cliente ni el dueño pueden aprobar su propia solicitud editando
+    // el documento directamente. El cliente lee las suyas; el dueño de esa
+    // barbería (o el admin) lee las de su barbería para revisarlas.
+    match /refundRequests/{id} {
+      allow read: if isSignedIn() && (
+        resource.data.clientId == request.auth.uid ||
+        isOwnerOfShop(resource.data.barbershopId) ||
+        isAdmin()
+      );
+      allow write: if false;
     }
 
     // payments/{id}: la ÚNICA vía de escritura es el backend (Cloud

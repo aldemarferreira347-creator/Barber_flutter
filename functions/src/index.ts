@@ -10,3 +10,7 @@ export { createPurchase } from './triggers/https/createPurchase';
 export { claimPurchase } from './triggers/https/claimPurchase';
 export { refundPurchaseItems } from './triggers/https/refundPurchaseItems';
 export { expirePurchases } from './triggers/scheduled/expirePurchases';
+export { bookPaidAppointment } from './triggers/https/bookPaidAppointment';
+export { postponeAppointment } from './triggers/https/postponeAppointment';
+export { requestAppointmentRefund } from './triggers/https/requestAppointmentRefund';
+export { resolveAppointmentRefund } from './triggers/https/resolveAppointmentRefund';

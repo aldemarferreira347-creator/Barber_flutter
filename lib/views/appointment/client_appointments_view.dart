@@ -8,12 +8,18 @@ import '../../theme/app_colors.dart';
 import '../widgets/appointment_card.dart';
 import '../widgets/empty_state.dart';
 
-const _kUpcomingStatuses = {AppointmentStatus.pending, AppointmentStatus.accepted};
+// 'postponed' cuenta como próxima: su `date` ya es la nueva fecha futura
+// tras el cambio (spec 6.4) — sigue siendo una cita activa, no pasada.
+const _kUpcomingStatuses = {AppointmentStatus.pending, AppointmentStatus.accepted, AppointmentStatus.postponed};
 
 class ClientAppointmentsView extends StatelessWidget {
   const ClientAppointmentsView({super.key});
 
   Future<void> _cancel(BuildContext context, Appointment appointment) async {
+    if (appointment.paid) {
+      await _cancelPaid(context, appointment);
+      return;
+    }
     final confirmed = await showDialog<bool>(
       context: context,
       builder: (context) => AlertDialog(
@@ -27,6 +33,104 @@ class ClientAppointmentsView extends StatelessWidget {
     );
     if (confirmed == true && context.mounted) {
       await context.read<AppointmentRepository>().setStatus(appointment.id, AppointmentStatus.cancelled);
+    }
+  }
+
+  /// Una cita pagada nunca se cancela directamente: primero se ofrece
+  /// posponer (conservando el pago); solo si el cliente insiste, se le
+  /// pide una justificación que el dueño debe aprobar (spec 6.3).
+  Future<void> _cancelPaid(BuildContext context, Appointment appointment) async {
+    final choice = await showDialog<String>(
+      context: context,
+      builder: (context) => AlertDialog(
+        title: const Text('Esta cita ya está pagada'),
+        content: const Text(
+          'En vez de cancelarla y perder tu horario, puedes posponerla a otra fecha conservando el pago ya realizado.',
+        ),
+        actions: [
+          TextButton(onPressed: () => Navigator.of(context).pop(), child: const Text('Volver')),
+          OutlinedButton(
+            onPressed: () => Navigator.of(context).pop('cancel'),
+            child: const Text('Cancelar de todas formas'),
+          ),
+          FilledButton(onPressed: () => Navigator.of(context).pop('postpone'), child: const Text('Posponer')),
+        ],
+      ),
+    );
+    if (!context.mounted || choice == null) return;
+    if (choice == 'postpone') {
+      await _postponePaid(context, appointment);
+    } else if (choice == 'cancel') {
+      await _requestCancellation(context, appointment);
+    }
+  }
+
+  Future<void> _postponePaid(BuildContext context, Appointment appointment) async {
+    final now = DateTime.now();
+    final date = await showDatePicker(
+      context: context,
+      initialDate: appointment.date,
+      firstDate: now,
+      lastDate: now.add(const Duration(days: 60)),
+    );
+    if (date == null || !context.mounted) return;
+    final time = await showTimePicker(context: context, initialTime: TimeOfDay.fromDateTime(appointment.date));
+    if (time == null || !context.mounted) return;
+    final newDate = DateTime(date.year, date.month, date.day, time.hour, time.minute);
+
+    try {
+      await context.read<AppointmentRepository>().postponePaid(appointment.id, newDate);
+      if (context.mounted) {
+        ScaffoldMessenger.of(context)
+            .showSnackBar(const SnackBar(content: Text('Cita pospuesta. Tu pago sigue en pie.')));
+      }
+    } catch (e) {
+      if (context.mounted) {
+        ScaffoldMessenger.of(context).showSnackBar(SnackBar(content: Text('No se pudo posponer: $e')));
+      }
+    }
+  }
+
+  Future<void> _requestCancellation(BuildContext context, Appointment appointment) async {
+    final reasonController = TextEditingController();
+    final reason = await showDialog<String>(
+      context: context,
+      builder: (context) => AlertDialog(
+        title: const Text('Justifica la cancelación'),
+        content: Column(
+          mainAxisSize: MainAxisSize.min,
+          crossAxisAlignment: CrossAxisAlignment.start,
+          children: [
+            const Text('El dueño de la barbería revisará esta justificación antes de aprobar el reembolso.'),
+            const SizedBox(height: 12),
+            TextField(
+              controller: reasonController,
+              maxLines: 3,
+              decoration: const InputDecoration(hintText: 'Cuéntanos qué pasó...'),
+            ),
+          ],
+        ),
+        actions: [
+          TextButton(onPressed: () => Navigator.of(context).pop(), child: const Text('Volver')),
+          FilledButton(
+            onPressed: () => Navigator.of(context).pop(reasonController.text.trim()),
+            child: const Text('Enviar solicitud'),
+          ),
+        ],
+      ),
+    );
+    if (reason == null || reason.isEmpty || !context.mounted) return;
+
+    try {
+      await context.read<AppointmentRepository>().requestRefund(appointmentId: appointment.id, reason: reason);
+      if (context.mounted) {
+        ScaffoldMessenger.of(context)
+            .showSnackBar(const SnackBar(content: Text('Solicitud enviada. Te avisaremos cuando el dueño la revise.')));
+      }
+    } catch (e) {
+      if (context.mounted) {
+        ScaffoldMessenger.of(context).showSnackBar(SnackBar(content: Text('No se pudo enviar la solicitud: $e')));
+      }
     }
   }
 
@@ -48,13 +152,21 @@ class ClientAppointmentsView extends StatelessWidget {
                 final appointments = snapshot.data ?? [];
                 if (appointments.isEmpty) {
                   return const Center(
-                    child: EmptyState(icon: Icons.event_available_outlined, title: 'No tienes citas programadas', subtitle: 'Agenda tu primera cita y luce increíble.'),
+                    child: EmptyState(
+                      icon: Icons.event_available_outlined,
+                      title: 'No tienes citas programadas',
+                      subtitle: 'Agenda tu primera cita y luce increíble.',
+                    ),
                   );
                 }
 
                 final upcoming = appointments.where((a) => _kUpcomingStatuses.contains(a.status)).toList();
                 // Más reciente primero: lo último que pasó es lo más relevante del historial.
-                final history = appointments.where((a) => !_kUpcomingStatuses.contains(a.status)).toList().reversed.toList();
+                final history = appointments
+                    .where((a) => !_kUpcomingStatuses.contains(a.status))
+                    .toList()
+                    .reversed
+                    .toList();
 
                 return ListView(
                   padding: const EdgeInsets.all(16),
@@ -110,7 +222,10 @@ class _SectionHeader extends StatelessWidget {
         Container(
           padding: const EdgeInsets.symmetric(horizontal: 8, vertical: 2),
           decoration: BoxDecoration(color: AppColors.border, borderRadius: BorderRadius.circular(10)),
-          child: Text('$count', style: const TextStyle(fontSize: 12, fontWeight: FontWeight.w600, color: AppColors.textSecondary)),
+          child: Text(
+            '$count',
+            style: const TextStyle(fontSize: 12, fontWeight: FontWeight.w600, color: AppColors.textSecondary),
+          ),
         ),
       ],
     );

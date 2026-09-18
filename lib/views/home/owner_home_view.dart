@@ -8,6 +8,7 @@ import '../profile/profile_menu_view.dart';
 import 'owner_appointments_tab.dart';
 import 'owner_dashboard_tab.dart';
 import 'owner_products_tab.dart';
+import 'owner_refund_requests_tab.dart';
 import 'owner_services_tab.dart';
 
 class OwnerHomeView extends StatelessWidget {
@@ -42,6 +43,11 @@ class OwnerHomeView extends StatelessWidget {
                     icon: Icons.shopping_bag_outlined,
                     label: 'Gestionar productos',
                     onTap: () => Navigator.of(context).push(MaterialPageRoute(builder: (_) => const OwnerProductsTab())),
+                  ),
+                  ProfileMenuItem(
+                    icon: Icons.receipt_long_outlined,
+                    label: 'Solicitudes de reembolso',
+                    onTap: () => Navigator.of(context).push(MaterialPageRoute(builder: (_) => const OwnerRefundRequestsTab())),
                   ),
                   ProfileMenuItem(icon: Icons.settings_outlined, label: 'Configuración', onTap: () => _comingSoon(context, 'La configuración')),
                   ProfileMenuItem(icon: Icons.help_outline, label: 'Ayuda', onTap: () => _comingSoon(context, 'La ayuda')),

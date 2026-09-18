@@ -23,7 +23,7 @@ class MockAppointmentRepository extends Mock implements AppointmentRepository {}
 
 const _kUid = 'client1';
 
-Appointment _appointment(String id, AppointmentStatus status, DateTime date) {
+Appointment _appointment(String id, AppointmentStatus status, DateTime date, {bool paid = false}) {
   return Appointment(
     id: id,
     barbershopId: 'shop1',
@@ -37,6 +37,8 @@ Appointment _appointment(String id, AppointmentStatus status, DateTime date) {
     durationMinutes: 30,
     date: date,
     status: status,
+    paid: paid,
+    paymentId: paid ? 'payment1' : null,
   );
 }
 
@@ -95,5 +97,48 @@ void main() {
     expect(find.text('2'), findsOneWidget); // contador de "Historial"
     // Solo la cita próxima (pending) ofrece cancelar.
     expect(find.text('Cancelar'), findsOneWidget);
+  });
+
+  testWidgets('cancelar una cita pagada ofrece posponer en vez de cancelar directo (spec 6.3)', (tester) async {
+    final now = DateTime(2026, 1, 1);
+    when(() => appointmentRepository.watchByClient(_kUid)).thenAnswer(
+      (_) => Stream.value([_appointment('a1', AppointmentStatus.pending, now, paid: true)]),
+    );
+
+    await tester.pumpWidget(wrap());
+    await tester.pump();
+
+    await tester.tap(find.text('Cancelar'));
+    await tester.pumpAndSettle();
+
+    expect(find.text('Esta cita ya está pagada'), findsOneWidget);
+    expect(find.text('Posponer'), findsOneWidget);
+    expect(find.text('Cancelar de todas formas'), findsOneWidget);
+    // No debe mostrarse el diálogo simple de cancelación directa.
+    expect(find.text('¿Cancelar tu cita de Corte?'), findsNothing);
+  });
+
+  testWidgets('insistir en cancelar una cita pagada pide una justificación y llama a requestRefund', (tester) async {
+    final now = DateTime(2026, 1, 1);
+    when(() => appointmentRepository.watchByClient(_kUid)).thenAnswer(
+      (_) => Stream.value([_appointment('a1', AppointmentStatus.pending, now, paid: true)]),
+    );
+    when(() => appointmentRepository.requestRefund(appointmentId: 'a1', reason: 'Emergencia médica'))
+        .thenAnswer((_) async => 'req1');
+
+    await tester.pumpWidget(wrap());
+    await tester.pump();
+
+    await tester.tap(find.text('Cancelar'));
+    await tester.pumpAndSettle();
+    await tester.tap(find.text('Cancelar de todas formas'));
+    await tester.pumpAndSettle();
+
+    expect(find.text('Justifica la cancelación'), findsOneWidget);
+    await tester.enterText(find.byType(TextField), 'Emergencia médica');
+    await tester.tap(find.text('Enviar solicitud'));
+    await tester.pumpAndSettle();
+
+    verify(() => appointmentRepository.requestRefund(appointmentId: 'a1', reason: 'Emergencia médica')).called(1);
   });
 }

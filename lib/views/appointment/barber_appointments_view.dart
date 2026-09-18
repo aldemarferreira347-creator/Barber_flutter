@@ -22,7 +22,21 @@ class BarberAppointmentsView extends StatelessWidget {
     final time = await showTimePicker(context: context, initialTime: TimeOfDay.fromDateTime(appointment.date));
     if (time == null || !context.mounted) return;
     final newDate = DateTime(date.year, date.month, date.day, time.hour, time.minute);
-    await context.read<AppointmentRepository>().reschedule(appointment.id, newDate);
+    final repo = context.read<AppointmentRepository>();
+    try {
+      // Una cita pagada tiene el horario bloqueado con una transacción
+      // (spec 6.2) — moverla debe pasar por el mismo mecanismo seguro, no
+      // por una escritura directa que podría chocar con otra reserva.
+      if (appointment.paid) {
+        await repo.postponePaid(appointment.id, newDate);
+      } else {
+        await repo.reschedule(appointment.id, newDate);
+      }
+    } catch (e) {
+      if (context.mounted) {
+        ScaffoldMessenger.of(context).showSnackBar(SnackBar(content: Text('No se pudo aplazar: $e')));
+      }
+    }
   }
 
   @override
@@ -43,7 +57,11 @@ class BarberAppointmentsView extends StatelessWidget {
                 final appointments = snapshot.data ?? [];
                 if (appointments.isEmpty) {
                   return const Center(
-                    child: EmptyState(icon: Icons.event_available_outlined, title: 'No tienes citas programadas', subtitle: 'Cuando un cliente te agende, aparecerá aquí.'),
+                    child: EmptyState(
+                      icon: Icons.event_available_outlined,
+                      title: 'No tienes citas programadas',
+                      subtitle: 'Cuando un cliente te agende, aparecerá aquí.',
+                    ),
                   );
                 }
                 return ListView.separated(

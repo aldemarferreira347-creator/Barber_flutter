@@ -3,6 +3,7 @@ import { HttpsError } from 'firebase-functions/v2/https';
 
 import { SimulatedNequiGateway } from '../payments/nequiGateway';
 import { PaymentGatewayAdapter } from '../payments/types';
+import { assertStaffOfShop } from '../shared/shopAuthorization';
 import { generateClaimCode } from './claimCode';
 import { CreatePurchaseInput, PurchaseItemRecord } from './types';
 
@@ -91,7 +92,7 @@ export class PurchaseService {
     if (!snapshot.exists) throw new HttpsError('not-found', 'La compra no existe.');
 
     const data = snapshot.data()!;
-    await this.assertStaffOfShop(callerUid, data.barbershopId as string);
+    await assertStaffOfShop(callerUid, data.barbershopId as string);
 
     if (data.status !== 'pending_claim') {
       throw new HttpsError('failed-precondition', `La compra no está lista para reclamar (status: ${data.status}).`);
@@ -147,21 +148,5 @@ export class PurchaseService {
     await batch.commit();
 
     return snapshot.size;
-  }
-
-  private async assertStaffOfShop(callerUid: string, barbershopId: string): Promise<void> {
-    const firestore = getFirestore();
-    const callerSnap = await firestore.doc(`users/${callerUid}`).get();
-    const caller = callerSnap.data();
-    if (!caller) throw new HttpsError('permission-denied', 'No se encontró tu perfil.');
-
-    if (caller.role === 'admin') return;
-    if (caller.role === 'barber' && caller.barbershopId === barbershopId) return;
-    if (caller.role === 'owner') {
-      const shopSnap = await firestore.doc(`barbershops/${barbershopId}`).get();
-      if (shopSnap.data()?.ownerId === callerUid) return;
-    }
-
-    throw new HttpsError('permission-denied', 'No tienes permiso sobre esa barbería.');
   }
 }
