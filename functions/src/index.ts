@@ -14,3 +14,4 @@ export { bookPaidAppointment } from './triggers/https/bookPaidAppointment';
 export { postponeAppointment } from './triggers/https/postponeAppointment';
 export { requestAppointmentRefund } from './triggers/https/requestAppointmentRefund';
 export { resolveAppointmentRefund } from './triggers/https/resolveAppointmentRefund';
+export { sendAppointmentReminders } from './triggers/scheduled/sendAppointmentReminders';

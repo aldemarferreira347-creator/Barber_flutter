@@ -11,6 +11,18 @@ class NotificationsView extends StatelessWidget {
 
   const NotificationsView({super.key, required this.uid});
 
+  IconData _iconFor(NotificationType type) => switch (type) {
+        NotificationType.autoPaymentOverdue => Icons.warning_amber_outlined,
+        NotificationType.appointmentReminder => Icons.alarm,
+        NotificationType.manual => Icons.campaign_outlined,
+      };
+
+  Color _colorFor(NotificationType type) => switch (type) {
+        NotificationType.autoPaymentOverdue => AppColors.warning,
+        NotificationType.appointmentReminder => AppColors.accent,
+        NotificationType.manual => AppColors.accent,
+      };
+
   @override
   Widget build(BuildContext context) {
     final repo = context.read<NotificationRepository>();
@@ -50,10 +62,7 @@ class NotificationsView extends StatelessWidget {
                   child: Row(
                     crossAxisAlignment: CrossAxisAlignment.start,
                     children: [
-                      Icon(
-                        n.type == NotificationType.autoPaymentOverdue ? Icons.warning_amber_outlined : Icons.campaign_outlined,
-                        color: n.type == NotificationType.autoPaymentOverdue ? AppColors.warning : AppColors.accent,
-                      ),
+                      Icon(_iconFor(n.type), color: _colorFor(n.type)),
                       const SizedBox(width: 12),
                       Expanded(
                         child: Column(

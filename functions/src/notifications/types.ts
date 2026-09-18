@@ -31,9 +31,12 @@ export interface NotificationChannel {
 /**
  * Categoría de la notificación: controla solo el ícono/estilo en el cliente
  * (ver lib/models/app_notification.dart) — no la vía de entrega, que decide
- * el dispatcher según canales disponibles.
+ * el dispatcher según canales disponibles. Agregar una categoría nueva
+ * (como 'appointment_reminder' en la fase 7) nunca requiere tocar
+ * notificationDispatcher.ts — es exactamente la extensibilidad que pide el
+ * objetivo de la sección 3.1 del spec.
  */
-export type NotificationCategory = 'manual' | 'auto_payment_overdue';
+export type NotificationCategory = 'manual' | 'auto_payment_overdue' | 'appointment_reminder';
 
 export interface DispatchNotificationInput {
   toUserId: string;
