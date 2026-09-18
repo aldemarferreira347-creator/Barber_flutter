@@ -8,10 +8,7 @@ extension PaymentStatusX on PaymentStatus {
   String get value => name;
 
   static PaymentStatus fromValue(String value) {
-    return PaymentStatus.values.firstWhere(
-      (status) => status.name == value,
-      orElse: () => PaymentStatus.ok,
-    );
+    return PaymentStatus.values.firstWhere((status) => status.name == value, orElse: () => PaymentStatus.ok);
   }
 }
 
@@ -30,6 +27,12 @@ class Barbershop {
   final DateTime? paymentDueDate;
   final Map<String, DaySchedule> schedule;
 
+  /// Suma y cantidad de calificaciones recibidas (spec 7.1) — solo los
+  /// escribe submitAppointmentRating en el backend. El promedio ya incluye
+  /// el descuento obligatorio por cierres de tienda (spec 3.4).
+  final int ratingSum;
+  final int ratingCount;
+
   const Barbershop({
     required this.id,
     required this.name,
@@ -44,7 +47,12 @@ class Barbershop {
     this.paymentStatus = PaymentStatus.ok,
     this.paymentDueDate,
     this.schedule = const {},
+    this.ratingSum = 0,
+    this.ratingCount = 0,
   });
+
+  /// 0 si nadie ha calificado todavía — nunca un promedio inventado.
+  double get averageRating => ratingCount == 0 ? 0 : ratingSum / ratingCount;
 
   factory Barbershop.fromMap(String id, Map<String, dynamic> map) {
     final dueDateValue = map['paymentDueDate'];
@@ -62,6 +70,8 @@ class Barbershop {
       paymentStatus: PaymentStatusX.fromValue(map['paymentStatus'] as String? ?? PaymentStatus.ok.value),
       paymentDueDate: dueDateValue is Timestamp ? dueDateValue.toDate() : null,
       schedule: weekScheduleFromMap(map['schedule'] as Map<String, dynamic>?),
+      ratingSum: (map['ratingSum'] as num?)?.toInt() ?? 0,
+      ratingCount: (map['ratingCount'] as num?)?.toInt() ?? 0,
     );
   }
 

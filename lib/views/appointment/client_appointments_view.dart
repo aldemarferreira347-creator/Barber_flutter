@@ -4,9 +4,11 @@ import 'package:provider/provider.dart';
 import '../../controllers/auth_controller.dart';
 import '../../models/appointment.dart';
 import '../../repositories/appointment_repository.dart';
+import '../../repositories/rating_repository.dart';
 import '../../theme/app_colors.dart';
 import '../widgets/appointment_card.dart';
 import '../widgets/empty_state.dart';
+import 'rate_appointment_view.dart';
 
 // 'postponed' cuenta como próxima: su `date` ya es la nueva fecha futura
 // tras el cambio (spec 6.4) — sigue siendo una cita activa, no pasada.
@@ -134,6 +136,8 @@ class ClientAppointmentsView extends StatelessWidget {
     }
   }
 
+  bool _canRate(Appointment appointment) => appointment.paid && appointment.status == AppointmentStatus.completed;
+
   @override
   Widget build(BuildContext context) {
     final profile = context.watch<AuthController>().profile;
@@ -168,38 +172,60 @@ class ClientAppointmentsView extends StatelessWidget {
                     .reversed
                     .toList();
 
-                return ListView(
-                  padding: const EdgeInsets.all(16),
-                  children: [
-                    _SectionHeader(label: 'Próximas', count: upcoming.length),
-                    const SizedBox(height: 10),
-                    if (upcoming.isEmpty)
-                      const _InlineEmptyNote(text: 'No tienes citas próximas.')
-                    else
-                      for (final appointment in upcoming) ...[
-                        AppointmentCard(
-                          appointment: appointment,
-                          subtitle: 'Con ${appointment.barberName}',
-                          actions: [
-                            TextButton(
-                              onPressed: () => _cancel(context, appointment),
-                              child: const Text('Cancelar', style: TextStyle(color: AppColors.error)),
+                return StreamBuilder<Set<String>>(
+                  stream: context.read<RatingRepository>().watchRatedAppointmentIds(profile.uid),
+                  builder: (context, ratedSnapshot) {
+                    final ratedIds = ratedSnapshot.data ?? const <String>{};
+
+                    return ListView(
+                      padding: const EdgeInsets.all(16),
+                      children: [
+                        _SectionHeader(label: 'Próximas', count: upcoming.length),
+                        const SizedBox(height: 10),
+                        if (upcoming.isEmpty)
+                          const _InlineEmptyNote(text: 'No tienes citas próximas.')
+                        else
+                          for (final appointment in upcoming) ...[
+                            AppointmentCard(
+                              appointment: appointment,
+                              subtitle: 'Con ${appointment.barberName}',
+                              actions: [
+                                TextButton(
+                                  onPressed: () => _cancel(context, appointment),
+                                  child: const Text('Cancelar', style: TextStyle(color: AppColors.error)),
+                                ),
+                              ],
                             ),
+                            const SizedBox(height: 10),
                           ],
-                        ),
+                        const SizedBox(height: 18),
+                        _SectionHeader(label: 'Historial', count: history.length),
                         const SizedBox(height: 10),
+                        if (history.isEmpty)
+                          const _InlineEmptyNote(text: 'Todavía no tienes citas pasadas.')
+                        else
+                          for (final appointment in history) ...[
+                            AppointmentCard(
+                              appointment: appointment,
+                              subtitle: 'Con ${appointment.barberName}',
+                              actions: _canRate(appointment) && !ratedIds.contains(appointment.id)
+                                  ? [
+                                      TextButton(
+                                        onPressed: () => Navigator.of(context).push(
+                                          MaterialPageRoute(
+                                            builder: (_) => RateAppointmentView(appointment: appointment),
+                                          ),
+                                        ),
+                                        child: const Text('Calificar'),
+                                      ),
+                                    ]
+                                  : const [],
+                            ),
+                            const SizedBox(height: 10),
+                          ],
                       ],
-                    const SizedBox(height: 18),
-                    _SectionHeader(label: 'Historial', count: history.length),
-                    const SizedBox(height: 10),
-                    if (history.isEmpty)
-                      const _InlineEmptyNote(text: 'Todavía no tienes citas pasadas.')
-                    else
-                      for (final appointment in history) ...[
-                        AppointmentCard(appointment: appointment, subtitle: 'Con ${appointment.barberName}'),
-                        const SizedBox(height: 10),
-                      ],
-                  ],
+                    );
+                  },
                 );
               },
             ),

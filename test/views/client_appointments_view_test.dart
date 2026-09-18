@@ -4,6 +4,7 @@ import 'package:barber/models/appointment.dart';
 import 'package:barber/models/user_role.dart';
 import 'package:barber/repositories/appointment_repository.dart';
 import 'package:barber/repositories/auth_repository.dart';
+import 'package:barber/repositories/rating_repository.dart';
 import 'package:barber/repositories/user_repository.dart';
 import 'package:barber/services/push_notification_service.dart';
 import 'package:barber/views/appointment/client_appointments_view.dart';
@@ -20,6 +21,8 @@ class MockUserRepository extends Mock implements UserRepository {}
 class MockPushNotificationService extends Mock implements PushNotificationService {}
 
 class MockAppointmentRepository extends Mock implements AppointmentRepository {}
+
+class MockRatingRepository extends Mock implements RatingRepository {}
 
 const _kUid = 'client1';
 
@@ -45,6 +48,7 @@ Appointment _appointment(String id, AppointmentStatus status, DateTime date, {bo
 void main() {
   late AuthController authController;
   late MockAppointmentRepository appointmentRepository;
+  late MockRatingRepository ratingRepository;
 
   setUp(() {
     final authRepository = MockAuthRepository();
@@ -57,6 +61,8 @@ void main() {
     authController.profile = AppUser(uid: _kUid, email: 'a@b.com', name: 'Ana', role: UserRole.client);
 
     appointmentRepository = MockAppointmentRepository();
+    ratingRepository = MockRatingRepository();
+    when(() => ratingRepository.watchRatedAppointmentIds(_kUid)).thenAnswer((_) => Stream.value(const {}));
   });
 
   Widget wrap() {
@@ -64,6 +70,7 @@ void main() {
       providers: [
         ChangeNotifierProvider<AuthController>.value(value: authController),
         Provider<AppointmentRepository>.value(value: appointmentRepository),
+        Provider<RatingRepository>.value(value: ratingRepository),
       ],
       child: const MaterialApp(home: ClientAppointmentsView()),
     );

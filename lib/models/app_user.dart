@@ -32,6 +32,11 @@ class AppUser {
   final DateTime? awaySince;
   final DateTime? awayUntilEstimate;
 
+  /// Solo aplica a Barbero (spec 7.1): suma y cantidad de calificaciones
+  /// recibidas — solo las escribe submitAppointmentRating en el backend.
+  final int ratingSum;
+  final int ratingCount;
+
   const AppUser({
     required this.uid,
     required this.email,
@@ -46,7 +51,12 @@ class AppUser {
     this.fcmTokens = const [],
     this.awaySince,
     this.awayUntilEstimate,
+    this.ratingSum = 0,
+    this.ratingCount = 0,
   });
+
+  /// 0 si nadie ha calificado todavía — nunca un promedio inventado.
+  double get averageRating => ratingCount == 0 ? 0 : ratingSum / ratingCount;
 
   factory AppUser.fromMap(String uid, Map<String, dynamic> map) {
     final createdAtValue = map['createdAt'];
@@ -66,6 +76,8 @@ class AppUser {
       fcmTokens: (map['fcmTokens'] as List?)?.whereType<String>().toList() ?? const [],
       awaySince: awaySinceValue is Timestamp ? awaySinceValue.toDate() : null,
       awayUntilEstimate: awayUntilEstimateValue is Timestamp ? awayUntilEstimateValue.toDate() : null,
+      ratingSum: (map['ratingSum'] as num?)?.toInt() ?? 0,
+      ratingCount: (map['ratingCount'] as num?)?.toInt() ?? 0,
     );
   }
 

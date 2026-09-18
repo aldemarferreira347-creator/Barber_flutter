@@ -12,6 +12,7 @@ import '../appointment/book_appointment_view.dart';
 import '../product/manage_products_view.dart';
 import '../service/manage_services_view.dart';
 import '../widgets/status_badge.dart';
+import 'barbershop_reviews_view.dart';
 
 Future<void> _openInGoogleMaps(BuildContext context, double lat, double lng) async {
   final uri = Uri.parse('https://www.google.com/maps/search/?api=1&query=$lat,$lng');
@@ -27,16 +28,16 @@ class BarbershopDetailView extends StatelessWidget {
   const BarbershopDetailView({super.key, required this.barbershopId});
 
   String _paymentLabel(PaymentStatus status) => switch (status) {
-        PaymentStatus.ok => 'Al día',
-        PaymentStatus.overdue => 'Pago pendiente',
-        PaymentStatus.blocked => 'Bloqueada',
-      };
+    PaymentStatus.ok => 'Al día',
+    PaymentStatus.overdue => 'Pago pendiente',
+    PaymentStatus.blocked => 'Bloqueada',
+  };
 
   Color _paymentColor(PaymentStatus status) => switch (status) {
-        PaymentStatus.ok => AppColors.success,
-        PaymentStatus.overdue => AppColors.warning,
-        PaymentStatus.blocked => AppColors.error,
-      };
+    PaymentStatus.ok => AppColors.success,
+    PaymentStatus.overdue => AppColors.warning,
+    PaymentStatus.blocked => AppColors.error,
+  };
 
   @override
   Widget build(BuildContext context) {
@@ -53,137 +54,179 @@ class BarbershopDetailView extends StatelessWidget {
           }
           final shop = snapshot.data;
           if (shop == null) {
-            return const Center(child: Text('Esta barbería ya no existe', style: TextStyle(color: AppColors.textSecondary)));
+            return const Center(
+              child: Text('Esta barbería ya no existe', style: TextStyle(color: AppColors.textSecondary)),
+            );
           }
           return Scaffold(
             floatingActionButton: role == UserRole.client
                 ? FloatingActionButton.extended(
-                    onPressed: () => Navigator.of(context).push(MaterialPageRoute(
-                      builder: (_) => BookAppointmentView(barbershopId: shop.id, barbershopName: shop.name),
-                    )),
+                    onPressed: () => Navigator.of(context).push(
+                      MaterialPageRoute(
+                        builder: (_) => BookAppointmentView(barbershopId: shop.id, barbershopName: shop.name),
+                      ),
+                    ),
                     icon: const Icon(Icons.calendar_month_outlined),
                     label: const Text('Agendar cita'),
                   )
                 : null,
             body: ListView(
-            padding: const EdgeInsets.all(16),
-            children: [
-              Container(
-                height: 160,
-                decoration: BoxDecoration(color: AppColors.primary, borderRadius: BorderRadius.circular(16)),
-                alignment: Alignment.center,
-                child: const Icon(Icons.storefront, color: Colors.white, size: 48),
-              ),
-              const SizedBox(height: 16),
-              Row(
-                children: [
-                  Expanded(child: Text(shop.name, style: const TextStyle(fontSize: 20, fontWeight: FontWeight.w800))),
-                  StatusBadge.active(shop.active),
-                ],
-              ),
-              const SizedBox(height: 16),
-              _InfoRow(icon: Icons.location_on_outlined, label: shop.address ?? 'Sin dirección'),
-              _InfoRow(icon: Icons.phone_outlined, label: shop.phone ?? 'Sin teléfono'),
-              _InfoRow(icon: Icons.mail_outline, label: shop.email ?? 'Sin correo de contacto'),
-              if (shop.location != null) ...[
-                const SizedBox(height: 8),
-                OutlinedButton.icon(
-                  onPressed: () => _openInGoogleMaps(context, shop.location!.latitude, shop.location!.longitude),
-                  icon: const Icon(Icons.map_outlined),
-                  label: const Text('Ver ubicación en Google Maps'),
+              padding: const EdgeInsets.all(16),
+              children: [
+                Container(
+                  height: 160,
+                  decoration: BoxDecoration(color: AppColors.primary, borderRadius: BorderRadius.circular(16)),
+                  alignment: Alignment.center,
+                  child: const Icon(Icons.storefront, color: Colors.white, size: 48),
                 ),
-              ],
-              const SizedBox(height: 8),
-              OutlinedButton.icon(
-                onPressed: () => Navigator.of(context).push(MaterialPageRoute(
-                  builder: (_) => ManageServicesView(barbershopId: shop.id),
-                )),
-                icon: const Icon(Icons.content_cut),
-                label: const Text('Ver servicios'),
-              ),
-              const SizedBox(height: 8),
-              OutlinedButton.icon(
-                onPressed: () => Navigator.of(context).push(MaterialPageRoute(
-                  builder: (_) => ManageProductsView(barbershopId: shop.id),
-                )),
-                icon: const Icon(Icons.shopping_bag_outlined),
-                label: const Text('Ver productos'),
-              ),
-              const SizedBox(height: 16),
-              Container(
-                padding: const EdgeInsets.all(16),
-                decoration: BoxDecoration(
-                  color: AppColors.surface,
-                  borderRadius: BorderRadius.circular(16),
-                  border: Border.all(color: AppColors.border),
-                ),
-                child: Row(
+                const SizedBox(height: 16),
+                Row(
                   children: [
                     Expanded(
-                      child: Column(
-                        crossAxisAlignment: CrossAxisAlignment.start,
-                        children: [
-                          const Text('Estado de pago', style: TextStyle(color: AppColors.textSecondary, fontSize: 12)),
-                          const SizedBox(height: 4),
-                          Text(
-                            _paymentLabel(shop.paymentStatus),
-                            style: TextStyle(color: _paymentColor(shop.paymentStatus), fontWeight: FontWeight.w700),
-                          ),
-                        ],
-                      ),
+                      child: Text(shop.name, style: const TextStyle(fontSize: 20, fontWeight: FontWeight.w800)),
                     ),
-                    if (shop.paymentDueDate != null)
-                      Column(
-                        crossAxisAlignment: CrossAxisAlignment.end,
-                        children: [
-                          const Text('Fecha de vencimiento', style: TextStyle(color: AppColors.textSecondary, fontSize: 12)),
-                          const SizedBox(height: 4),
-                          Text(
-                            '${shop.paymentDueDate!.year}-${shop.paymentDueDate!.month.toString().padLeft(2, '0')}-${shop.paymentDueDate!.day.toString().padLeft(2, '0')}',
-                            style: const TextStyle(fontWeight: FontWeight.w600),
-                          ),
-                        ],
-                      ),
+                    StatusBadge.active(shop.active),
                   ],
                 ),
-              ),
-              if ((shop.description ?? '').isNotEmpty) ...[
+                if (shop.ratingCount > 0) ...[
+                  const SizedBox(height: 6),
+                  Row(
+                    children: [
+                      const Icon(Icons.star, color: AppColors.primary, size: 16),
+                      const SizedBox(width: 4),
+                      Text(
+                        '${shop.averageRating.toStringAsFixed(1)} (${shop.ratingCount})',
+                        style: const TextStyle(
+                          color: AppColors.textSecondary,
+                          fontWeight: FontWeight.w600,
+                          fontSize: 13,
+                        ),
+                      ),
+                    ],
+                  ),
+                ],
                 const SizedBox(height: 16),
-                const Text('Información general', style: TextStyle(fontWeight: FontWeight.w700)),
-                const SizedBox(height: 6),
-                Text(shop.description!, style: const TextStyle(color: AppColors.textSecondary)),
-              ],
-              if (shop.schedule.isNotEmpty) ...[
-                const SizedBox(height: 16),
-                const Text('Horarios', style: TextStyle(fontWeight: FontWeight.w700)),
+                _InfoRow(icon: Icons.location_on_outlined, label: shop.address ?? 'Sin dirección'),
+                _InfoRow(icon: Icons.phone_outlined, label: shop.phone ?? 'Sin teléfono'),
+                _InfoRow(icon: Icons.mail_outline, label: shop.email ?? 'Sin correo de contacto'),
+                if (shop.location != null) ...[
+                  const SizedBox(height: 8),
+                  OutlinedButton.icon(
+                    onPressed: () => _openInGoogleMaps(context, shop.location!.latitude, shop.location!.longitude),
+                    icon: const Icon(Icons.map_outlined),
+                    label: const Text('Ver ubicación en Google Maps'),
+                  ),
+                ],
                 const SizedBox(height: 8),
+                OutlinedButton.icon(
+                  onPressed: () =>
+                      Navigator.of(context)
+                          .push(MaterialPageRoute(builder: (_) => ManageServicesView(barbershopId: shop.id))),
+                  icon: const Icon(Icons.content_cut),
+                  label: const Text('Ver servicios'),
+                ),
+                const SizedBox(height: 8),
+                OutlinedButton.icon(
+                  onPressed: () =>
+                      Navigator.of(context)
+                          .push(MaterialPageRoute(builder: (_) => ManageProductsView(barbershopId: shop.id))),
+                  icon: const Icon(Icons.shopping_bag_outlined),
+                  label: const Text('Ver productos'),
+                ),
+                const SizedBox(height: 8),
+                OutlinedButton.icon(
+                  onPressed: () =>
+                      Navigator.of(context)
+                          .push(MaterialPageRoute(builder: (_) => BarbershopReviewsView(barbershopId: shop.id))),
+                  icon: const Icon(Icons.reviews_outlined),
+                  label: const Text('Ver reseñas'),
+                ),
+                const SizedBox(height: 16),
                 Container(
-                  padding: const EdgeInsets.symmetric(horizontal: 14, vertical: 4),
+                  padding: const EdgeInsets.all(16),
                   decoration: BoxDecoration(
                     color: AppColors.surface,
-                    borderRadius: BorderRadius.circular(14),
+                    borderRadius: BorderRadius.circular(16),
                     border: Border.all(color: AppColors.border),
                   ),
-                  child: Column(
+                  child: Row(
                     children: [
-                      for (final day in kWeekdays)
-                        Padding(
-                          padding: const EdgeInsets.symmetric(vertical: 8),
-                          child: Row(
-                            children: [
-                              Expanded(child: Text(day[0].toUpperCase() + day.substring(1))),
-                              Text(
-                                shop.schedule[day]!.isOpen ? '${shop.schedule[day]!.openTime} – ${shop.schedule[day]!.closeTime}' : 'Cerrado',
-                                style: TextStyle(color: shop.schedule[day]!.isOpen ? AppColors.textPrimary : AppColors.textSecondary, fontWeight: FontWeight.w600),
-                              ),
-                            ],
-                          ),
+                      Expanded(
+                        child: Column(
+                          crossAxisAlignment: CrossAxisAlignment.start,
+                          children: [
+                            const Text(
+                              'Estado de pago',
+                              style: TextStyle(color: AppColors.textSecondary, fontSize: 12),
+                            ),
+                            const SizedBox(height: 4),
+                            Text(
+                              _paymentLabel(shop.paymentStatus),
+                              style: TextStyle(color: _paymentColor(shop.paymentStatus), fontWeight: FontWeight.w700),
+                            ),
+                          ],
+                        ),
+                      ),
+                      if (shop.paymentDueDate != null)
+                        Column(
+                          crossAxisAlignment: CrossAxisAlignment.end,
+                          children: [
+                            const Text(
+                              'Fecha de vencimiento',
+                              style: TextStyle(color: AppColors.textSecondary, fontSize: 12),
+                            ),
+                            const SizedBox(height: 4),
+                            Text(
+                              '${shop.paymentDueDate!.year}-${shop.paymentDueDate!.month.toString().padLeft(2, '0')}-${shop.paymentDueDate!.day.toString().padLeft(2, '0')}',
+                              style: const TextStyle(fontWeight: FontWeight.w600),
+                            ),
+                          ],
                         ),
                     ],
                   ),
                 ),
+                if ((shop.description ?? '').isNotEmpty) ...[
+                  const SizedBox(height: 16),
+                  const Text('Información general', style: TextStyle(fontWeight: FontWeight.w700)),
+                  const SizedBox(height: 6),
+                  Text(shop.description!, style: const TextStyle(color: AppColors.textSecondary)),
+                ],
+                if (shop.schedule.isNotEmpty) ...[
+                  const SizedBox(height: 16),
+                  const Text('Horarios', style: TextStyle(fontWeight: FontWeight.w700)),
+                  const SizedBox(height: 8),
+                  Container(
+                    padding: const EdgeInsets.symmetric(horizontal: 14, vertical: 4),
+                    decoration: BoxDecoration(
+                      color: AppColors.surface,
+                      borderRadius: BorderRadius.circular(14),
+                      border: Border.all(color: AppColors.border),
+                    ),
+                    child: Column(
+                      children: [
+                        for (final day in kWeekdays)
+                          Padding(
+                            padding: const EdgeInsets.symmetric(vertical: 8),
+                            child: Row(
+                              children: [
+                                Expanded(child: Text(day[0].toUpperCase() + day.substring(1))),
+                                Text(
+                                  shop.schedule[day]!.isOpen
+                                      ? '${shop.schedule[day]!.openTime} – ${shop.schedule[day]!.closeTime}'
+                                      : 'Cerrado',
+                                  style: TextStyle(
+                                    color: shop.schedule[day]!.isOpen ? AppColors.textPrimary : AppColors.textSecondary,
+                                    fontWeight: FontWeight.w600,
+                                  ),
+                                ),
+                              ],
+                            ),
+                          ),
+                      ],
+                    ),
+                  ),
+                ],
               ],
-            ],
             ),
           );
         },

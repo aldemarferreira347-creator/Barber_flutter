@@ -62,6 +62,11 @@ service cloud.firestore {
         // y solo tiene sentido si nadie más puede alterarlo por su cuenta.
         && request.resource.data.awayUntilEstimate == resource.data.awayUntilEstimate
         && request.resource.data.awaySince == resource.data.awaySince
+        // ratingSum/ratingCount (spec 7.1) del propio barbero: solo los
+        // toca submitAppointmentRating (Admin SDK) — ni el barbero ni el
+        // admin editando a mano pueden inflar su promedio.
+        && request.resource.data.ratingSum == resource.data.ratingSum
+        && request.resource.data.ratingCount == resource.data.ratingCount
         && (
           (request.auth.uid == uid &&
             request.resource.data.role == resource.data.role &&
@@ -99,7 +104,12 @@ service cloud.firestore {
         (resource.data.ownerId == request.auth.uid &&
           request.resource.data.ownerId == resource.data.ownerId &&
           request.resource.data.active == resource.data.active &&
-          request.resource.data.paymentStatus == resource.data.paymentStatus) ||
+          request.resource.data.paymentStatus == resource.data.paymentStatus &&
+          // ratingSum/ratingCount (spec 7.1) solo los toca
+          // submitAppointmentRating (Admin SDK) — el dueño no puede
+          // inflar su propio promedio editando el documento.
+          request.resource.data.ratingSum == resource.data.ratingSum &&
+          request.resource.data.ratingCount == resource.data.ratingCount) ||
         isAdmin()
       );
 
@@ -216,6 +226,34 @@ service cloud.firestore {
     match /purchases/{id} {
       allow read: if isSignedIn() && (
         resource.data.buyerId == request.auth.uid ||
+        isStaffOfShop(resource.data.barbershopId) ||
+        isAdmin()
+      );
+      allow write: if false;
+    }
+
+    // ratings/{appointmentId}: la ÚNICA vía de escritura es el backend
+    // (submitAppointmentRating, Admin SDK) — el id del documento ES el
+    // appointmentId, así un cliente no puede calificar la misma cita dos
+    // veces (el backend falla con already-exists en el segundo intento).
+    // Cualquier usuario autenticado puede leerlas, igual que el catálogo
+    // de servicios/productos.
+    match /ratings/{id} {
+      allow read: if isSignedIn();
+      allow write: if false;
+    }
+
+    // comments/{appointmentId}: la ÚNICA vía de escritura es el backend
+    // (submitAppointmentComment/replyToComment, Admin SDK) — la moderación
+    // (spec 7.3) corre ANTES de escribir el documento, nunca después, así
+    // que un comentario rechazado nunca queda expuesto con status
+    // 'published'. Un comentario rechazado solo lo ve su propio autor (para
+    // que sepa que no se publicó) o el personal/admin de esa barbería; el
+    // resto de la app solo ve los publicados.
+    match /comments/{id} {
+      allow read: if isSignedIn() && (
+        resource.data.status == 'published' ||
+        resource.data.clientId == request.auth.uid ||
         isStaffOfShop(resource.data.barbershopId) ||
         isAdmin()
       );

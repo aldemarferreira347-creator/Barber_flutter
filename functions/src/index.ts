@@ -19,3 +19,6 @@ export { markBarberAway } from './triggers/https/markBarberAway';
 export { markBarberReturned } from './triggers/https/markBarberReturned';
 export { processOverdueBarbers } from './triggers/scheduled/processOverdueBarbers';
 export { closeShopForExternalEvent } from './triggers/https/closeShopForExternalEvent';
+export { submitAppointmentRating } from './triggers/https/submitAppointmentRating';
+export { submitAppointmentComment } from './triggers/https/submitAppointmentComment';
+export { replyToComment } from './triggers/https/replyToComment';
