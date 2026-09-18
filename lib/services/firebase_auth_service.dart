@@ -37,12 +37,46 @@ class FirebaseAuthService implements AuthRepository {
   }
 
   @override
-  Future<UserCredential?> signInWithGoogle() async {
+  Future<GoogleSignInOutcome> signInWithGoogle() async {
     await _googleSignIn.initialize();
-    final account = await _googleSignIn.authenticate();
+
+    final GoogleSignInAccount account;
+    try {
+      account = await _googleSignIn.authenticate();
+    } on GoogleSignInException catch (e) {
+      if (e.code == GoogleSignInExceptionCode.canceled) return const GoogleSignInCancelled();
+      rethrow;
+    }
+
     final googleAuth = account.authentication;
     final credential = GoogleAuthProvider.credential(idToken: googleAuth.idToken);
-    return _auth.signInWithCredential(credential);
+
+    try {
+      final userCredential = await _auth.signInWithCredential(credential);
+      return GoogleSignInSuccess(userCredential);
+    } on FirebaseAuthException catch (e) {
+      // Se activa cuando el proyecto tiene "una cuenta por correo" (el
+      // default recomendado) y ese correo ya está registrado con otro
+      // método (en este caso siempre correo/contraseña, el único otro
+      // método de registro con correo que ofrece la app) — no completamos
+      // el login todavía, se lo devolvemos a la UI para pedir la
+      // contraseña (spec 5.1).
+      if (e.code != 'account-exists-with-different-credential') rethrow;
+      final email = e.email ?? account.email;
+      return GoogleSignInRequiresPasswordLink(email: email, pendingGoogleCredential: credential);
+    }
+  }
+
+  @override
+  Future<UserCredential> linkGoogleWithPassword({
+    required String email,
+    required String password,
+    required AuthCredential pendingGoogleCredential,
+  }) async {
+    final passwordCredential = EmailAuthProvider.credential(email: email, password: password);
+    final userCredential = await _auth.signInWithCredential(passwordCredential);
+    await userCredential.user!.linkWithCredential(pendingGoogleCredential);
+    return userCredential;
   }
 
   @override

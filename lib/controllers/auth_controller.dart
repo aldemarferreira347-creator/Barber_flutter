@@ -12,7 +12,8 @@ import '../services/firebase_auth_service.dart';
 import '../services/firestore_user_service.dart';
 import '../services/push_notification_service.dart';
 
-export '../repositories/auth_repository.dart' show PhoneCodeHandle;
+export '../repositories/auth_repository.dart'
+    show PhoneCodeHandle, GoogleSignInOutcome, GoogleSignInSuccess, GoogleSignInRequiresPasswordLink, GoogleSignInCancelled;
 
 enum AuthStatus { unknown, authenticated, unauthenticated }
 
@@ -84,12 +85,45 @@ class AuthController extends ChangeNotifier {
     return _runGuarded(() => _authService.sendPasswordResetEmail(email));
   }
 
-  Future<bool> signInWithGoogle() {
+  /// Intenta iniciar sesión con Google. Si ese correo ya tiene una cuenta de
+  /// correo/contraseña sin vincular, devuelve [GoogleSignInRequiresPasswordLink]
+  /// en vez de completar el login — la UI debe pedir esa contraseña y
+  /// llamar a [confirmGoogleLinkWithPassword] (spec 5.1). Null indica un
+  /// error real (ver [errorMessage]); [GoogleSignInCancelled] es un caso
+  /// normal, no un error.
+  Future<GoogleSignInOutcome?> signInWithGoogle() async {
+    isBusy = true;
+    errorMessage = null;
+    notifyListeners();
+    try {
+      final outcome = await _authService.signInWithGoogle();
+      if (outcome is GoogleSignInSuccess) {
+        await _ensureClientProfile(outcome.credential.user!);
+      }
+      return outcome;
+    } on FirebaseException catch (e) {
+      errorMessage = e.message ?? 'Error de autenticación';
+      return null;
+    } finally {
+      isBusy = false;
+      notifyListeners();
+    }
+  }
+
+  /// Segundo paso del vínculo Google + correo/contraseña: confirma la
+  /// contraseña original y completa el login con ambos métodos vinculados.
+  Future<bool> confirmGoogleLinkWithPassword({
+    required String email,
+    required String password,
+    required AuthCredential pendingGoogleCredential,
+  }) {
     return _runGuarded(() async {
-      final credential = await _authService.signInWithGoogle();
-      final user = credential?.user;
-      if (user == null) return; // cancelado por el usuario
-      await _ensureClientProfile(user);
+      final credential = await _authService.linkGoogleWithPassword(
+        email: email,
+        password: password,
+        pendingGoogleCredential: pendingGoogleCredential,
+      );
+      await _ensureClientProfile(credential.user!);
     });
   }
 

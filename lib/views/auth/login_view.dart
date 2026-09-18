@@ -1,3 +1,4 @@
+import 'package:firebase_auth/firebase_auth.dart';
 import 'package:flutter/material.dart';
 import 'package:provider/provider.dart';
 
@@ -38,7 +39,61 @@ class _LoginViewState extends State<LoginView> {
   }
 
   Future<void> _submitGoogle(AuthController auth) async {
-    final ok = await auth.signInWithGoogle();
+    final outcome = await auth.signInWithGoogle();
+    if (!mounted) return;
+
+    switch (outcome) {
+      case null:
+        if (auth.errorMessage != null) {
+          ScaffoldMessenger.of(context).showSnackBar(SnackBar(content: Text(auth.errorMessage!)));
+        }
+      case GoogleSignInCancelled():
+        break;
+      case GoogleSignInSuccess():
+        break;
+      case GoogleSignInRequiresPasswordLink(:final email, :final pendingGoogleCredential):
+        await _linkGoogleWithPassword(auth, email: email, pendingGoogleCredential: pendingGoogleCredential);
+    }
+  }
+
+  Future<void> _linkGoogleWithPassword(
+    AuthController auth, {
+    required String email,
+    required AuthCredential pendingGoogleCredential,
+  }) async {
+    final passwordController = TextEditingController();
+    final password = await showDialog<String>(
+      context: context,
+      builder: (context) => AlertDialog(
+        title: const Text('Confirma tu contraseña'),
+        content: Column(
+          mainAxisSize: MainAxisSize.min,
+          crossAxisAlignment: CrossAxisAlignment.start,
+          children: [
+            Text('Ya existe una cuenta registrada con $email usando correo y contraseña. Confírmala para vincular tu cuenta de Google a ella.'),
+            const SizedBox(height: 14),
+            TextField(
+              controller: passwordController,
+              obscureText: true,
+              autofocus: true,
+              decoration: const InputDecoration(labelText: 'Contraseña', prefixIcon: Icon(Icons.lock_outline)),
+              onSubmitted: (value) => Navigator.of(context).pop(value),
+            ),
+          ],
+        ),
+        actions: [
+          TextButton(onPressed: () => Navigator.of(context).pop(), child: const Text('Cancelar')),
+          FilledButton(onPressed: () => Navigator.of(context).pop(passwordController.text), child: const Text('Vincular')),
+        ],
+      ),
+    );
+    if (password == null || password.isEmpty || !mounted) return;
+
+    final ok = await auth.confirmGoogleLinkWithPassword(
+      email: email,
+      password: password,
+      pendingGoogleCredential: pendingGoogleCredential,
+    );
     if (!ok && mounted && auth.errorMessage != null) {
       ScaffoldMessenger.of(context).showSnackBar(SnackBar(content: Text(auth.errorMessage!)));
     }
