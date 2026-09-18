@@ -48,7 +48,6 @@ class ClientHomeView extends StatelessWidget {
                       label: 'Notificaciones',
                       onTap: () => Navigator.of(context).push(MaterialPageRoute(builder: (_) => NotificationsView(uid: uid))),
                     ),
-                  ProfileMenuItem(icon: Icons.history, label: 'Historial de citas', onTap: () => _comingSoon(context, 'El historial')),
                   ProfileMenuItem(icon: Icons.payment_outlined, label: 'Métodos de pago', onTap: () => _comingSoon(context, 'Los métodos de pago')),
                   ProfileMenuItem(icon: Icons.storefront_outlined, label: 'Registrar mi barbería (ser Dueño)', onTap: () => _openOwnerUpgrade(context)),
                 ],
