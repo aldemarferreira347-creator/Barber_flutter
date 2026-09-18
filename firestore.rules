@@ -129,20 +129,23 @@ service cloud.firestore {
       allow delete: if false;
     }
 
-    // notifications/{id}: solo el admin crea (manuales o el chequeo
-    // automático de pago vencido, que también corre desde una sesión de
-    // admin). El destinatario o el admin pueden leerlas y marcarlas leídas.
+    // notifications/{id}: la ÚNICA vía de escritura es el backend (Cloud
+    // Function sendNotification -> notificationDispatcher, con Admin SDK,
+    // que no pasa por estas reglas) — así toda notificación, manual o
+    // automática, comparte el mismo flujo de entrega (push/SMS/correo) sin
+    // que el cliente pueda falsificar una a nombre del sistema. El
+    // destinatario (o el admin) puede leerlas; el destinatario solo puede
+    // marcarlas como leídas, nunca alterar su contenido.
     match /notifications/{id} {
       allow read: if isSignedIn() && (resource.data.toUserId == request.auth.uid || isAdmin());
-      allow create: if isAdmin();
-      allow update: if isSignedIn() && (
-        (resource.data.toUserId == request.auth.uid &&
-          request.resource.data.read == true &&
-          request.resource.data.toUserId == resource.data.toUserId &&
-          request.resource.data.title == resource.data.title &&
-          request.resource.data.body == resource.data.body) ||
-        isAdmin()
-      );
+      allow create: if false;
+      allow update: if isSignedIn() &&
+        resource.data.toUserId == request.auth.uid &&
+        request.resource.data.read == true &&
+        request.resource.data.toUserId == resource.data.toUserId &&
+        request.resource.data.title == resource.data.title &&
+        request.resource.data.body == resource.data.body &&
+        request.resource.data.type == resource.data.type;
       allow delete: if false;
     }
   }

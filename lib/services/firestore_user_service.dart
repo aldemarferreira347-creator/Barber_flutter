@@ -1,6 +1,7 @@
 import 'package:cloud_firestore/cloud_firestore.dart';
 
 import '../models/app_user.dart';
+import '../models/notification_tone.dart';
 import '../models/user_role.dart';
 import '../repositories/user_repository.dart';
 
@@ -90,5 +91,24 @@ class FirestoreUserService implements UserRepository {
   @override
   Future<void> setAvailable(String uid, bool available) {
     return _users.doc(uid).update({'available': available});
+  }
+
+  @override
+  Future<void> setNotificationTone(String uid, NotificationTone tone) {
+    return _users.doc(uid).update({'notificationTone': tone.value});
+  }
+
+  @override
+  Future<void> addFcmToken(String uid, String token) {
+    return _users.doc(uid).update({
+      'fcmTokens': FieldValue.arrayUnion([token]),
+    });
+  }
+
+  @override
+  Future<void> removeFcmToken(String uid, String token) {
+    return _users.doc(uid).update({
+      'fcmTokens': FieldValue.arrayRemove([token]),
+    });
   }
 }

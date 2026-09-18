@@ -4,11 +4,13 @@ import 'package:firebase_auth/firebase_auth.dart';
 import 'package:flutter/foundation.dart';
 
 import '../models/app_user.dart';
+import '../models/notification_tone.dart';
 import '../models/user_role.dart';
 import '../repositories/auth_repository.dart';
 import '../repositories/user_repository.dart';
 import '../services/firebase_auth_service.dart';
 import '../services/firestore_user_service.dart';
+import '../services/push_notification_service.dart';
 
 export '../repositories/auth_repository.dart' show PhoneCodeHandle;
 
@@ -21,16 +23,20 @@ enum AuthStatus { unknown, authenticated, unauthenticated }
 class AuthController extends ChangeNotifier {
   final AuthRepository _authService;
   final UserRepository _userService;
+  final PushNotificationService _pushService;
 
   AuthController({
     AuthRepository? authService,
     UserRepository? userService,
+    PushNotificationService? pushService,
   })  : _authService = authService ?? FirebaseAuthService(),
-        _userService = userService ?? FirestoreUserService() {
+        _userService = userService ?? FirestoreUserService(),
+        _pushService = pushService ?? PushNotificationService() {
     _authSubscription = _authService.authStateChanges.listen(_onAuthChanged);
   }
 
   StreamSubscription<User?>? _authSubscription;
+  StreamSubscription<String>? _tokenRefreshSubscription;
 
   AuthStatus status = AuthStatus.unknown;
   AppUser? profile;
@@ -39,6 +45,8 @@ class AuthController extends ChangeNotifier {
 
   Future<void> _onAuthChanged(User? user) async {
     if (user == null) {
+      _tokenRefreshSubscription?.cancel();
+      _tokenRefreshSubscription = null;
       status = AuthStatus.unauthenticated;
       profile = null;
       notifyListeners();
@@ -47,6 +55,23 @@ class AuthController extends ChangeNotifier {
     profile = await _userService.fetchUserProfile(user.uid);
     status = AuthStatus.authenticated;
     notifyListeners();
+    _registerPushToken(user.uid);
+  }
+
+  /// Guarda el token FCM del dispositivo y lo mantiene al día mientras dure
+  /// la sesión. Nunca debe poder tumbar el login: si el dispositivo no
+  /// soporta push, o el usuario niega el permiso, o falla por cualquier
+  /// motivo, se ignora en silencio (push es una mejora, no un requisito).
+  void _registerPushToken(String uid) {
+    _pushService.requestPermissionAndGetToken().then((token) {
+      if (token != null) _userService.addFcmToken(uid, token);
+    }).catchError((_) {});
+
+    _tokenRefreshSubscription?.cancel();
+    _tokenRefreshSubscription = _pushService.onTokenRefresh.listen(
+      (token) => _userService.addFcmToken(uid, token),
+      onError: (_) {},
+    );
   }
 
   Future<bool> signIn({required String email, required String password}) {
@@ -147,6 +172,16 @@ class AuthController extends ChangeNotifier {
     });
   }
 
+  /// Elige o cambia el tono de notificaciones del usuario actual (spec 3.5).
+  Future<bool> chooseNotificationTone(NotificationTone tone) {
+    return _runGuarded(() async {
+      final current = profile;
+      if (current == null) throw Exception('No hay una sesión activa');
+      await _userService.setNotificationTone(current.uid, tone);
+      profile = current.copyWith(notificationTone: tone);
+    });
+  }
+
   Future<void> signOut() => _authService.signOut();
 
   Future<bool> _runGuarded(Future<void> Function() action) async {
@@ -168,6 +203,7 @@ class AuthController extends ChangeNotifier {
   @override
   void dispose() {
     _authSubscription?.cancel();
+    _tokenRefreshSubscription?.cancel();
     super.dispose();
   }
 }

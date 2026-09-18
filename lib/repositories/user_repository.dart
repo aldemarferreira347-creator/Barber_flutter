@@ -1,4 +1,5 @@
 import '../models/app_user.dart';
+import '../models/notification_tone.dart';
 import '../models/user_role.dart';
 
 /// Abstracción sobre la persistencia de perfiles de usuario (users/{uid}).
@@ -36,4 +37,14 @@ abstract class UserRepository {
 
   /// El propio Barbero marca si está disponible para recibir citas nuevas.
   Future<void> setAvailable(String uid, bool available);
+
+  /// El propio usuario elige o cambia el tono de sus notificaciones (spec 3.5).
+  Future<void> setNotificationTone(String uid, NotificationTone tone);
+
+  /// Registra el token FCM del dispositivo actual (puede haber varios por
+  /// usuario). Es idempotente: agregar el mismo token dos veces no duplica.
+  Future<void> addFcmToken(String uid, String token);
+
+  /// Retira un token FCM (p.ej. quedó inválido o el usuario cerró sesión).
+  Future<void> removeFcmToken(String uid, String token);
 }

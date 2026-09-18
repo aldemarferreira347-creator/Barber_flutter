@@ -2,6 +2,7 @@ import 'package:flutter/material.dart';
 import 'package:provider/provider.dart';
 
 import '../../controllers/auth_controller.dart';
+import '../../models/notification_tone.dart';
 import '../../models/user_role.dart';
 import '../../theme/app_colors.dart';
 import '../widgets/action_list_tile.dart';
@@ -26,6 +27,42 @@ class ProfileMenuView extends StatelessWidget {
         UserRole.barber => 'Barbero',
         UserRole.client => 'Cliente',
       };
+
+  Future<void> _showToneDialog(BuildContext context) async {
+    final authController = context.read<AuthController>();
+    final current = authController.profile?.notificationTone;
+    final tone = await showDialog<NotificationTone>(
+      context: context,
+      builder: (dialogContext) => SimpleDialog(
+        title: const Text('Tono de notificaciones'),
+        children: [
+          for (final option in NotificationTone.values)
+            SimpleDialogOption(
+              onPressed: () => Navigator.of(dialogContext).pop(option),
+              child: Row(
+                children: [
+                  Icon(
+                    option == current ? Icons.radio_button_checked : Icons.radio_button_off,
+                    color: option == current ? AppColors.accent : AppColors.textSecondary,
+                    size: 20,
+                  ),
+                  const SizedBox(width: 10),
+                  Text(option.label),
+                ],
+              ),
+            ),
+        ],
+      ),
+    );
+    if (tone == null || tone == current || !context.mounted) return;
+    final ok = await authController.chooseNotificationTone(tone);
+    if (!context.mounted) return;
+    if (!ok) {
+      ScaffoldMessenger.of(context).showSnackBar(
+        SnackBar(content: Text(authController.errorMessage ?? 'No se pudo actualizar el tono')),
+      );
+    }
+  }
 
   @override
   Widget build(BuildContext context) {
@@ -70,6 +107,12 @@ class ProfileMenuView extends StatelessWidget {
             ),
           ),
           const SizedBox(height: 18),
+          ActionListTile(
+            icon: Icons.tune,
+            label: 'Tono de notificaciones',
+            onTap: () => _showToneDialog(context),
+          ),
+          const SizedBox(height: 10),
           for (final item in items) ...[
             ActionListTile(icon: item.icon, label: item.label, onTap: item.onTap),
             const SizedBox(height: 10),

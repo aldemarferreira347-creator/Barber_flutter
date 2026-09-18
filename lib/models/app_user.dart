@@ -1,5 +1,6 @@
 import 'package:cloud_firestore/cloud_firestore.dart';
 
+import 'notification_tone.dart';
 import 'user_role.dart';
 
 class AppUser {
@@ -14,6 +15,13 @@ class AppUser {
   /// ("darse de baja" temporalmente sin dejar la barbería).
   final bool available;
   final DateTime? createdAt;
+  /// Null hasta que el usuario lo elige en su primer inicio de sesión
+  /// (ver AuthGate) — a partir de ahí nunca vuelve a ser null.
+  final NotificationTone? notificationTone;
+  /// Tokens FCM de los dispositivos donde el usuario tiene sesión iniciada
+  /// con permiso de notificaciones concedido; puede haber varios (varios
+  /// dispositivos a la vez).
+  final List<String> fcmTokens;
 
   const AppUser({
     required this.uid,
@@ -25,6 +33,8 @@ class AppUser {
     this.active = true,
     this.available = true,
     this.createdAt,
+    this.notificationTone,
+    this.fcmTokens = const [],
   });
 
   factory AppUser.fromMap(String uid, Map<String, dynamic> map) {
@@ -39,6 +49,24 @@ class AppUser {
       active: map['active'] as bool? ?? true,
       available: map['available'] as bool? ?? true,
       createdAt: createdAtValue is Timestamp ? createdAtValue.toDate() : null,
+      notificationTone: NotificationToneX.fromValue(map['notificationTone'] as String?),
+      fcmTokens: (map['fcmTokens'] as List?)?.whereType<String>().toList() ?? const [],
+    );
+  }
+
+  AppUser copyWith({NotificationTone? notificationTone}) {
+    return AppUser(
+      uid: uid,
+      email: email,
+      name: name,
+      role: role,
+      phone: phone,
+      barbershopId: barbershopId,
+      active: active,
+      available: available,
+      createdAt: createdAt,
+      notificationTone: notificationTone ?? this.notificationTone,
+      fcmTokens: fcmTokens,
     );
   }
 
@@ -68,6 +96,8 @@ class AppUser {
       'active': active,
       'available': available,
       'createdAt': createdAt == null ? FieldValue.serverTimestamp() : Timestamp.fromDate(createdAt!),
+      'notificationTone': notificationTone?.value,
+      'fcmTokens': fcmTokens,
     };
   }
 }

@@ -10,6 +10,7 @@ import '../home/admin_home_view.dart';
 import '../home/barber_home_view.dart';
 import '../home/client_home_view.dart';
 import '../home/owner_home_view.dart';
+import '../notification/choose_notification_tone_view.dart';
 
 /// Decide qué pantalla mostrar según el estado de sesión y el rol del
 /// usuario autenticado, y mantiene el UserController sincronizado con el uid activo.
@@ -118,6 +119,10 @@ class _AuthGateState extends State<AuthGate> {
               ),
             ),
           );
+        }
+
+        if (profile.notificationTone == null) {
+          return const ChooseNotificationToneView();
         }
 
         switch (profile.role) {
