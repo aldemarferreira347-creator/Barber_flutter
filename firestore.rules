@@ -129,6 +129,16 @@ service cloud.firestore {
       allow delete: if false;
     }
 
+    // payments/{id}: la ÚNICA vía de escritura es el backend (Cloud
+    // Functions requestPayment/refundPayment, con Admin SDK, que no pasa
+    // por estas reglas) — evita que el cliente pueda fabricar un pago
+    // 'approved' o alterar su monto/estado. El pagador (o el admin) puede
+    // leer sus propios pagos para seguir el estado en vivo.
+    match /payments/{id} {
+      allow read: if isSignedIn() && (resource.data.payerId == request.auth.uid || isAdmin());
+      allow write: if false;
+    }
+
     // notifications/{id}: la ÚNICA vía de escritura es el backend (Cloud
     // Function sendNotification -> notificationDispatcher, con Admin SDK,
     // que no pasa por estas reglas) — así toda notificación, manual o

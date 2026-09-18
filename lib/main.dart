@@ -9,6 +9,7 @@ import 'repositories/appointment_repository.dart';
 import 'repositories/auth_repository.dart';
 import 'repositories/barbershop_repository.dart';
 import 'repositories/notification_repository.dart';
+import 'repositories/payment_repository.dart';
 import 'repositories/service_repository.dart';
 import 'repositories/storage_repository.dart';
 import 'repositories/user_repository.dart';
@@ -20,6 +21,7 @@ import 'services/firestore_barbershop_service.dart';
 import 'services/firestore_notification_service.dart';
 import 'services/firestore_service_service.dart';
 import 'services/firestore_user_service.dart';
+import 'services/nequi_payment_gateway.dart';
 import 'theme/app_theme.dart';
 
 Future<void> main() async {
@@ -47,6 +49,7 @@ class BarberApp extends StatelessWidget {
         ),
         Provider<AppointmentRepository>(create: (_) => FirestoreAppointmentService()),
         Provider<NotificationRepository>(create: (_) => FirestoreNotificationService()),
+        Provider<PaymentGateway>(create: (_) => NequiPaymentGateway()),
         ChangeNotifierProvider(
           create: (context) => AuthController(
             authService: context.read<AuthRepository>(),
