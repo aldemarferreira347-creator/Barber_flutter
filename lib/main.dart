@@ -1,0 +1,63 @@
+import 'package:firebase_core/firebase_core.dart';
+import 'package:flutter/material.dart';
+import 'package:provider/provider.dart';
+
+import 'controllers/auth_controller.dart';
+import 'controllers/user_controller.dart';
+import 'firebase_options.dart';
+import 'repositories/appointment_repository.dart';
+import 'repositories/auth_repository.dart';
+import 'repositories/barbershop_repository.dart';
+import 'repositories/notification_repository.dart';
+import 'repositories/service_repository.dart';
+import 'repositories/user_repository.dart';
+import 'routes/app_router.dart';
+import 'services/firebase_auth_service.dart';
+import 'services/firestore_appointment_service.dart';
+import 'services/firestore_barbershop_service.dart';
+import 'services/firestore_notification_service.dart';
+import 'services/firestore_service_service.dart';
+import 'services/firestore_user_service.dart';
+import 'theme/app_theme.dart';
+
+Future<void> main() async {
+  WidgetsFlutterBinding.ensureInitialized();
+  await Firebase.initializeApp(options: DefaultFirebaseOptions.currentPlatform);
+  runApp(const BarberApp());
+}
+
+class BarberApp extends StatelessWidget {
+  const BarberApp({super.key});
+
+  @override
+  Widget build(BuildContext context) {
+    return MultiProvider(
+      providers: [
+        // Repositorios (infraestructura Firebase) expuestos por su
+        // abstracción: el resto de la app depende de la interfaz, no de
+        // Firebase directamente (Dependency Inversion).
+        Provider<AuthRepository>(create: (_) => FirebaseAuthService()),
+        Provider<UserRepository>(create: (_) => FirestoreUserService()),
+        Provider<BarbershopRepository>(create: (_) => FirestoreBarbershopService()),
+        Provider<ServiceRepository>(create: (_) => FirestoreServiceService()),
+        Provider<AppointmentRepository>(create: (_) => FirestoreAppointmentService()),
+        Provider<NotificationRepository>(create: (_) => FirestoreNotificationService()),
+        ChangeNotifierProvider(
+          create: (context) => AuthController(
+            authService: context.read<AuthRepository>(),
+            userService: context.read<UserRepository>(),
+          ),
+        ),
+        ChangeNotifierProvider(
+          create: (context) => UserController(userService: context.read<UserRepository>()),
+        ),
+      ],
+      child: MaterialApp(
+        title: 'BarberFlow',
+        theme: AppTheme.light,
+        initialRoute: AppRoutes.root,
+        onGenerateRoute: AppRouter.onGenerateRoute,
+      ),
+    );
+  }
+}

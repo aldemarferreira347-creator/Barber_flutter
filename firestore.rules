@@ -1,0 +1,149 @@
+rules_version = '2';
+
+service cloud.firestore {
+  match /databases/{database}/documents {
+    function isSignedIn() {
+      return request.auth != null;
+    }
+
+    function isAdmin() {
+      return isSignedIn() &&
+        exists(/databases/$(database)/documents/users/$(request.auth.uid)) &&
+        get(/databases/$(database)/documents/users/$(request.auth.uid)).data.role == 'admin';
+    }
+
+    function isOwnerOfShop(shopId) {
+      return isSignedIn() && shopId != null &&
+        exists(/databases/$(database)/documents/barbershops/$(shopId)) &&
+        get(/databases/$(database)/documents/barbershops/$(shopId)).data.ownerId == request.auth.uid;
+    }
+
+    // users/{uid}: el autorregistro público solo puede crear rol 'client'
+    // (Dueño se obtiene pagando, Barbero lo crea su Dueño, Admin no se
+    // autorregistra — todo eso lo asigna el admin cambiando el rol después).
+    // Un usuario puede editar su propio perfil pero NUNCA su propio rol ni
+    // su propio estado 'active' (evita autopromoción y autodesbloqueo).
+    match /users/{uid} {
+      // Nota técnica: para que las CONSULTAS (no solo los get por id)
+      // funcionen, Firestore exige poder demostrar la regla a partir del
+      // propio filtro de la consulta — por eso estas condiciones dependen
+      // solo de resource.data.role (que si va en el where de la consulta)
+      // y no de funciones con get()/exists() como isOwnerOfShop().
+      allow read: if isSignedIn() && (
+        request.auth.uid == uid ||
+        isAdmin() ||
+        // Perfiles de Cliente: los necesita el Dueño para buscarlos por
+        // correo y contratarlos como Barbero.
+        resource.data.role == 'client' ||
+        // Perfiles de Barbero: los necesita el Cliente para elegir con
+        // quién agendar su cita.
+        resource.data.role == 'barber'
+      );
+
+      allow create: if isSignedIn() && request.auth.uid == uid
+        && request.resource.data.role == 'client'
+        && request.resource.data.active == true;
+
+      allow update: if isSignedIn() && (
+        (request.auth.uid == uid &&
+          request.resource.data.role == resource.data.role &&
+          request.resource.data.active == resource.data.active) ||
+        isAdmin() ||
+        // Dueño contrata a un Cliente existente como Barbero de su negocio.
+        (resource.data.role == 'client' &&
+          request.resource.data.role == 'barber' &&
+          isOwnerOfShop(request.resource.data.barbershopId) &&
+          request.resource.data.active == resource.data.active) ||
+        // Dueño da de baja a un Barbero de su propio negocio (vuelve a Cliente).
+        (resource.data.role == 'barber' &&
+          request.resource.data.role == 'client' &&
+          request.resource.data.barbershopId == null &&
+          isOwnerOfShop(resource.data.barbershopId) &&
+          request.resource.data.active == resource.data.active)
+      );
+
+      allow delete: if false;
+    }
+
+    // barbershops/{id}: cualquier usuario autenticado puede leer (para que
+    // el cliente navegue barberías). El dueño crea/edita los datos básicos
+    // de la suya, pero NO puede cambiar 'active' ni 'paymentStatus' — esos
+    // campos son bloqueo/desbloqueo exclusivo del admin.
+    match /barbershops/{shopId} {
+      allow read: if isSignedIn();
+
+      allow create: if isSignedIn()
+        && request.resource.data.ownerId == request.auth.uid
+        && request.resource.data.active == true
+        && request.resource.data.paymentStatus == 'ok';
+
+      allow update: if isSignedIn() && (
+        (resource.data.ownerId == request.auth.uid &&
+          request.resource.data.ownerId == resource.data.ownerId &&
+          request.resource.data.active == resource.data.active &&
+          request.resource.data.paymentStatus == resource.data.paymentStatus) ||
+        isAdmin()
+      );
+
+      allow delete: if isAdmin();
+
+      // servicios de la barbería: el dueño de ESA barbería (o el admin) los
+      // administra; cualquier usuario autenticado puede verlos (catálogo).
+      match /services/{serviceId} {
+        allow read: if isSignedIn();
+        allow write: if isSignedIn() && (isOwnerOfShop(shopId) || isAdmin());
+      }
+
+      match /{document=**} {
+        allow read: if isSignedIn();
+        allow write: if isAdmin();
+      }
+    }
+
+    // appointments/{id}: el cliente crea su propia cita (status 'pending').
+    // El cliente y el barbero involucrados pueden leerla, igual que el
+    // dueño de la barbería y el admin. Actualizaciones de estado/fecha
+    // quedan para el barbero de la cita, el dueño de esa barbería o el
+    // admin; el cliente solo puede cancelar la suya (pending → cancelled).
+    match /appointments/{appointmentId} {
+      allow read: if isSignedIn() && (
+        resource.data.clientId == request.auth.uid ||
+        resource.data.barberId == request.auth.uid ||
+        isOwnerOfShop(resource.data.barbershopId) ||
+        isAdmin()
+      );
+
+      allow create: if isSignedIn()
+        && request.resource.data.clientId == request.auth.uid
+        && request.resource.data.status == 'pending';
+
+      allow update: if isSignedIn() && (
+        resource.data.barberId == request.auth.uid ||
+        isOwnerOfShop(resource.data.barbershopId) ||
+        isAdmin() ||
+        (resource.data.clientId == request.auth.uid &&
+          resource.data.status == 'pending' &&
+          request.resource.data.status == 'cancelled')
+      );
+
+      allow delete: if false;
+    }
+
+    // notifications/{id}: solo el admin crea (manuales o el chequeo
+    // automático de pago vencido, que también corre desde una sesión de
+    // admin). El destinatario o el admin pueden leerlas y marcarlas leídas.
+    match /notifications/{id} {
+      allow read: if isSignedIn() && (resource.data.toUserId == request.auth.uid || isAdmin());
+      allow create: if isAdmin();
+      allow update: if isSignedIn() && (
+        (resource.data.toUserId == request.auth.uid &&
+          request.resource.data.read == true &&
+          request.resource.data.toUserId == resource.data.toUserId &&
+          request.resource.data.title == resource.data.title &&
+          request.resource.data.body == resource.data.body) ||
+        isAdmin()
+      );
+      allow delete: if false;
+    }
+  }
+}
