@@ -1,0 +1,158 @@
+# Estado del proyecto y pendientes
+
+Este documento resume qué está hecho, qué sigue en progreso y qué falta,
+para retomar el trabajo sin perder contexto. Se basa en el plan original
+(`C:\Users\jaime\.claude\plans\immutable-noodling-seal.md`) y en el estado
+real del código a la fecha.
+
+## Hecho y commiteado (Fases 0–10 + alineación visual)
+
+Todo esto ya está en `master` y subido a
+https://github.com/aldemarferreira347-creator/Barber_flutter :
+
+- **Fase 0** — Backend Cloud Functions, `StorageRepository`, harness de tests.
+- **Fase 1** — Sistema de notificaciones (push/SMS/correo, tono personalizado).
+- **Fase 2** — Identidad visual, historial de citas, geolocalización.
+- **Fase 3** — Vinculación segura de cuentas Google.
+- **Fase 4** — `PaymentGateway` + Nequi simulado.
+- **Fase 5** — Productos, compras con código de reclamo y expiración 24h.
+- **Fase 6** — Citas pagadas, bloqueo transaccional de horario, posponer/reembolso.
+- **Fase 7** — Recordatorios automáticos de cita (1h / 15min).
+- **Fase 8** — Disponibilidad del barbero y aplazamiento automático.
+- **Fase 9** — Cierre de tienda por evento externo (penalización de calificación).
+- **Fase 10** — Calificaciones, comentarios y moderación automática.
+- **UI** — Login/registro/dashboards alineados al sistema de diseño de referencia
+  compartido por el usuario; barbería con foto de portada real.
+
+## En progreso — Fase 11 (gestión multi-barbería, spec 12.1–12.6)
+
+**Backend: completo y commiteado en el árbol de trabajo pero SIN COMMIT
+todavía.** Corre 40 suites / 251 tests en verde (`npm test` en `functions/`).
+
+- Corrige el hallazgo de seguridad ya documentado: `barbershops/{id}` ya
+  no puede nacer `active` ni aprobada — nace `approvalStatus: 'pending'`,
+  `active: false` obligatoriamente (antes cualquier usuario autenticado
+  podía crear su barbería ya visible en el catálogo).
+- `OwnershipService.requestOwnership` — sube al cliente a rol Dueño al
+  registrar su barbería (spec 12.1), vía Cloud Function porque el propio
+  usuario no puede tocar su rol.
+- `SubscriptionService` — pagar/cancelar mensualidad (spec 12.5), revisión
+  periódica (`processBarbershopBilling`, cada 24h) que vence → gracia
+  (3-5 días) → bloquea, y cancela+reembolsa automáticamente las citas
+  pagadas que caen después del corte de mensualidad (spec 12.6), sin
+  tocar las que ya estaban dentro del período pagado.
+- Notificaciones nuevas: mensualidad vencida/bloqueada (al dueño), cita
+  cancelada por bloqueo (al cliente) — 4 tonos cada una.
+- El precio de la mensualidad (`MONTHLY_FEE` en
+  `functions/src/barbershops/subscriptionService.ts`) es un **placeholder
+  de 50000** hasta que el negocio defina el precio real.
+
+**Cliente Flutter: wiring hecho, PERO NO VERIFICADO TODAVÍA** (la sesión
+se interrumpió antes de correr `flutter analyze`/`flutter test` sobre
+estos cambios) **y SIN COMMIT**:
+
+- `Barbershop` gana `approvalStatus` (pending/approved/rejected) y
+  `isVisibleInCatalog`.
+- `BarbershopRepository`/`FirestoreBarbershopService` ganan
+  `watchApproved()` (catálogo del cliente, filtra por aprobada+activa),
+  `requestOwnership`, `resolveApproval` (admin, escritura directa —
+  arranca el primer ciclo de 30 días de mensualidad), `paySubscription`,
+  `cancelSubscription`.
+- `AddBarbershopView` ahora crea la barbería pendiente y llama
+  `requestOwnership`; muestra aviso de "pendiente de revisión".
+- `AuthGate` — nuevo `_OwnerGate`: un usuario con rol Dueño pero SIN
+  ninguna barbería aprobada ve `ClientHomeView`, no `OwnerHomeView`
+  (spec 12.1: "no otorga ningún permiso de gestión adicional").
+- `ManageBarbershopsView` — el catálogo de cliente ahora usa
+  `watchApproved()`; el panel de admin muestra aprobar/rechazar para
+  solicitudes pendientes; la vista del propio dueño muestra el badge de
+  estado de aprobación.
+- `OwnerDashboardTab` — tarjeta de estado de mensualidad con
+  pagar/cancelar, y lista de "otras barberías" del mismo dueño (spec
+  12.2) con su estado.
+- `ClientHomeView` — "Registrar mi barbería" ahora navega de verdad al
+  formulario (antes era un stub "próximamente").
+
+### Para retomar Fase 11 (en este orden)
+
+1. `flutter analyze` sobre todo el proyecto y corregir lo que salga.
+2. Escribir tests Flutter nuevos: `FirestoreBarbershopService` (métodos
+   nuevos: `watchApproved`, `requestOwnership`, `resolveApproval`,
+   `paySubscription`, `cancelSubscription` — mockeando
+   `FirebaseFunctions`/`FirebaseFirestore` como en los servicios
+   existentes), y revisar si `client_appointments_view_test.dart` u
+   otros widget tests necesitan un `Provider<BarbershopRepository>` mock
+   adicional por los nuevos usos en `AuthGate`.
+3. `dart format --line-length=120` sobre los archivos tocados.
+4. `flutter test` completo en verde.
+5. Repetir el gate de `functions/` (`npm run build && npm run lint && npm test`)
+   por si algo cambió.
+6. Commit de Fase 11 con mensaje detallado (terminando en
+   `Co-Authored-By: Claude Sonnet 5 <noreply@anthropic.com>`), y push.
+7. Revisar el flujo end-to-end manualmente si hay forma de probarlo:
+   cliente registra barbería → aparece pendiente → admin aprueba → dueño
+   ve panel completo → paga/cancela mensualidad.
+
+## No empezado
+
+### Fase 12 — Recomendación de peinados con IA (spec 9.1–9.4)
+
+- `google_mlkit_face_detection` para landmarks faciales on-device.
+- `FaceShapeClassifier` (Dart puro, sin Firebase, 100% testeable por
+  proporciones geométricas).
+- Catálogo estático de estilos por forma de rostro con puntaje 1–10 por
+  reglas (no LLM) y explicaciones en tono respetuoso.
+- Visor de maniquí genérico rotable (no la foto real del usuario).
+- El campo de observación libre pasa por el mismo filtro de moderación
+  de la Fase 10 (`functions/src/shared/contentModerationFilter.ts`),
+  reutilizado, no reimplementado.
+- **Intervención pendiente:** el catálogo de imágenes/renders de
+  peinados por forma de rostro debe aportarlo el usuario/diseño.
+
+### Fase 13 — Endurecimiento final de seguridad y regresión
+
+- Auditoría completa de `firestore.rules`/`storage.rules`/Cloud
+  Functions: mínimo privilegio, ningún secreto expuesto, App Check en
+  todas las callables sensibles, rate-limiting básico en el webhook de
+  Nequi (cuando exista).
+- Correr el skill `security-review` sobre el conjunto completo de
+  cambios y aplicar los hallazgos.
+- Suite de regresión completa (`flutter test` + `flutter analyze` sin
+  warnings + suite Jest de `functions/` + reglas con emulador — esto
+  último sigue bloqueado, ver limitación abajo).
+- Consolidar este mismo documento con el resultado final para el
+  usuario.
+
+## Limitación conocida y aceptada: reglas de Firestore/Storage sin ejecutar
+
+El emulador de Firebase (`@firebase/rules-unit-testing`) necesita un
+JRE/Java que no está disponible en este entorno sandbox (el intento de
+`winget install` falló). Por eso **todos** los tests de reglas
+(`functions/test/rules/*.rules.test.ts`) están escritos y se
+type-chequean (`npx tsc --noEmit --strict ...`) pero nunca se ejecutan
+de verdad contra el emulador. Quedan excluidos de `npm test`
+(`testPathIgnorePatterns` en `functions/jest.config.js`) y solo
+correrían con `npm run test:rules`, que requiere el emulador. Si en
+algún momento hay una máquina con Java disponible, correr
+`npm run test:rules` en `functions/` para validar por primera vez todas
+las reglas escritas hasta ahora.
+
+## Intervenciones humanas pendientes (no bloquean seguir desarrollando)
+
+1. Activar plan **Blaze** en el proyecto Firebase — necesario para
+   desplegar Cloud Functions a producción (incluye las nuevas
+   `processBarbershopBilling`, `requestBarbershopOwnership`,
+   `payBarbershopSubscription`, `cancelBarbershopSubscription`).
+2. Credenciales reales de comercio/API de **Nequi** (hoy todo corre en
+   modo simulado vía `SimulatedNequiGateway`).
+3. Definir el **precio real de la mensualidad** (hoy es un placeholder
+   de 50000 en `subscriptionService.ts`).
+4. Cuenta y credenciales de **Twilio** (SMS) y **SendGrid** o activar la
+   extensión "Trigger Email" para el canal de respaldo de notificaciones.
+5. Configurar **APNs** si se necesita push en iOS además de Android/Web.
+6. Asset de **logo/ícono** de la app para `flutter_launcher_icons`/splash.
+7. **Catálogo de imágenes** de peinados por forma de rostro (Fase 12).
+8. Registrar **App Check** (Play Integrity / App Attest) en la consola
+   de Firebase para los proyectos Android/iOS reales.
+9. Una máquina con **Java/JRE** disponible para correr por fin las
+   pruebas de reglas de Firestore/Storage contra el emulador real.
