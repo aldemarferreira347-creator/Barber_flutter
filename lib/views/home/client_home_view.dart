@@ -5,7 +5,6 @@ import '../../controllers/auth_controller.dart';
 import '../appointment/client_appointments_view.dart';
 import '../barbershop/manage_barbershops_view.dart';
 import '../notification/notifications_view.dart';
-import '../widgets/coming_soon_view.dart';
 import '../widgets/role_shell.dart';
 import '../profile/profile_menu_view.dart';
 import 'client_dashboard_tab.dart';
@@ -15,16 +14,6 @@ class ClientHomeView extends StatelessWidget {
 
   void _comingSoon(BuildContext context, String feature) {
     ScaffoldMessenger.of(context).showSnackBar(SnackBar(content: Text('$feature próximamente')));
-  }
-
-  void _openOwnerUpgrade(BuildContext context) {
-    Navigator.of(context).push(MaterialPageRoute(
-      builder: (_) => const ComingSoonView(
-        title: 'Registra tu barbería',
-        icon: Icons.storefront_outlined,
-        message: 'Para convertirte en dueño necesitas pagar la suscripción. Esta opción se habilita cuando el pago con Nequi esté disponible.',
-      ),
-    ));
   }
 
   @override
@@ -46,10 +35,21 @@ class ClientHomeView extends StatelessWidget {
                     ProfileMenuItem(
                       icon: Icons.notifications_none,
                       label: 'Notificaciones',
-                      onTap: () => Navigator.of(context).push(MaterialPageRoute(builder: (_) => NotificationsView(uid: uid))),
+                      onTap: () =>
+                          Navigator.of(context).push(MaterialPageRoute(builder: (_) => NotificationsView(uid: uid))),
                     ),
-                  ProfileMenuItem(icon: Icons.payment_outlined, label: 'Métodos de pago', onTap: () => _comingSoon(context, 'Los métodos de pago')),
-                  ProfileMenuItem(icon: Icons.storefront_outlined, label: 'Registrar mi barbería (ser Dueño)', onTap: () => _openOwnerUpgrade(context)),
+                  ProfileMenuItem(
+                    icon: Icons.payment_outlined,
+                    label: 'Métodos de pago',
+                    onTap: () => _comingSoon(context, 'Los métodos de pago'),
+                  ),
+                  if (uid != null)
+                    ProfileMenuItem(
+                      icon: Icons.storefront_outlined,
+                      label: 'Registrar mi barbería (ser Dueño)',
+                      onTap: () => Navigator.of(context)
+                          .push(MaterialPageRoute(builder: (_) => ManageBarbershopsView(ownerId: uid, canAdd: true))),
+                    ),
                 ],
               );
             },

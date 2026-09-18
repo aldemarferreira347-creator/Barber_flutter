@@ -3,7 +3,9 @@ import 'package:provider/provider.dart';
 
 import '../../controllers/auth_controller.dart';
 import '../../controllers/user_controller.dart';
+import '../../models/barbershop.dart';
 import '../../models/user_role.dart';
+import '../../repositories/barbershop_repository.dart';
 import '../../theme/app_colors.dart';
 import '../auth/login_view.dart';
 import '../home/admin_home_view.dart';
@@ -50,11 +52,17 @@ class _AuthGateState extends State<AuthGate> {
                   children: [
                     Container(
                       padding: const EdgeInsets.all(20),
-                      decoration: BoxDecoration(color: AppColors.warning.withValues(alpha: 0.12), shape: BoxShape.circle),
+                      decoration: BoxDecoration(
+                        color: AppColors.warning.withValues(alpha: 0.12),
+                        shape: BoxShape.circle,
+                      ),
                       child: const Icon(Icons.error_outline, size: 40, color: AppColors.warning),
                     ),
                     const SizedBox(height: 20),
-                    const Text('No pudimos cargar tu perfil', style: TextStyle(fontSize: 20, fontWeight: FontWeight.w800, color: AppColors.textPrimary)),
+                    const Text(
+                      'No pudimos cargar tu perfil',
+                      style: TextStyle(fontSize: 20, fontWeight: FontWeight.w800, color: AppColors.textPrimary),
+                    ),
                     const SizedBox(height: 8),
                     const Text(
                       'Tu sesión existe pero no encontramos tus datos. Cierra sesión e intenta iniciar de nuevo.',
@@ -98,7 +106,10 @@ class _AuthGateState extends State<AuthGate> {
                       child: const Icon(Icons.lock_outline, size: 40, color: AppColors.error),
                     ),
                     const SizedBox(height: 20),
-                    const Text('Cuenta bloqueada', style: TextStyle(fontSize: 20, fontWeight: FontWeight.w800, color: AppColors.textPrimary)),
+                    const Text(
+                      'Cuenta bloqueada',
+                      style: TextStyle(fontSize: 20, fontWeight: FontWeight.w800, color: AppColors.textPrimary),
+                    ),
                     const SizedBox(height: 8),
                     const Text(
                       'Tu cuenta o tu barbería fue bloqueada, probablemente por un pago pendiente. Contacta al administrador para resolverlo.',
@@ -129,12 +140,36 @@ class _AuthGateState extends State<AuthGate> {
           case UserRole.admin:
             return const AdminHomeView();
           case UserRole.owner:
-            return const OwnerHomeView();
+            return _OwnerGate(ownerId: profile.uid);
           case UserRole.barber:
             return const BarberHomeView();
           case UserRole.client:
             return const ClientHomeView();
         }
     }
+  }
+}
+
+/// Spec 12.1: tener el rol Dueño sin ninguna barbería aprobada no otorga
+/// ningún permiso de gestión adicional — se ve y usa la app exactamente
+/// igual que un Cliente hasta que el admin apruebe al menos una.
+class _OwnerGate extends StatelessWidget {
+  final String ownerId;
+
+  const _OwnerGate({required this.ownerId});
+
+  @override
+  Widget build(BuildContext context) {
+    return StreamBuilder<List<Barbershop>>(
+      stream: context.read<BarbershopRepository>().watchByOwner(ownerId),
+      builder: (context, snapshot) {
+        if (snapshot.connectionState == ConnectionState.waiting) {
+          return const Scaffold(body: Center(child: CircularProgressIndicator()));
+        }
+        final shops = snapshot.data ?? const <Barbershop>[];
+        final hasApprovedShop = shops.any((s) => s.approvalStatus == BarbershopApprovalStatus.approved);
+        return hasApprovedShop ? const OwnerHomeView() : const ClientHomeView();
+      },
+    );
   }
 }

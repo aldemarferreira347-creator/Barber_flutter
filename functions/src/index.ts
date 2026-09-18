@@ -22,3 +22,7 @@ export { closeShopForExternalEvent } from './triggers/https/closeShopForExternal
 export { submitAppointmentRating } from './triggers/https/submitAppointmentRating';
 export { submitAppointmentComment } from './triggers/https/submitAppointmentComment';
 export { replyToComment } from './triggers/https/replyToComment';
+export { requestBarbershopOwnership } from './triggers/https/requestBarbershopOwnership';
+export { payBarbershopSubscription } from './triggers/https/payBarbershopSubscription';
+export { cancelBarbershopSubscription } from './triggers/https/cancelBarbershopSubscription';
+export { processBarbershopBilling } from './triggers/scheduled/processBarbershopBilling';

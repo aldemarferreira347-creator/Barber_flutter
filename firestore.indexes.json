@@ -95,6 +95,14 @@
         {"fieldPath": "barbershopId", "order": "ASCENDING"},
         {"fieldPath": "status", "order": "ASCENDING"}
       ]
+    },
+    {
+      "collectionGroup": "barbershops",
+      "queryScope": "COLLECTION",
+      "fields": [
+        {"fieldPath": "paymentStatus", "order": "ASCENDING"},
+        {"fieldPath": "paymentDueDate", "order": "ASCENDING"}
+      ]
     }
   ],
   "fieldOverrides": []

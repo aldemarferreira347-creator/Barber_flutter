@@ -3,10 +3,9 @@ import { HttpsError } from 'firebase-functions/v2/https';
 
 import { slotId } from '../appointments/slotId';
 import { dispatchShopClosureNotice } from '../notifications/dispatchTemplatedNotification';
+import { UPCOMING_APPOINTMENT_STATUSES } from '../shared/appointmentStatuses';
 import { toJsDate } from '../shared/dateUtils';
 import { assertOwnerOfShop } from '../shared/shopAuthorization';
-
-const UPCOMING_STATUSES = new Set(['pending', 'accepted', 'postponed']);
 
 export interface CloseShopInput {
   barbershopId: string;
@@ -59,7 +58,7 @@ export class ShopClosureService {
     let affected = 0;
     for (const doc of appointmentsSnap.docs) {
       const data = doc.data();
-      if (data.paid !== true || !UPCOMING_STATUSES.has(data.status as string)) continue;
+      if (data.paid !== true || !UPCOMING_APPOINTMENT_STATUSES.has(data.status as string)) continue;
 
       const slotRef = firestore.collection('appointmentSlots').doc(slotId(data.barberId as string, toJsDate(data.date)));
       await Promise.all([

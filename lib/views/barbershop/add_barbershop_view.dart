@@ -111,8 +111,13 @@ class _AddBarbershopViewState extends State<AddBarbershopView> {
           phone: _phoneController.text.trim(),
           email: _emailController.text.trim(),
           description: _descriptionController.text.trim(),
+          active: false,
+          approvalStatus: BarbershopApprovalStatus.pending,
         ),
       );
+      // Solicitud de rol de Dueño (spec 12.1): el rol propio no se puede
+      // cambiar desde el cliente, así que esto lo confirma el backend.
+      await repo.requestOwnership(id);
       if (_position != null) {
         await repo.updateLocation(id, _position!.latitude, _position!.longitude);
       }
@@ -168,6 +173,27 @@ class _AddBarbershopViewState extends State<AddBarbershopView> {
                           )
                         : null,
                   ),
+                ),
+              ),
+              const SizedBox(height: 16),
+              Container(
+                padding: const EdgeInsets.all(12),
+                decoration: BoxDecoration(
+                  color: AppColors.accent.withValues(alpha: 0.08),
+                  borderRadius: BorderRadius.circular(12),
+                  border: Border.all(color: AppColors.accent.withValues(alpha: 0.2)),
+                ),
+                child: const Row(
+                  children: [
+                    Icon(Icons.info_outline, size: 18, color: AppColors.accent),
+                    SizedBox(width: 8),
+                    Expanded(
+                      child: Text(
+                        'Tu barbería quedará pendiente de revisión. El administrador la aprobará antes de que aparezca en el catálogo.',
+                        style: TextStyle(fontSize: 12, color: AppColors.textSecondary),
+                      ),
+                    ),
+                  ],
                 ),
               ),
               const SizedBox(height: 20),

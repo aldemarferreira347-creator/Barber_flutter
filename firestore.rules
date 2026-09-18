@@ -89,21 +89,30 @@ service cloud.firestore {
     }
 
     // barbershops/{id}: cualquier usuario autenticado puede leer (para que
-    // el cliente navegue barberías). El dueño crea/edita los datos básicos
-    // de la suya, pero NO puede cambiar 'active' ni 'paymentStatus' — esos
-    // campos son bloqueo/desbloqueo exclusivo del admin.
+    // el cliente navegue barberías; el catálogo visible se filtra en el
+    // cliente por approvalStatus=='approved' && active==true). El dueño
+    // crea/edita los datos básicos de la suya, pero NO puede cambiar
+    // 'active', 'approvalStatus' ni 'paymentStatus' — esos campos son
+    // aprobación/bloqueo exclusivo del admin (spec 12.1/12.4/12.6).
+    //
+    // Hallazgo de seguridad corregido aquí: antes el create() exigía
+    // active==true && paymentStatus=='ok', es decir cualquier usuario
+    // autenticado podía crear su propia barbería ya activa y visible en el
+    // catálogo, sin revisión del admin. Ahora toda barbería nace
+    // obligatoriamente 'pending' e inactiva.
     match /barbershops/{shopId} {
       allow read: if isSignedIn();
 
       allow create: if isSignedIn()
         && request.resource.data.ownerId == request.auth.uid
-        && request.resource.data.active == true
-        && request.resource.data.paymentStatus == 'ok';
+        && request.resource.data.approvalStatus == 'pending'
+        && request.resource.data.active == false;
 
       allow update: if isSignedIn() && (
         (resource.data.ownerId == request.auth.uid &&
           request.resource.data.ownerId == resource.data.ownerId &&
           request.resource.data.active == resource.data.active &&
+          request.resource.data.approvalStatus == resource.data.approvalStatus &&
           request.resource.data.paymentStatus == resource.data.paymentStatus &&
           // ratingSum/ratingCount (spec 7.1) solo los toca
           // submitAppointmentRating (Admin SDK) — el dueño no puede

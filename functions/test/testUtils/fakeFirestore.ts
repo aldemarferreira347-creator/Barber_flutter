@@ -80,6 +80,8 @@ function matches(actual: unknown, op: string, expected: unknown): boolean {
       return (actual as number | Date) <= (expected as number | Date);
     case '>=':
       return (actual as number | Date) >= (expected as number | Date);
+    case '>':
+      return (actual as number | Date) > (expected as number | Date);
     default:
       throw new Error(`Operador no soportado en el fake: ${op}`);
   }

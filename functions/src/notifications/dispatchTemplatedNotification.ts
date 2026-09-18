@@ -2,6 +2,7 @@ import { dispatchNotification } from './notificationDispatcher';
 import { renderBarberBack, renderRescheduleInvite } from './templates/barberAvailabilityTemplates';
 import { renderAppointmentReminder, ReminderTemplateData } from './templates/appointmentReminderTemplates';
 import { renderShopClosureNotice } from './templates/shopClosureTemplates';
+import { renderAppointmentCancelledByBlockNotice, renderSubscriptionStatusNotice } from './templates/subscriptionTemplates';
 import { fetchNotificationRecipient } from './userDirectory';
 
 /**
@@ -53,4 +54,36 @@ export async function dispatchShopClosureNotice(input: { toUserId: string; barbe
   const tone = recipient?.notificationTone ?? 'normal';
   const { title, body } = renderShopClosureNotice(tone, { barbershopName: input.barbershopName, serviceName: input.serviceName });
   await dispatchNotification({ toUserId: input.toUserId, title, body, category: 'shop_closure' });
+}
+
+/** Mensualidad vencida o bloqueada (spec 12.5/12.6): al dueño de la barbería. */
+export async function dispatchSubscriptionStatusNotice(input: {
+  toUserId: string;
+  kind: 'overdue' | 'blocked';
+  barbershopName: string;
+}): Promise<void> {
+  const recipient = await fetchNotificationRecipient(input.toUserId);
+  const tone = recipient?.notificationTone ?? 'normal';
+  const { title, body } = renderSubscriptionStatusNotice(input.kind, tone, { barbershopName: input.barbershopName });
+  await dispatchNotification({
+    toUserId: input.toUserId,
+    title,
+    body,
+    category: input.kind === 'overdue' ? 'subscription_overdue' : 'subscription_blocked',
+  });
+}
+
+/** La cita del cliente se canceló y reembolsó automáticamente por bloqueo de la barbería (spec 12.6). */
+export async function dispatchAppointmentCancelledByBlockNotice(input: {
+  toUserId: string;
+  barbershopName: string;
+  serviceName: string;
+}): Promise<void> {
+  const recipient = await fetchNotificationRecipient(input.toUserId);
+  const tone = recipient?.notificationTone ?? 'normal';
+  const { title, body } = renderAppointmentCancelledByBlockNotice(tone, {
+    barbershopName: input.barbershopName,
+    serviceName: input.serviceName,
+  });
+  await dispatchNotification({ toUserId: input.toUserId, title, body, category: 'appointment_cancelled_by_block' });
 }

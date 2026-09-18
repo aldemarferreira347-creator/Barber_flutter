@@ -42,7 +42,10 @@ export type NotificationCategory =
   | 'appointment_reminder'
   | 'barber_reschedule_invite'
   | 'barber_back_on_time'
-  | 'shop_closure';
+  | 'shop_closure'
+  | 'subscription_overdue'
+  | 'subscription_blocked'
+  | 'appointment_cancelled_by_block';
 
 export interface DispatchNotificationInput {
   toUserId: string;

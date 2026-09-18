@@ -12,6 +12,22 @@ extension PaymentStatusX on PaymentStatus {
   }
 }
 
+/// Revisión del administrador sobre la solicitud de registro (spec 12.1):
+/// toda barbería nace 'pending' y solo el admin la pasa a 'approved' o
+/// 'rejected' — nunca el propio dueño.
+enum BarbershopApprovalStatus { pending, approved, rejected }
+
+extension BarbershopApprovalStatusX on BarbershopApprovalStatus {
+  String get value => name;
+
+  static BarbershopApprovalStatus fromValue(String value) {
+    return BarbershopApprovalStatus.values.firstWhere(
+      (s) => s.name == value,
+      orElse: () => BarbershopApprovalStatus.pending,
+    );
+  }
+}
+
 class Barbershop {
   final String id;
   final String name;
@@ -22,7 +38,12 @@ class Barbershop {
   final String? email;
   final String? description;
   final String? photoUrl;
+
+  /// Visibilidad/operación general: si está en false, la barbería y sus
+  /// barberos quedan bloqueados y desaparecen del catálogo (spec 12.6),
+  /// sea porque aún no fue aprobada o porque se bloqueó por mensualidad.
   final bool active;
+  final BarbershopApprovalStatus approvalStatus;
   final PaymentStatus paymentStatus;
   final DateTime? paymentDueDate;
   final Map<String, DaySchedule> schedule;
@@ -43,7 +64,8 @@ class Barbershop {
     this.email,
     this.description,
     this.photoUrl,
-    this.active = true,
+    this.active = false,
+    this.approvalStatus = BarbershopApprovalStatus.pending,
     this.paymentStatus = PaymentStatus.ok,
     this.paymentDueDate,
     this.schedule = const {},
@@ -53,6 +75,10 @@ class Barbershop {
 
   /// 0 si nadie ha calificado todavía — nunca un promedio inventado.
   double get averageRating => ratingCount == 0 ? 0 : ratingSum / ratingCount;
+
+  /// Solo aparece en el catálogo del cliente si el admin ya la aprobó y no
+  /// está bloqueada (spec 12.1/12.6).
+  bool get isVisibleInCatalog => active && approvalStatus == BarbershopApprovalStatus.approved;
 
   factory Barbershop.fromMap(String id, Map<String, dynamic> map) {
     final dueDateValue = map['paymentDueDate'];
@@ -67,6 +93,9 @@ class Barbershop {
       description: map['description'] as String?,
       photoUrl: map['photoUrl'] as String?,
       active: map['active'] as bool? ?? true,
+      approvalStatus: BarbershopApprovalStatusX.fromValue(
+        map['approvalStatus'] as String? ?? BarbershopApprovalStatus.pending.value,
+      ),
       paymentStatus: PaymentStatusX.fromValue(map['paymentStatus'] as String? ?? PaymentStatus.ok.value),
       paymentDueDate: dueDateValue is Timestamp ? dueDateValue.toDate() : null,
       schedule: weekScheduleFromMap(map['schedule'] as Map<String, dynamic>?),
@@ -86,6 +115,7 @@ class Barbershop {
       'description': description,
       'photoUrl': photoUrl,
       'active': active,
+      'approvalStatus': approvalStatus.value,
       'paymentStatus': paymentStatus.value,
       'paymentDueDate': paymentDueDate == null ? null : Timestamp.fromDate(paymentDueDate!),
       'schedule': schedule.isEmpty ? weekScheduleToMap(weekScheduleFromMap(null)) : weekScheduleToMap(schedule),

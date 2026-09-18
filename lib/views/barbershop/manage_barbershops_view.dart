@@ -28,7 +28,14 @@ class _ManageBarbershopsViewState extends State<ManageBarbershopsView> {
   @override
   Widget build(BuildContext context) {
     final service = context.read<BarbershopRepository>();
-    final stream = widget.ownerId != null ? service.watchByOwner(widget.ownerId!) : service.watchAll();
+    // Catálogo del cliente (ni ownerId ni adminControls): solo barberías
+    // aprobadas y activas (spec 12.1/12.6) — el admin sí ve todas, incluidas
+    // las pendientes de revisión.
+    final stream = widget.ownerId != null
+        ? service.watchByOwner(widget.ownerId!)
+        : widget.adminControls
+        ? service.watchAll()
+        : service.watchApproved();
 
     return Scaffold(
       appBar: AppBar(title: const Text('Barberías')),
@@ -112,18 +119,12 @@ class _ManageBarbershopsViewState extends State<ManageBarbershopsView> {
                                   ],
                                 ),
                               ),
-                              widget.adminControls
-                                  ? Column(
-                                      crossAxisAlignment: CrossAxisAlignment.end,
-                                      children: [
-                                        StatusBadge.active(shop.active),
-                                        Switch(
-                                          value: shop.active,
-                                          onChanged: (value) => service.setActive(shop.id, value),
-                                        ),
-                                      ],
-                                    )
-                                  : StatusBadge.active(shop.active),
+                              if (widget.adminControls)
+                                _AdminShopControls(shop: shop, service: service)
+                              else if (widget.ownerId != null)
+                                _ApprovalStatusBadge(status: shop.approvalStatus)
+                              else
+                                StatusBadge.active(shop.active),
                             ],
                           ),
                         ),
@@ -136,6 +137,67 @@ class _ManageBarbershopsViewState extends State<ManageBarbershopsView> {
           ],
         ),
       ),
+    );
+  }
+}
+
+class _ApprovalStatusBadge extends StatelessWidget {
+  final BarbershopApprovalStatus status;
+
+  const _ApprovalStatusBadge({required this.status});
+
+  @override
+  Widget build(BuildContext context) {
+    final (label, color) = switch (status) {
+      BarbershopApprovalStatus.pending => ('Pendiente', AppColors.warning),
+      BarbershopApprovalStatus.approved => ('Aprobada', AppColors.success),
+      BarbershopApprovalStatus.rejected => ('Rechazada', AppColors.error),
+    };
+    return Container(
+      padding: const EdgeInsets.symmetric(horizontal: 10, vertical: 4),
+      decoration: BoxDecoration(color: color.withValues(alpha: 0.12), borderRadius: BorderRadius.circular(20)),
+      child: Text(
+        label,
+        style: TextStyle(color: color, fontSize: 12, fontWeight: FontWeight.w600),
+      ),
+    );
+  }
+}
+
+/// Panel del admin (spec 12.4): aprueba/rechaza solicitudes pendientes; ya
+/// aprobada, controla el bloqueo/desbloqueo general como antes.
+class _AdminShopControls extends StatelessWidget {
+  final Barbershop shop;
+  final BarbershopRepository service;
+
+  const _AdminShopControls({required this.shop, required this.service});
+
+  @override
+  Widget build(BuildContext context) {
+    if (shop.approvalStatus == BarbershopApprovalStatus.pending) {
+      return Row(
+        mainAxisSize: MainAxisSize.min,
+        children: [
+          IconButton(
+            tooltip: 'Rechazar',
+            icon: const Icon(Icons.close, color: AppColors.error),
+            onPressed: () => service.resolveApproval(shop.id, approve: false),
+          ),
+          IconButton(
+            tooltip: 'Aprobar',
+            icon: const Icon(Icons.check_circle_outline, color: AppColors.success),
+            onPressed: () => service.resolveApproval(shop.id, approve: true),
+          ),
+        ],
+      );
+    }
+    return Column(
+      crossAxisAlignment: CrossAxisAlignment.end,
+      children: [
+        _ApprovalStatusBadge(status: shop.approvalStatus),
+        if (shop.approvalStatus == BarbershopApprovalStatus.approved)
+          Switch(value: shop.active, onChanged: (value) => service.setActive(shop.id, value)),
+      ],
     );
   }
 }
