@@ -55,23 +55,30 @@ service cloud.firestore {
         && request.resource.data.role == 'client'
         && request.resource.data.active == true;
 
-      allow update: if isSignedIn() && (
-        (request.auth.uid == uid &&
-          request.resource.data.role == resource.data.role &&
-          request.resource.data.active == resource.data.active) ||
-        isAdmin() ||
-        // Dueño contrata a un Cliente existente como Barbero de su negocio.
-        (resource.data.role == 'client' &&
-          request.resource.data.role == 'barber' &&
-          isOwnerOfShop(request.resource.data.barbershopId) &&
-          request.resource.data.active == resource.data.active) ||
-        // Dueño da de baja a un Barbero de su propio negocio (vuelve a Cliente).
-        (resource.data.role == 'barber' &&
-          request.resource.data.role == 'client' &&
-          request.resource.data.barbershopId == null &&
-          isOwnerOfShop(resource.data.barbershopId) &&
-          request.resource.data.active == resource.data.active)
-      );
+      allow update: if isSignedIn()
+        // awayUntilEstimate/awaySince (spec 3.3) solo los toca el backend
+        // (markBarberAway/markBarberReturned/processOverdueBarbers, Admin
+        // SDK) — el límite de tiempo sale del propio estimado del barbero,
+        // y solo tiene sentido si nadie más puede alterarlo por su cuenta.
+        && request.resource.data.awayUntilEstimate == resource.data.awayUntilEstimate
+        && request.resource.data.awaySince == resource.data.awaySince
+        && (
+          (request.auth.uid == uid &&
+            request.resource.data.role == resource.data.role &&
+            request.resource.data.active == resource.data.active) ||
+          isAdmin() ||
+          // Dueño contrata a un Cliente existente como Barbero de su negocio.
+          (resource.data.role == 'client' &&
+            request.resource.data.role == 'barber' &&
+            isOwnerOfShop(request.resource.data.barbershopId) &&
+            request.resource.data.active == resource.data.active) ||
+          // Dueño da de baja a un Barbero de su propio negocio (vuelve a Cliente).
+          (resource.data.role == 'barber' &&
+            request.resource.data.role == 'client' &&
+            request.resource.data.barbershopId == null &&
+            isOwnerOfShop(resource.data.barbershopId) &&
+            request.resource.data.active == resource.data.active)
+        );
 
       allow delete: if false;
     }

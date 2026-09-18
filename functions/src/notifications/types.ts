@@ -36,7 +36,12 @@ export interface NotificationChannel {
  * notificationDispatcher.ts — es exactamente la extensibilidad que pide el
  * objetivo de la sección 3.1 del spec.
  */
-export type NotificationCategory = 'manual' | 'auto_payment_overdue' | 'appointment_reminder';
+export type NotificationCategory =
+  | 'manual'
+  | 'auto_payment_overdue'
+  | 'appointment_reminder'
+  | 'barber_reschedule_invite'
+  | 'barber_back_on_time';
 
 export interface DispatchNotificationInput {
   toUserId: string;

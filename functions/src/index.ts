@@ -15,3 +15,6 @@ export { postponeAppointment } from './triggers/https/postponeAppointment';
 export { requestAppointmentRefund } from './triggers/https/requestAppointmentRefund';
 export { resolveAppointmentRefund } from './triggers/https/resolveAppointmentRefund';
 export { sendAppointmentReminders } from './triggers/scheduled/sendAppointmentReminders';
+export { markBarberAway } from './triggers/https/markBarberAway';
+export { markBarberReturned } from './triggers/https/markBarberReturned';
+export { processOverdueBarbers } from './triggers/scheduled/processOverdueBarbers';

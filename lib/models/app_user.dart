@@ -11,17 +11,26 @@ class AppUser {
   final UserRole role;
   final String? barbershopId;
   final bool active;
+
   /// Solo aplica a Barbero: si está disponible para recibir citas nuevas
   /// ("darse de baja" temporalmente sin dejar la barbería).
   final bool available;
   final DateTime? createdAt;
+
   /// Null hasta que el usuario lo elige en su primer inicio de sesión
   /// (ver AuthGate) — a partir de ahí nunca vuelve a ser null.
   final NotificationTone? notificationTone;
+
   /// Tokens FCM de los dispositivos donde el usuario tiene sesión iniciada
   /// con permiso de notificaciones concedido; puede haber varios (varios
   /// dispositivos a la vez).
   final List<String> fcmTokens;
+
+  /// Solo aplica a Barbero (spec 3.3): cuándo salió y hasta cuándo estimó
+  /// que tardaría en volver. Ambos null si no está afuera. Solo los
+  /// escribe el backend (markBarberAway/markBarberReturned).
+  final DateTime? awaySince;
+  final DateTime? awayUntilEstimate;
 
   const AppUser({
     required this.uid,
@@ -35,10 +44,14 @@ class AppUser {
     this.createdAt,
     this.notificationTone,
     this.fcmTokens = const [],
+    this.awaySince,
+    this.awayUntilEstimate,
   });
 
   factory AppUser.fromMap(String uid, Map<String, dynamic> map) {
     final createdAtValue = map['createdAt'];
+    final awaySinceValue = map['awaySince'];
+    final awayUntilEstimateValue = map['awayUntilEstimate'];
     return AppUser(
       uid: uid,
       email: map['email'] as String? ?? '',
@@ -51,6 +64,8 @@ class AppUser {
       createdAt: createdAtValue is Timestamp ? createdAtValue.toDate() : null,
       notificationTone: NotificationToneX.fromValue(map['notificationTone'] as String?),
       fcmTokens: (map['fcmTokens'] as List?)?.whereType<String>().toList() ?? const [],
+      awaySince: awaySinceValue is Timestamp ? awaySinceValue.toDate() : null,
+      awayUntilEstimate: awayUntilEstimateValue is Timestamp ? awayUntilEstimateValue.toDate() : null,
     );
   }
 
@@ -69,6 +84,10 @@ class AppUser {
       fcmTokens: fcmTokens,
     );
   }
+
+  /// Solo tiene sentido para Barbero: si salió de la tienda y todavía no
+  /// marcó su regreso.
+  bool get isAway => awayUntilEstimate != null;
 
   /// Primer nombre para saludos ("Hola, Carlos"); nunca vacío mientras
   /// [name] tenga algún carácter no-espacio, y '' si [name] está vacío.

@@ -1,9 +1,10 @@
-import { FieldValue, getFirestore, Timestamp } from 'firebase-admin/firestore';
+import { FieldValue, getFirestore } from 'firebase-admin/firestore';
 import { HttpsError } from 'firebase-functions/v2/https';
 
 import { SimulatedNequiGateway } from '../payments/nequiGateway';
 import { PaymentGatewayAdapter } from '../payments/types';
 import { PurchaseService } from '../products/purchaseService';
+import { toJsDate } from '../shared/dateUtils';
 import { assertOwnerOfShop } from '../shared/shopAuthorization';
 import { slotId } from './slotId';
 import { BookPaidAppointmentInput, RequestAppointmentRefundInput } from './types';
@@ -11,9 +12,11 @@ import { BookPaidAppointmentInput, RequestAppointmentRefundInput } from './types
 const NON_POSTPONABLE_STATUSES = new Set(['cancelled', 'completed']);
 
 function toDate(value: unknown): Date {
-  if (value instanceof Timestamp) return value.toDate();
-  if (value instanceof Date) return value;
-  throw new HttpsError('internal', 'Fecha de cita inválida.');
+  try {
+    return toJsDate(value);
+  } catch {
+    throw new HttpsError('internal', 'Fecha de cita inválida.');
+  }
 }
 
 /**

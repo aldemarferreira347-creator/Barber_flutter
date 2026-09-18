@@ -1,4 +1,5 @@
 import { dispatchNotification } from './notificationDispatcher';
+import { renderBarberBack, renderRescheduleInvite } from './templates/barberAvailabilityTemplates';
 import { renderAppointmentReminder, ReminderTemplateData } from './templates/appointmentReminderTemplates';
 import { fetchNotificationRecipient } from './userDirectory';
 
@@ -27,4 +28,20 @@ export async function dispatchAppointmentReminder(input: {
   const { title, body } = renderAppointmentReminder(input.kind, tone, data);
 
   await dispatchNotification({ toUserId: input.toUserId, title, body, category: 'appointment_reminder' });
+}
+
+/** El barbero no volvió dentro de su propio estimado (spec 3.3) — invita a reprogramar. */
+export async function dispatchRescheduleInvite(input: { toUserId: string; serviceName: string }): Promise<void> {
+  const recipient = await fetchNotificationRecipient(input.toUserId);
+  const tone = recipient?.notificationTone ?? 'normal';
+  const { title, body } = renderRescheduleInvite(tone, { serviceName: input.serviceName });
+  await dispatchNotification({ toUserId: input.toUserId, title, body, category: 'barber_reschedule_invite' });
+}
+
+/** El barbero volvió a tiempo y hay una cita en la próxima hora (spec 3.3). */
+export async function dispatchBarberBack(input: { toUserId: string; serviceName: string; time: string }): Promise<void> {
+  const recipient = await fetchNotificationRecipient(input.toUserId);
+  const tone = recipient?.notificationTone ?? 'normal';
+  const { title, body } = renderBarberBack(tone, { serviceName: input.serviceName, time: input.time });
+  await dispatchNotification({ toUserId: input.toUserId, title, body, category: 'barber_back_on_time' });
 }

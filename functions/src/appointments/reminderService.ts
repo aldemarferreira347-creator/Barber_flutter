@@ -1,23 +1,12 @@
-import { FieldValue, getFirestore, Timestamp } from 'firebase-admin/firestore';
+import { FieldValue, getFirestore } from 'firebase-admin/firestore';
 
 import { dispatchAppointmentReminder } from '../notifications/dispatchTemplatedNotification';
+import { formatTimeUTC, toJsDate } from '../shared/dateUtils';
 
 const UPCOMING_STATUSES = new Set(['pending', 'accepted', 'postponed']);
 // Un poco más de 60 min de margen para no perder el borde entre corridas
 // (la función se programa cada 5 minutos).
 const WINDOW_MINUTES = 65;
-
-function toDate(value: unknown): Date {
-  if (value instanceof Timestamp) return value.toDate();
-  if (value instanceof Date) return value;
-  throw new Error('Fecha de cita inválida.');
-}
-
-function formatTime(date: Date): string {
-  const hours = date.getUTCHours().toString().padStart(2, '0');
-  const minutes = date.getUTCMinutes().toString().padStart(2, '0');
-  return `${hours}:${minutes}`;
-}
 
 /**
  * Recordatorios automáticos 1h y 15min antes de la cita (spec 3.2). Cada
@@ -49,9 +38,9 @@ export class AppointmentReminderService {
       const data = doc.data();
       if (!UPCOMING_STATUSES.has(data.status as string)) continue;
 
-      const date = toDate(data.date);
+      const date = toJsDate(data.date);
       const minutesUntil = (date.getTime() - now.getTime()) / 60_000;
-      const time = formatTime(date);
+      const time = formatTimeUTC(date);
 
       if (minutesUntil <= 60 && minutesUntil > 15 && !data.reminder1hSentAt) {
         const barbershopName = await resolveBarbershopName(data.barbershopId as string);

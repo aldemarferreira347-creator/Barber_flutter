@@ -68,6 +68,11 @@ function resolvePatch(existing: DocData, patch: DocData): DocData {
 }
 
 function matches(actual: unknown, op: string, expected: unknown): boolean {
+  // Como en Firestore real: un campo ausente o null nunca cumple una
+  // desigualdad (si no, JS coerciona null -> 0 y lo trataría como "muy en
+  // el pasado", dando falsos positivos p.ej. en barberos que no están afuera).
+  if (op !== '==' && (actual === null || actual === undefined)) return false;
+
   switch (op) {
     case '==':
       return actual === expected;
