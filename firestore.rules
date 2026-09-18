@@ -18,6 +18,17 @@ service cloud.firestore {
         get(/databases/$(database)/documents/barbershops/$(shopId)).data.ownerId == request.auth.uid;
     }
 
+    function isBarberOfShop(shopId) {
+      return isSignedIn() && shopId != null &&
+        exists(/databases/$(database)/documents/users/$(request.auth.uid)) &&
+        get(/databases/$(database)/documents/users/$(request.auth.uid)).data.role == 'barber' &&
+        get(/databases/$(database)/documents/users/$(request.auth.uid)).data.barbershopId == shopId;
+    }
+
+    function isStaffOfShop(shopId) {
+      return isOwnerOfShop(shopId) || isBarberOfShop(shopId);
+    }
+
     // users/{uid}: el autorregistro público solo puede crear rol 'client'
     // (Dueño se obtiene pagando, Barbero lo crea su Dueño, Admin no se
     // autorregistra — todo eso lo asigna el admin cambiando el rol después).
@@ -94,6 +105,12 @@ service cloud.firestore {
         allow write: if isSignedIn() && (isOwnerOfShop(shopId) || isAdmin());
       }
 
+      // productos del catálogo: mismo criterio que servicios.
+      match /products/{productId} {
+        allow read: if isSignedIn();
+        allow write: if isSignedIn() && (isOwnerOfShop(shopId) || isAdmin());
+      }
+
       match /{document=**} {
         allow read: if isSignedIn();
         allow write: if isAdmin();
@@ -136,6 +153,21 @@ service cloud.firestore {
     // leer sus propios pagos para seguir el estado en vivo.
     match /payments/{id} {
       allow read: if isSignedIn() && (resource.data.payerId == request.auth.uid || isAdmin());
+      allow write: if false;
+    }
+
+    // purchases/{id}: la ÚNICA vía de escritura es el backend
+    // (createPurchase/claimPurchase/refundPurchaseItems, con Admin SDK) —
+    // el código de reclamo, el total y el estado nunca los decide el
+    // cliente. El comprador lee las suyas; el personal de la barbería
+    // (dueño o barbero de ESA barbería) lee las de su barbería para
+    // atender reclamos; el admin lee todas.
+    match /purchases/{id} {
+      allow read: if isSignedIn() && (
+        resource.data.buyerId == request.auth.uid ||
+        isStaffOfShop(resource.data.barbershopId) ||
+        isAdmin()
+      );
       allow write: if false;
     }
 

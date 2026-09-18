@@ -10,15 +10,19 @@ import 'repositories/auth_repository.dart';
 import 'repositories/barbershop_repository.dart';
 import 'repositories/notification_repository.dart';
 import 'repositories/payment_repository.dart';
+import 'repositories/product_repository.dart';
+import 'repositories/purchase_repository.dart';
 import 'repositories/service_repository.dart';
 import 'repositories/storage_repository.dart';
 import 'repositories/user_repository.dart';
 import 'routes/app_router.dart';
+import 'services/cloud_purchase_service.dart';
 import 'services/firebase_auth_service.dart';
 import 'services/firebase_storage_service.dart';
 import 'services/firestore_appointment_service.dart';
 import 'services/firestore_barbershop_service.dart';
 import 'services/firestore_notification_service.dart';
+import 'services/firestore_product_service.dart';
 import 'services/firestore_service_service.dart';
 import 'services/firestore_user_service.dart';
 import 'services/nequi_payment_gateway.dart';
@@ -50,6 +54,10 @@ class BarberApp extends StatelessWidget {
         Provider<AppointmentRepository>(create: (_) => FirestoreAppointmentService()),
         Provider<NotificationRepository>(create: (_) => FirestoreNotificationService()),
         Provider<PaymentGateway>(create: (_) => NequiPaymentGateway()),
+        Provider<PurchaseRepository>(create: (_) => CloudPurchaseService()),
+        ProxyProvider<StorageRepository, ProductRepository>(
+          update: (_, storage, _) => FirestoreProductService(storage: storage),
+        ),
         ChangeNotifierProvider(
           create: (context) => AuthController(
             authService: context.read<AuthRepository>(),

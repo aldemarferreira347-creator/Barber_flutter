@@ -9,6 +9,7 @@ import '../../models/user_role.dart';
 import '../../repositories/barbershop_repository.dart';
 import '../../theme/app_colors.dart';
 import '../appointment/book_appointment_view.dart';
+import '../product/manage_products_view.dart';
 import '../service/manage_services_view.dart';
 import '../widgets/status_badge.dart';
 
@@ -99,6 +100,14 @@ class BarbershopDetailView extends StatelessWidget {
                 )),
                 icon: const Icon(Icons.content_cut),
                 label: const Text('Ver servicios'),
+              ),
+              const SizedBox(height: 8),
+              OutlinedButton.icon(
+                onPressed: () => Navigator.of(context).push(MaterialPageRoute(
+                  builder: (_) => ManageProductsView(barbershopId: shop.id),
+                )),
+                icon: const Icon(Icons.shopping_bag_outlined),
+                label: const Text('Ver productos'),
               ),
               const SizedBox(height: 16),
               Container(

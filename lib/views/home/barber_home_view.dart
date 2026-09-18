@@ -5,6 +5,7 @@ import '../../controllers/auth_controller.dart';
 import '../appointment/barber_appointments_view.dart';
 import '../barber/barber_availability_view.dart';
 import '../notification/notifications_view.dart';
+import '../product/claim_purchase_view.dart';
 import '../service/manage_services_view.dart';
 import '../widgets/role_shell.dart';
 import '../profile/profile_menu_view.dart';
@@ -34,7 +35,7 @@ class BarberHomeView extends StatelessWidget {
                       label: 'Notificaciones',
                       onTap: () => Navigator.of(context).push(MaterialPageRoute(builder: (_) => NotificationsView(uid: profile.uid))),
                     ),
-                  if (profile?.barbershopId != null)
+                  if (profile?.barbershopId != null) ...[
                     ProfileMenuItem(
                       icon: Icons.content_cut,
                       label: 'Servicios de mi barbería',
@@ -42,6 +43,14 @@ class BarberHomeView extends StatelessWidget {
                         builder: (_) => ManageServicesView(barbershopId: profile!.barbershopId!),
                       )),
                     ),
+                    ProfileMenuItem(
+                      icon: Icons.qr_code,
+                      label: 'Reclamar compra de producto',
+                      onTap: () => Navigator.of(context).push(MaterialPageRoute(
+                        builder: (_) => ClaimPurchaseView(barbershopId: profile!.barbershopId!),
+                      )),
+                    ),
+                  ],
                 ],
               );
             },

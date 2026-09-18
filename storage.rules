@@ -35,6 +35,12 @@ service firebase.storage {
       allow write: if (isOwnerOfShop(shopId) || isAdmin()) && isImageUnder5MB();
     }
 
+    // Fotos de productos del catálogo: mismo criterio que servicios.
+    match /barbershops/{shopId}/products/{fileName} {
+      allow read: if isSignedIn();
+      allow write: if (isOwnerOfShop(shopId) || isAdmin()) && isImageUnder5MB();
+    }
+
     match /{allPaths=**} {
       allow read, write: if false;
     }

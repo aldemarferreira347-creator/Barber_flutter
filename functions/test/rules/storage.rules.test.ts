@@ -88,3 +88,43 @@ describe('storage.rules — barbershops/{shopId}/services', () => {
     await assertFails(uploadBytes(fileRef, fakeImageOfSize(1024)));
   });
 });
+
+describe('storage.rules — barbershops/{shopId}/products', () => {
+  let testEnv: RulesTestEnvironment;
+
+  beforeAll(async () => {
+    testEnv = await initializeTestEnvironment({
+      projectId: PROJECT_ID,
+      storage: {
+        rules: readFileSync(join(__dirname, '../../../storage.rules'), 'utf8'),
+        host: '127.0.0.1',
+        port: 9199,
+      },
+      firestore: {
+        rules: 'service cloud.firestore { match /databases/{db}/documents { match /{document=**} { allow read, write: if true; } } }',
+        host: '127.0.0.1',
+        port: 8080,
+      },
+    });
+
+    await testEnv.withSecurityRulesDisabled(async (context) => {
+      await context.firestore().doc(`barbershops/${SHOP_ID}`).set({ ownerId: OWNER_UID, name: 'Test Shop' });
+    });
+  });
+
+  afterAll(async () => {
+    await testEnv.cleanup();
+  });
+
+  it('permite al dueño de la barbería subir una foto de producto válida', async () => {
+    const storage = testEnv.authenticatedContext(OWNER_UID).storage();
+    const fileRef = ref(storage, `barbershops/${SHOP_ID}/products/wax.png`);
+    await assertSucceeds(uploadBytes(fileRef, fakeImageOfSize(1024)));
+  });
+
+  it('rechaza la subida de un usuario que no es dueño de esa barbería', async () => {
+    const storage = testEnv.authenticatedContext(OTHER_UID).storage();
+    const fileRef = ref(storage, `barbershops/${SHOP_ID}/products/wax.png`);
+    await assertFails(uploadBytes(fileRef, fakeImageOfSize(1024)));
+  });
+});
