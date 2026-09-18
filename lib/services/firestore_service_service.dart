@@ -1,18 +1,17 @@
 import 'dart:typed_data';
 
 import 'package:cloud_firestore/cloud_firestore.dart';
-import 'package:firebase_storage/firebase_storage.dart';
 
 import '../models/service.dart';
 import '../repositories/service_repository.dart';
+import '../repositories/storage_repository.dart';
 
 class FirestoreServiceService implements ServiceRepository {
   final FirebaseFirestore _firestore;
-  final FirebaseStorage _storage;
+  final StorageRepository _storage;
 
-  FirestoreServiceService({FirebaseFirestore? firestore, FirebaseStorage? storage})
-      : _firestore = firestore ?? FirebaseFirestore.instance,
-        _storage = storage ?? FirebaseStorage.instance;
+  FirestoreServiceService({required this._storage, FirebaseFirestore? firestore})
+      : _firestore = firestore ?? FirebaseFirestore.instance;
 
   CollectionReference<Map<String, dynamic>> _services(String barbershopId) =>
       _firestore.collection('barbershops').doc(barbershopId).collection('services');
@@ -35,9 +34,7 @@ class FirestoreServiceService implements ServiceRepository {
   }
 
   @override
-  Future<String> uploadPhoto({required String barbershopId, required String fileName, required Uint8List bytes}) async {
-    final ref = _storage.ref('barbershops/$barbershopId/services/$fileName');
-    await ref.putData(bytes);
-    return ref.getDownloadURL();
+  Future<String> uploadPhoto({required String barbershopId, required String fileName, required Uint8List bytes}) {
+    return _storage.uploadBytes(path: 'barbershops/$barbershopId/services/$fileName', bytes: bytes);
   }
 }

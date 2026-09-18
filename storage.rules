@@ -1,0 +1,42 @@
+rules_version = '2';
+
+// Reglas de Storage. Sigue el mismo criterio que firestore.rules: cada ruta
+// nueva se agrega en la fase que introduce esa feature (nunca se abren
+// rutas "por si acaso" para código que todavía no existe) — todo lo que no
+// tiene una regla explícita queda denegado por el fallback del final.
+service firebase.storage {
+  match /b/{bucket}/o {
+    function isSignedIn() {
+      return request.auth != null;
+    }
+
+    function isImageUnder5MB() {
+      return request.resource.size < 5 * 1024 * 1024 &&
+        request.resource.contentType.matches('image/.*');
+    }
+
+    function isOwnerOfShop(shopId) {
+      return isSignedIn() &&
+        firestore.exists(/databases/(default)/documents/barbershops/$(shopId)) &&
+        firestore.get(/databases/(default)/documents/barbershops/$(shopId)).data.ownerId == request.auth.uid;
+    }
+
+    function isAdmin() {
+      return isSignedIn() &&
+        firestore.exists(/databases/(default)/documents/users/$(request.auth.uid)) &&
+        firestore.get(/databases/(default)/documents/users/$(request.auth.uid)).data.role == 'admin';
+    }
+
+    // Fotos de servicios del catálogo de cada barbería: cualquier usuario
+    // autenticado las ve (catálogo), solo el dueño de esa barbería (o el
+    // admin) las sube o reemplaza.
+    match /barbershops/{shopId}/services/{fileName} {
+      allow read: if isSignedIn();
+      allow write: if (isOwnerOfShop(shopId) || isAdmin()) && isImageUnder5MB();
+    }
+
+    match /{allPaths=**} {
+      allow read, write: if false;
+    }
+  }
+}

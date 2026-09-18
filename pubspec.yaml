@@ -44,6 +44,7 @@ dependencies:
   geolocator: ^14.0.3
   geocoding: ^5.0.0
   firebase_storage: ^13.6.0
+  firebase_app_check: ^0.4.8
 
 dev_dependencies:
   flutter_test:
@@ -55,6 +56,7 @@ dev_dependencies:
   # package. See that file for information about deactivating specific lint
   # rules and activating additional ones.
   flutter_lints: ^6.0.0
+  mocktail: ^1.0.5
 
 # For information on the generic Dart part of this file, see the
 # following page: https://dart.dev/tools/pub/pubspec

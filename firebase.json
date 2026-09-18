@@ -1,1 +1,46 @@
-{"firestore":{"rules":"firestore.rules","indexes":"firestore.indexes.json"},"flutter":{"platforms":{"android":{"default":{"projectId":"barber-c61c5","appId":"1:520100424312:android:018b84195249f2abcb9b8d","fileOutput":"android/app/google-services.json"}},"dart":{"lib/firebase_options.dart":{"projectId":"barber-c61c5","configurations":{"android":"1:520100424312:android:018b84195249f2abcb9b8d","web":"1:520100424312:web:5ccad4b98d424f00cb9b8d","windows":"1:520100424312:web:ca5d39cc392966d4cb9b8d"}}}}}}
+{
+  "firestore": {
+    "rules": "firestore.rules",
+    "indexes": "firestore.indexes.json"
+  },
+  "storage": {
+    "rules": "storage.rules"
+  },
+  "functions": [
+    {
+      "source": "functions",
+      "codebase": "default",
+      "ignore": ["node_modules", ".git", "firebase-debug.log", "firebase-debug.*.log", "*.local"],
+      "predeploy": ["npm --prefix \"$RESOURCE_DIR\" run build"]
+    }
+  ],
+  "emulators": {
+    "auth": { "port": 9099 },
+    "functions": { "port": 5001 },
+    "firestore": { "port": 8080 },
+    "storage": { "port": 9199 },
+    "ui": { "enabled": true, "port": 4000 },
+    "singleProjectMode": true
+  },
+  "flutter": {
+    "platforms": {
+      "android": {
+        "default": {
+          "projectId": "barber-c61c5",
+          "appId": "1:520100424312:android:018b84195249f2abcb9b8d",
+          "fileOutput": "android/app/google-services.json"
+        }
+      },
+      "dart": {
+        "lib/firebase_options.dart": {
+          "projectId": "barber-c61c5",
+          "configurations": {
+            "android": "1:520100424312:android:018b84195249f2abcb9b8d",
+            "web": "1:520100424312:web:5ccad4b98d424f00cb9b8d",
+            "windows": "1:520100424312:web:ca5d39cc392966d4cb9b8d"
+          }
+        }
+      }
+    }
+  }
+}

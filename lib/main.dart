@@ -10,9 +10,11 @@ import 'repositories/auth_repository.dart';
 import 'repositories/barbershop_repository.dart';
 import 'repositories/notification_repository.dart';
 import 'repositories/service_repository.dart';
+import 'repositories/storage_repository.dart';
 import 'repositories/user_repository.dart';
 import 'routes/app_router.dart';
 import 'services/firebase_auth_service.dart';
+import 'services/firebase_storage_service.dart';
 import 'services/firestore_appointment_service.dart';
 import 'services/firestore_barbershop_service.dart';
 import 'services/firestore_notification_service.dart';
@@ -39,7 +41,10 @@ class BarberApp extends StatelessWidget {
         Provider<AuthRepository>(create: (_) => FirebaseAuthService()),
         Provider<UserRepository>(create: (_) => FirestoreUserService()),
         Provider<BarbershopRepository>(create: (_) => FirestoreBarbershopService()),
-        Provider<ServiceRepository>(create: (_) => FirestoreServiceService()),
+        Provider<StorageRepository>(create: (_) => FirebaseStorageService()),
+        ProxyProvider<StorageRepository, ServiceRepository>(
+          update: (_, storage, _) => FirestoreServiceService(storage: storage),
+        ),
         Provider<AppointmentRepository>(create: (_) => FirestoreAppointmentService()),
         Provider<NotificationRepository>(create: (_) => FirestoreNotificationService()),
         ChangeNotifierProvider(

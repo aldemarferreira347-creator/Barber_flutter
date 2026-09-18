@@ -10,8 +10,7 @@ abstract class ServiceRepository {
   Future<void> setActive(String barbershopId, String serviceId, bool active);
 
   /// Sube la foto del servicio (tomada con cámara o elegida de galería) y
-  /// devuelve la URL pública. [bytes] funciona igual en web y móvil (a
-  /// diferencia de un File de dart:io, que no existe en web).
+  /// devuelve la URL pública.
   Future<String> uploadPhoto({
     required String barbershopId,
     required String fileName,
