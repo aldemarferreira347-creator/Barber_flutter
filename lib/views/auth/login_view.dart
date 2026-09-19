@@ -4,6 +4,7 @@ import 'package:provider/provider.dart';
 
 import '../../controllers/auth_controller.dart';
 import '../../theme/app_colors.dart';
+import '../widgets/brand_mark.dart';
 import 'phone_login_view.dart';
 import 'register_view.dart';
 
@@ -283,7 +284,7 @@ class _LoginHero extends StatelessWidget {
           Container(
             padding: const EdgeInsets.all(16),
             decoration: BoxDecoration(color: Colors.white.withValues(alpha: 0.1), shape: BoxShape.circle),
-            child: const Icon(Icons.content_cut, color: Colors.white, size: 30),
+            child: const BrandMark(size: 30),
           ),
           const SizedBox(height: 14),
           const Text(

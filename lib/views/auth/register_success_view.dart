@@ -1,6 +1,7 @@
 import 'package:flutter/material.dart';
 
 import '../../theme/app_colors.dart';
+import '../widgets/brand_mark.dart';
 
 class RegisterSuccessView extends StatelessWidget {
   const RegisterSuccessView({super.key});
@@ -39,7 +40,7 @@ class RegisterSuccessView extends StatelessWidget {
               Container(
                 padding: const EdgeInsets.all(14),
                 decoration: const BoxDecoration(color: AppColors.primary, shape: BoxShape.circle),
-                child: const Icon(Icons.content_cut, color: Colors.white, size: 26),
+                child: const BrandMark(size: 26),
               ),
               const SizedBox(height: 8),
               const Text('BarberFlow', style: TextStyle(fontWeight: FontWeight.w800)),

@@ -5,6 +5,7 @@ import '../../controllers/auth_controller.dart';
 import '../../models/appointment.dart';
 import '../../repositories/appointment_repository.dart';
 import '../../theme/app_colors.dart';
+import '../notification/notifications_view.dart';
 import '../widgets/appointment_card.dart';
 import '../widgets/empty_state.dart';
 
@@ -18,7 +19,26 @@ class ClientDashboardTab extends StatelessWidget {
     final repo = context.read<AppointmentRepository>();
 
     return Scaffold(
-      appBar: AppBar(title: Text('Hola, $greetingName 👋')),
+      appBar: AppBar(
+        title: Text('Hola, $greetingName 👋'),
+        actions: [
+          if (profile != null)
+            IconButton(
+              icon: const Icon(Icons.notifications_none),
+              tooltip: 'Notificaciones',
+              onPressed: () =>
+                  Navigator.of(context).push(MaterialPageRoute(builder: (_) => NotificationsView(uid: profile.uid))),
+            ),
+          const Padding(
+            padding: EdgeInsets.only(right: 16, left: 4),
+            child: CircleAvatar(
+              radius: 16,
+              backgroundColor: AppColors.primary,
+              child: Icon(Icons.person_outline, color: Colors.white, size: 16),
+            ),
+          ),
+        ],
+      ),
       body: StreamBuilder<List<Appointment>>(
         stream: profile == null ? const Stream<List<Appointment>>.empty() : repo.watchByClient(profile.uid),
         builder: (context, snapshot) {

@@ -11,6 +11,7 @@ import '../../repositories/user_repository.dart';
 import '../../theme/app_colors.dart';
 import '../admin/manage_users_view.dart';
 import '../barbershop/manage_barbershops_view.dart';
+import '../notification/notifications_view.dart';
 import '../widgets/action_list_tile.dart';
 import '../widgets/stat_card.dart';
 
@@ -64,7 +65,26 @@ class _AdminDashboardTabState extends State<AdminDashboardTab> {
     final greetingName = profile?.firstName.isNotEmpty == true ? profile!.firstName : 'Admin';
 
     return Scaffold(
-      appBar: AppBar(title: Text('Hola, $greetingName 👋')),
+      appBar: AppBar(
+        title: Text('Hola, $greetingName 👋'),
+        actions: [
+          if (profile != null)
+            IconButton(
+              icon: const Icon(Icons.notifications_none),
+              tooltip: 'Notificaciones',
+              onPressed: () =>
+                  Navigator.of(context).push(MaterialPageRoute(builder: (_) => NotificationsView(uid: profile.uid))),
+            ),
+          const Padding(
+            padding: EdgeInsets.only(right: 16, left: 4),
+            child: CircleAvatar(
+              radius: 16,
+              backgroundColor: AppColors.primary,
+              child: Icon(Icons.shield_outlined, color: Colors.white, size: 16),
+            ),
+          ),
+        ],
+      ),
       body: ListView(
         padding: const EdgeInsets.all(16),
         children: [
@@ -141,6 +161,14 @@ class _AdminDashboardTabState extends State<AdminDashboardTab> {
             onTap: () =>
                 Navigator.of(context)
                     .push(MaterialPageRoute(builder: (_) => const ManageBarbershopsView(adminControls: true))),
+          ),
+          const SizedBox(height: 10),
+          ActionListTile(
+            icon: Icons.settings_outlined,
+            label: 'Configuración del sistema',
+            onTap: () =>
+                ScaffoldMessenger.of(context)
+                    .showSnackBar(const SnackBar(content: Text('La configuración próximamente'))),
           ),
         ],
       ),

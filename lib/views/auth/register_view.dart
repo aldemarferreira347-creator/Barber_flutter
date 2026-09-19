@@ -3,6 +3,7 @@ import 'package:provider/provider.dart';
 
 import '../../controllers/auth_controller.dart';
 import '../../theme/app_colors.dart';
+import '../widgets/brand_mark.dart';
 import 'register_success_view.dart';
 
 /// Autorregistro público: siempre crea una cuenta de Cliente. Ser Dueño
@@ -62,6 +63,23 @@ class _RegisterViewState extends State<RegisterView> {
                 child: Column(
                   crossAxisAlignment: CrossAxisAlignment.stretch,
                   children: [
+                    Center(
+                      child: Column(
+                        children: [
+                          Container(
+                            padding: const EdgeInsets.all(14),
+                            decoration: const BoxDecoration(color: AppColors.primary, shape: BoxShape.circle),
+                            child: const BrandMark(size: 26),
+                          ),
+                          const SizedBox(height: 10),
+                          const Text(
+                            'BarberFlow',
+                            style: TextStyle(fontSize: 16, fontWeight: FontWeight.w800, color: AppColors.primary),
+                          ),
+                        ],
+                      ),
+                    ),
+                    const SizedBox(height: 20),
                     const Text('Crear cuenta', style: TextStyle(fontSize: 22, fontWeight: FontWeight.w800)),
                     const SizedBox(height: 4),
                     const Text(
@@ -125,7 +143,37 @@ class _RegisterViewState extends State<RegisterView> {
                         ],
                       ),
                     ),
-                    const SizedBox(height: 24),
+                    const SizedBox(height: 16),
+                    Center(
+                      child: TextButton(
+                        onPressed: () => showDialog<void>(
+                          context: context,
+                          builder: (context) => AlertDialog(
+                            title: const Text('Términos y condiciones'),
+                            content: const Text(
+                              'Al registrarte aceptas el uso de tus datos para gestionar tus citas y tu cuenta en BarberFlow.',
+                            ),
+                            actions: [
+                              TextButton(onPressed: () => Navigator.of(context).pop(), child: const Text('Entendido')),
+                            ],
+                          ),
+                        ),
+                        child: RichText(
+                          textAlign: TextAlign.center,
+                          text: const TextSpan(
+                            style: TextStyle(color: AppColors.textSecondary, fontSize: 12),
+                            children: [
+                              TextSpan(text: 'Al registrarte aceptas nuestros '),
+                              TextSpan(
+                                text: 'Términos y condiciones',
+                                style: TextStyle(color: AppColors.accent, fontWeight: FontWeight.w600),
+                              ),
+                            ],
+                          ),
+                        ),
+                      ),
+                    ),
+                    const SizedBox(height: 8),
                     FilledButton(
                       onPressed: auth.isBusy ? null : () => _submit(auth),
                       child: auth.isBusy

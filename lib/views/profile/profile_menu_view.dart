@@ -121,11 +121,10 @@ class ProfileMenuView extends StatelessWidget {
           const SizedBox(height: 12),
           SizedBox(
             width: double.infinity,
-            child: OutlinedButton.icon(
+            child: FilledButton.icon(
               onPressed: () => context.read<AuthController>().signOut(),
-              icon: const Icon(Icons.logout, color: AppColors.error),
-              label: const Text('Cerrar sesión', style: TextStyle(color: AppColors.error)),
-              style: OutlinedButton.styleFrom(side: const BorderSide(color: AppColors.error)),
+              icon: const Icon(Icons.logout),
+              label: const Text('Cerrar sesión'),
             ),
           ),
         ],

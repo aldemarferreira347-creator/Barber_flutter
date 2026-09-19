@@ -9,6 +9,7 @@ import '../barber/manage_barbers_view.dart';
 import '../barbershop/add_barbershop_view.dart';
 import '../barbershop/barbershop_detail_view.dart';
 import '../barbershop/edit_schedule_view.dart';
+import '../notification/notifications_view.dart';
 import '../service/manage_services_view.dart';
 import '../widgets/action_list_tile.dart';
 import '../widgets/empty_state.dart';
@@ -78,7 +79,26 @@ class OwnerDashboardTab extends StatelessWidget {
     final greetingName = profile?.firstName.isNotEmpty == true ? profile!.firstName : 'Dueño';
 
     return Scaffold(
-      appBar: AppBar(title: Text('Hola, $greetingName 👋')),
+      appBar: AppBar(
+        title: Text('Hola, $greetingName 👋'),
+        actions: [
+          if (profile != null)
+            IconButton(
+              icon: const Icon(Icons.notifications_none),
+              tooltip: 'Notificaciones',
+              onPressed: () =>
+                  Navigator.of(context).push(MaterialPageRoute(builder: (_) => NotificationsView(uid: profile.uid))),
+            ),
+          const Padding(
+            padding: EdgeInsets.only(right: 16, left: 4),
+            child: CircleAvatar(
+              radius: 16,
+              backgroundColor: AppColors.primary,
+              child: Icon(Icons.storefront_outlined, color: Colors.white, size: 16),
+            ),
+          ),
+        ],
+      ),
       body: StreamBuilder<List<Barbershop>>(
         stream: profile == null ? const Stream<List<Barbershop>>.empty() : barbershopService.watchByOwner(profile.uid),
         builder: (context, snapshot) {

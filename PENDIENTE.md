@@ -27,6 +27,36 @@ https://github.com/aldemarferreira347-creator/Barber_flutter :
   build + lint + test (40 suites / 251 tests) en verde.
 - **UI** — Login/registro/dashboards alineados al sistema de diseño de referencia
   compartido por el usuario; barbería con foto de portada real.
+- **UI — rediseño completo (mockups Splash/Login/Registro/Homes/Perfil/Gestión)**:
+  - `BrandMark` (`lib/views/widgets/brand_mark.dart`): poste de barbería
+    dibujado con `CustomPainter`, reemplaza el ícono de tijeras genérico en
+    splash, login, registro y registro exitoso.
+  - Splash con fondo degradado + tagline "Gestiona · Organiza · Crece".
+  - Registro: header con marca + wordmark, línea de "Términos y condiciones"
+    (diálogo informativo). Se decidió a propósito **no** agregar selector de
+    rol aunque el mockup lo muestre — el autorregistro sigue creando siempre
+    una cuenta de Cliente (ver comentario en `register_view.dart`); las
+    demás vías de alta (Dueño paga suscripción, Barbero lo crea su Dueño,
+    Admin no se autorregistra) ya están documentadas y protegidas en backend.
+  - Headers de los 4 dashboards (Admin/Dueño/Cliente/Barbero) con ícono de
+    notificaciones + avatar.
+  - Admin: tercera acción rápida "Configuración del sistema".
+  - Perfil: botón "Cerrar sesión" pasó de outline rojo a `FilledButton`.
+  - Panel de Barbero (`barber_dashboard_tab.dart`) rediseñado por completo
+    siguiendo el mockup detallado: banner "Hoy N citas" con degradado +
+    botón "Ver calendario", fila de accesos rápidos (Perfil/Disponibilidad/
+    Servicios), tarjeta "Tu barbería" (si tiene una asignada) y tarjeta
+    "Resumen". Los items de su menú de perfil se extrajeron a
+    `barber_profile_items.dart` para compartirlos entre el tab "Perfil" y
+    el acceso rápido del panel.
+  - Verificado en vivo con `flutter run -d web-server`: Splash/Login/Registro
+    calzan pixel a pixel con el mockup. Las pantallas autenticadas (Homes,
+    Perfil, Gestión de usuarios/barberías, Detalle) no se probaron en el
+    navegador porque requieren iniciar sesión contra el Firebase real del
+    proyecto — se validaron por revisión de código, `flutter analyze` y
+    `flutter test` (52/52 en verde). El resto de las ~40 vistas del proyecto
+    ya comparte el mismo sistema de diseño (`AppColors`/tarjetas/badges):
+    una búsqueda de colores fuera de `AppColors` no encontró ninguno.
 
 ## Historial — cierre de Fase 11
 
