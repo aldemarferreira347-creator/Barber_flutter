@@ -47,19 +47,24 @@ class ManageBarbersView extends StatelessWidget {
       if (!context.mounted) return;
       if (user == null) {
         ScaffoldMessenger.of(context).showSnackBar(
-          const SnackBar(content: Text('No existe ninguna cuenta con ese correo. Pídele que se registre primero como cliente.')),
+          const SnackBar(
+            content: Text('No existe ninguna cuenta con ese correo. Pídele que se registre primero como cliente.'),
+          ),
         );
         return;
       }
       if (user.role != UserRole.client) {
         ScaffoldMessenger.of(context).showSnackBar(
-          SnackBar(content: Text('${user.name.isEmpty ? user.email : user.name} ya tiene otro rol y no se puede contratar.')),
+          SnackBar(
+            content: Text('${user.name.isEmpty ? user.email : user.name} ya tiene otro rol y no se puede contratar.'),
+          ),
         );
         return;
       }
       await repo.hireAsBarber(uid: user.uid, barbershopId: barbershopId);
       if (!context.mounted) return;
-      ScaffoldMessenger.of(context).showSnackBar(SnackBar(content: Text('${user.name} ahora es barbero de tu barbería.')));
+      ScaffoldMessenger.of(context)
+          .showSnackBar(SnackBar(content: Text('${user.name} ahora es barbero de tu barbería.')));
     } catch (e) {
       if (context.mounted) {
         ScaffoldMessenger.of(context).showSnackBar(SnackBar(content: Text('No se pudo contratar: $e')));
@@ -130,7 +135,13 @@ class ManageBarbersView extends StatelessWidget {
                 ),
                 child: Row(
                   children: [
-                    CircleAvatar(backgroundColor: AppColors.primary, child: Text(barber.initials, style: const TextStyle(color: Colors.white, fontSize: 12, fontWeight: FontWeight.w700))),
+                    CircleAvatar(
+                      backgroundColor: AppColors.primary,
+                      child: Text(
+                        barber.initials,
+                        style: const TextStyle(color: Colors.white, fontSize: 12, fontWeight: FontWeight.w700),
+                      ),
+                    ),
                     const SizedBox(width: 12),
                     Expanded(
                       child: Column(

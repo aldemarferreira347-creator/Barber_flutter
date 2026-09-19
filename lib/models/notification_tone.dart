@@ -7,11 +7,11 @@ extension NotificationToneX on NotificationTone {
   String get value => name;
 
   String get label => switch (this) {
-        NotificationTone.formal => 'Formal',
-        NotificationTone.normal => 'Normal',
-        NotificationTone.friendly => 'Amigable',
-        NotificationTone.informal => 'Informal / coloquial',
-      };
+    NotificationTone.formal => 'Formal',
+    NotificationTone.normal => 'Normal',
+    NotificationTone.friendly => 'Amigable',
+    NotificationTone.informal => 'Informal / coloquial',
+  };
 
   static NotificationTone? fromValue(String? value) {
     if (value == null) return null;

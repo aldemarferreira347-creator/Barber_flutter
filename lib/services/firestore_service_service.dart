@@ -11,16 +11,17 @@ class FirestoreServiceService implements ServiceRepository {
   final StorageRepository _storage;
 
   FirestoreServiceService({required this._storage, FirebaseFirestore? firestore})
-      : _firestore = firestore ?? FirebaseFirestore.instance;
+    : _firestore = firestore ?? FirebaseFirestore.instance;
 
   CollectionReference<Map<String, dynamic>> _services(String barbershopId) =>
       _firestore.collection('barbershops').doc(barbershopId).collection('services');
 
   @override
   Stream<List<Service>> watchByBarbershop(String barbershopId) {
-    return _services(barbershopId).orderBy('name').snapshots().map(
-          (snapshot) => snapshot.docs.map((doc) => Service.fromMap(doc.id, barbershopId, doc.data())).toList(),
-        );
+    return _services(barbershopId)
+        .orderBy('name')
+        .snapshots()
+        .map((snapshot) => snapshot.docs.map((doc) => Service.fromMap(doc.id, barbershopId, doc.data())).toList());
   }
 
   @override

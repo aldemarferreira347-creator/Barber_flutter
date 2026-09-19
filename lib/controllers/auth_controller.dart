@@ -13,7 +13,12 @@ import '../services/firestore_user_service.dart';
 import '../services/push_notification_service.dart';
 
 export '../repositories/auth_repository.dart'
-    show PhoneCodeHandle, GoogleSignInOutcome, GoogleSignInSuccess, GoogleSignInRequiresPasswordLink, GoogleSignInCancelled;
+    show
+        PhoneCodeHandle,
+        GoogleSignInOutcome,
+        GoogleSignInSuccess,
+        GoogleSignInRequiresPasswordLink,
+        GoogleSignInCancelled;
 
 enum AuthStatus { unknown, authenticated, unauthenticated }
 
@@ -26,13 +31,10 @@ class AuthController extends ChangeNotifier {
   final UserRepository _userService;
   final PushNotificationService _pushService;
 
-  AuthController({
-    AuthRepository? authService,
-    UserRepository? userService,
-    PushNotificationService? pushService,
-  })  : _authService = authService ?? FirebaseAuthService(),
-        _userService = userService ?? FirestoreUserService(),
-        _pushService = pushService ?? PushNotificationService() {
+  AuthController({AuthRepository? authService, UserRepository? userService, PushNotificationService? pushService})
+    : _authService = authService ?? FirebaseAuthService(),
+      _userService = userService ?? FirestoreUserService(),
+      _pushService = pushService ?? PushNotificationService() {
     _authSubscription = _authService.authStateChanges.listen(_onAuthChanged);
   }
 
@@ -64,9 +66,12 @@ class AuthController extends ChangeNotifier {
   /// soporta push, o el usuario niega el permiso, o falla por cualquier
   /// motivo, se ignora en silencio (push es una mejora, no un requisito).
   void _registerPushToken(String uid) {
-    _pushService.requestPermissionAndGetToken().then((token) {
-      if (token != null) _userService.addFcmToken(uid, token);
-    }).catchError((_) {});
+    _pushService
+        .requestPermissionAndGetToken()
+        .then((token) {
+          if (token != null) _userService.addFcmToken(uid, token);
+        })
+        .catchError((_) {});
 
     _tokenRefreshSubscription?.cancel();
     _tokenRefreshSubscription = _pushService.onTokenRefresh.listen(
@@ -179,11 +184,7 @@ class AuthController extends ChangeNotifier {
   /// crea su Dueño; Admin no se autorregistra nunca. No hay parámetro de rol
   /// a propósito, para que no exista forma de pedir otro rol desde aquí
   /// (defensa en profundidad: lo mismo se exige en firestore.rules).
-  Future<bool> register({
-    required String email,
-    required String password,
-    required String name,
-  }) {
+  Future<bool> register({required String email, required String password, required String name}) {
     return _runGuarded(() async {
       final normalizedEmail = email.trim().toLowerCase();
       final credential = await _authService.register(email: normalizedEmail, password: password);

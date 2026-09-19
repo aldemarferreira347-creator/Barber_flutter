@@ -11,13 +11,13 @@ class AppointmentCard extends StatelessWidget {
   const AppointmentCard({super.key, required this.appointment, required this.subtitle, this.actions = const []});
 
   Color get _statusColor => switch (appointment.status) {
-        AppointmentStatus.pending => AppColors.warning,
-        AppointmentStatus.accepted => AppColors.success,
-        AppointmentStatus.rejected => AppColors.error,
-        AppointmentStatus.cancelled => AppColors.error,
-        AppointmentStatus.postponed => AppColors.accent,
-        AppointmentStatus.completed => AppColors.textSecondary,
-      };
+    AppointmentStatus.pending => AppColors.warning,
+    AppointmentStatus.accepted => AppColors.success,
+    AppointmentStatus.rejected => AppColors.error,
+    AppointmentStatus.cancelled => AppColors.error,
+    AppointmentStatus.postponed => AppColors.accent,
+    AppointmentStatus.completed => AppColors.textSecondary,
+  };
 
   static String _twoDigits(int n) => n.toString().padLeft(2, '0');
 
@@ -40,11 +40,19 @@ class AppointmentCard extends StatelessWidget {
         children: [
           Row(
             children: [
-              Expanded(child: Text(appointment.serviceName, style: const TextStyle(fontWeight: FontWeight.w700))),
+              Expanded(
+                child: Text(appointment.serviceName, style: const TextStyle(fontWeight: FontWeight.w700)),
+              ),
               Container(
                 padding: const EdgeInsets.symmetric(horizontal: 10, vertical: 4),
-                decoration: BoxDecoration(color: _statusColor.withValues(alpha: 0.12), borderRadius: BorderRadius.circular(20)),
-                child: Text(appointment.status.label, style: TextStyle(color: _statusColor, fontSize: 12, fontWeight: FontWeight.w600)),
+                decoration: BoxDecoration(
+                  color: _statusColor.withValues(alpha: 0.12),
+                  borderRadius: BorderRadius.circular(20),
+                ),
+                child: Text(
+                  appointment.status.label,
+                  style: TextStyle(color: _statusColor, fontSize: 12, fontWeight: FontWeight.w600),
+                ),
               ),
             ],
           ),
@@ -60,12 +68,7 @@ class AppointmentCard extends StatelessWidget {
           ),
           if (actions.isNotEmpty) ...[
             const SizedBox(height: 10),
-            Wrap(
-              alignment: WrapAlignment.end,
-              spacing: 4,
-              runSpacing: 4,
-              children: actions,
-            ),
+            Wrap(alignment: WrapAlignment.end, spacing: 4, runSpacing: 4, children: actions),
           ],
         ],
       ),

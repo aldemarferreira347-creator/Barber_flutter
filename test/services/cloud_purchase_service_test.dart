@@ -56,13 +56,15 @@ void main() {
     );
 
     expect(id, 'purchase1');
-    verify(() => callable.call<Map<String, dynamic>>({
-          'barbershopId': 'shop1',
-          'items': [
-            {'productId': 'p1', 'quantity': 2}
-          ],
-          'appointmentId': null,
-        })).called(1);
+    verify(
+      () => callable.call<Map<String, dynamic>>({
+        'barbershopId': 'shop1',
+        'items': [
+          {'productId': 'p1', 'quantity': 2},
+        ],
+        'appointmentId': null,
+      }),
+    ).called(1);
   });
 
   test('claimPurchase llama a la función con el purchaseId', () async {
@@ -82,7 +84,12 @@ void main() {
 
     await service.refundItems(purchaseId: 'purchase1', itemIndexes: [0, 2]);
 
-    verify(() => callable.call<void>({'purchaseId': 'purchase1', 'itemIndexes': [0, 2]})).called(1);
+    verify(
+      () => callable.call<void>({
+        'purchaseId': 'purchase1',
+        'itemIndexes': [0, 2],
+      }),
+    ).called(1);
   });
 
   test('watchPurchase traduce el snapshot a Purchase', () async {

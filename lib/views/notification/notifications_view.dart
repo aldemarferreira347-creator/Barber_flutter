@@ -12,16 +12,16 @@ class NotificationsView extends StatelessWidget {
   const NotificationsView({super.key, required this.uid});
 
   IconData _iconFor(NotificationType type) => switch (type) {
-        NotificationType.autoPaymentOverdue => Icons.warning_amber_outlined,
-        NotificationType.appointmentReminder => Icons.alarm,
-        NotificationType.manual => Icons.campaign_outlined,
-      };
+    NotificationType.autoPaymentOverdue => Icons.warning_amber_outlined,
+    NotificationType.appointmentReminder => Icons.alarm,
+    NotificationType.manual => Icons.campaign_outlined,
+  };
 
   Color _colorFor(NotificationType type) => switch (type) {
-        NotificationType.autoPaymentOverdue => AppColors.warning,
-        NotificationType.appointmentReminder => AppColors.accent,
-        NotificationType.manual => AppColors.accent,
-      };
+    NotificationType.autoPaymentOverdue => AppColors.warning,
+    NotificationType.appointmentReminder => AppColors.accent,
+    NotificationType.manual => AppColors.accent,
+  };
 
   @override
   Widget build(BuildContext context) {
@@ -38,7 +38,11 @@ class NotificationsView extends StatelessWidget {
           }
           if (notifications.isEmpty) {
             return const Center(
-              child: EmptyState(icon: Icons.notifications_none, title: 'Sin notificaciones', subtitle: 'Aquí verás los avisos del administrador.'),
+              child: EmptyState(
+                icon: Icons.notifications_none,
+                title: 'Sin notificaciones',
+                subtitle: 'Aquí verás los avisos del administrador.',
+              ),
             );
           }
           return ListView.separated(
@@ -74,7 +78,12 @@ class NotificationsView extends StatelessWidget {
                           ],
                         ),
                       ),
-                      if (!n.read) Container(width: 8, height: 8, decoration: const BoxDecoration(color: AppColors.accent, shape: BoxShape.circle)),
+                      if (!n.read)
+                        Container(
+                          width: 8,
+                          height: 8,
+                          decoration: const BoxDecoration(color: AppColors.accent, shape: BoxShape.circle),
+                        ),
                     ],
                   ),
                 ),

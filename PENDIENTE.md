@@ -5,7 +5,7 @@ para retomar el trabajo sin perder contexto. Se basa en el plan original
 (`C:\Users\jaime\.claude\plans\immutable-noodling-seal.md`) y en el estado
 real del código a la fecha.
 
-## Hecho y commiteado (Fases 0–10 + alineación visual)
+## Hecho y commiteado (Fases 0–11 + alineación visual)
 
 Todo esto ya está en `master` y subido a
 https://github.com/aldemarferreira347-creator/Barber_flutter :
@@ -21,13 +21,17 @@ https://github.com/aldemarferreira347-creator/Barber_flutter :
 - **Fase 8** — Disponibilidad del barbero y aplazamiento automático.
 - **Fase 9** — Cierre de tienda por evento externo (penalización de calificación).
 - **Fase 10** — Calificaciones, comentarios y moderación automática.
+- **Fase 11** — Gestión multi-barbería: aprobación de barberías, mensualidad,
+  ascenso a Dueño (spec 12.1–12.6). Verificada: `flutter analyze` sin
+  hallazgos, `flutter test` 52/52, `dart format` aplicado; en `functions/`
+  build + lint + test (40 suites / 251 tests) en verde.
 - **UI** — Login/registro/dashboards alineados al sistema de diseño de referencia
   compartido por el usuario; barbería con foto de portada real.
 
-## En progreso — Fase 11 (gestión multi-barbería, spec 12.1–12.6)
+## Historial — cierre de Fase 11
 
-**Backend: completo y commiteado en el árbol de trabajo pero SIN COMMIT
-todavía.** Corre 40 suites / 251 tests en verde (`npm test` en `functions/`).
+Backend y wiring de Flutter quedaron commiteados (commit `1895cc7`). Se
+corrieron los pasos de "Para retomar Fase 11" pendientes:
 
 - Corrige el hallazgo de seguridad ya documentado: `barbershops/{id}` ya
   no puede nacer `active` ni aprobada — nace `approvalStatus: 'pending'`,
@@ -47,9 +51,9 @@ todavía.** Corre 40 suites / 251 tests en verde (`npm test` en `functions/`).
   `functions/src/barbershops/subscriptionService.ts`) es un **placeholder
   de 50000** hasta que el negocio defina el precio real.
 
-**Cliente Flutter: wiring hecho, PERO NO VERIFICADO TODAVÍA** (la sesión
-se interrumpió antes de correr `flutter analyze`/`flutter test` sobre
-estos cambios) **y SIN COMMIT**:
+**Cliente Flutter: wiring hecho y ya verificado** (`flutter analyze` sin
+hallazgos, `flutter test` 52/52 incluyendo los tests nuevos de
+`FirestoreBarbershopService`):
 
 - `Barbershop` gana `approvalStatus` (pending/approved/rejected) y
   `isVisibleInCatalog`.
@@ -73,25 +77,20 @@ estos cambios) **y SIN COMMIT**:
 - `ClientHomeView` — "Registrar mi barbería" ahora navega de verdad al
   formulario (antes era un stub "próximamente").
 
-### Para retomar Fase 11 (en este orden)
+### Fase 11 — cerrada
 
-1. `flutter analyze` sobre todo el proyecto y corregir lo que salga.
-2. Escribir tests Flutter nuevos: `FirestoreBarbershopService` (métodos
-   nuevos: `watchApproved`, `requestOwnership`, `resolveApproval`,
-   `paySubscription`, `cancelSubscription` — mockeando
-   `FirebaseFunctions`/`FirebaseFirestore` como en los servicios
-   existentes), y revisar si `client_appointments_view_test.dart` u
-   otros widget tests necesitan un `Provider<BarbershopRepository>` mock
-   adicional por los nuevos usos en `AuthGate`.
-3. `dart format --line-length=120` sobre los archivos tocados.
-4. `flutter test` completo en verde.
-5. Repetir el gate de `functions/` (`npm run build && npm run lint && npm test`)
-   por si algo cambió.
-6. Commit de Fase 11 con mensaje detallado (terminando en
-   `Co-Authored-By: Claude Sonnet 5 <noreply@anthropic.com>`), y push.
-7. Revisar el flujo end-to-end manualmente si hay forma de probarlo:
-   cliente registra barbería → aparece pendiente → admin aprueba → dueño
-   ve panel completo → paga/cancela mensualidad.
+Todos los pasos de la lista original quedaron completados: `flutter
+analyze` limpio, tests de `FirestoreBarbershopService` ya existentes y en
+verde, `dart format --line-length=120` aplicado, `flutter test` completo
+en verde, y el gate de `functions/` (`npm run build && npm run lint && npm
+test`) repetido sin regresiones.
+
+Queda pendiente, para cuando haya forma de probarlo manualmente (no
+bloquea seguir desarrollando):
+
+- Revisar el flujo end-to-end: cliente registra barbería → aparece
+  pendiente → admin aprueba → dueño ve panel completo → paga/cancela
+  mensualidad.
 
 ## No empezado
 

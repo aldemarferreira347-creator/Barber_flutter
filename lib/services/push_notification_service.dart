@@ -14,7 +14,8 @@ class PushNotificationService {
   /// actual no soporta push (p.ej. Windows/Linux de escritorio).
   Future<String?> requestPermissionAndGetToken() async {
     final settings = await _messaging.requestPermission();
-    final granted = settings.authorizationStatus == AuthorizationStatus.authorized ||
+    final granted =
+        settings.authorizationStatus == AuthorizationStatus.authorized ||
         settings.authorizationStatus == AuthorizationStatus.provisional;
     if (!granted) return null;
     return _messaging.getToken();

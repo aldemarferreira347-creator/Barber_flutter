@@ -43,12 +43,14 @@ void main() {
     final id = await gateway.requestPayment(amount: 20000, category: PaymentCategory.appointment, relatedId: 'appt1');
 
     expect(id, 'payment1');
-    verify(() => callable.call<Map<String, dynamic>>({
-          'amount': 20000.0,
-          'category': 'appointment',
-          'relatedId': 'appt1',
-          'description': null,
-        })).called(1);
+    verify(
+      () => callable.call<Map<String, dynamic>>({
+        'amount': 20000.0,
+        'category': 'appointment',
+        'relatedId': 'appt1',
+        'description': null,
+      }),
+    ).called(1);
   });
 
   test('refund envía el monto solo cuando se especifica', () async {

@@ -24,11 +24,7 @@ class AppTheme {
         foregroundColor: AppColors.textPrimary,
         elevation: 0,
         centerTitle: false,
-        titleTextStyle: TextStyle(
-          color: AppColors.textPrimary,
-          fontSize: 20,
-          fontWeight: FontWeight.w700,
-        ),
+        titleTextStyle: TextStyle(color: AppColors.textPrimary, fontSize: 20, fontWeight: FontWeight.w700),
       ),
       textTheme: const TextTheme(
         headlineSmall: TextStyle(fontWeight: FontWeight.w700, color: AppColors.textPrimary),
@@ -75,9 +71,7 @@ class AppTheme {
           textStyle: const TextStyle(fontSize: 16, fontWeight: FontWeight.w600),
         ),
       ),
-      textButtonTheme: TextButtonThemeData(
-        style: TextButton.styleFrom(foregroundColor: AppColors.accent),
-      ),
+      textButtonTheme: TextButtonThemeData(style: TextButton.styleFrom(foregroundColor: AppColors.accent)),
       cardTheme: CardThemeData(
         color: AppColors.surface,
         elevation: 0,

@@ -12,8 +12,8 @@ class NequiPaymentGateway implements PaymentGateway {
   final FirebaseFirestore _firestore;
 
   NequiPaymentGateway({FirebaseFunctions? functions, FirebaseFirestore? firestore})
-      : _functions = functions ?? FirebaseFunctions.instance,
-        _firestore = firestore ?? FirebaseFirestore.instance;
+    : _functions = functions ?? FirebaseFunctions.instance,
+      _firestore = firestore ?? FirebaseFirestore.instance;
 
   @override
   Future<String> requestPayment({
@@ -42,9 +42,6 @@ class NequiPaymentGateway implements PaymentGateway {
 
   @override
   Future<void> refund(String paymentId, {double? amount}) {
-    return _functions.httpsCallable('refundPayment').call<void>({
-      'paymentId': paymentId,
-      'amount': ?amount,
-    });
+    return _functions.httpsCallable('refundPayment').call<void>({'paymentId': paymentId, 'amount': ?amount});
   }
 }

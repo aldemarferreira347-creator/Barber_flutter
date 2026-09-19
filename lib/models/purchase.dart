@@ -6,20 +6,20 @@ enum PurchaseStatus { pendingPayment, pendingClaim, claimed, expired, paymentFai
 
 extension PurchaseStatusX on PurchaseStatus {
   String get value => switch (this) {
-        PurchaseStatus.pendingPayment => 'pending_payment',
-        PurchaseStatus.pendingClaim => 'pending_claim',
-        PurchaseStatus.claimed => 'claimed',
-        PurchaseStatus.expired => 'expired',
-        PurchaseStatus.paymentFailed => 'payment_failed',
-      };
+    PurchaseStatus.pendingPayment => 'pending_payment',
+    PurchaseStatus.pendingClaim => 'pending_claim',
+    PurchaseStatus.claimed => 'claimed',
+    PurchaseStatus.expired => 'expired',
+    PurchaseStatus.paymentFailed => 'payment_failed',
+  };
 
   String get label => switch (this) {
-        PurchaseStatus.pendingPayment => 'Procesando pago',
-        PurchaseStatus.pendingClaim => 'Lista para reclamar',
-        PurchaseStatus.claimed => 'Reclamada',
-        PurchaseStatus.expired => 'Vencida',
-        PurchaseStatus.paymentFailed => 'Pago fallido',
-      };
+    PurchaseStatus.pendingPayment => 'Procesando pago',
+    PurchaseStatus.pendingClaim => 'Lista para reclamar',
+    PurchaseStatus.claimed => 'Reclamada',
+    PurchaseStatus.expired => 'Vencida',
+    PurchaseStatus.paymentFailed => 'Pago fallido',
+  };
 
   static PurchaseStatus fromValue(String value) {
     return switch (value) {
@@ -98,7 +98,9 @@ class Purchase {
       barbershopId: map['barbershopId'] as String? ?? '',
       buyerId: map['buyerId'] as String? ?? '',
       appointmentId: map['appointmentId'] as String?,
-      items: (map['items'] as List?)?.map((e) => PurchaseItem.fromMap(Map<String, dynamic>.from(e as Map))).toList() ?? const [],
+      items:
+          (map['items'] as List?)?.map((e) => PurchaseItem.fromMap(Map<String, dynamic>.from(e as Map))).toList() ??
+          const [],
       totalAmount: (map['totalAmount'] as num?)?.toDouble() ?? 0,
       paymentId: map['paymentId'] as String?,
       claimCode: map['claimCode'] as String?,

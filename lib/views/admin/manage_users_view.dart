@@ -21,11 +21,11 @@ class _ManageUsersViewState extends State<ManageUsersView> {
   UserRole? _roleFilter;
 
   String _roleLabel(UserRole role) => switch (role) {
-        UserRole.admin => 'Admin',
-        UserRole.owner => 'Dueño',
-        UserRole.barber => 'Barbero',
-        UserRole.client => 'Cliente',
-      };
+    UserRole.admin => 'Admin',
+    UserRole.owner => 'Dueño',
+    UserRole.barber => 'Barbero',
+    UserRole.client => 'Cliente',
+  };
 
   Future<void> _notify(BuildContext context, AppUser user) async {
     final titleController = TextEditingController();
@@ -37,9 +37,16 @@ class _ManageUsersViewState extends State<ManageUsersView> {
         content: Column(
           mainAxisSize: MainAxisSize.min,
           children: [
-            TextField(controller: titleController, decoration: const InputDecoration(labelText: 'Título')),
+            TextField(
+              controller: titleController,
+              decoration: const InputDecoration(labelText: 'Título'),
+            ),
             const SizedBox(height: 12),
-            TextField(controller: bodyController, maxLines: 3, decoration: const InputDecoration(labelText: 'Mensaje')),
+            TextField(
+              controller: bodyController,
+              maxLines: 3,
+              decoration: const InputDecoration(labelText: 'Mensaje'),
+            ),
           ],
         ),
         actions: [
@@ -52,10 +59,10 @@ class _ManageUsersViewState extends State<ManageUsersView> {
     if (titleController.text.trim().isEmpty) return;
     try {
       await context.read<NotificationRepository>().send(
-            toUserId: user.uid,
-            title: titleController.text.trim(),
-            body: bodyController.text.trim(),
-          );
+        toUserId: user.uid,
+        title: titleController.text.trim(),
+        body: bodyController.text.trim(),
+      );
       if (context.mounted) {
         ScaffoldMessenger.of(context).showSnackBar(SnackBar(content: Text('Notificación enviada a ${user.name}')));
       }
@@ -88,7 +95,11 @@ class _ManageUsersViewState extends State<ManageUsersView> {
               child: ListView(
                 scrollDirection: Axis.horizontal,
                 children: [
-                  _RoleChip(label: 'Todos', selected: _roleFilter == null, onTap: () => setState(() => _roleFilter = null)),
+                  _RoleChip(
+                    label: 'Todos',
+                    selected: _roleFilter == null,
+                    onTap: () => setState(() => _roleFilter = null),
+                  ),
                   for (final role in UserRole.values)
                     Padding(
                       padding: const EdgeInsets.only(left: 8),
@@ -114,10 +125,14 @@ class _ManageUsersViewState extends State<ManageUsersView> {
                     users = users.where((u) => u.role == _roleFilter).toList();
                   }
                   if (_query.isNotEmpty) {
-                    users = users.where((u) => u.name.toLowerCase().contains(_query) || u.email.toLowerCase().contains(_query)).toList();
+                    users = users
+                        .where((u) => u.name.toLowerCase().contains(_query) || u.email.toLowerCase().contains(_query))
+                        .toList();
                   }
                   if (users.isEmpty) {
-                    return const Center(child: Text('No se encontraron usuarios', style: TextStyle(color: AppColors.textSecondary)));
+                    return const Center(
+                      child: Text('No se encontraron usuarios', style: TextStyle(color: AppColors.textSecondary)),
+                    );
                   }
                   return ListView.separated(
                     itemCount: users.length,
@@ -136,17 +151,33 @@ class _ManageUsersViewState extends State<ManageUsersView> {
                         ),
                         child: Row(
                           children: [
-                            CircleAvatar(backgroundColor: AppColors.primary, child: Text(initials, style: const TextStyle(color: Colors.white, fontSize: 12, fontWeight: FontWeight.w700))),
+                            CircleAvatar(
+                              backgroundColor: AppColors.primary,
+                              child: Text(
+                                initials,
+                                style: const TextStyle(color: Colors.white, fontSize: 12, fontWeight: FontWeight.w700),
+                              ),
+                            ),
                             const SizedBox(width: 12),
                             Expanded(
                               child: Column(
                                 crossAxisAlignment: CrossAxisAlignment.start,
                                 children: [
                                   Text(user.name, style: const TextStyle(fontWeight: FontWeight.w700)),
-                                  Text(user.email, style: const TextStyle(color: AppColors.textSecondary, fontSize: 12)),
+                                  Text(
+                                    user.email,
+                                    style: const TextStyle(color: AppColors.textSecondary, fontSize: 12),
+                                  ),
                                   const SizedBox(height: 4),
                                   if (user.uid == currentUid)
-                                    Text(_roleLabel(user.role), style: const TextStyle(color: AppColors.accent, fontSize: 12, fontWeight: FontWeight.w600))
+                                    Text(
+                                      _roleLabel(user.role),
+                                      style: const TextStyle(
+                                        color: AppColors.accent,
+                                        fontSize: 12,
+                                        fontWeight: FontWeight.w600,
+                                      ),
+                                    )
                                   else
                                     PopupMenuButton<UserRole>(
                                       initialValue: user.role,
@@ -157,7 +188,14 @@ class _ManageUsersViewState extends State<ManageUsersView> {
                                       child: Row(
                                         mainAxisSize: MainAxisSize.min,
                                         children: [
-                                          Text(_roleLabel(user.role), style: const TextStyle(color: AppColors.accent, fontSize: 12, fontWeight: FontWeight.w600)),
+                                          Text(
+                                            _roleLabel(user.role),
+                                            style: const TextStyle(
+                                              color: AppColors.accent,
+                                              fontSize: 12,
+                                              fontWeight: FontWeight.w600,
+                                            ),
+                                          ),
                                           const Icon(Icons.arrow_drop_down, size: 16, color: AppColors.accent),
                                         ],
                                       ),

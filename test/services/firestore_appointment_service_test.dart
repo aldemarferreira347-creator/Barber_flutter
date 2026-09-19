@@ -39,14 +39,16 @@ void main() {
     );
 
     expect(id, 'appt1');
-    verify(() => callable.call<Map<String, dynamic>>({
-          'barbershopId': 'shop1',
-          'barberId': 'barber1',
-          'barberName': 'Beto',
-          'serviceId': 'svc1',
-          'clientName': 'Ana',
-          'date': date.toIso8601String(),
-        })).called(1);
+    verify(
+      () => callable.call<Map<String, dynamic>>({
+        'barbershopId': 'shop1',
+        'barberId': 'barber1',
+        'barberName': 'Beto',
+        'serviceId': 'svc1',
+        'clientName': 'Ana',
+        'date': date.toIso8601String(),
+      }),
+    ).called(1);
   });
 
   test('postponePaid envía appointmentId y newDate', () async {
@@ -70,11 +72,13 @@ void main() {
     final id = await service.requestRefund(appointmentId: 'appt1', reason: 'Emergencia');
 
     expect(id, 'req1');
-    verify(() => callable.call<Map<String, dynamic>>({
-          'appointmentId': 'appt1',
-          'reason': 'Emergencia',
-          'purchaseId': null,
-          'purchaseItemIndexes': null,
-        })).called(1);
+    verify(
+      () => callable.call<Map<String, dynamic>>({
+        'appointmentId': 'appt1',
+        'reason': 'Emergencia',
+        'purchaseId': null,
+        'purchaseItemIndexes': null,
+      }),
+    ).called(1);
   });
 }

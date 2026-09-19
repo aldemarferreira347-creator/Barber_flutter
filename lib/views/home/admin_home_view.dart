@@ -19,7 +19,11 @@ class AdminHomeView extends StatelessWidget {
       tabs: [
         const RoleTab(label: 'Inicio', icon: Icons.home_outlined, page: AdminDashboardTab()),
         const RoleTab(label: 'Usuarios', icon: Icons.people_outline, page: ManageUsersView()),
-        const RoleTab(label: 'Barberías', icon: Icons.storefront_outlined, page: ManageBarbershopsView(adminControls: true)),
+        const RoleTab(
+          label: 'Barberías',
+          icon: Icons.storefront_outlined,
+          page: ManageBarbershopsView(adminControls: true),
+        ),
         RoleTab(
           label: 'Ajustes',
           icon: Icons.settings_outlined,
@@ -34,10 +38,20 @@ class AdminHomeView extends StatelessWidget {
                 ProfileMenuItem(
                   icon: Icons.storefront_outlined,
                   label: 'Barberías',
-                  onTap: () => Navigator.of(context).push(MaterialPageRoute(builder: (_) => const ManageBarbershopsView(adminControls: true))),
+                  onTap: () =>
+                      Navigator.of(context)
+                          .push(MaterialPageRoute(builder: (_) => const ManageBarbershopsView(adminControls: true))),
                 ),
-                ProfileMenuItem(icon: Icons.settings_outlined, label: 'Configuración del sistema', onTap: () => _comingSoon(context, 'La configuración')),
-                ProfileMenuItem(icon: Icons.help_outline, label: 'Ayuda', onTap: () => _comingSoon(context, 'La ayuda')),
+                ProfileMenuItem(
+                  icon: Icons.settings_outlined,
+                  label: 'Configuración del sistema',
+                  onTap: () => _comingSoon(context, 'La configuración'),
+                ),
+                ProfileMenuItem(
+                  icon: Icons.help_outline,
+                  label: 'Ayuda',
+                  onTap: () => _comingSoon(context, 'La ayuda'),
+                ),
               ],
             ),
           ),

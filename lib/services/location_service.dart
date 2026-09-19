@@ -26,7 +26,9 @@ class LocationService {
       }
     }
     if (permission == LocationPermission.deniedForever) {
-      throw const LocationException('El permiso de ubicación está bloqueado. Actívalo desde los ajustes del dispositivo.');
+      throw const LocationException(
+        'El permiso de ubicación está bloqueado. Actívalo desde los ajustes del dispositivo.',
+      );
     }
 
     return Geolocator.getCurrentPosition(locationSettings: const LocationSettings(accuracy: LocationAccuracy.high));

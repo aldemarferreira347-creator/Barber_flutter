@@ -37,9 +37,10 @@ class FirestoreUserService implements UserRepository {
 
   @override
   Stream<List<AppUser>> watchAll() {
-    return _users.orderBy('name').snapshots().map(
-          (snapshot) => snapshot.docs.map((doc) => AppUser.fromMap(doc.id, doc.data())).toList(),
-        );
+    return _users
+        .orderBy('name')
+        .snapshots()
+        .map((snapshot) => snapshot.docs.map((doc) => AppUser.fromMap(doc.id, doc.data())).toList());
   }
 
   @override

@@ -42,7 +42,10 @@ class _ChooseNotificationToneViewState extends State<ChooseNotificationToneView>
             crossAxisAlignment: CrossAxisAlignment.start,
             children: [
               const SizedBox(height: 12),
-              const Text('¿Cómo prefieres que te hablemos?', style: TextStyle(fontSize: 22, fontWeight: FontWeight.w800)),
+              const Text(
+                '¿Cómo prefieres que te hablemos?',
+                style: TextStyle(fontSize: 22, fontWeight: FontWeight.w800),
+              ),
               const SizedBox(height: 8),
               const Text(
                 'Elige el tono de tus notificaciones. Puedes cambiarlo cuando quieras desde tu perfil.',
@@ -64,11 +67,17 @@ class _ChooseNotificationToneViewState extends State<ChooseNotificationToneView>
                         decoration: BoxDecoration(
                           color: selected ? AppColors.accent.withValues(alpha: 0.08) : AppColors.surface,
                           borderRadius: BorderRadius.circular(14),
-                          border: Border.all(color: selected ? AppColors.accent : AppColors.border, width: selected ? 2 : 1),
+                          border: Border.all(
+                            color: selected ? AppColors.accent : AppColors.border,
+                            width: selected ? 2 : 1,
+                          ),
                         ),
                         child: Row(
                           children: [
-                            Icon(selected ? Icons.radio_button_checked : Icons.radio_button_off, color: selected ? AppColors.accent : AppColors.textSecondary),
+                            Icon(
+                              selected ? Icons.radio_button_checked : Icons.radio_button_off,
+                              color: selected ? AppColors.accent : AppColors.textSecondary,
+                            ),
                             const SizedBox(width: 12),
                             Text(tone.label, style: const TextStyle(fontWeight: FontWeight.w600, fontSize: 15)),
                           ],
@@ -84,7 +93,11 @@ class _ChooseNotificationToneViewState extends State<ChooseNotificationToneView>
                 child: FilledButton(
                   onPressed: _selected == null || _saving ? null : _confirm,
                   child: _saving
-                      ? const SizedBox(width: 20, height: 20, child: CircularProgressIndicator(strokeWidth: 2, color: Colors.white))
+                      ? const SizedBox(
+                          width: 20,
+                          height: 20,
+                          child: CircularProgressIndicator(strokeWidth: 2, color: Colors.white),
+                        )
                       : const Text('Continuar'),
                 ),
               ),

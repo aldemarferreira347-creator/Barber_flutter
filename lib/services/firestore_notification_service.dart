@@ -9,20 +9,27 @@ class FirestoreNotificationService implements NotificationRepository {
   final FirebaseFunctions _functions;
 
   FirestoreNotificationService({FirebaseFirestore? firestore, FirebaseFunctions? functions})
-      : _firestore = firestore ?? FirebaseFirestore.instance,
-        _functions = functions ?? FirebaseFunctions.instance;
+    : _firestore = firestore ?? FirebaseFirestore.instance,
+      _functions = functions ?? FirebaseFunctions.instance;
 
   CollectionReference<Map<String, dynamic>> get _notifications => _firestore.collection('notifications');
 
   @override
   Stream<List<AppNotification>> watchForUser(String uid) {
-    return _notifications.where('toUserId', isEqualTo: uid).orderBy('createdAt', descending: true).snapshots().map(
-          (snapshot) => snapshot.docs.map((doc) => AppNotification.fromMap(doc.id, doc.data())).toList(),
-        );
+    return _notifications
+        .where('toUserId', isEqualTo: uid)
+        .orderBy('createdAt', descending: true)
+        .snapshots()
+        .map((snapshot) => snapshot.docs.map((doc) => AppNotification.fromMap(doc.id, doc.data())).toList());
   }
 
   @override
-  Future<void> send({required String toUserId, required String title, required String body, NotificationType type = NotificationType.manual}) {
+  Future<void> send({
+    required String toUserId,
+    required String title,
+    required String body,
+    NotificationType type = NotificationType.manual,
+  }) {
     // El envío en sí (registrar la notificación + entregarla por push, y si
     // hace falta por SMS/correo) corre en el backend (functions/src/
     // notifications/notificationDispatcher.ts) — el cliente nunca escribe

@@ -29,7 +29,10 @@ class _EditScheduleViewState extends State<EditScheduleView> {
     final current = _schedule[day]!;
     final currentValue = isOpenTime ? current.openTime : current.closeTime;
     final parts = currentValue.split(':');
-    final initial = TimeOfDay(hour: int.tryParse(parts[0]) ?? 8, minute: int.tryParse(parts.length > 1 ? parts[1] : '0') ?? 0);
+    final initial = TimeOfDay(
+      hour: int.tryParse(parts[0]) ?? 8,
+      minute: int.tryParse(parts.length > 1 ? parts[1] : '0') ?? 0,
+    );
     final picked = await showTimePicker(context: context, initialTime: initial);
     if (picked == null) return;
     final formatted = '${picked.hour.toString().padLeft(2, '0')}:${picked.minute.toString().padLeft(2, '0')}';
@@ -71,7 +74,10 @@ class _EditScheduleViewState extends State<EditScheduleView> {
                 children: [
                   Expanded(
                     flex: 2,
-                    child: Text(day[0].toUpperCase() + day.substring(1), style: const TextStyle(fontWeight: FontWeight.w600)),
+                    child: Text(
+                      day[0].toUpperCase() + day.substring(1),
+                      style: const TextStyle(fontWeight: FontWeight.w600),
+                    ),
                   ),
                   Switch(
                     value: _schedule[day]!.isOpen,
@@ -82,7 +88,13 @@ class _EditScheduleViewState extends State<EditScheduleView> {
                     const Text('–', style: TextStyle(color: AppColors.textSecondary)),
                     TextButton(onPressed: () => _pickTime(day, false), child: Text(_schedule[day]!.closeTime)),
                   ] else
-                    const Expanded(child: Text('Cerrado', textAlign: TextAlign.end, style: TextStyle(color: AppColors.textSecondary))),
+                    const Expanded(
+                      child: Text(
+                        'Cerrado',
+                        textAlign: TextAlign.end,
+                        style: TextStyle(color: AppColors.textSecondary),
+                      ),
+                    ),
                 ],
               ),
             ),
@@ -92,7 +104,11 @@ class _EditScheduleViewState extends State<EditScheduleView> {
           FilledButton(
             onPressed: _saving ? null : _save,
             child: _saving
-                ? const SizedBox(height: 18, width: 18, child: CircularProgressIndicator(strokeWidth: 2, color: Colors.white))
+                ? const SizedBox(
+                    height: 18,
+                    width: 18,
+                    child: CircularProgressIndicator(strokeWidth: 2, color: Colors.white),
+                  )
                 : const Text('Guardar horarios'),
           ),
         ],

@@ -24,11 +24,18 @@ class ClientDashboardTab extends StatelessWidget {
         builder: (context, snapshot) {
           final all = snapshot.data ?? [];
           final now = DateTime.now();
-          final upcoming = all
-              .where((a) => a.date.isAfter(now) && (a.status == AppointmentStatus.pending || a.status == AppointmentStatus.accepted))
-              .toList()
-            ..sort((a, b) => a.date.compareTo(b.date));
-          final today = upcoming.where((a) => a.date.year == now.year && a.date.month == now.month && a.date.day == now.day).length;
+          final upcoming =
+              all
+                  .where(
+                    (a) =>
+                        a.date.isAfter(now) &&
+                        (a.status == AppointmentStatus.pending || a.status == AppointmentStatus.accepted),
+                  )
+                  .toList()
+                ..sort((a, b) => a.date.compareTo(b.date));
+          final today = upcoming
+              .where((a) => a.date.year == now.year && a.date.month == now.month && a.date.day == now.day)
+              .length;
 
           return ListView(
             padding: const EdgeInsets.all(16),
@@ -46,7 +53,10 @@ class ClientDashboardTab extends StatelessWidget {
                         children: [
                           const Text('Hoy', style: TextStyle(color: Colors.white70, fontSize: 12)),
                           const SizedBox(height: 4),
-                          Text('$today', style: const TextStyle(color: Colors.white, fontSize: 28, fontWeight: FontWeight.w800)),
+                          Text(
+                            '$today',
+                            style: const TextStyle(color: Colors.white, fontSize: 28, fontWeight: FontWeight.w800),
+                          ),
                           const Text('Citas programadas', style: TextStyle(color: Colors.white70, fontSize: 12)),
                         ],
                       ),
@@ -68,7 +78,10 @@ class ClientDashboardTab extends StatelessWidget {
                   children: [
                     Text('¡Vamos por más!', style: TextStyle(fontWeight: FontWeight.w700)),
                     SizedBox(height: 4),
-                    Text('Agenda tu próxima cita y luce increíble.', style: TextStyle(color: AppColors.textSecondary, fontSize: 13)),
+                    Text(
+                      'Agenda tu próxima cita y luce increíble.',
+                      style: TextStyle(color: AppColors.textSecondary, fontSize: 13),
+                    ),
                   ],
                 ),
               ),

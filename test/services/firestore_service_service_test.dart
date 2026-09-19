@@ -17,8 +17,12 @@ void main() {
 
   test('uploadPhoto delega en StorageRepository con la ruta esperada, sin tocar Firestore', () async {
     final storage = MockStorageRepository();
-    when(() => storage.uploadBytes(path: any(named: 'path'), bytes: any(named: 'bytes')))
-        .thenAnswer((_) async => 'https://example.com/photo.png');
+    when(
+      () => storage.uploadBytes(
+        path: any(named: 'path'),
+        bytes: any(named: 'bytes'),
+      ),
+    ).thenAnswer((_) async => 'https://example.com/photo.png');
 
     final service = FirestoreServiceService(storage: storage, firestore: MockFirebaseFirestore());
     final bytes = Uint8List.fromList([1, 2, 3]);

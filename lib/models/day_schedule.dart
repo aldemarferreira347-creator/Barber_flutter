@@ -33,9 +33,7 @@ Map<String, DaySchedule> weekScheduleFromMap(Map<String, dynamic>? map) {
   if (map == null) {
     return {for (final day in kWeekdays) day: const DaySchedule()};
   }
-  return {
-    for (final day in kWeekdays) day: DaySchedule.fromMap(map[day] as Map<String, dynamic>?),
-  };
+  return {for (final day in kWeekdays) day: DaySchedule.fromMap(map[day] as Map<String, dynamic>?)};
 }
 
 Map<String, dynamic> weekScheduleToMap(Map<String, DaySchedule> schedule) {

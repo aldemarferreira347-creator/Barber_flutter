@@ -39,7 +39,12 @@ class ActionListTile extends StatelessWidget {
                 child: Icon(icon, color: iconColor, size: 18),
               ),
               const SizedBox(width: 12),
-              Expanded(child: Text(label, style: const TextStyle(fontWeight: FontWeight.w600, color: AppColors.textPrimary))),
+              Expanded(
+                child: Text(
+                  label,
+                  style: const TextStyle(fontWeight: FontWeight.w600, color: AppColors.textPrimary),
+                ),
+              ),
               const Icon(Icons.chevron_right, color: AppColors.textSecondary),
             ],
           ),

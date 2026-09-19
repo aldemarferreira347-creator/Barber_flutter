@@ -42,9 +42,7 @@ class _RoleShellState extends State<RoleShell> {
           _index = i;
           _visited.add(i);
         }),
-        items: widget.tabs
-            .map((tab) => BottomNavigationBarItem(icon: Icon(tab.icon), label: tab.label))
-            .toList(),
+        items: widget.tabs.map((tab) => BottomNavigationBarItem(icon: Icon(tab.icon), label: tab.label)).toList(),
       ),
     );
   }

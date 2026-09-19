@@ -33,22 +33,24 @@ class BarberHomeView extends StatelessWidget {
                     ProfileMenuItem(
                       icon: Icons.notifications_none,
                       label: 'Notificaciones',
-                      onTap: () => Navigator.of(context).push(MaterialPageRoute(builder: (_) => NotificationsView(uid: profile.uid))),
+                      onTap: () =>
+                          Navigator.of(context)
+                              .push(MaterialPageRoute(builder: (_) => NotificationsView(uid: profile.uid))),
                     ),
                   if (profile?.barbershopId != null) ...[
                     ProfileMenuItem(
                       icon: Icons.content_cut,
                       label: 'Servicios de mi barbería',
-                      onTap: () => Navigator.of(context).push(MaterialPageRoute(
-                        builder: (_) => ManageServicesView(barbershopId: profile!.barbershopId!),
-                      )),
+                      onTap: () => Navigator.of(context).push(
+                        MaterialPageRoute(builder: (_) => ManageServicesView(barbershopId: profile!.barbershopId!)),
+                      ),
                     ),
                     ProfileMenuItem(
                       icon: Icons.qr_code,
                       label: 'Reclamar compra de producto',
-                      onTap: () => Navigator.of(context).push(MaterialPageRoute(
-                        builder: (_) => ClaimPurchaseView(barbershopId: profile!.barbershopId!),
-                      )),
+                      onTap: () => Navigator.of(context).push(
+                        MaterialPageRoute(builder: (_) => ClaimPurchaseView(barbershopId: profile!.barbershopId!)),
+                      ),
                     ),
                   ],
                 ],

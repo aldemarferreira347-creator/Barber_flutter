@@ -11,16 +11,17 @@ class FirestoreProductService implements ProductRepository {
   final StorageRepository _storage;
 
   FirestoreProductService({required this._storage, FirebaseFirestore? firestore})
-      : _firestore = firestore ?? FirebaseFirestore.instance;
+    : _firestore = firestore ?? FirebaseFirestore.instance;
 
   CollectionReference<Map<String, dynamic>> _products(String barbershopId) =>
       _firestore.collection('barbershops').doc(barbershopId).collection('products');
 
   @override
   Stream<List<Product>> watchByBarbershop(String barbershopId) {
-    return _products(barbershopId).orderBy('name').snapshots().map(
-          (snapshot) => snapshot.docs.map((doc) => Product.fromMap(doc.id, barbershopId, doc.data())).toList(),
-        );
+    return _products(barbershopId)
+        .orderBy('name')
+        .snapshots()
+        .map((snapshot) => snapshot.docs.map((doc) => Product.fromMap(doc.id, barbershopId, doc.data())).toList());
   }
 
   @override

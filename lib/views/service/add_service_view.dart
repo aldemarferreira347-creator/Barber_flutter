@@ -58,15 +58,17 @@ class _AddServiceViewState extends State<AddServiceView> {
         final fileName = '${DateTime.now().millisecondsSinceEpoch}_${_photoName ?? 'foto.jpg'}';
         photoUrl = await repo.uploadPhoto(barbershopId: widget.barbershopId, fileName: fileName, bytes: _photoBytes!);
       }
-      await repo.create(Service(
-        id: '',
-        barbershopId: widget.barbershopId,
-        name: _nameController.text.trim(),
-        description: _descriptionController.text.trim(),
-        price: double.tryParse(_priceController.text.trim()) ?? 0,
-        durationMinutes: int.tryParse(_durationController.text.trim()) ?? 30,
-        photoUrl: photoUrl,
-      ));
+      await repo.create(
+        Service(
+          id: '',
+          barbershopId: widget.barbershopId,
+          name: _nameController.text.trim(),
+          description: _descriptionController.text.trim(),
+          price: double.tryParse(_priceController.text.trim()) ?? 0,
+          durationMinutes: int.tryParse(_durationController.text.trim()) ?? 30,
+          photoUrl: photoUrl,
+        ),
+      );
       if (mounted) Navigator.of(context).pop();
     } catch (e) {
       if (mounted) {
@@ -97,7 +99,9 @@ class _AddServiceViewState extends State<AddServiceView> {
                       color: AppColors.surface,
                       borderRadius: BorderRadius.circular(16),
                       border: Border.all(color: AppColors.border),
-                      image: _photoBytes != null ? DecorationImage(image: MemoryImage(_photoBytes!), fit: BoxFit.cover) : null,
+                      image: _photoBytes != null
+                          ? DecorationImage(image: MemoryImage(_photoBytes!), fit: BoxFit.cover)
+                          : null,
                     ),
                     child: _photoBytes == null
                         ? const Column(
@@ -115,7 +119,10 @@ class _AddServiceViewState extends State<AddServiceView> {
               const SizedBox(height: 20),
               TextFormField(
                 controller: _nameController,
-                decoration: const InputDecoration(labelText: 'Nombre del servicio', prefixIcon: Icon(Icons.content_cut)),
+                decoration: const InputDecoration(
+                  labelText: 'Nombre del servicio',
+                  prefixIcon: Icon(Icons.content_cut),
+                ),
                 validator: (value) => (value == null || value.trim().isEmpty) ? 'Requerido' : null,
               ),
               const SizedBox(height: 14),
@@ -150,7 +157,11 @@ class _AddServiceViewState extends State<AddServiceView> {
               FilledButton(
                 onPressed: _saving ? null : _submit,
                 child: _saving
-                    ? const SizedBox(height: 18, width: 18, child: CircularProgressIndicator(strokeWidth: 2, color: Colors.white))
+                    ? const SizedBox(
+                        height: 18,
+                        width: 18,
+                        child: CircularProgressIndicator(strokeWidth: 2, color: Colors.white),
+                      )
                     : const Text('Guardar servicio'),
               ),
             ],

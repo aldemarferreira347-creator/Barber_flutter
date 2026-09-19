@@ -98,12 +98,15 @@ void main() {
       final credential = MockUserCredential();
       when(() => credential.user).thenReturn(user);
 
-      when(() => authRepository.linkGoogleWithPassword(
-            email: _kEmail,
-            password: 'secret123',
-            pendingGoogleCredential: pendingCredential,
-          )).thenAnswer((_) async => credential);
-      when(() => userRepository.fetchUserProfile(_kUid)).thenAnswer((_) async => AppUser(uid: _kUid, email: _kEmail, name: 'Ana', role: UserRole.client));
+      when(
+        () => authRepository.linkGoogleWithPassword(
+          email: _kEmail,
+          password: 'secret123',
+          pendingGoogleCredential: pendingCredential,
+        ),
+      ).thenAnswer((_) async => credential);
+      when(() => userRepository.fetchUserProfile(_kUid))
+          .thenAnswer((_) async => AppUser(uid: _kUid, email: _kEmail, name: 'Ana', role: UserRole.client));
 
       final ok = await controller.confirmGoogleLinkWithPassword(
         email: _kEmail,
@@ -116,11 +119,13 @@ void main() {
     });
 
     test('contraseña incorrecta no deja al usuario autenticado', () async {
-      when(() => authRepository.linkGoogleWithPassword(
-            email: _kEmail,
-            password: 'wrong',
-            pendingGoogleCredential: pendingCredential,
-          )).thenThrow(FirebaseAuthException(code: 'wrong-password', message: 'Contraseña incorrecta'));
+      when(
+        () => authRepository.linkGoogleWithPassword(
+          email: _kEmail,
+          password: 'wrong',
+          pendingGoogleCredential: pendingCredential,
+        ),
+      ).thenThrow(FirebaseAuthException(code: 'wrong-password', message: 'Contraseña incorrecta'));
 
       final ok = await controller.confirmGoogleLinkWithPassword(
         email: _kEmail,

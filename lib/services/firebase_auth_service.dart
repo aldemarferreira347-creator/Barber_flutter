@@ -12,8 +12,8 @@ class FirebaseAuthService implements AuthRepository {
   final GoogleSignIn _googleSignIn;
 
   FirebaseAuthService({FirebaseAuth? auth, GoogleSignIn? googleSignIn})
-      : _auth = auth ?? FirebaseAuth.instance,
-        _googleSignIn = googleSignIn ?? GoogleSignIn.instance;
+    : _auth = auth ?? FirebaseAuth.instance,
+      _googleSignIn = googleSignIn ?? GoogleSignIn.instance;
 
   @override
   Stream<User?> get authStateChanges => _auth.authStateChanges();
@@ -97,10 +97,12 @@ class FirebaseAuthService implements AuthRepository {
       },
       codeSent: (verificationId, resendToken) {
         if (completer.isCompleted) return;
-        completer.complete(PhoneCodeHandle((smsCode) {
-          final credential = PhoneAuthProvider.credential(verificationId: verificationId, smsCode: smsCode);
-          return _auth.signInWithCredential(credential);
-        }));
+        completer.complete(
+          PhoneCodeHandle((smsCode) {
+            final credential = PhoneAuthProvider.credential(verificationId: verificationId, smsCode: smsCode);
+            return _auth.signInWithCredential(credential);
+          }),
+        );
       },
       codeAutoRetrievalTimeout: (_) {},
     );

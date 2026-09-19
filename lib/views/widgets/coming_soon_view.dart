@@ -15,7 +15,9 @@ class ComingSoonView extends StatelessWidget {
   Widget build(BuildContext context) {
     return Scaffold(
       appBar: AppBar(title: Text(title)),
-      body: Center(child: EmptyState(icon: icon, title: title, subtitle: message)),
+      body: Center(
+        child: EmptyState(icon: icon, title: title, subtitle: message),
+      ),
     );
   }
 }

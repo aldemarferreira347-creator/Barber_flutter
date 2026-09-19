@@ -108,9 +108,8 @@ void main() {
 
   testWidgets('cancelar una cita pagada ofrece posponer en vez de cancelar directo (spec 6.3)', (tester) async {
     final now = DateTime(2026, 1, 1);
-    when(() => appointmentRepository.watchByClient(_kUid)).thenAnswer(
-      (_) => Stream.value([_appointment('a1', AppointmentStatus.pending, now, paid: true)]),
-    );
+    when(() => appointmentRepository.watchByClient(_kUid))
+        .thenAnswer((_) => Stream.value([_appointment('a1', AppointmentStatus.pending, now, paid: true)]));
 
     await tester.pumpWidget(wrap());
     await tester.pump();
@@ -127,9 +126,8 @@ void main() {
 
   testWidgets('insistir en cancelar una cita pagada pide una justificación y llama a requestRefund', (tester) async {
     final now = DateTime(2026, 1, 1);
-    when(() => appointmentRepository.watchByClient(_kUid)).thenAnswer(
-      (_) => Stream.value([_appointment('a1', AppointmentStatus.pending, now, paid: true)]),
-    );
+    when(() => appointmentRepository.watchByClient(_kUid))
+        .thenAnswer((_) => Stream.value([_appointment('a1', AppointmentStatus.pending, now, paid: true)]));
     when(() => appointmentRepository.requestRefund(appointmentId: 'a1', reason: 'Emergencia médica'))
         .thenAnswer((_) async => 'req1');
 

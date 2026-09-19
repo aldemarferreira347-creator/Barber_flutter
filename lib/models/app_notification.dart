@@ -4,10 +4,10 @@ enum NotificationType { manual, autoPaymentOverdue, appointmentReminder }
 
 extension NotificationTypeX on NotificationType {
   String get value => switch (this) {
-        NotificationType.manual => 'manual',
-        NotificationType.autoPaymentOverdue => 'auto_payment_overdue',
-        NotificationType.appointmentReminder => 'appointment_reminder',
-      };
+    NotificationType.manual => 'manual',
+    NotificationType.autoPaymentOverdue => 'auto_payment_overdue',
+    NotificationType.appointmentReminder => 'appointment_reminder',
+  };
 
   static NotificationType fromValue(String value) {
     return switch (value) {

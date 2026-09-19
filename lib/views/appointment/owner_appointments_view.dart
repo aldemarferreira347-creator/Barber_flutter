@@ -26,7 +26,11 @@ class OwnerAppointmentsView extends StatelessWidget {
           final appointments = snapshot.data ?? [];
           if (appointments.isEmpty) {
             return const Center(
-              child: EmptyState(icon: Icons.event_available_outlined, title: 'Sin citas todavía', subtitle: 'Aquí verás todas las citas de tu barbería.'),
+              child: EmptyState(
+                icon: Icons.event_available_outlined,
+                title: 'Sin citas todavía',
+                subtitle: 'Aquí verás todas las citas de tu barbería.',
+              ),
             );
           }
           return ListView.separated(

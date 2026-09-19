@@ -64,18 +64,27 @@ class _RegisterViewState extends State<RegisterView> {
                   children: [
                     const Text('Crear cuenta', style: TextStyle(fontSize: 22, fontWeight: FontWeight.w800)),
                     const SizedBox(height: 4),
-                    const Text('Completa la información para registrarte como cliente', style: TextStyle(color: AppColors.textSecondary)),
+                    const Text(
+                      'Completa la información para registrarte como cliente',
+                      style: TextStyle(color: AppColors.textSecondary),
+                    ),
                     const SizedBox(height: 20),
                     TextFormField(
                       controller: _nameController,
-                      decoration: const InputDecoration(labelText: 'Nombre completo', prefixIcon: Icon(Icons.person_outline)),
+                      decoration: const InputDecoration(
+                        labelText: 'Nombre completo',
+                        prefixIcon: Icon(Icons.person_outline),
+                      ),
                       validator: (value) => (value == null || value.trim().isEmpty) ? 'Requerido' : null,
                     ),
                     const SizedBox(height: 14),
                     TextFormField(
                       controller: _emailController,
                       keyboardType: TextInputType.emailAddress,
-                      decoration: const InputDecoration(labelText: 'Correo electrónico', prefixIcon: Icon(Icons.mail_outline)),
+                      decoration: const InputDecoration(
+                        labelText: 'Correo electrónico',
+                        prefixIcon: Icon(Icons.mail_outline),
+                      ),
                       validator: (value) => (value == null || !value.contains('@')) ? 'Correo inválido' : null,
                     ),
                     const SizedBox(height: 14),
@@ -89,7 +98,10 @@ class _RegisterViewState extends State<RegisterView> {
                     TextFormField(
                       controller: _confirmController,
                       obscureText: true,
-                      decoration: const InputDecoration(labelText: 'Confirmar contraseña', prefixIcon: Icon(Icons.lock_outline)),
+                      decoration: const InputDecoration(
+                        labelText: 'Confirmar contraseña',
+                        prefixIcon: Icon(Icons.lock_outline),
+                      ),
                       validator: (value) => value != _passwordController.text ? 'Las contraseñas no coinciden' : null,
                     ),
                     const SizedBox(height: 16),
@@ -117,7 +129,11 @@ class _RegisterViewState extends State<RegisterView> {
                     FilledButton(
                       onPressed: auth.isBusy ? null : () => _submit(auth),
                       child: auth.isBusy
-                          ? const SizedBox(height: 18, width: 18, child: CircularProgressIndicator(strokeWidth: 2, color: Colors.white))
+                          ? const SizedBox(
+                              height: 18,
+                              width: 18,
+                              child: CircularProgressIndicator(strokeWidth: 2, color: Colors.white),
+                            )
                           : const Text('Registrarse'),
                     ),
                     const SizedBox(height: 12),
@@ -129,7 +145,10 @@ class _RegisterViewState extends State<RegisterView> {
                             style: TextStyle(color: AppColors.textSecondary),
                             children: [
                               TextSpan(text: '¿Ya tienes una cuenta? '),
-                              TextSpan(text: 'Inicia sesión', style: TextStyle(color: AppColors.accent, fontWeight: FontWeight.w600)),
+                              TextSpan(
+                                text: 'Inicia sesión',
+                                style: TextStyle(color: AppColors.accent, fontWeight: FontWeight.w600),
+                              ),
                             ],
                           ),
                         ),

@@ -26,9 +26,8 @@ class _PhoneLoginViewState extends State<PhoneLoginView> {
   Future<void> _sendCode(AuthController auth) async {
     final phone = _phoneController.text.trim();
     if (!phone.startsWith('+') || phone.length < 8) {
-      ScaffoldMessenger.of(context).showSnackBar(
-        const SnackBar(content: Text('Usa formato internacional, ej. +573001234567')),
-      );
+      ScaffoldMessenger.of(context)
+          .showSnackBar(const SnackBar(content: Text('Usa formato internacional, ej. +573001234567')));
       return;
     }
     final handle = await auth.startPhoneVerification(phone);
@@ -93,20 +92,31 @@ class _PhoneLoginViewState extends State<PhoneLoginView> {
                     FilledButton(
                       onPressed: auth.isBusy ? null : () => _sendCode(auth),
                       child: auth.isBusy
-                          ? const SizedBox(height: 18, width: 18, child: CircularProgressIndicator(strokeWidth: 2, color: Colors.white))
+                          ? const SizedBox(
+                              height: 18,
+                              width: 18,
+                              child: CircularProgressIndicator(strokeWidth: 2, color: Colors.white),
+                            )
                           : const Text('Enviar código'),
                     ),
                   ] else ...[
                     TextField(
                       controller: _codeController,
                       keyboardType: TextInputType.number,
-                      decoration: const InputDecoration(labelText: 'Código de 6 dígitos', prefixIcon: Icon(Icons.sms_outlined)),
+                      decoration: const InputDecoration(
+                        labelText: 'Código de 6 dígitos',
+                        prefixIcon: Icon(Icons.sms_outlined),
+                      ),
                     ),
                     const SizedBox(height: 20),
                     FilledButton(
                       onPressed: auth.isBusy ? null : () => _confirmCode(auth),
                       child: auth.isBusy
-                          ? const SizedBox(height: 18, width: 18, child: CircularProgressIndicator(strokeWidth: 2, color: Colors.white))
+                          ? const SizedBox(
+                              height: 18,
+                              width: 18,
+                              child: CircularProgressIndicator(strokeWidth: 2, color: Colors.white),
+                            )
                           : const Text('Confirmar código'),
                     ),
                     TextButton(

@@ -9,8 +9,8 @@ class CloudPurchaseService implements PurchaseRepository {
   final FirebaseFirestore _firestore;
 
   CloudPurchaseService({FirebaseFunctions? functions, FirebaseFirestore? firestore})
-      : _functions = functions ?? FirebaseFunctions.instance,
-        _firestore = firestore ?? FirebaseFirestore.instance;
+    : _functions = functions ?? FirebaseFunctions.instance,
+      _firestore = firestore ?? FirebaseFirestore.instance;
 
   CollectionReference<Map<String, dynamic>> get _purchases => _firestore.collection('purchases');
 
@@ -39,16 +39,20 @@ class CloudPurchaseService implements PurchaseRepository {
 
   @override
   Stream<List<Purchase>> watchByBuyer(String buyerId) {
-    return _purchases.where('buyerId', isEqualTo: buyerId).orderBy('createdAt', descending: true).snapshots().map(
-          (snapshot) => snapshot.docs.map((doc) => Purchase.fromMap(doc.id, doc.data())).toList(),
-        );
+    return _purchases
+        .where('buyerId', isEqualTo: buyerId)
+        .orderBy('createdAt', descending: true)
+        .snapshots()
+        .map((snapshot) => snapshot.docs.map((doc) => Purchase.fromMap(doc.id, doc.data())).toList());
   }
 
   @override
   Stream<List<Purchase>> watchByBarbershop(String barbershopId) {
-    return _purchases.where('barbershopId', isEqualTo: barbershopId).orderBy('createdAt', descending: true).snapshots().map(
-          (snapshot) => snapshot.docs.map((doc) => Purchase.fromMap(doc.id, doc.data())).toList(),
-        );
+    return _purchases
+        .where('barbershopId', isEqualTo: barbershopId)
+        .orderBy('createdAt', descending: true)
+        .snapshots()
+        .map((snapshot) => snapshot.docs.map((doc) => Purchase.fromMap(doc.id, doc.data())).toList());
   }
 
   @override

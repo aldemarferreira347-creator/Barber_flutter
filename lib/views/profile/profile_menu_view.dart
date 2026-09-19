@@ -22,11 +22,11 @@ class ProfileMenuView extends StatelessWidget {
   const ProfileMenuView({super.key, required this.items});
 
   String _roleLabel(UserRole role) => switch (role) {
-        UserRole.admin => 'Administrador',
-        UserRole.owner => 'Dueño',
-        UserRole.barber => 'Barbero',
-        UserRole.client => 'Cliente',
-      };
+    UserRole.admin => 'Administrador',
+    UserRole.owner => 'Dueño',
+    UserRole.barber => 'Barbero',
+    UserRole.client => 'Cliente',
+  };
 
   Future<void> _showToneDialog(BuildContext context) async {
     final authController = context.read<AuthController>();
@@ -58,9 +58,8 @@ class ProfileMenuView extends StatelessWidget {
     final ok = await authController.chooseNotificationTone(tone);
     if (!context.mounted) return;
     if (!ok) {
-      ScaffoldMessenger.of(context).showSnackBar(
-        SnackBar(content: Text(authController.errorMessage ?? 'No se pudo actualizar el tono')),
-      );
+      ScaffoldMessenger.of(context)
+          .showSnackBar(SnackBar(content: Text(authController.errorMessage ?? 'No se pudo actualizar el tono')));
     }
   }
 
@@ -88,7 +87,10 @@ class ProfileMenuView extends StatelessWidget {
                 CircleAvatar(
                   radius: 26,
                   backgroundColor: AppColors.primary,
-                  child: Text(initials, style: const TextStyle(color: Colors.white, fontWeight: FontWeight.w700)),
+                  child: Text(
+                    initials,
+                    style: const TextStyle(color: Colors.white, fontWeight: FontWeight.w700),
+                  ),
                 ),
                 const SizedBox(width: 14),
                 Expanded(
@@ -99,7 +101,10 @@ class ProfileMenuView extends StatelessWidget {
                       const SizedBox(height: 2),
                       Text(profile?.email ?? '', style: const TextStyle(color: AppColors.textSecondary, fontSize: 13)),
                       const SizedBox(height: 4),
-                      Text('Rol: ${_roleLabel(profile?.role ?? UserRole.client)}', style: const TextStyle(color: AppColors.accent, fontSize: 12, fontWeight: FontWeight.w600)),
+                      Text(
+                        'Rol: ${_roleLabel(profile?.role ?? UserRole.client)}',
+                        style: const TextStyle(color: AppColors.accent, fontSize: 12, fontWeight: FontWeight.w600),
+                      ),
                     ],
                   ),
                 ),
@@ -107,11 +112,7 @@ class ProfileMenuView extends StatelessWidget {
             ),
           ),
           const SizedBox(height: 18),
-          ActionListTile(
-            icon: Icons.tune,
-            label: 'Tono de notificaciones',
-            onTap: () => _showToneDialog(context),
-          ),
+          ActionListTile(icon: Icons.tune, label: 'Tono de notificaciones', onTap: () => _showToneDialog(context)),
           const SizedBox(height: 10),
           for (final item in items) ...[
             ActionListTile(icon: item.icon, label: item.label, onTap: item.onTap),

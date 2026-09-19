@@ -31,7 +31,10 @@ class StatCard extends StatelessWidget {
             child: Column(
               crossAxisAlignment: CrossAxisAlignment.start,
               children: [
-                Text(value, style: const TextStyle(fontSize: 26, fontWeight: FontWeight.w800, color: AppColors.textPrimary)),
+                Text(
+                  value,
+                  style: const TextStyle(fontSize: 26, fontWeight: FontWeight.w800, color: AppColors.textPrimary),
+                ),
                 const SizedBox(height: 2),
                 Text(label, style: const TextStyle(fontSize: 13, color: AppColors.textSecondary)),
               ],

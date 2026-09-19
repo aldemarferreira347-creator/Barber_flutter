@@ -48,7 +48,8 @@ class _AdminDashboardTabState extends State<AdminDashboardTab> {
         await notificationRepo.send(
           toUserId: shop.ownerId,
           title: 'Pago vencido',
-          body: 'El pago de "${shop.name}" venció el ${dueDate.day}/${dueDate.month}/${dueDate.year}. Regulariza para evitar el bloqueo.',
+          body:
+              'El pago de "${shop.name}" venció el ${dueDate.day}/${dueDate.month}/${dueDate.year}. Regulariza para evitar el bloqueo.',
           type: NotificationType.autoPaymentOverdue,
         );
       }
@@ -63,9 +64,7 @@ class _AdminDashboardTabState extends State<AdminDashboardTab> {
     final greetingName = profile?.firstName.isNotEmpty == true ? profile!.firstName : 'Admin';
 
     return Scaffold(
-      appBar: AppBar(
-        title: Text('Hola, $greetingName 👋'),
-      ),
+      appBar: AppBar(title: Text('Hola, $greetingName 👋')),
       body: ListView(
         padding: const EdgeInsets.all(16),
         children: [
@@ -85,19 +84,40 @@ class _AdminDashboardTabState extends State<AdminDashboardTab> {
                     children: [
                       Row(
                         children: [
-                          Expanded(child: StatCard(icon: Icons.people_outline, value: '${users.length}', label: 'Usuarios registrados', iconColor: AppColors.accent)),
+                          Expanded(
+                            child: StatCard(
+                              icon: Icons.people_outline,
+                              value: '${users.length}',
+                              label: 'Usuarios registrados',
+                              iconColor: AppColors.accent,
+                            ),
+                          ),
                         ],
                       ),
                       const SizedBox(height: 12),
                       Row(
                         children: [
-                          Expanded(child: StatCard(icon: Icons.storefront_outlined, value: '$activeShops', label: 'Barberías activas', iconColor: AppColors.success)),
+                          Expanded(
+                            child: StatCard(
+                              icon: Icons.storefront_outlined,
+                              value: '$activeShops',
+                              label: 'Barberías activas',
+                              iconColor: AppColors.success,
+                            ),
+                          ),
                         ],
                       ),
                       const SizedBox(height: 12),
                       Row(
                         children: [
-                          Expanded(child: StatCard(icon: Icons.warning_amber_outlined, value: '$overdueShops', label: 'Barberías con pago pendiente', iconColor: AppColors.warning)),
+                          Expanded(
+                            child: StatCard(
+                              icon: Icons.warning_amber_outlined,
+                              value: '$overdueShops',
+                              label: 'Barberías con pago pendiente',
+                              iconColor: AppColors.warning,
+                            ),
+                          ),
                         ],
                       ),
                     ],
@@ -118,7 +138,9 @@ class _AdminDashboardTabState extends State<AdminDashboardTab> {
           ActionListTile(
             icon: Icons.storefront_outlined,
             label: 'Ver todas las barberías',
-            onTap: () => Navigator.of(context).push(MaterialPageRoute(builder: (_) => const ManageBarbershopsView(adminControls: true))),
+            onTap: () =>
+                Navigator.of(context)
+                    .push(MaterialPageRoute(builder: (_) => const ManageBarbershopsView(adminControls: true))),
           ),
         ],
       ),

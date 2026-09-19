@@ -23,7 +23,9 @@ class ManageServicesView extends StatelessWidget {
       appBar: AppBar(title: const Text('Servicios')),
       floatingActionButton: canManage
           ? FloatingActionButton(
-              onPressed: () => Navigator.of(context).push(MaterialPageRoute(builder: (_) => AddServiceView(barbershopId: barbershopId))),
+              onPressed: () =>
+                  Navigator.of(context)
+                      .push(MaterialPageRoute(builder: (_) => AddServiceView(barbershopId: barbershopId))),
               child: const Icon(Icons.add),
             )
           : null,
@@ -75,11 +77,17 @@ class ManageServicesView extends StatelessWidget {
                         crossAxisAlignment: CrossAxisAlignment.start,
                         children: [
                           Text(service.name, style: const TextStyle(fontWeight: FontWeight.w700)),
-                          Text('${service.durationMinutes} min', style: const TextStyle(color: AppColors.textSecondary, fontSize: 12)),
+                          Text(
+                            '${service.durationMinutes} min',
+                            style: const TextStyle(color: AppColors.textSecondary, fontSize: 12),
+                          ),
                         ],
                       ),
                     ),
-                    Text('\$${service.price.toStringAsFixed(0)}', style: const TextStyle(fontWeight: FontWeight.w800, color: AppColors.accent)),
+                    Text(
+                      '\$${service.price.toStringAsFixed(0)}',
+                      style: const TextStyle(fontWeight: FontWeight.w800, color: AppColors.accent),
+                    ),
                     if (canManage)
                       Switch(
                         value: service.active,
