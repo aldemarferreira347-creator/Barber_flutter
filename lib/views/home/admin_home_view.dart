@@ -2,6 +2,7 @@ import 'package:flutter/material.dart';
 
 import '../admin/manage_users_view.dart';
 import '../barbershop/manage_barbershops_view.dart';
+import '../help/help_view.dart';
 import '../profile/profile_menu_view.dart';
 import '../widgets/role_shell.dart';
 import 'admin_dashboard_tab.dart';
@@ -50,7 +51,7 @@ class AdminHomeView extends StatelessWidget {
                 ProfileMenuItem(
                   icon: Icons.help_outline,
                   label: 'Ayuda',
-                  onTap: () => _comingSoon(context, 'La ayuda'),
+                  onTap: () => Navigator.of(context).push(MaterialPageRoute(builder: (_) => const HelpView())),
                 ),
               ],
             ),

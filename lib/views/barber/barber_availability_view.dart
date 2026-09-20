@@ -56,7 +56,7 @@ class BarberAvailabilityView extends StatelessWidget {
                         available
                             ? 'Los clientes pueden agendar contigo.'
                             : 'No aparecerás para que te agenden citas nuevas.',
-                        style: const TextStyle(color: AppColors.textSecondary, fontSize: 12),
+                        style: TextStyle(color: AppColors.textSecondary, fontSize: 12),
                       ),
                     ],
                   ),
@@ -153,10 +153,10 @@ class _AwayControlState extends State<_AwayControl> {
           estimate == null
               ? 'Estimaste que volverías pronto.'
               : 'Estimaste volver antes de las ${estimate.hour.toString().padLeft(2, '0')}:${estimate.minute.toString().padLeft(2, '0')}.',
-          style: const TextStyle(color: AppColors.textSecondary, fontSize: 13),
+          style: TextStyle(color: AppColors.textSecondary, fontSize: 13),
         ),
         const SizedBox(height: 4),
-        const Text(
+        Text(
           'Si no marcas tu regreso a tiempo, tus citas pagadas de hoy se aplazan automáticamente y se invita a tus clientes a reprogramar.',
           style: TextStyle(color: AppColors.textSecondary, fontSize: 12),
         ),
@@ -176,7 +176,7 @@ class _AwayControlState extends State<_AwayControl> {
       children: [
         const Text('¿Vas a salir de la tienda?', style: TextStyle(fontWeight: FontWeight.w700)),
         const SizedBox(height: 4),
-        const Text(
+        Text(
           'Indica cuánto tiempo estimas que tardarás — de eso depende hasta cuándo tus clientes siguen esperándote con normalidad.',
           style: TextStyle(color: AppColors.textSecondary, fontSize: 12),
         ),

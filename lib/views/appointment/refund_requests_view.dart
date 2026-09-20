@@ -96,7 +96,7 @@ class RefundRequestsView extends StatelessWidget {
                     Text(request.reason, style: const TextStyle(fontWeight: FontWeight.w600)),
                     if (request.purchaseId != null) ...[
                       const SizedBox(height: 4),
-                      const Text(
+                      Text(
                         'Incluye productos por reembolsar',
                         style: TextStyle(color: AppColors.textSecondary, fontSize: 12),
                       ),

@@ -47,6 +47,7 @@ dependencies:
   firebase_app_check: ^0.4.8
   firebase_messaging: ^16.7.0
   cloud_functions: ^6.5.0
+  shared_preferences: ^2.3.2
 
 dev_dependencies:
   flutter_test:

@@ -1,6 +1,7 @@
 import 'package:flutter/material.dart';
 
 import '../../models/app_user.dart';
+import '../help/help_view.dart';
 import '../notification/notifications_view.dart';
 import '../product/claim_purchase_view.dart';
 import '../profile/profile_menu_view.dart';
@@ -32,5 +33,10 @@ List<ProfileMenuItem> buildBarberProfileItems(BuildContext context, AppUser? pro
                 .push(MaterialPageRoute(builder: (_) => ClaimPurchaseView(barbershopId: profile!.barbershopId!))),
       ),
     ],
+    ProfileMenuItem(
+      icon: Icons.help_outline,
+      label: 'Ayuda',
+      onTap: () => Navigator.of(context).push(MaterialPageRoute(builder: (_) => const HelpView())),
+    ),
   ];
 }

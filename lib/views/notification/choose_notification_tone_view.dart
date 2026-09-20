@@ -47,7 +47,7 @@ class _ChooseNotificationToneViewState extends State<ChooseNotificationToneView>
                 style: TextStyle(fontSize: 22, fontWeight: FontWeight.w800),
               ),
               const SizedBox(height: 8),
-              const Text(
+              Text(
                 'Elige el tono de tus notificaciones. Puedes cambiarlo cuando quieras desde tu perfil.',
                 style: TextStyle(color: AppColors.textSecondary),
               ),

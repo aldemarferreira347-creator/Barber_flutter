@@ -240,7 +240,7 @@ class _SelectableTile extends StatelessWidget {
                   children: [
                     Text(title, style: const TextStyle(fontWeight: FontWeight.w600)),
                     if (subtitle != null)
-                      Text(subtitle!, style: const TextStyle(color: AppColors.textSecondary, fontSize: 12)),
+                      Text(subtitle!, style: TextStyle(color: AppColors.textSecondary, fontSize: 12)),
                   ],
                 ),
               ),

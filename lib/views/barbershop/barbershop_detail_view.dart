@@ -54,7 +54,7 @@ class BarbershopDetailView extends StatelessWidget {
           }
           final shop = snapshot.data;
           if (shop == null) {
-            return const Center(
+            return Center(
               child: Text('Esta barbería ya no existe', style: TextStyle(color: AppColors.textSecondary)),
             );
           }
@@ -73,17 +73,21 @@ class BarbershopDetailView extends StatelessWidget {
             body: ListView(
               padding: const EdgeInsets.all(16),
               children: [
-                Container(
-                  height: 160,
-                  decoration: BoxDecoration(
-                    color: AppColors.primary,
-                    borderRadius: BorderRadius.circular(16),
-                    image: shop.photoUrl != null
-                        ? DecorationImage(image: NetworkImage(shop.photoUrl!), fit: BoxFit.cover)
-                        : null,
+                Semantics(
+                  image: true,
+                  label: shop.photoUrl != null ? 'Foto de portada de ${shop.name}' : 'Sin foto de portada',
+                  child: Container(
+                    height: 160,
+                    decoration: BoxDecoration(
+                      color: AppColors.primary,
+                      borderRadius: BorderRadius.circular(16),
+                      image: shop.photoUrl != null
+                          ? DecorationImage(image: NetworkImage(shop.photoUrl!), fit: BoxFit.cover)
+                          : null,
+                    ),
+                    alignment: Alignment.center,
+                    child: shop.photoUrl == null ? const Icon(Icons.storefront, color: Colors.white, size: 48) : null,
                   ),
-                  alignment: Alignment.center,
-                  child: shop.photoUrl == null ? const Icon(Icons.storefront, color: Colors.white, size: 48) : null,
                 ),
                 const SizedBox(height: 16),
                 Row(
@@ -98,15 +102,11 @@ class BarbershopDetailView extends StatelessWidget {
                   const SizedBox(height: 6),
                   Row(
                     children: [
-                      const Icon(Icons.star, color: AppColors.primary, size: 16),
+                      Icon(Icons.star, color: AppColors.primary, size: 16),
                       const SizedBox(width: 4),
                       Text(
                         '${shop.averageRating.toStringAsFixed(1)} (${shop.ratingCount})',
-                        style: const TextStyle(
-                          color: AppColors.textSecondary,
-                          fontWeight: FontWeight.w600,
-                          fontSize: 13,
-                        ),
+                        style: TextStyle(color: AppColors.textSecondary, fontWeight: FontWeight.w600, fontSize: 13),
                       ),
                     ],
                   ),
@@ -161,10 +161,7 @@ class BarbershopDetailView extends StatelessWidget {
                         child: Column(
                           crossAxisAlignment: CrossAxisAlignment.start,
                           children: [
-                            const Text(
-                              'Estado de pago',
-                              style: TextStyle(color: AppColors.textSecondary, fontSize: 12),
-                            ),
+                            Text('Estado de pago', style: TextStyle(color: AppColors.textSecondary, fontSize: 12)),
                             const SizedBox(height: 4),
                             Text(
                               _paymentLabel(shop.paymentStatus),
@@ -177,7 +174,7 @@ class BarbershopDetailView extends StatelessWidget {
                         Column(
                           crossAxisAlignment: CrossAxisAlignment.end,
                           children: [
-                            const Text(
+                            Text(
                               'Fecha de vencimiento',
                               style: TextStyle(color: AppColors.textSecondary, fontSize: 12),
                             ),
@@ -195,7 +192,7 @@ class BarbershopDetailView extends StatelessWidget {
                   const SizedBox(height: 16),
                   const Text('Información general', style: TextStyle(fontWeight: FontWeight.w700)),
                   const SizedBox(height: 6),
-                  Text(shop.description!, style: const TextStyle(color: AppColors.textSecondary)),
+                  Text(shop.description!, style: TextStyle(color: AppColors.textSecondary)),
                 ],
                 if (shop.schedule.isNotEmpty) ...[
                   const SizedBox(height: 16),

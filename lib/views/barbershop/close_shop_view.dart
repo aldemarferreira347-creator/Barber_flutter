@@ -110,7 +110,7 @@ class _CloseShopViewState extends State<CloseShopView> {
   Widget _buildForm() {
     return ListView(
       children: [
-        const Text(
+        Text(
           'Las reservas pagadas dentro de este rango quedarán aplazadas y sus clientes serán invitados a reprogramar. '
           'Su calificación final tendrá un descuento obligatorio de 1 estrella, ya que el cierre afecta su experiencia '
           'aunque no dependa de la barbería.',

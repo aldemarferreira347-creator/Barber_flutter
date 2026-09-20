@@ -125,7 +125,12 @@ class _AddBarbershopViewState extends State<AddBarbershopView> {
         final fileName = '${DateTime.now().millisecondsSinceEpoch}_${_photoName ?? 'foto.jpg'}';
         await repo.uploadPhoto(id, fileName: fileName, bytes: _photoBytes!);
       }
-      if (mounted) Navigator.of(context).pop();
+      if (mounted) {
+        Navigator.of(context).pop();
+        ScaffoldMessenger.of(context).showSnackBar(
+          const SnackBar(content: Text('Barbería registrada. Queda pendiente de revisión por el administrador.')),
+        );
+      }
     } catch (e) {
       if (mounted) {
         ScaffoldMessenger.of(context).showSnackBar(SnackBar(content: Text('No se pudo guardar: $e')));
@@ -160,11 +165,11 @@ class _AddBarbershopViewState extends State<AddBarbershopView> {
                           : null,
                     ),
                     child: _photoBytes == null
-                        ? const Column(
+                        ? Column(
                             mainAxisAlignment: MainAxisAlignment.center,
                             children: [
                               Icon(Icons.add_a_photo_outlined, color: AppColors.textSecondary),
-                              SizedBox(height: 6),
+                              const SizedBox(height: 6),
                               Text(
                                 'Añadir foto de portada',
                                 style: TextStyle(color: AppColors.textSecondary, fontSize: 12),
@@ -183,10 +188,10 @@ class _AddBarbershopViewState extends State<AddBarbershopView> {
                   borderRadius: BorderRadius.circular(12),
                   border: Border.all(color: AppColors.accent.withValues(alpha: 0.2)),
                 ),
-                child: const Row(
+                child: Row(
                   children: [
                     Icon(Icons.info_outline, size: 18, color: AppColors.accent),
-                    SizedBox(width: 8),
+                    const SizedBox(width: 8),
                     Expanded(
                       child: Text(
                         'Tu barbería quedará pendiente de revisión. El administrador la aprobará antes de que aparezca en el catálogo.',

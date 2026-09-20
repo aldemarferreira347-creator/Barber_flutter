@@ -209,11 +209,11 @@ class _ConductGuidelines extends StatelessWidget {
         borderRadius: BorderRadius.circular(12),
         border: Border.all(color: AppColors.border),
       ),
-      child: const Column(
+      child: Column(
         crossAxisAlignment: CrossAxisAlignment.start,
         children: [
-          Text('Antes de calificar', style: TextStyle(fontWeight: FontWeight.w700)),
-          SizedBox(height: 8),
+          const Text('Antes de calificar', style: TextStyle(fontWeight: FontWeight.w700)),
+          const SizedBox(height: 8),
           Text(
             'La barbería debe garantizar puntualidad, higiene y buen trato. '
             'Te pedimos que tu comentario sea constructivo: describe tu experiencia '

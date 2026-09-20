@@ -71,12 +71,18 @@ class ManageProductsView extends StatelessWidget {
                       ClipRRect(
                         borderRadius: BorderRadius.circular(10),
                         child: product.photoUrl != null
-                            ? Image.network(product.photoUrl!, width: 56, height: 56, fit: BoxFit.cover)
+                            ? Image.network(
+                                product.photoUrl!,
+                                width: 56,
+                                height: 56,
+                                fit: BoxFit.cover,
+                                semanticLabel: 'Foto de ${product.name}',
+                              )
                             : Container(
                                 width: 56,
                                 height: 56,
                                 color: AppColors.background,
-                                child: const Icon(Icons.shopping_bag_outlined, color: AppColors.textSecondary),
+                                child: Icon(Icons.shopping_bag_outlined, color: AppColors.textSecondary),
                               ),
                       ),
                       const SizedBox(width: 12),
@@ -88,14 +94,14 @@ class ManageProductsView extends StatelessWidget {
                             if ((product.description ?? '').isNotEmpty)
                               Text(
                                 product.description!,
-                                style: const TextStyle(color: AppColors.textSecondary, fontSize: 12),
+                                style: TextStyle(color: AppColors.textSecondary, fontSize: 12),
                               ),
                           ],
                         ),
                       ),
                       Text(
                         '\$${product.price.toStringAsFixed(0)}',
-                        style: const TextStyle(fontWeight: FontWeight.w800, color: AppColors.accent),
+                        style: TextStyle(fontWeight: FontWeight.w800, color: AppColors.accent),
                       ),
                       if (canManage)
                         Switch(

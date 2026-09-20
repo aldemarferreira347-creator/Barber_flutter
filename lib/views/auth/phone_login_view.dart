@@ -79,7 +79,7 @@ class _PhoneLoginViewState extends State<PhoneLoginView> {
                   const SizedBox(height: 4),
                   Text(
                     codeStep ? 'Enviado a ${_phoneController.text}' : 'Escribe tu número con indicativo de país',
-                    style: const TextStyle(color: AppColors.textSecondary),
+                    style: TextStyle(color: AppColors.textSecondary),
                   ),
                   const SizedBox(height: 20),
                   if (!codeStep) ...[

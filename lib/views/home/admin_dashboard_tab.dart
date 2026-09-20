@@ -75,12 +75,12 @@ class _AdminDashboardTabState extends State<AdminDashboardTab> {
               onPressed: () =>
                   Navigator.of(context).push(MaterialPageRoute(builder: (_) => NotificationsView(uid: profile.uid))),
             ),
-          const Padding(
-            padding: EdgeInsets.only(right: 16, left: 4),
+          Padding(
+            padding: const EdgeInsets.only(right: 16, left: 4),
             child: CircleAvatar(
               radius: 16,
               backgroundColor: AppColors.primary,
-              child: Icon(Icons.shield_outlined, color: Colors.white, size: 16),
+              child: const Icon(Icons.shield_outlined, color: Colors.white, size: 16),
             ),
           ),
         ],
@@ -88,7 +88,7 @@ class _AdminDashboardTabState extends State<AdminDashboardTab> {
       body: ListView(
         padding: const EdgeInsets.all(16),
         children: [
-          const Text('Panel de administración', style: TextStyle(color: AppColors.textSecondary)),
+          Text('Panel de administración', style: TextStyle(color: AppColors.textSecondary)),
           const SizedBox(height: 16),
           StreamBuilder<List<AppUser>>(
             stream: userService.watchAll(),

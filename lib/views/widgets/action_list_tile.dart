@@ -7,18 +7,13 @@ class ActionListTile extends StatelessWidget {
   final IconData icon;
   final String label;
   final VoidCallback? onTap;
-  final Color iconColor;
+  final Color? iconColor;
 
-  const ActionListTile({
-    super.key,
-    required this.icon,
-    required this.label,
-    this.onTap,
-    this.iconColor = AppColors.accent,
-  });
+  const ActionListTile({super.key, required this.icon, required this.label, this.onTap, this.iconColor});
 
   @override
   Widget build(BuildContext context) {
+    final resolvedIconColor = iconColor ?? AppColors.accent;
     return Material(
       color: AppColors.surface,
       borderRadius: BorderRadius.circular(14),
@@ -35,17 +30,17 @@ class ActionListTile extends StatelessWidget {
             children: [
               Container(
                 padding: const EdgeInsets.all(8),
-                decoration: BoxDecoration(color: iconColor.withValues(alpha: 0.12), shape: BoxShape.circle),
-                child: Icon(icon, color: iconColor, size: 18),
+                decoration: BoxDecoration(color: resolvedIconColor.withValues(alpha: 0.12), shape: BoxShape.circle),
+                child: Icon(icon, color: resolvedIconColor, size: 18),
               ),
               const SizedBox(width: 12),
               Expanded(
                 child: Text(
                   label,
-                  style: const TextStyle(fontWeight: FontWeight.w600, color: AppColors.textPrimary),
+                  style: TextStyle(fontWeight: FontWeight.w600, color: AppColors.textPrimary),
                 ),
               ),
-              const Icon(Icons.chevron_right, color: AppColors.textSecondary),
+              Icon(Icons.chevron_right, color: AppColors.textSecondary),
             ],
           ),
         ),

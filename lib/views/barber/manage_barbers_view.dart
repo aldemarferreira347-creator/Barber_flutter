@@ -22,7 +22,7 @@ class ManageBarbersView extends StatelessWidget {
         content: Column(
           mainAxisSize: MainAxisSize.min,
           children: [
-            const Text(
+            Text(
               'Escribe el correo de un cliente ya registrado en BarberFlow para contratarlo como barbero de tu barbería.',
               style: TextStyle(color: AppColors.textSecondary, fontSize: 13),
             ),
@@ -148,7 +148,7 @@ class ManageBarbersView extends StatelessWidget {
                         crossAxisAlignment: CrossAxisAlignment.start,
                         children: [
                           Text(barber.name, style: const TextStyle(fontWeight: FontWeight.w700)),
-                          Text(barber.email, style: const TextStyle(color: AppColors.textSecondary, fontSize: 12)),
+                          Text(barber.email, style: TextStyle(color: AppColors.textSecondary, fontSize: 12)),
                         ],
                       ),
                     ),

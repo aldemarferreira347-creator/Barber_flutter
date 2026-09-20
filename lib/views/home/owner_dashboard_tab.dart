@@ -89,12 +89,12 @@ class OwnerDashboardTab extends StatelessWidget {
               onPressed: () =>
                   Navigator.of(context).push(MaterialPageRoute(builder: (_) => NotificationsView(uid: profile.uid))),
             ),
-          const Padding(
-            padding: EdgeInsets.only(right: 16, left: 4),
+          Padding(
+            padding: const EdgeInsets.only(right: 16, left: 4),
             child: CircleAvatar(
               radius: 16,
               backgroundColor: AppColors.primary,
-              child: Icon(Icons.storefront_outlined, color: Colors.white, size: 16),
+              child: const Icon(Icons.storefront_outlined, color: Colors.white, size: 16),
             ),
           ),
         ],
@@ -111,7 +111,7 @@ class OwnerDashboardTab extends StatelessWidget {
           return ListView(
             padding: const EdgeInsets.all(16),
             children: [
-              const Text('Tu barbería en buenas manos', style: TextStyle(color: AppColors.textSecondary)),
+              Text('Tu barbería en buenas manos', style: TextStyle(color: AppColors.textSecondary)),
               const SizedBox(height: 16),
               if (shop == null)
                 Column(
@@ -151,7 +151,7 @@ class OwnerDashboardTab extends StatelessWidget {
                         child: Column(
                           crossAxisAlignment: CrossAxisAlignment.start,
                           children: [
-                            const Text('Mi barbería', style: TextStyle(color: AppColors.textSecondary, fontSize: 12)),
+                            Text('Mi barbería', style: TextStyle(color: AppColors.textSecondary, fontSize: 12)),
                             Text(shop.name, style: const TextStyle(fontWeight: FontWeight.w700)),
                           ],
                         ),

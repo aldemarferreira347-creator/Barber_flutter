@@ -37,20 +37,26 @@ import 'services/firestore_service_service.dart';
 import 'services/firestore_user_service.dart';
 import 'services/nequi_payment_gateway.dart';
 import 'theme/app_theme.dart';
+import 'theme/theme_controller.dart';
 
 Future<void> main() async {
   WidgetsFlutterBinding.ensureInitialized();
   await Firebase.initializeApp(options: DefaultFirebaseOptions.currentPlatform);
-  runApp(const BarberApp());
+  final themeController = ThemeController();
+  await themeController.load();
+  runApp(BarberApp(themeController: themeController));
 }
 
 class BarberApp extends StatelessWidget {
-  const BarberApp({super.key});
+  final ThemeController themeController;
+
+  const BarberApp({super.key, required this.themeController});
 
   @override
   Widget build(BuildContext context) {
     return MultiProvider(
       providers: [
+        ChangeNotifierProvider<ThemeController>.value(value: themeController),
         // Repositorios (infraestructura Firebase) expuestos por su
         // abstracción: el resto de la app depende de la interfaz, no de
         // Firebase directamente (Dependency Inversion).
@@ -83,11 +89,17 @@ class BarberApp extends StatelessWidget {
         ),
         ChangeNotifierProvider(create: (context) => UserController(userService: context.read<UserRepository>())),
       ],
-      child: MaterialApp(
-        title: 'BarberFlow',
-        theme: AppTheme.light,
-        initialRoute: AppRoutes.root,
-        onGenerateRoute: AppRouter.onGenerateRoute,
+      // Consumer, no solo Provider: al cambiar el modo oscuro necesitamos
+      // reconstruir todo el árbol de la app, porque la mayoría de las
+      // pantallas lee `AppColors.x` directamente (no vía Theme.of(context)).
+      child: Consumer<ThemeController>(
+        builder: (context, _, _) => MaterialApp(
+          key: ValueKey(themeController.isDark),
+          title: 'BarberFlow',
+          theme: AppTheme.current,
+          initialRoute: AppRoutes.root,
+          onGenerateRoute: AppRouter.onGenerateRoute,
+        ),
       ),
     );
   }

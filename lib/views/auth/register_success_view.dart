@@ -23,7 +23,7 @@ class RegisterSuccessView extends StatelessWidget {
               const SizedBox(height: 20),
               const Text('¡Registro exitoso!', style: TextStyle(fontSize: 22, fontWeight: FontWeight.w800)),
               const SizedBox(height: 8),
-              const Text(
+              Text(
                 'Tu cuenta ha sido creada correctamente.\nAhora puedes iniciar sesión.',
                 textAlign: TextAlign.center,
                 style: TextStyle(color: AppColors.textSecondary),
@@ -39,7 +39,7 @@ class RegisterSuccessView extends StatelessWidget {
               const Spacer(),
               Container(
                 padding: const EdgeInsets.all(14),
-                decoration: const BoxDecoration(color: AppColors.primary, shape: BoxShape.circle),
+                decoration: BoxDecoration(color: AppColors.primary, shape: BoxShape.circle),
                 child: const BrandMark(size: 26),
               ),
               const SizedBox(height: 8),

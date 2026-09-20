@@ -5,6 +5,7 @@ import '../../controllers/auth_controller.dart';
 import '../../models/notification_tone.dart';
 import '../../models/user_role.dart';
 import '../../theme/app_colors.dart';
+import '../../theme/theme_controller.dart';
 import '../widgets/action_list_tile.dart';
 
 class ProfileMenuItem {
@@ -99,11 +100,11 @@ class ProfileMenuView extends StatelessWidget {
                     children: [
                       Text(profile?.name ?? '', style: const TextStyle(fontWeight: FontWeight.w700, fontSize: 16)),
                       const SizedBox(height: 2),
-                      Text(profile?.email ?? '', style: const TextStyle(color: AppColors.textSecondary, fontSize: 13)),
+                      Text(profile?.email ?? '', style: TextStyle(color: AppColors.textSecondary, fontSize: 13)),
                       const SizedBox(height: 4),
                       Text(
                         'Rol: ${_roleLabel(profile?.role ?? UserRole.client)}',
-                        style: const TextStyle(color: AppColors.accent, fontSize: 12, fontWeight: FontWeight.w600),
+                        style: TextStyle(color: AppColors.accent, fontSize: 12, fontWeight: FontWeight.w600),
                       ),
                     ],
                   ),
@@ -113,6 +114,37 @@ class ProfileMenuView extends StatelessWidget {
           ),
           const SizedBox(height: 18),
           ActionListTile(icon: Icons.tune, label: 'Tono de notificaciones', onTap: () => _showToneDialog(context)),
+          const SizedBox(height: 10),
+          Consumer<ThemeController>(
+            builder: (context, themeController, _) => Material(
+              color: AppColors.surface,
+              borderRadius: BorderRadius.circular(14),
+              child: Container(
+                padding: const EdgeInsets.symmetric(horizontal: 14, vertical: 6),
+                decoration: BoxDecoration(
+                  borderRadius: BorderRadius.circular(14),
+                  border: Border.all(color: AppColors.border),
+                ),
+                child: Row(
+                  children: [
+                    Container(
+                      padding: const EdgeInsets.all(8),
+                      decoration: BoxDecoration(
+                        color: AppColors.accent.withValues(alpha: 0.12),
+                        shape: BoxShape.circle,
+                      ),
+                      child: Icon(Icons.dark_mode_outlined, color: AppColors.accent, size: 18),
+                    ),
+                    const SizedBox(width: 12),
+                    const Expanded(
+                      child: Text('Modo oscuro', style: TextStyle(fontWeight: FontWeight.w600)),
+                    ),
+                    Switch(value: themeController.isDark, onChanged: (value) => themeController.setDark(value)),
+                  ],
+                ),
+              ),
+            ),
+          ),
           const SizedBox(height: 10),
           for (final item in items) ...[
             ActionListTile(icon: item.icon, label: item.label, onTap: item.onTap),

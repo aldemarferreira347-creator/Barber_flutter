@@ -157,10 +157,7 @@ class _LoginViewState extends State<LoginView> {
                       children: [
                         const Text('Iniciar sesión', style: TextStyle(fontSize: 22, fontWeight: FontWeight.w800)),
                         const SizedBox(height: 4),
-                        const Text(
-                          'Accede a tu cuenta para continuar',
-                          style: TextStyle(color: AppColors.textSecondary),
-                        ),
+                        Text('Accede a tu cuenta para continuar', style: TextStyle(color: AppColors.textSecondary)),
                         const SizedBox(height: 24),
                         TextFormField(
                           controller: _emailController,
@@ -209,10 +206,10 @@ class _LoginViewState extends State<LoginView> {
                             onPressed: () =>
                                 Navigator.of(context).push(MaterialPageRoute(builder: (_) => const RegisterView())),
                             child: RichText(
-                              text: const TextSpan(
+                              text: TextSpan(
                                 style: TextStyle(color: AppColors.textSecondary),
                                 children: [
-                                  TextSpan(text: '¿No tienes una cuenta? '),
+                                  const TextSpan(text: '¿No tienes una cuenta? '),
                                   TextSpan(
                                     text: 'Regístrate',
                                     style: TextStyle(color: AppColors.accent, fontWeight: FontWeight.w600),
@@ -224,13 +221,13 @@ class _LoginViewState extends State<LoginView> {
                         ),
                         const SizedBox(height: 12),
                         Row(
-                          children: const [
-                            Expanded(child: Divider()),
+                          children: [
+                            const Expanded(child: Divider()),
                             Padding(
-                              padding: EdgeInsets.symmetric(horizontal: 10),
+                              padding: const EdgeInsets.symmetric(horizontal: 10),
                               child: Text('o', style: TextStyle(color: AppColors.textSecondary)),
                             ),
-                            Expanded(child: Divider()),
+                            const Expanded(child: Divider()),
                           ],
                         ),
                         const SizedBox(height: 12),
@@ -271,11 +268,11 @@ class _LoginHero extends StatelessWidget {
     return Container(
       width: double.infinity,
       padding: const EdgeInsets.fromLTRB(24, 56, 24, 32),
-      decoration: const BoxDecoration(
+      decoration: BoxDecoration(
         gradient: LinearGradient(
           begin: Alignment.topCenter,
           end: Alignment.bottomCenter,
-          colors: [AppColors.primary, Color(0xFF1E293B)],
+          colors: [AppColors.primary, const Color(0xFF1E293B)],
         ),
       ),
       child: Column(

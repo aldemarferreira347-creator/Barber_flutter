@@ -59,12 +59,12 @@ class _AuthGateState extends State<AuthGate> {
                       child: const Icon(Icons.error_outline, size: 40, color: AppColors.warning),
                     ),
                     const SizedBox(height: 20),
-                    const Text(
+                    Text(
                       'No pudimos cargar tu perfil',
                       style: TextStyle(fontSize: 20, fontWeight: FontWeight.w800, color: AppColors.textPrimary),
                     ),
                     const SizedBox(height: 8),
-                    const Text(
+                    Text(
                       'Tu sesión existe pero no encontramos tus datos. Cierra sesión e intenta iniciar de nuevo.',
                       textAlign: TextAlign.center,
                       style: TextStyle(color: AppColors.textSecondary),
@@ -106,12 +106,12 @@ class _AuthGateState extends State<AuthGate> {
                       child: const Icon(Icons.lock_outline, size: 40, color: AppColors.error),
                     ),
                     const SizedBox(height: 20),
-                    const Text(
+                    Text(
                       'Cuenta bloqueada',
                       style: TextStyle(fontSize: 20, fontWeight: FontWeight.w800, color: AppColors.textPrimary),
                     ),
                     const SizedBox(height: 8),
-                    const Text(
+                    Text(
                       'Tu cuenta o tu barbería fue bloqueada, probablemente por un pago pendiente. Contacta al administrador para resolverlo.',
                       textAlign: TextAlign.center,
                       style: TextStyle(color: AppColors.textSecondary),

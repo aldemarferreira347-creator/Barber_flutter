@@ -1,4 +1,5 @@
 import 'package:flutter/material.dart';
+import 'package:flutter/services.dart';
 import 'package:provider/provider.dart';
 
 import '../../models/product.dart';
@@ -63,7 +64,7 @@ class _BuyProductViewState extends State<BuyProductView> {
         Text(widget.product.name, style: const TextStyle(fontSize: 20, fontWeight: FontWeight.w800)),
         if ((widget.product.description ?? '').isNotEmpty) ...[
           const SizedBox(height: 4),
-          Text(widget.product.description!, style: const TextStyle(color: AppColors.textSecondary)),
+          Text(widget.product.description!, style: TextStyle(color: AppColors.textSecondary)),
         ],
         const SizedBox(height: 20),
         Row(
@@ -137,22 +138,36 @@ class _BuyProductViewState extends State<BuyProductView> {
               const Text('Presenta este código en la barbería para reclamar tu producto:', textAlign: TextAlign.center),
               const SizedBox(height: 12),
               Container(
-                padding: const EdgeInsets.symmetric(horizontal: 20, vertical: 12),
+                padding: const EdgeInsets.symmetric(horizontal: 12, vertical: 6),
                 decoration: BoxDecoration(
                   color: AppColors.surface,
                   borderRadius: BorderRadius.circular(12),
                   border: Border.all(color: AppColors.border),
                 ),
-                child: Text(
-                  purchase.claimCode ?? '—',
-                  style: const TextStyle(fontSize: 24, fontWeight: FontWeight.w800, letterSpacing: 2),
+                child: Row(
+                  mainAxisSize: MainAxisSize.min,
+                  children: [
+                    Padding(
+                      padding: const EdgeInsets.symmetric(horizontal: 8),
+                      child: Text(
+                        purchase.claimCode ?? '—',
+                        style: const TextStyle(fontSize: 24, fontWeight: FontWeight.w800, letterSpacing: 2),
+                      ),
+                    ),
+                    if (purchase.claimCode != null)
+                      IconButton(
+                        icon: const Icon(Icons.copy_outlined),
+                        tooltip: 'Copiar código',
+                        onPressed: () {
+                          Clipboard.setData(ClipboardData(text: purchase.claimCode!));
+                          ScaffoldMessenger.of(context).showSnackBar(const SnackBar(content: Text('Código copiado')));
+                        },
+                      ),
+                  ],
                 ),
               ),
               const SizedBox(height: 8),
-              const Text(
-                'Tienes 24 horas para reclamarlo.',
-                style: TextStyle(color: AppColors.textSecondary, fontSize: 12),
-              ),
+              Text('Tienes 24 horas para reclamarlo.', style: TextStyle(color: AppColors.textSecondary, fontSize: 12)),
             ],
           ),
         );

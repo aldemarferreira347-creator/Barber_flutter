@@ -2,6 +2,7 @@ import 'package:flutter/material.dart';
 import 'package:provider/provider.dart';
 
 import '../../controllers/auth_controller.dart';
+import '../help/help_view.dart';
 import '../notification/notifications_view.dart';
 import '../widgets/role_shell.dart';
 import '../profile/profile_menu_view.dart';
@@ -67,7 +68,7 @@ class OwnerHomeView extends StatelessWidget {
                   ProfileMenuItem(
                     icon: Icons.help_outline,
                     label: 'Ayuda',
-                    onTap: () => _comingSoon(context, 'La ayuda'),
+                    onTap: () => Navigator.of(context).push(MaterialPageRoute(builder: (_) => const HelpView())),
                   ),
                 ],
               );

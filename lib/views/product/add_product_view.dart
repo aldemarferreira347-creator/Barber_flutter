@@ -101,11 +101,11 @@ class _AddProductViewState extends State<AddProductView> {
                           : null,
                     ),
                     child: _photoBytes == null
-                        ? const Column(
+                        ? Column(
                             mainAxisAlignment: MainAxisAlignment.center,
                             children: [
                               Icon(Icons.add_a_photo_outlined, color: AppColors.textSecondary),
-                              SizedBox(height: 6),
+                              const SizedBox(height: 6),
                               Text('Añadir foto', style: TextStyle(color: AppColors.textSecondary, fontSize: 12)),
                             ],
                           )

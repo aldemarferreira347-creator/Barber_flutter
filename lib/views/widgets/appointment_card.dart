@@ -57,13 +57,13 @@ class AppointmentCard extends StatelessWidget {
             ],
           ),
           const SizedBox(height: 4),
-          Text(subtitle, style: const TextStyle(color: AppColors.textSecondary, fontSize: 13)),
+          Text(subtitle, style: TextStyle(color: AppColors.textSecondary, fontSize: 13)),
           const SizedBox(height: 4),
           Row(
             children: [
-              const Icon(Icons.calendar_month_outlined, size: 14, color: AppColors.textSecondary),
+              Icon(Icons.calendar_month_outlined, size: 14, color: AppColors.textSecondary),
               const SizedBox(width: 4),
-              Text(_dateLabel, style: const TextStyle(color: AppColors.textSecondary, fontSize: 12)),
+              Text(_dateLabel, style: TextStyle(color: AppColors.textSecondary, fontSize: 12)),
             ],
           ),
           if (actions.isNotEmpty) ...[

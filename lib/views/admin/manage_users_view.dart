@@ -7,6 +7,7 @@ import '../../models/user_role.dart';
 import '../../repositories/notification_repository.dart';
 import '../../repositories/user_repository.dart';
 import '../../theme/app_colors.dart';
+import '../widgets/scroll_to_top_fab.dart';
 import '../widgets/status_badge.dart';
 
 class ManageUsersView extends StatefulWidget {
@@ -17,8 +18,15 @@ class ManageUsersView extends StatefulWidget {
 }
 
 class _ManageUsersViewState extends State<ManageUsersView> {
+  final _scrollController = ScrollController();
   String _query = '';
   UserRole? _roleFilter;
+
+  @override
+  void dispose() {
+    _scrollController.dispose();
+    super.dispose();
+  }
 
   String _roleLabel(UserRole role) => switch (role) {
     UserRole.admin => 'Admin',
@@ -80,6 +88,7 @@ class _ManageUsersViewState extends State<ManageUsersView> {
 
     return Scaffold(
       appBar: AppBar(title: const Text('Usuarios')),
+      floatingActionButton: ScrollToTopFab(controller: _scrollController),
       body: Padding(
         padding: const EdgeInsets.all(16),
         child: Column(
@@ -130,11 +139,12 @@ class _ManageUsersViewState extends State<ManageUsersView> {
                         .toList();
                   }
                   if (users.isEmpty) {
-                    return const Center(
+                    return Center(
                       child: Text('No se encontraron usuarios', style: TextStyle(color: AppColors.textSecondary)),
                     );
                   }
                   return ListView.separated(
+                    controller: _scrollController,
                     itemCount: users.length,
                     separatorBuilder: (_, _) => const SizedBox(height: 10),
                     itemBuilder: (context, index) {
@@ -164,15 +174,12 @@ class _ManageUsersViewState extends State<ManageUsersView> {
                                 crossAxisAlignment: CrossAxisAlignment.start,
                                 children: [
                                   Text(user.name, style: const TextStyle(fontWeight: FontWeight.w700)),
-                                  Text(
-                                    user.email,
-                                    style: const TextStyle(color: AppColors.textSecondary, fontSize: 12),
-                                  ),
+                                  Text(user.email, style: TextStyle(color: AppColors.textSecondary, fontSize: 12)),
                                   const SizedBox(height: 4),
                                   if (user.uid == currentUid)
                                     Text(
                                       _roleLabel(user.role),
-                                      style: const TextStyle(
+                                      style: TextStyle(
                                         color: AppColors.accent,
                                         fontSize: 12,
                                         fontWeight: FontWeight.w600,
@@ -190,13 +197,13 @@ class _ManageUsersViewState extends State<ManageUsersView> {
                                         children: [
                                           Text(
                                             _roleLabel(user.role),
-                                            style: const TextStyle(
+                                            style: TextStyle(
                                               color: AppColors.accent,
                                               fontSize: 12,
                                               fontWeight: FontWeight.w600,
                                             ),
                                           ),
-                                          const Icon(Icons.arrow_drop_down, size: 16, color: AppColors.accent),
+                                          Icon(Icons.arrow_drop_down, size: 16, color: AppColors.accent),
                                         ],
                                       ),
                                     ),
@@ -204,7 +211,7 @@ class _ManageUsersViewState extends State<ManageUsersView> {
                               ),
                             ),
                             IconButton(
-                              icon: const Icon(Icons.notifications_outlined, color: AppColors.accent),
+                              icon: Icon(Icons.notifications_outlined, color: AppColors.accent),
                               tooltip: 'Enviar notificación',
                               onPressed: () => _notify(context, user),
                             ),
@@ -249,7 +256,7 @@ class _RoleChip extends StatelessWidget {
       selectedColor: AppColors.primary,
       labelStyle: TextStyle(color: selected ? Colors.white : AppColors.textPrimary, fontWeight: FontWeight.w600),
       backgroundColor: AppColors.surface,
-      side: const BorderSide(color: AppColors.border),
+      side: BorderSide(color: AppColors.border),
     );
   }
 }

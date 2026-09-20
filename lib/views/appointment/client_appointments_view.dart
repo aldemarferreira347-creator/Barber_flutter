@@ -250,7 +250,7 @@ class _SectionHeader extends StatelessWidget {
           decoration: BoxDecoration(color: AppColors.border, borderRadius: BorderRadius.circular(10)),
           child: Text(
             '$count',
-            style: const TextStyle(fontSize: 12, fontWeight: FontWeight.w600, color: AppColors.textSecondary),
+            style: TextStyle(fontSize: 12, fontWeight: FontWeight.w600, color: AppColors.textSecondary),
           ),
         ),
       ],
@@ -273,7 +273,7 @@ class _InlineEmptyNote extends StatelessWidget {
         borderRadius: BorderRadius.circular(12),
         border: Border.all(color: AppColors.border),
       ),
-      child: Text(text, style: const TextStyle(color: AppColors.textSecondary, fontSize: 13)),
+      child: Text(text, style: TextStyle(color: AppColors.textSecondary, fontSize: 13)),
     );
   }
 }

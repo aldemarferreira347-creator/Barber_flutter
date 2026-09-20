@@ -5,6 +5,7 @@ import '../../controllers/auth_controller.dart';
 import '../../models/appointment.dart';
 import '../../repositories/appointment_repository.dart';
 import '../../theme/app_colors.dart';
+import '../help/help_view.dart';
 import '../notification/notifications_view.dart';
 import '../widgets/appointment_card.dart';
 import '../widgets/empty_state.dart';
@@ -29,15 +30,20 @@ class ClientDashboardTab extends StatelessWidget {
               onPressed: () =>
                   Navigator.of(context).push(MaterialPageRoute(builder: (_) => NotificationsView(uid: profile.uid))),
             ),
-          const Padding(
-            padding: EdgeInsets.only(right: 16, left: 4),
+          Padding(
+            padding: const EdgeInsets.only(right: 16, left: 4),
             child: CircleAvatar(
               radius: 16,
               backgroundColor: AppColors.primary,
-              child: Icon(Icons.person_outline, color: Colors.white, size: 16),
+              child: const Icon(Icons.person_outline, color: Colors.white, size: 16),
             ),
           ),
         ],
+      ),
+      floatingActionButton: FloatingActionButton(
+        tooltip: 'Ayuda',
+        onPressed: () => Navigator.of(context).push(MaterialPageRoute(builder: (_) => const HelpView())),
+        child: const Icon(Icons.help_outline),
       ),
       body: StreamBuilder<List<Appointment>>(
         stream: profile == null ? const Stream<List<Appointment>>.empty() : repo.watchByClient(profile.uid),
@@ -60,7 +66,7 @@ class ClientDashboardTab extends StatelessWidget {
           return ListView(
             padding: const EdgeInsets.all(16),
             children: [
-              const Text('Tu estilo, nuestra prioridad', style: TextStyle(color: AppColors.textSecondary)),
+              Text('Tu estilo, nuestra prioridad', style: TextStyle(color: AppColors.textSecondary)),
               const SizedBox(height: 16),
               Container(
                 padding: const EdgeInsets.all(16),
@@ -93,11 +99,11 @@ class ClientDashboardTab extends StatelessWidget {
                   borderRadius: BorderRadius.circular(16),
                   border: Border.all(color: AppColors.accent.withValues(alpha: 0.2)),
                 ),
-                child: const Column(
+                child: Column(
                   crossAxisAlignment: CrossAxisAlignment.start,
                   children: [
-                    Text('¡Vamos por más!', style: TextStyle(fontWeight: FontWeight.w700)),
-                    SizedBox(height: 4),
+                    const Text('¡Vamos por más!', style: TextStyle(fontWeight: FontWeight.w700)),
+                    const SizedBox(height: 4),
                     Text(
                       'Agenda tu próxima cita y luce increíble.',
                       style: TextStyle(color: AppColors.textSecondary, fontSize: 13),

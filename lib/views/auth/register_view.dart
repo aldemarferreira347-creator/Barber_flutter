@@ -3,6 +3,7 @@ import 'package:provider/provider.dart';
 
 import '../../controllers/auth_controller.dart';
 import '../../theme/app_colors.dart';
+import '../help/privacy_policy_view.dart';
 import '../widgets/brand_mark.dart';
 import 'register_success_view.dart';
 
@@ -23,6 +24,8 @@ class _RegisterViewState extends State<RegisterView> {
   final _emailController = TextEditingController();
   final _passwordController = TextEditingController();
   final _confirmController = TextEditingController();
+  bool _obscurePassword = true;
+  bool _obscureConfirm = true;
 
   @override
   void dispose() {
@@ -68,11 +71,11 @@ class _RegisterViewState extends State<RegisterView> {
                         children: [
                           Container(
                             padding: const EdgeInsets.all(14),
-                            decoration: const BoxDecoration(color: AppColors.primary, shape: BoxShape.circle),
+                            decoration: BoxDecoration(color: AppColors.primary, shape: BoxShape.circle),
                             child: const BrandMark(size: 26),
                           ),
                           const SizedBox(height: 10),
-                          const Text(
+                          Text(
                             'BarberFlow',
                             style: TextStyle(fontSize: 16, fontWeight: FontWeight.w800, color: AppColors.primary),
                           ),
@@ -82,7 +85,7 @@ class _RegisterViewState extends State<RegisterView> {
                     const SizedBox(height: 20),
                     const Text('Crear cuenta', style: TextStyle(fontSize: 22, fontWeight: FontWeight.w800)),
                     const SizedBox(height: 4),
-                    const Text(
+                    Text(
                       'Completa la información para registrarte como cliente',
                       style: TextStyle(color: AppColors.textSecondary),
                     ),
@@ -108,17 +111,28 @@ class _RegisterViewState extends State<RegisterView> {
                     const SizedBox(height: 14),
                     TextFormField(
                       controller: _passwordController,
-                      obscureText: true,
-                      decoration: const InputDecoration(labelText: 'Contraseña', prefixIcon: Icon(Icons.lock_outline)),
+                      obscureText: _obscurePassword,
+                      decoration: InputDecoration(
+                        labelText: 'Contraseña',
+                        prefixIcon: const Icon(Icons.lock_outline),
+                        suffixIcon: IconButton(
+                          icon: Icon(_obscurePassword ? Icons.visibility_outlined : Icons.visibility_off_outlined),
+                          onPressed: () => setState(() => _obscurePassword = !_obscurePassword),
+                        ),
+                      ),
                       validator: (value) => (value == null || value.length < 6) ? 'Mínimo 6 caracteres' : null,
                     ),
                     const SizedBox(height: 14),
                     TextFormField(
                       controller: _confirmController,
-                      obscureText: true,
-                      decoration: const InputDecoration(
+                      obscureText: _obscureConfirm,
+                      decoration: InputDecoration(
                         labelText: 'Confirmar contraseña',
-                        prefixIcon: Icon(Icons.lock_outline),
+                        prefixIcon: const Icon(Icons.lock_outline),
+                        suffixIcon: IconButton(
+                          icon: Icon(_obscureConfirm ? Icons.visibility_outlined : Icons.visibility_off_outlined),
+                          onPressed: () => setState(() => _obscureConfirm = !_obscureConfirm),
+                        ),
                       ),
                       validator: (value) => value != _passwordController.text ? 'Las contraseñas no coinciden' : null,
                     ),
@@ -130,10 +144,10 @@ class _RegisterViewState extends State<RegisterView> {
                         borderRadius: BorderRadius.circular(12),
                         border: Border.all(color: AppColors.accent.withValues(alpha: 0.2)),
                       ),
-                      child: const Row(
+                      child: Row(
                         children: [
                           Icon(Icons.info_outline, size: 18, color: AppColors.accent),
-                          SizedBox(width: 8),
+                          const SizedBox(width: 8),
                           Expanded(
                             child: Text(
                               '¿Eres dueño de una barbería? Esa cuenta se habilita pagando la suscripción, desde tu perfil una vez inicies sesión.',
@@ -145,32 +159,42 @@ class _RegisterViewState extends State<RegisterView> {
                     ),
                     const SizedBox(height: 16),
                     Center(
-                      child: TextButton(
-                        onPressed: () => showDialog<void>(
-                          context: context,
-                          builder: (context) => AlertDialog(
-                            title: const Text('Términos y condiciones'),
-                            content: const Text(
-                              'Al registrarte aceptas el uso de tus datos para gestionar tus citas y tu cuenta en BarberFlow.',
-                            ),
-                            actions: [
-                              TextButton(onPressed: () => Navigator.of(context).pop(), child: const Text('Entendido')),
-                            ],
-                          ),
-                        ),
-                        child: RichText(
-                          textAlign: TextAlign.center,
-                          text: const TextSpan(
-                            style: TextStyle(color: AppColors.textSecondary, fontSize: 12),
-                            children: [
-                              TextSpan(text: 'Al registrarte aceptas nuestros '),
-                              TextSpan(
-                                text: 'Términos y condiciones',
-                                style: TextStyle(color: AppColors.accent, fontWeight: FontWeight.w600),
+                      child: Wrap(
+                        alignment: WrapAlignment.center,
+                        crossAxisAlignment: WrapCrossAlignment.center,
+                        children: [
+                          TextButton(
+                            onPressed: () => showDialog<void>(
+                              context: context,
+                              builder: (context) => AlertDialog(
+                                title: const Text('Términos y condiciones'),
+                                content: const Text(
+                                  'Al registrarte aceptas el uso de tus datos para gestionar tus citas y tu cuenta en BarberFlow.',
+                                ),
+                                actions: [
+                                  TextButton(
+                                    onPressed: () => Navigator.of(context).pop(),
+                                    child: const Text('Entendido'),
+                                  ),
+                                ],
                               ),
-                            ],
+                            ),
+                            child: Text(
+                              'Términos y condiciones',
+                              style: TextStyle(color: AppColors.accent, fontWeight: FontWeight.w600, fontSize: 12),
+                            ),
                           ),
-                        ),
+                          Text('  ·  ', style: TextStyle(color: AppColors.textSecondary, fontSize: 12)),
+                          TextButton(
+                            onPressed: () =>
+                                Navigator.of(context)
+                                    .push(MaterialPageRoute(builder: (_) => const PrivacyPolicyView())),
+                            child: Text(
+                              'Política de privacidad',
+                              style: TextStyle(color: AppColors.accent, fontWeight: FontWeight.w600, fontSize: 12),
+                            ),
+                          ),
+                        ],
                       ),
                     ),
                     const SizedBox(height: 8),
@@ -189,10 +213,10 @@ class _RegisterViewState extends State<RegisterView> {
                       child: TextButton(
                         onPressed: () => Navigator.of(context).pop(),
                         child: RichText(
-                          text: const TextSpan(
+                          text: TextSpan(
                             style: TextStyle(color: AppColors.textSecondary),
                             children: [
-                              TextSpan(text: '¿Ya tienes una cuenta? '),
+                              const TextSpan(text: '¿Ya tienes una cuenta? '),
                               TextSpan(
                                 text: 'Inicia sesión',
                                 style: TextStyle(color: AppColors.accent, fontWeight: FontWeight.w600),

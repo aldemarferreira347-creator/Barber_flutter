@@ -108,7 +108,7 @@ class _ClaimPurchaseViewState extends State<ClaimPurchaseView> {
                         Text(purchase.status.label, style: const TextStyle(fontWeight: FontWeight.w700)),
                         Text(
                           '\$${purchase.totalAmount.toStringAsFixed(0)}',
-                          style: const TextStyle(fontWeight: FontWeight.w800, color: AppColors.accent),
+                          style: TextStyle(fontWeight: FontWeight.w800, color: AppColors.accent),
                         ),
                       ],
                     ),

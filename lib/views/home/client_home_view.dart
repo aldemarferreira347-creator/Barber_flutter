@@ -4,6 +4,7 @@ import 'package:provider/provider.dart';
 import '../../controllers/auth_controller.dart';
 import '../appointment/client_appointments_view.dart';
 import '../barbershop/manage_barbershops_view.dart';
+import '../help/help_view.dart';
 import '../notification/notifications_view.dart';
 import '../widgets/role_shell.dart';
 import '../profile/profile_menu_view.dart';
@@ -50,6 +51,11 @@ class ClientHomeView extends StatelessWidget {
                       onTap: () => Navigator.of(context)
                           .push(MaterialPageRoute(builder: (_) => ManageBarbershopsView(ownerId: uid, canAdd: true))),
                     ),
+                  ProfileMenuItem(
+                    icon: Icons.help_outline,
+                    label: 'Ayuda',
+                    onTap: () => Navigator.of(context).push(MaterialPageRoute(builder: (_) => const HelpView())),
+                  ),
                 ],
               );
             },

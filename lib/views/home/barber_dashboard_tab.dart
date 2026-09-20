@@ -39,12 +39,12 @@ class BarberDashboardTab extends StatelessWidget {
               onPressed: () =>
                   Navigator.of(context).push(MaterialPageRoute(builder: (_) => NotificationsView(uid: profile.uid))),
             ),
-          const Padding(
-            padding: EdgeInsets.only(right: 16, left: 4),
+          Padding(
+            padding: const EdgeInsets.only(right: 16, left: 4),
             child: CircleAvatar(
               radius: 16,
               backgroundColor: AppColors.primary,
-              child: Icon(Icons.content_cut, color: Colors.white, size: 16),
+              child: const Icon(Icons.content_cut, color: Colors.white, size: 16),
             ),
           ),
         ],
@@ -72,10 +72,10 @@ class BarberDashboardTab extends StatelessWidget {
               Container(
                 padding: const EdgeInsets.all(18),
                 decoration: BoxDecoration(
-                  gradient: const LinearGradient(
+                  gradient: LinearGradient(
                     begin: Alignment.topLeft,
                     end: Alignment.bottomRight,
-                    colors: [AppColors.primary, Color(0xFF1E293B)],
+                    colors: [AppColors.primary, const Color(0xFF1E293B)],
                   ),
                   borderRadius: BorderRadius.circular(18),
                 ),
@@ -198,13 +198,13 @@ class BarberDashboardTab extends StatelessWidget {
                                   Text(shop.name, style: const TextStyle(fontWeight: FontWeight.w700)),
                                   Text(
                                     shop.address ?? '',
-                                    style: const TextStyle(color: AppColors.textSecondary, fontSize: 12),
+                                    style: TextStyle(color: AppColors.textSecondary, fontSize: 12),
                                   ),
                                 ],
                               ),
                             ),
                             StatusBadge.active(shop.active),
-                            const Icon(Icons.chevron_right, color: AppColors.textSecondary),
+                            Icon(Icons.chevron_right, color: AppColors.textSecondary),
                           ],
                         ),
                       ),
@@ -233,7 +233,7 @@ class BarberDashboardTab extends StatelessWidget {
                       child: const Icon(Icons.insights_outlined, color: AppColors.warning, size: 20),
                     ),
                     const SizedBox(width: 12),
-                    const Expanded(
+                    Expanded(
                       child: Text(
                         '¡Bienvenido! Aquí podrás ver tus citas, clientes y la información de tu barbería.',
                         style: TextStyle(color: AppColors.textSecondary, fontSize: 13),

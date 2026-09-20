@@ -5,11 +5,25 @@ import '../../models/app_notification.dart';
 import '../../repositories/notification_repository.dart';
 import '../../theme/app_colors.dart';
 import '../widgets/empty_state.dart';
+import '../widgets/scroll_to_top_fab.dart';
 
-class NotificationsView extends StatelessWidget {
+class NotificationsView extends StatefulWidget {
   final String uid;
 
   const NotificationsView({super.key, required this.uid});
+
+  @override
+  State<NotificationsView> createState() => _NotificationsViewState();
+}
+
+class _NotificationsViewState extends State<NotificationsView> {
+  final _scrollController = ScrollController();
+
+  @override
+  void dispose() {
+    _scrollController.dispose();
+    super.dispose();
+  }
 
   IconData _iconFor(NotificationType type) => switch (type) {
     NotificationType.autoPaymentOverdue => Icons.warning_amber_outlined,
@@ -29,8 +43,9 @@ class NotificationsView extends StatelessWidget {
 
     return Scaffold(
       appBar: AppBar(title: const Text('Notificaciones')),
+      floatingActionButton: ScrollToTopFab(controller: _scrollController),
       body: StreamBuilder<List<AppNotification>>(
-        stream: repo.watchForUser(uid),
+        stream: repo.watchForUser(widget.uid),
         builder: (context, snapshot) {
           final notifications = snapshot.data ?? [];
           if (snapshot.connectionState == ConnectionState.waiting) {
@@ -46,6 +61,7 @@ class NotificationsView extends StatelessWidget {
             );
           }
           return ListView.separated(
+            controller: _scrollController,
             padding: const EdgeInsets.all(16),
             itemCount: notifications.length,
             separatorBuilder: (_, _) => const SizedBox(height: 10),
@@ -74,7 +90,7 @@ class NotificationsView extends StatelessWidget {
                           children: [
                             Text(n.title, style: const TextStyle(fontWeight: FontWeight.w700)),
                             const SizedBox(height: 2),
-                            Text(n.body, style: const TextStyle(color: AppColors.textSecondary, fontSize: 13)),
+                            Text(n.body, style: TextStyle(color: AppColors.textSecondary, fontSize: 13)),
                           ],
                         ),
                       ),
@@ -82,7 +98,7 @@ class NotificationsView extends StatelessWidget {
                         Container(
                           width: 8,
                           height: 8,
-                          decoration: const BoxDecoration(color: AppColors.accent, shape: BoxShape.circle),
+                          decoration: BoxDecoration(color: AppColors.accent, shape: BoxShape.circle),
                         ),
                     ],
                   ),

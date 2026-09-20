@@ -27,11 +27,11 @@ class _SplashViewState extends State<SplashView> {
   Widget build(BuildContext context) {
     return Scaffold(
       body: Container(
-        decoration: const BoxDecoration(
+        decoration: BoxDecoration(
           gradient: RadialGradient(
             center: Alignment.topCenter,
             radius: 1.3,
-            colors: [Color(0xFF1E293B), AppColors.primary],
+            colors: [const Color(0xFF1E293B), AppColors.primary],
           ),
         ),
         child: SafeArea(

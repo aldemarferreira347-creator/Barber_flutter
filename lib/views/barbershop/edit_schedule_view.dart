@@ -85,10 +85,10 @@ class _EditScheduleViewState extends State<EditScheduleView> {
                   ),
                   if (_schedule[day]!.isOpen) ...[
                     TextButton(onPressed: () => _pickTime(day, true), child: Text(_schedule[day]!.openTime)),
-                    const Text('–', style: TextStyle(color: AppColors.textSecondary)),
+                    Text('–', style: TextStyle(color: AppColors.textSecondary)),
                     TextButton(onPressed: () => _pickTime(day, false), child: Text(_schedule[day]!.closeTime)),
                   ] else
-                    const Expanded(
+                    Expanded(
                       child: Text(
                         'Cerrado',
                         textAlign: TextAlign.end,

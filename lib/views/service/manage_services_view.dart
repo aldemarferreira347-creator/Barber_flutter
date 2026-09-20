@@ -63,12 +63,18 @@ class ManageServicesView extends StatelessWidget {
                     ClipRRect(
                       borderRadius: BorderRadius.circular(10),
                       child: service.photoUrl != null
-                          ? Image.network(service.photoUrl!, width: 56, height: 56, fit: BoxFit.cover)
+                          ? Image.network(
+                              service.photoUrl!,
+                              width: 56,
+                              height: 56,
+                              fit: BoxFit.cover,
+                              semanticLabel: 'Foto del servicio ${service.name}',
+                            )
                           : Container(
                               width: 56,
                               height: 56,
                               color: AppColors.background,
-                              child: const Icon(Icons.content_cut, color: AppColors.textSecondary),
+                              child: Icon(Icons.content_cut, color: AppColors.textSecondary),
                             ),
                     ),
                     const SizedBox(width: 12),
@@ -79,14 +85,14 @@ class ManageServicesView extends StatelessWidget {
                           Text(service.name, style: const TextStyle(fontWeight: FontWeight.w700)),
                           Text(
                             '${service.durationMinutes} min',
-                            style: const TextStyle(color: AppColors.textSecondary, fontSize: 12),
+                            style: TextStyle(color: AppColors.textSecondary, fontSize: 12),
                           ),
                         ],
                       ),
                     ),
                     Text(
                       '\$${service.price.toStringAsFixed(0)}',
-                      style: const TextStyle(fontWeight: FontWeight.w800, color: AppColors.accent),
+                      style: TextStyle(fontWeight: FontWeight.w800, color: AppColors.accent),
                     ),
                     if (canManage)
                       Switch(

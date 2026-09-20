@@ -114,7 +114,7 @@ class _ManageBarbershopsViewState extends State<ManageBarbershopsView> {
                                     Text(shop.name, style: const TextStyle(fontWeight: FontWeight.w700)),
                                     Text(
                                       shop.address ?? '',
-                                      style: const TextStyle(color: AppColors.textSecondary, fontSize: 12),
+                                      style: TextStyle(color: AppColors.textSecondary, fontSize: 12),
                                     ),
                                   ],
                                 ),
@@ -172,6 +172,21 @@ class _AdminShopControls extends StatelessWidget {
 
   const _AdminShopControls({required this.shop, required this.service});
 
+  Future<void> _confirmReject(BuildContext context) async {
+    final confirmed = await showDialog<bool>(
+      context: context,
+      builder: (context) => AlertDialog(
+        title: const Text('Rechazar barbería'),
+        content: Text('"${shop.name}" no aparecerá en el catálogo. Esta acción se puede revertir después.'),
+        actions: [
+          TextButton(onPressed: () => Navigator.of(context).pop(false), child: const Text('Volver')),
+          FilledButton(onPressed: () => Navigator.of(context).pop(true), child: const Text('Sí, rechazar')),
+        ],
+      ),
+    );
+    if (confirmed == true) service.resolveApproval(shop.id, approve: false);
+  }
+
   @override
   Widget build(BuildContext context) {
     if (shop.approvalStatus == BarbershopApprovalStatus.pending) {
@@ -181,7 +196,7 @@ class _AdminShopControls extends StatelessWidget {
           IconButton(
             tooltip: 'Rechazar',
             icon: const Icon(Icons.close, color: AppColors.error),
-            onPressed: () => service.resolveApproval(shop.id, approve: false),
+            onPressed: () => _confirmReject(context),
           ),
           IconButton(
             tooltip: 'Aprobar',

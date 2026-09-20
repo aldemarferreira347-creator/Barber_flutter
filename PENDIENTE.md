@@ -57,6 +57,54 @@ https://github.com/aldemarferreira347-creator/Barber_flutter :
     `flutter test` (52/52 en verde). El resto de las ~40 vistas del proyecto
     ya comparte el mismo sistema de diseño (`AppColors`/tarjetas/badges):
     una búsqueda de colores fuera de `AppColors` no encontró ninguno.
+- **Modo oscuro real** — `AppColors` pasó de constantes fijas a getters
+  dinámicos (`lib/theme/app_colors.dart`) según `AppColors.isDark`;
+  `ThemeController` (`lib/theme/theme_controller.dart`, con
+  `shared_preferences` para persistirlo) notifica y fuerza un rebuild de
+  toda la app vía `Consumer<ThemeController>` en `main.dart`, porque casi
+  todas las pantallas leen `AppColors.x` directamente y no `Theme.of(context)`.
+  Switch "Modo oscuro" en el menú de perfil (todos los roles). Esto obligó
+  a quitar `const` de ~90 sitios que ya no son compile-time constants
+  (mecánico, cubierto por `flutter analyze`). Verificado en vivo en
+  Login/Registro con el navegador — fondo, tarjetas y botones cambian
+  correctamente entre claro/oscuro.
+- **Checklist UX (dos tandas de 20 y 15 puntos que compartió el usuario,
+  del estilo "cosas que le faltan a tu web/app")** — se adaptó lo que
+  aplica a una app Flutter nativa:
+  - Toggle de contraseña visible también en Registro (ya existía en Login).
+  - Botón de copiar al portapapeles en el código de reclamo de compra
+    (`buy_product_view.dart`).
+  - Confirmación antes de "Rechazar" una solicitud de barbería (antes era
+    un solo tap sin vuelta atrás).
+  - Feedback de éxito al registrar una barbería nueva (antes cerraba la
+    pantalla sin avisar).
+  - Pantalla de Ayuda (`lib/views/help/help_view.dart`): FAQ expandible +
+    contacto por correo/teléfono (`lib/support_info.dart`, valores
+    **placeholder** — reemplazar antes de publicar) + enlace a Política de
+    privacidad (`privacy_policy_view.dart`, texto real, no un stub).
+    Reemplaza los stubs "La ayuda próximamente" de Admin/Dueño y se agregó
+    también a Cliente/Barbero, que no la tenían.
+  - Botón flotante de ayuda en el panel de Cliente.
+  - `ScrollToTopFab` (`lib/views/widgets/scroll_to_top_fab.dart`) aplicado
+    en Usuarios y Notificaciones (listas largas sin FAB propio ya).
+  - Texto alternativo (`Semantics`/`semanticLabel`) en la foto de portada
+    de barbería y en las fotos de servicios/productos, para lectores de
+    pantalla.
+  - **No aplican a una app móvil nativa** (se explicó al usuario en vez de
+    forzarlas): banner de cookies, hoja de estilo de impresión, enlace
+    "saltar al contenido", sitemap.xml, meta-título por página, UTM
+    tracking. "Menús móviles" y "encabezados fijos" ya están cubiertos de
+    forma nativa (bottom nav + `AppBar`).
+  - **Deliberadamente no implementados esta vuelta** (quedan como mejora
+    futura si se necesitan): analíticas (requeriría agregar
+    `firebase_analytics` y decidir qué eventos trackear — no es un ajuste
+    de UI), búsqueda global unificada (ya hay búsqueda por pantalla en
+    Usuarios/Barberías/servicios/productos; una búsqueda "de todo el
+    sistema" no encaja con la navegación por rol actual), breakpoints
+    responsivos más allá de los que ya existen (formularios de auth con
+    `ConstrainedBox(maxWidth: 400)`), ícono de app/favicon generado a
+    partir del `BrandMark` (la Fase 13 ya lista esto como intervención
+    humana pendiente en la sección de abajo).
 
 ## Historial — cierre de Fase 11
 
@@ -185,3 +233,6 @@ las reglas escritas hasta ahora.
    de Firebase para los proyectos Android/iOS reales.
 9. Una máquina con **Java/JRE** disponible para correr por fin las
    pruebas de reglas de Firestore/Storage contra el emulador real.
+10. Correo y teléfono reales de soporte en `lib/support_info.dart` (hoy
+    son placeholders: `soporte@barberflow.com` / `+573000000000`),
+    mostrados en la pantalla de Ayuda.

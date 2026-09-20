@@ -50,8 +50,8 @@ class BarbershopReviewsView extends StatelessWidget {
                   _AverageRatingHeader(shop: shop),
                   const SizedBox(height: 20),
                   if (comments.isEmpty)
-                    const Padding(
-                      padding: EdgeInsets.symmetric(vertical: 24),
+                    Padding(
+                      padding: const EdgeInsets.symmetric(vertical: 24),
                       child: Center(
                         child: Text('Todavía no hay comentarios.', style: TextStyle(color: AppColors.textSecondary)),
                       ),
@@ -87,7 +87,7 @@ class _AverageRatingHeader extends StatelessWidget {
       ),
       child: Row(
         children: [
-          const Icon(Icons.star, color: AppColors.primary, size: 32),
+          Icon(Icons.star, color: AppColors.primary, size: 32),
           const SizedBox(width: 12),
           Column(
             crossAxisAlignment: CrossAxisAlignment.start,
@@ -99,7 +99,7 @@ class _AverageRatingHeader extends StatelessWidget {
               if (shop.ratingCount > 0)
                 Text(
                   '${shop.ratingCount} calificación(es)',
-                  style: const TextStyle(color: AppColors.textSecondary, fontSize: 12),
+                  style: TextStyle(color: AppColors.textSecondary, fontSize: 12),
                 ),
             ],
           ),
