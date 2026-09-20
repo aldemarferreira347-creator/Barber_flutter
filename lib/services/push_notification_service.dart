@@ -7,7 +7,8 @@ import 'package:firebase_messaging/firebase_messaging.dart';
 class PushNotificationService {
   final FirebaseMessaging _messaging;
 
-  PushNotificationService({FirebaseMessaging? messaging}) : _messaging = messaging ?? FirebaseMessaging.instance;
+  PushNotificationService({FirebaseMessaging? messaging})
+    : _messaging = messaging ?? FirebaseMessaging.instance;
 
   /// Pide permiso de notificaciones si hace falta y devuelve el token FCM
   /// del dispositivo, o null si el usuario no dio permiso o la plataforma

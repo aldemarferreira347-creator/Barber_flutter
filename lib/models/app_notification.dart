@@ -57,7 +57,9 @@ class AppNotification {
       'body': body,
       'type': type.value,
       'read': read,
-      'createdAt': createdAt == null ? FieldValue.serverTimestamp() : Timestamp.fromDate(createdAt!),
+      'createdAt': createdAt == null
+          ? FieldValue.serverTimestamp()
+          : Timestamp.fromDate(createdAt!),
     };
   }
 }

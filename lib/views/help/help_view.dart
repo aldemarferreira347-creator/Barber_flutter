@@ -46,7 +46,8 @@ class HelpView extends StatelessWidget {
   Future<void> _launch(BuildContext context, Uri uri) async {
     final opened = await launchUrl(uri);
     if (!opened && context.mounted) {
-      ScaffoldMessenger.of(context).showSnackBar(const SnackBar(content: Text('No se pudo abrir')));
+      ScaffoldMessenger.of(context)
+          .showSnackBar(const SnackBar(content: Text('No se pudo abrir')));
     }
   }
 
@@ -57,7 +58,10 @@ class HelpView extends StatelessWidget {
       body: ListView(
         padding: const EdgeInsets.all(16),
         children: [
-          const Text('Preguntas frecuentes', style: TextStyle(fontWeight: FontWeight.w700, fontSize: 15)),
+          const Text(
+            'Preguntas frecuentes',
+            style: TextStyle(fontWeight: FontWeight.w700, fontSize: 15),
+          ),
           const SizedBox(height: 8),
           Container(
             decoration: BoxDecoration(
@@ -72,10 +76,24 @@ class HelpView extends StatelessWidget {
                   for (final (index, item) in _faq.indexed) ...[
                     if (index > 0) Divider(height: 1, color: AppColors.border),
                     ExpansionTile(
-                      title: Text(item.q, style: const TextStyle(fontWeight: FontWeight.w600, fontSize: 13)),
+                      title: Text(
+                        item.q,
+                        style: const TextStyle(
+                          fontWeight: FontWeight.w600,
+                          fontSize: 13,
+                        ),
+                      ),
                       childrenPadding: const EdgeInsets.fromLTRB(16, 0, 16, 16),
                       expandedAlignment: Alignment.topLeft,
-                      children: [Text(item.a, style: TextStyle(color: AppColors.textSecondary, height: 1.4))],
+                      children: [
+                        Text(
+                          item.a,
+                          style: TextStyle(
+                            color: AppColors.textSecondary,
+                            height: 1.4,
+                          ),
+                        ),
+                      ],
                     ),
                   ],
                 ],
@@ -83,14 +101,20 @@ class HelpView extends StatelessWidget {
             ),
           ),
           const SizedBox(height: 24),
-          const Text('Contáctanos', style: TextStyle(fontWeight: FontWeight.w700, fontSize: 15)),
+          const Text(
+            'Contáctanos',
+            style: TextStyle(fontWeight: FontWeight.w700, fontSize: 15),
+          ),
           const SizedBox(height: 8),
           Material(
             color: AppColors.surface,
             borderRadius: BorderRadius.circular(14),
             child: InkWell(
               borderRadius: BorderRadius.circular(14),
-              onTap: () => _launch(context, Uri(scheme: 'mailto', path: SupportInfo.supportEmail)),
+              onTap: () => _launch(
+                context,
+                Uri(scheme: 'mailto', path: SupportInfo.supportEmail),
+              ),
               child: Container(
                 padding: const EdgeInsets.all(14),
                 decoration: BoxDecoration(
@@ -114,7 +138,10 @@ class HelpView extends StatelessWidget {
             borderRadius: BorderRadius.circular(14),
             child: InkWell(
               borderRadius: BorderRadius.circular(14),
-              onTap: () => _launch(context, Uri(scheme: 'tel', path: SupportInfo.supportPhone)),
+              onTap: () => _launch(
+                context,
+                Uri(scheme: 'tel', path: SupportInfo.supportPhone),
+              ),
               child: Container(
                 padding: const EdgeInsets.all(14),
                 decoration: BoxDecoration(
@@ -138,7 +165,9 @@ class HelpView extends StatelessWidget {
             borderRadius: BorderRadius.circular(14),
             child: InkWell(
               borderRadius: BorderRadius.circular(14),
-              onTap: () => Navigator.of(context).push(MaterialPageRoute(builder: (_) => const PrivacyPolicyView())),
+              onTap: () => Navigator.of(context).push(
+                MaterialPageRoute(builder: (_) => const PrivacyPolicyView()),
+              ),
               child: Container(
                 padding: const EdgeInsets.all(14),
                 decoration: BoxDecoration(

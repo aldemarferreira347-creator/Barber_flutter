@@ -1,12 +1,22 @@
 import 'package:cloud_firestore/cloud_firestore.dart';
 
-enum AppointmentStatus { pending, accepted, rejected, postponed, completed, cancelled }
+enum AppointmentStatus {
+  pending,
+  accepted,
+  rejected,
+  postponed,
+  completed,
+  cancelled,
+}
 
 extension AppointmentStatusX on AppointmentStatus {
   String get value => name;
 
   static AppointmentStatus fromValue(String value) {
-    return AppointmentStatus.values.firstWhere((s) => s.name == value, orElse: () => AppointmentStatus.pending);
+    return AppointmentStatus.values.firstWhere(
+      (s) => s.name == value,
+      orElse: () => AppointmentStatus.pending,
+    );
   }
 
   String get label => switch (this) {
@@ -98,13 +108,19 @@ class Appointment {
       servicePrice: (map['servicePrice'] as num?)?.toDouble() ?? 0,
       durationMinutes: (map['durationMinutes'] as num?)?.toInt() ?? 30,
       date: dateValue is Timestamp ? dateValue.toDate() : DateTime.now(),
-      status: AppointmentStatusX.fromValue(map['status'] as String? ?? 'pending'),
+      status: AppointmentStatusX.fromValue(
+        map['status'] as String? ?? 'pending',
+      ),
       createdAt: createdAtValue is Timestamp ? createdAtValue.toDate() : null,
       paid: map['paid'] as bool? ?? false,
       paymentId: map['paymentId'] as String?,
       rescheduleHistory:
           (map['rescheduleHistory'] as List?)
-              ?.map((e) => RescheduleEntry.fromMap(Map<String, dynamic>.from(e as Map)))
+              ?.map(
+                (e) => RescheduleEntry.fromMap(
+                  Map<String, dynamic>.from(e as Map),
+                ),
+              )
               .toList() ??
           const [],
       forcedRatingPenalty: map['forcedRatingPenalty'] as bool? ?? false,
@@ -124,7 +140,9 @@ class Appointment {
       'durationMinutes': durationMinutes,
       'date': Timestamp.fromDate(date),
       'status': status.value,
-      'createdAt': createdAt == null ? FieldValue.serverTimestamp() : Timestamp.fromDate(createdAt!),
+      'createdAt': createdAt == null
+          ? FieldValue.serverTimestamp()
+          : Timestamp.fromDate(createdAt!),
       'paid': paid,
     };
   }

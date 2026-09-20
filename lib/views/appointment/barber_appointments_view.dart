@@ -19,9 +19,18 @@ class BarberAppointmentsView extends StatelessWidget {
       lastDate: DateTime.now().add(const Duration(days: 60)),
     );
     if (date == null || !context.mounted) return;
-    final time = await showTimePicker(context: context, initialTime: TimeOfDay.fromDateTime(appointment.date));
+    final time = await showTimePicker(
+      context: context,
+      initialTime: TimeOfDay.fromDateTime(appointment.date),
+    );
     if (time == null || !context.mounted) return;
-    final newDate = DateTime(date.year, date.month, date.day, time.hour, time.minute);
+    final newDate = DateTime(
+      date.year,
+      date.month,
+      date.day,
+      time.hour,
+      time.minute,
+    );
     final repo = context.read<AppointmentRepository>();
     try {
       // Una cita pagada tiene el horario bloqueado con una transacción
@@ -34,7 +43,8 @@ class BarberAppointmentsView extends StatelessWidget {
       }
     } catch (e) {
       if (context.mounted) {
-        ScaffoldMessenger.of(context).showSnackBar(SnackBar(content: Text('No se pudo aplazar: $e')));
+        ScaffoldMessenger.of(context)
+            .showSnackBar(SnackBar(content: Text('No se pudo aplazar: $e')));
       }
     }
   }
@@ -70,26 +80,47 @@ class BarberAppointmentsView extends StatelessWidget {
                   separatorBuilder: (_, _) => const SizedBox(height: 10),
                   itemBuilder: (context, index) {
                     final appointment = appointments[index];
-                    final isPending = appointment.status == AppointmentStatus.pending;
-                    final isUpcoming = isPending || appointment.status == AppointmentStatus.accepted;
+                    final isPending =
+                        appointment.status == AppointmentStatus.pending;
+                    final isUpcoming =
+                        isPending ||
+                        appointment.status == AppointmentStatus.accepted;
                     return AppointmentCard(
                       appointment: appointment,
                       subtitle: 'Cliente: ${appointment.clientName}',
                       actions: [
                         if (isPending) ...[
                           TextButton(
-                            onPressed: () => repo.setStatus(appointment.id, AppointmentStatus.rejected),
-                            child: const Text('Rechazar', style: TextStyle(color: AppColors.error)),
+                            onPressed: () => repo.setStatus(
+                              appointment.id,
+                              AppointmentStatus.rejected,
+                            ),
+                            child: const Text(
+                              'Rechazar',
+                              style: TextStyle(color: AppColors.error),
+                            ),
                           ),
-                          TextButton(onPressed: () => _postpone(context, appointment), child: const Text('Aplazar')),
+                          TextButton(
+                            onPressed: () => _postpone(context, appointment),
+                            child: const Text('Aplazar'),
+                          ),
                           FilledButton(
-                            onPressed: () => repo.setStatus(appointment.id, AppointmentStatus.accepted),
+                            onPressed: () => repo.setStatus(
+                              appointment.id,
+                              AppointmentStatus.accepted,
+                            ),
                             child: const Text('Aceptar'),
                           ),
                         ] else if (isUpcoming) ...[
-                          TextButton(onPressed: () => _postpone(context, appointment), child: const Text('Aplazar')),
+                          TextButton(
+                            onPressed: () => _postpone(context, appointment),
+                            child: const Text('Aplazar'),
+                          ),
                           FilledButton(
-                            onPressed: () => repo.setStatus(appointment.id, AppointmentStatus.completed),
+                            onPressed: () => repo.setStatus(
+                              appointment.id,
+                              AppointmentStatus.completed,
+                            ),
                             child: const Text('Marcar completada'),
                           ),
                         ],

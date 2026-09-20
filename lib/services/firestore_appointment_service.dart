@@ -8,11 +8,14 @@ class FirestoreAppointmentService implements AppointmentRepository {
   final FirebaseFirestore _firestore;
   final FirebaseFunctions _functions;
 
-  FirestoreAppointmentService({FirebaseFirestore? firestore, FirebaseFunctions? functions})
-    : _firestore = firestore ?? FirebaseFirestore.instance,
-      _functions = functions ?? FirebaseFunctions.instance;
+  FirestoreAppointmentService({
+    FirebaseFirestore? firestore,
+    FirebaseFunctions? functions,
+  }) : _firestore = firestore ?? FirebaseFirestore.instance,
+       _functions = functions ?? FirebaseFunctions.instance;
 
-  CollectionReference<Map<String, dynamic>> get _appointments => _firestore.collection('appointments');
+  CollectionReference<Map<String, dynamic>> get _appointments =>
+      _firestore.collection('appointments');
 
   @override
   Future<String> create(Appointment appointment) async {
@@ -29,14 +32,16 @@ class FirestoreAppointmentService implements AppointmentRepository {
     required String clientName,
     required DateTime date,
   }) async {
-    final result = await _functions.httpsCallable('bookPaidAppointment').call<Map<String, dynamic>>({
-      'barbershopId': barbershopId,
-      'barberId': barberId,
-      'barberName': barberName,
-      'serviceId': serviceId,
-      'clientName': clientName,
-      'date': date.toIso8601String(),
-    });
+    final result = await _functions
+        .httpsCallable('bookPaidAppointment')
+        .call<Map<String, dynamic>>({
+          'barbershopId': barbershopId,
+          'barberId': barberId,
+          'barberName': barberName,
+          'serviceId': serviceId,
+          'clientName': clientName,
+          'date': date.toIso8601String(),
+        });
     return result.data['id'] as String;
   }
 
@@ -46,7 +51,11 @@ class FirestoreAppointmentService implements AppointmentRepository {
         .where('clientId', isEqualTo: clientId)
         .orderBy('date')
         .snapshots()
-        .map((snapshot) => snapshot.docs.map((doc) => Appointment.fromMap(doc.id, doc.data())).toList());
+        .map(
+          (snapshot) => snapshot.docs
+              .map((doc) => Appointment.fromMap(doc.id, doc.data()))
+              .toList(),
+        );
   }
 
   @override
@@ -55,7 +64,11 @@ class FirestoreAppointmentService implements AppointmentRepository {
         .where('barberId', isEqualTo: barberId)
         .orderBy('date')
         .snapshots()
-        .map((snapshot) => snapshot.docs.map((doc) => Appointment.fromMap(doc.id, doc.data())).toList());
+        .map(
+          (snapshot) => snapshot.docs
+              .map((doc) => Appointment.fromMap(doc.id, doc.data()))
+              .toList(),
+        );
   }
 
   @override
@@ -64,7 +77,11 @@ class FirestoreAppointmentService implements AppointmentRepository {
         .where('barbershopId', isEqualTo: barbershopId)
         .orderBy('date')
         .snapshots()
-        .map((snapshot) => snapshot.docs.map((doc) => Appointment.fromMap(doc.id, doc.data())).toList());
+        .map(
+          (snapshot) => snapshot.docs
+              .map((doc) => Appointment.fromMap(doc.id, doc.data()))
+              .toList(),
+        );
   }
 
   @override
@@ -95,12 +112,14 @@ class FirestoreAppointmentService implements AppointmentRepository {
     String? purchaseId,
     List<int>? purchaseItemIndexes,
   }) async {
-    final result = await _functions.httpsCallable('requestAppointmentRefund').call<Map<String, dynamic>>({
-      'appointmentId': appointmentId,
-      'reason': reason,
-      'purchaseId': purchaseId,
-      'purchaseItemIndexes': purchaseItemIndexes,
-    });
+    final result = await _functions
+        .httpsCallable('requestAppointmentRefund')
+        .call<Map<String, dynamic>>({
+          'appointmentId': appointmentId,
+          'reason': reason,
+          'purchaseId': purchaseId,
+          'purchaseItemIndexes': purchaseItemIndexes,
+        });
     return result.data['id'] as String;
   }
 }

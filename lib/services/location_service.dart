@@ -15,14 +15,18 @@ class LocationService {
   Future<Position> getCurrentPosition() async {
     final serviceEnabled = await Geolocator.isLocationServiceEnabled();
     if (!serviceEnabled) {
-      throw const LocationException('Activa la ubicación de tu dispositivo para continuar.');
+      throw const LocationException(
+        'Activa la ubicación de tu dispositivo para continuar.',
+      );
     }
 
     var permission = await Geolocator.checkPermission();
     if (permission == LocationPermission.denied) {
       permission = await Geolocator.requestPermission();
       if (permission == LocationPermission.denied) {
-        throw const LocationException('Necesitamos permiso de ubicación para guardar dónde queda tu barbería.');
+        throw const LocationException(
+          'Necesitamos permiso de ubicación para guardar dónde queda tu barbería.',
+        );
       }
     }
     if (permission == LocationPermission.deniedForever) {
@@ -31,6 +35,8 @@ class LocationService {
       );
     }
 
-    return Geolocator.getCurrentPosition(locationSettings: const LocationSettings(accuracy: LocationAccuracy.high));
+    return Geolocator.getCurrentPosition(
+      locationSettings: const LocationSettings(accuracy: LocationAccuracy.high),
+    );
   }
 }

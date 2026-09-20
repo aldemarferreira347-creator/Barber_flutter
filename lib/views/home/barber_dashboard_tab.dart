@@ -24,7 +24,9 @@ class BarberDashboardTab extends StatelessWidget {
   @override
   Widget build(BuildContext context) {
     final profile = context.watch<AuthController>().profile;
-    final greetingName = profile?.firstName.isNotEmpty == true ? profile!.firstName : 'Barbero';
+    final greetingName = profile?.firstName.isNotEmpty == true
+        ? profile!.firstName
+        : 'Barbero';
     final repo = context.read<AppointmentRepository>();
     final barbershopId = profile?.barbershopId;
 
@@ -36,21 +38,30 @@ class BarberDashboardTab extends StatelessWidget {
             IconButton(
               icon: const Icon(Icons.notifications_none),
               tooltip: 'Notificaciones',
-              onPressed: () =>
-                  Navigator.of(context).push(MaterialPageRoute(builder: (_) => NotificationsView(uid: profile.uid))),
+              onPressed: () => Navigator.of(context).push(
+                MaterialPageRoute(
+                  builder: (_) => NotificationsView(uid: profile.uid),
+                ),
+              ),
             ),
           Padding(
             padding: const EdgeInsets.only(right: 16, left: 4),
             child: CircleAvatar(
               radius: 16,
               backgroundColor: AppColors.primary,
-              child: const Icon(Icons.content_cut, color: Colors.white, size: 16),
+              child: const Icon(
+                Icons.content_cut,
+                color: Colors.white,
+                size: 16,
+              ),
             ),
           ),
         ],
       ),
       body: StreamBuilder<List<Appointment>>(
-        stream: profile == null ? const Stream<List<Appointment>>.empty() : repo.watchByBarber(profile.uid),
+        stream: profile == null
+            ? const Stream<List<Appointment>>.empty()
+            : repo.watchByBarber(profile.uid),
         builder: (context, snapshot) {
           final all = snapshot.data ?? [];
           final now = DateTime.now();
@@ -61,7 +72,8 @@ class BarberDashboardTab extends StatelessWidget {
                         a.date.year == now.year &&
                         a.date.month == now.month &&
                         a.date.day == now.day &&
-                        (a.status == AppointmentStatus.pending || a.status == AppointmentStatus.accepted),
+                        (a.status == AppointmentStatus.pending ||
+                            a.status == AppointmentStatus.accepted),
                   )
                   .toList()
                 ..sort((a, b) => a.date.compareTo(b.date));
@@ -88,25 +100,55 @@ class BarberDashboardTab extends StatelessWidget {
                           child: Column(
                             crossAxisAlignment: CrossAxisAlignment.start,
                             children: [
-                              const Text('Hoy', style: TextStyle(color: Colors.white70, fontSize: 12)),
+                              const Text(
+                                'Hoy',
+                                style: TextStyle(
+                                  color: Colors.white70,
+                                  fontSize: 12,
+                                ),
+                              ),
                               const SizedBox(height: 4),
                               Text(
                                 '${todayList.length}',
-                                style: const TextStyle(color: Colors.white, fontSize: 28, fontWeight: FontWeight.w800),
+                                style: const TextStyle(
+                                  color: Colors.white,
+                                  fontSize: 28,
+                                  fontWeight: FontWeight.w800,
+                                ),
                               ),
-                              const Text('citas programadas', style: TextStyle(color: Colors.white70, fontSize: 12)),
+                              const Text(
+                                'citas programadas',
+                                style: TextStyle(
+                                  color: Colors.white70,
+                                  fontSize: 12,
+                                ),
+                              ),
                             ],
                           ),
                         ),
-                        const Icon(Icons.calendar_month_outlined, color: Colors.white, size: 28),
+                        const Icon(
+                          Icons.calendar_month_outlined,
+                          color: Colors.white,
+                          size: 28,
+                        ),
                       ],
                     ),
                     const SizedBox(height: 14),
                     OutlinedButton.icon(
-                      onPressed: () =>
-                          Navigator.of(context).push(MaterialPageRoute(builder: (_) => const BarberAppointmentsView())),
-                      icon: const Icon(Icons.calendar_today_outlined, size: 16, color: Colors.white),
-                      label: const Text('Ver calendario', style: TextStyle(color: Colors.white)),
+                      onPressed: () => Navigator.of(context).push(
+                        MaterialPageRoute(
+                          builder: (_) => const BarberAppointmentsView(),
+                        ),
+                      ),
+                      icon: const Icon(
+                        Icons.calendar_today_outlined,
+                        size: 16,
+                        color: Colors.white,
+                      ),
+                      label: const Text(
+                        'Ver calendario',
+                        style: TextStyle(color: Colors.white),
+                      ),
                       style: OutlinedButton.styleFrom(
                         minimumSize: const Size.fromHeight(40),
                         side: const BorderSide(color: Colors.white38),
@@ -125,7 +167,9 @@ class BarberDashboardTab extends StatelessWidget {
                       label: 'Perfil',
                       onTap: () => Navigator.of(context).push(
                         MaterialPageRoute(
-                          builder: (_) => ProfileMenuView(items: buildBarberProfileItems(context, profile)),
+                          builder: (_) => ProfileMenuView(
+                            items: buildBarberProfileItems(context, profile),
+                          ),
                         ),
                       ),
                     ),
@@ -135,8 +179,11 @@ class BarberDashboardTab extends StatelessWidget {
                     child: _QuickAction(
                       icon: Icons.access_time,
                       label: 'Disponibilidad',
-                      onTap: () =>
-                          Navigator.of(context).push(MaterialPageRoute(builder: (_) => const BarberAvailabilityView())),
+                      onTap: () => Navigator.of(context).push(
+                        MaterialPageRoute(
+                          builder: (_) => const BarberAvailabilityView(),
+                        ),
+                      ),
                     ),
                   ),
                   const SizedBox(width: 10),
@@ -146,27 +193,39 @@ class BarberDashboardTab extends StatelessWidget {
                       label: 'Servicios',
                       onTap: barbershopId == null
                           ? null
-                          : () => Navigator.of(
-                              context,
-                            ).push(MaterialPageRoute(builder: (_) => ManageServicesView(barbershopId: barbershopId))),
+                          : () => Navigator.of(context).push(
+                              MaterialPageRoute(
+                                builder: (_) => ManageServicesView(
+                                  barbershopId: barbershopId,
+                                ),
+                              ),
+                            ),
                     ),
                   ),
                 ],
               ),
               if (barbershopId != null) ...[
                 const SizedBox(height: 20),
-                const Text('Tu barbería', style: TextStyle(fontWeight: FontWeight.w700, fontSize: 15)),
+                const Text(
+                  'Tu barbería',
+                  style: TextStyle(fontWeight: FontWeight.w700, fontSize: 15),
+                ),
                 const SizedBox(height: 10),
                 StreamBuilder<Barbershop?>(
-                  stream: context.read<BarbershopRepository>().watchOne(barbershopId),
+                  stream: context.read<BarbershopRepository>().watchOne(
+                    barbershopId,
+                  ),
                   builder: (context, shopSnapshot) {
                     final shop = shopSnapshot.data;
                     if (shop == null) return const SizedBox.shrink();
                     return InkWell(
                       borderRadius: BorderRadius.circular(14),
-                      onTap: () =>
-                          Navigator.of(context)
-                              .push(MaterialPageRoute(builder: (_) => BarbershopDetailView(barbershopId: shop.id))),
+                      onTap: () => Navigator.of(context).push(
+                        MaterialPageRoute(
+                          builder: (_) =>
+                              BarbershopDetailView(barbershopId: shop.id),
+                        ),
+                      ),
                       child: Container(
                         padding: const EdgeInsets.all(12),
                         decoration: BoxDecoration(
@@ -183,11 +242,18 @@ class BarberDashboardTab extends StatelessWidget {
                                 color: AppColors.primary,
                                 borderRadius: BorderRadius.circular(10),
                                 image: shop.photoUrl != null
-                                    ? DecorationImage(image: NetworkImage(shop.photoUrl!), fit: BoxFit.cover)
+                                    ? DecorationImage(
+                                        image: NetworkImage(shop.photoUrl!),
+                                        fit: BoxFit.cover,
+                                      )
                                     : null,
                               ),
                               child: shop.photoUrl == null
-                                  ? const Icon(Icons.storefront, color: Colors.white, size: 22)
+                                  ? const Icon(
+                                      Icons.storefront,
+                                      color: Colors.white,
+                                      size: 22,
+                                    )
                                   : null,
                             ),
                             const SizedBox(width: 12),
@@ -195,16 +261,27 @@ class BarberDashboardTab extends StatelessWidget {
                               child: Column(
                                 crossAxisAlignment: CrossAxisAlignment.start,
                                 children: [
-                                  Text(shop.name, style: const TextStyle(fontWeight: FontWeight.w700)),
+                                  Text(
+                                    shop.name,
+                                    style: const TextStyle(
+                                      fontWeight: FontWeight.w700,
+                                    ),
+                                  ),
                                   Text(
                                     shop.address ?? '',
-                                    style: TextStyle(color: AppColors.textSecondary, fontSize: 12),
+                                    style: TextStyle(
+                                      color: AppColors.textSecondary,
+                                      fontSize: 12,
+                                    ),
                                   ),
                                 ],
                               ),
                             ),
                             StatusBadge.active(shop.active),
-                            Icon(Icons.chevron_right, color: AppColors.textSecondary),
+                            Icon(
+                              Icons.chevron_right,
+                              color: AppColors.textSecondary,
+                            ),
                           ],
                         ),
                       ),
@@ -213,14 +290,19 @@ class BarberDashboardTab extends StatelessWidget {
                 ),
               ],
               const SizedBox(height: 20),
-              const Text('Resumen', style: TextStyle(fontWeight: FontWeight.w700, fontSize: 15)),
+              const Text(
+                'Resumen',
+                style: TextStyle(fontWeight: FontWeight.w700, fontSize: 15),
+              ),
               const SizedBox(height: 10),
               Container(
                 padding: const EdgeInsets.all(16),
                 decoration: BoxDecoration(
                   color: AppColors.warning.withValues(alpha: 0.08),
                   borderRadius: BorderRadius.circular(16),
-                  border: Border.all(color: AppColors.warning.withValues(alpha: 0.25)),
+                  border: Border.all(
+                    color: AppColors.warning.withValues(alpha: 0.25),
+                  ),
                 ),
                 child: Row(
                   children: [
@@ -230,20 +312,30 @@ class BarberDashboardTab extends StatelessWidget {
                         color: AppColors.warning.withValues(alpha: 0.15),
                         shape: BoxShape.circle,
                       ),
-                      child: const Icon(Icons.insights_outlined, color: AppColors.warning, size: 20),
+                      child: const Icon(
+                        Icons.insights_outlined,
+                        color: AppColors.warning,
+                        size: 20,
+                      ),
                     ),
                     const SizedBox(width: 12),
                     Expanded(
                       child: Text(
                         '¡Bienvenido! Aquí podrás ver tus citas, clientes y la información de tu barbería.',
-                        style: TextStyle(color: AppColors.textSecondary, fontSize: 13),
+                        style: TextStyle(
+                          color: AppColors.textSecondary,
+                          fontSize: 13,
+                        ),
                       ),
                     ),
                   ],
                 ),
               ),
               const SizedBox(height: 20),
-              const Text('Mis citas de hoy', style: TextStyle(fontWeight: FontWeight.w700, fontSize: 15)),
+              const Text(
+                'Mis citas de hoy',
+                style: TextStyle(fontWeight: FontWeight.w700, fontSize: 15),
+              ),
               const SizedBox(height: 10),
               if (todayList.isEmpty)
                 Container(
@@ -261,7 +353,10 @@ class BarberDashboardTab extends StatelessWidget {
                 )
               else
                 for (final appointment in todayList) ...[
-                  AppointmentCard(appointment: appointment, subtitle: 'Cliente: ${appointment.clientName}'),
+                  AppointmentCard(
+                    appointment: appointment,
+                    subtitle: 'Cliente: ${appointment.clientName}',
+                  ),
                   const SizedBox(height: 10),
                 ],
             ],
@@ -277,7 +372,11 @@ class _QuickAction extends StatelessWidget {
   final String label;
   final VoidCallback? onTap;
 
-  const _QuickAction({required this.icon, required this.label, required this.onTap});
+  const _QuickAction({
+    required this.icon,
+    required this.label,
+    required this.onTap,
+  });
 
   @override
   Widget build(BuildContext context) {
@@ -287,13 +386,20 @@ class _QuickAction extends StatelessWidget {
       child: Container(
         padding: const EdgeInsets.symmetric(vertical: 14),
         decoration: BoxDecoration(
-          color: onTap == null ? AppColors.surface.withValues(alpha: 0.5) : AppColors.surface,
+          color: onTap == null
+              ? AppColors.surface.withValues(alpha: 0.5)
+              : AppColors.surface,
           borderRadius: BorderRadius.circular(14),
           border: Border.all(color: AppColors.border),
         ),
         child: Column(
           children: [
-            Icon(icon, color: onTap == null ? AppColors.textSecondary.withValues(alpha: 0.5) : AppColors.primary),
+            Icon(
+              icon,
+              color: onTap == null
+                  ? AppColors.textSecondary.withValues(alpha: 0.5)
+                  : AppColors.primary,
+            ),
             const SizedBox(height: 6),
             Text(
               label,
@@ -301,7 +407,9 @@ class _QuickAction extends StatelessWidget {
               style: TextStyle(
                 fontSize: 12,
                 fontWeight: FontWeight.w600,
-                color: onTap == null ? AppColors.textSecondary.withValues(alpha: 0.5) : AppColors.textPrimary,
+                color: onTap == null
+                    ? AppColors.textSecondary.withValues(alpha: 0.5)
+                    : AppColors.textPrimary,
               ),
             ),
           ],

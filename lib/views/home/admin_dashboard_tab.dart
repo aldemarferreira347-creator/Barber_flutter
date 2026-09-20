@@ -44,7 +44,9 @@ class _AdminDashboardTabState extends State<AdminDashboardTab> {
 
     for (final shop in shops) {
       final dueDate = shop.paymentDueDate;
-      if (dueDate != null && dueDate.isBefore(now) && shop.paymentStatus == PaymentStatus.ok) {
+      if (dueDate != null &&
+          dueDate.isBefore(now) &&
+          shop.paymentStatus == PaymentStatus.ok) {
         await barbershopRepo.setPaymentStatus(shop.id, PaymentStatus.overdue);
         await notificationRepo.send(
           toUserId: shop.ownerId,
@@ -62,7 +64,9 @@ class _AdminDashboardTabState extends State<AdminDashboardTab> {
     final profile = context.watch<AuthController>().profile;
     final userService = context.read<UserRepository>();
     final barbershopService = context.read<BarbershopRepository>();
-    final greetingName = profile?.firstName.isNotEmpty == true ? profile!.firstName : 'Admin';
+    final greetingName = profile?.firstName.isNotEmpty == true
+        ? profile!.firstName
+        : 'Admin';
 
     return Scaffold(
       appBar: AppBar(
@@ -72,15 +76,22 @@ class _AdminDashboardTabState extends State<AdminDashboardTab> {
             IconButton(
               icon: const Icon(Icons.notifications_none),
               tooltip: 'Notificaciones',
-              onPressed: () =>
-                  Navigator.of(context).push(MaterialPageRoute(builder: (_) => NotificationsView(uid: profile.uid))),
+              onPressed: () => Navigator.of(context).push(
+                MaterialPageRoute(
+                  builder: (_) => NotificationsView(uid: profile.uid),
+                ),
+              ),
             ),
           Padding(
             padding: const EdgeInsets.only(right: 16, left: 4),
             child: CircleAvatar(
               radius: 16,
               backgroundColor: AppColors.primary,
-              child: const Icon(Icons.shield_outlined, color: Colors.white, size: 16),
+              child: const Icon(
+                Icons.shield_outlined,
+                color: Colors.white,
+                size: 16,
+              ),
             ),
           ),
         ],
@@ -88,7 +99,10 @@ class _AdminDashboardTabState extends State<AdminDashboardTab> {
       body: ListView(
         padding: const EdgeInsets.all(16),
         children: [
-          Text('Panel de administración', style: TextStyle(color: AppColors.textSecondary)),
+          Text(
+            'Panel de administración',
+            style: TextStyle(color: AppColors.textSecondary),
+          ),
           const SizedBox(height: 16),
           StreamBuilder<List<AppUser>>(
             stream: userService.watchAll(),
@@ -99,7 +113,9 @@ class _AdminDashboardTabState extends State<AdminDashboardTab> {
                 builder: (context, shopSnapshot) {
                   final shops = shopSnapshot.data ?? [];
                   final activeShops = shops.where((s) => s.active).length;
-                  final overdueShops = shops.where((s) => s.paymentStatus != PaymentStatus.ok).length;
+                  final overdueShops = shops
+                      .where((s) => s.paymentStatus != PaymentStatus.ok)
+                      .length;
                   return Column(
                     children: [
                       Row(
@@ -147,28 +163,36 @@ class _AdminDashboardTabState extends State<AdminDashboardTab> {
             },
           ),
           const SizedBox(height: 24),
-          const Text('Acciones rápidas', style: TextStyle(fontWeight: FontWeight.w700, fontSize: 15)),
+          const Text(
+            'Acciones rápidas',
+            style: TextStyle(fontWeight: FontWeight.w700, fontSize: 15),
+          ),
           const SizedBox(height: 10),
           ActionListTile(
             icon: Icons.people_outline,
             label: 'Gestionar usuarios',
-            onTap: () => Navigator.of(context).push(MaterialPageRoute(builder: (_) => const ManageUsersView())),
+            onTap: () => Navigator.of(
+              context,
+            ).push(MaterialPageRoute(builder: (_) => const ManageUsersView())),
           ),
           const SizedBox(height: 10),
           ActionListTile(
             icon: Icons.storefront_outlined,
             label: 'Ver todas las barberías',
-            onTap: () =>
-                Navigator.of(context)
-                    .push(MaterialPageRoute(builder: (_) => const ManageBarbershopsView(adminControls: true))),
+            onTap: () => Navigator.of(context).push(
+              MaterialPageRoute(
+                builder: (_) =>
+                    const ManageBarbershopsView(adminControls: true),
+              ),
+            ),
           ),
           const SizedBox(height: 10),
           ActionListTile(
             icon: Icons.settings_outlined,
             label: 'Configuración del sistema',
-            onTap: () =>
-                ScaffoldMessenger.of(context)
-                    .showSnackBar(const SnackBar(content: Text('La configuración próximamente'))),
+            onTap: () => ScaffoldMessenger.of(context).showSnackBar(
+              const SnackBar(content: Text('La configuración próximamente')),
+            ),
           ),
         ],
       ),

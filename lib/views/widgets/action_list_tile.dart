@@ -1,6 +1,8 @@
 import 'package:flutter/material.dart';
+import 'package:flutter_animate/flutter_animate.dart';
 
 import '../../theme/app_colors.dart';
+import 'pressable_scale.dart';
 
 /// Item de "Acciones rápidas" / menú: icono a la izquierda, texto y chevron.
 class ActionListTile extends StatelessWidget {
@@ -8,43 +10,75 @@ class ActionListTile extends StatelessWidget {
   final String label;
   final VoidCallback? onTap;
   final Color? iconColor;
+  final int animationIndex;
 
-  const ActionListTile({super.key, required this.icon, required this.label, this.onTap, this.iconColor});
+  const ActionListTile({
+    super.key,
+    required this.icon,
+    required this.label,
+    this.onTap,
+    this.iconColor,
+    this.animationIndex = 0,
+  });
 
   @override
   Widget build(BuildContext context) {
     final resolvedIconColor = iconColor ?? AppColors.accent;
-    return Material(
-      color: AppColors.surface,
-      borderRadius: BorderRadius.circular(14),
-      child: InkWell(
-        borderRadius: BorderRadius.circular(14),
-        onTap: onTap,
-        child: Container(
-          padding: const EdgeInsets.symmetric(horizontal: 14, vertical: 14),
-          decoration: BoxDecoration(
+    return PressableScale(
+          onTap: onTap,
+          child: Material(
+            color: AppColors.surface,
             borderRadius: BorderRadius.circular(14),
-            border: Border.all(color: AppColors.border),
-          ),
-          child: Row(
-            children: [
-              Container(
-                padding: const EdgeInsets.all(8),
-                decoration: BoxDecoration(color: resolvedIconColor.withValues(alpha: 0.12), shape: BoxShape.circle),
-                child: Icon(icon, color: resolvedIconColor, size: 18),
-              ),
-              const SizedBox(width: 12),
-              Expanded(
-                child: Text(
-                  label,
-                  style: TextStyle(fontWeight: FontWeight.w600, color: AppColors.textPrimary),
+            elevation: 1,
+            shadowColor: AppColors.textPrimary.withValues(alpha: 0.08),
+            child: InkWell(
+              borderRadius: BorderRadius.circular(14),
+              onTap: onTap,
+              child: Container(
+                padding: const EdgeInsets.symmetric(
+                  horizontal: 14,
+                  vertical: 14,
+                ),
+                decoration: BoxDecoration(
+                  borderRadius: BorderRadius.circular(14),
+                  border: Border.all(color: AppColors.border),
+                ),
+                child: Row(
+                  children: [
+                    Container(
+                      padding: const EdgeInsets.all(8),
+                      decoration: BoxDecoration(
+                        gradient: LinearGradient(
+                          begin: Alignment.topLeft,
+                          end: Alignment.bottomRight,
+                          colors: [
+                            resolvedIconColor.withValues(alpha: 0.20),
+                            resolvedIconColor.withValues(alpha: 0.08),
+                          ],
+                        ),
+                        shape: BoxShape.circle,
+                      ),
+                      child: Icon(icon, color: resolvedIconColor, size: 18),
+                    ),
+                    const SizedBox(width: 12),
+                    Expanded(
+                      child: Text(
+                        label,
+                        style: TextStyle(
+                          fontWeight: FontWeight.w600,
+                          color: AppColors.textPrimary,
+                        ),
+                      ),
+                    ),
+                    Icon(Icons.chevron_right, color: AppColors.textSecondary),
+                  ],
                 ),
               ),
-              Icon(Icons.chevron_right, color: AppColors.textSecondary),
-            ],
+            ),
           ),
-        ),
-      ),
-    );
+        )
+        .animate(delay: (animationIndex * 60).ms)
+        .fadeIn(duration: 300.ms)
+        .slideX(begin: 0.08, end: 0, curve: Curves.easeOutCubic);
   }
 }

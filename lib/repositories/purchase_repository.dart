@@ -27,11 +27,17 @@ abstract class PurchaseRepository {
 
   /// El barbero busca una compra por su código de reclamo, dentro de su
   /// propia barbería.
-  Future<Purchase?> findByClaimCode({required String barbershopId, required String claimCode});
+  Future<Purchase?> findByClaimCode({
+    required String barbershopId,
+    required String claimCode,
+  });
 
   /// El barbero marca la compra completa como reclamada.
   Future<void> claimPurchase(String purchaseId);
 
   /// Reembolso parcial por checklist de ítems (spec 6.5/10.5).
-  Future<void> refundItems({required String purchaseId, required List<int> itemIndexes});
+  Future<void> refundItems({
+    required String purchaseId,
+    required List<int> itemIndexes,
+  });
 }

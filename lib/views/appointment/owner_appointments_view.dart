@@ -41,7 +41,8 @@ class OwnerAppointmentsView extends StatelessWidget {
               final appointment = appointments[index];
               return AppointmentCard(
                 appointment: appointment,
-                subtitle: '${appointment.clientName} con ${appointment.barberName}',
+                subtitle:
+                    '${appointment.clientName} con ${appointment.barberName}',
               );
             },
           );

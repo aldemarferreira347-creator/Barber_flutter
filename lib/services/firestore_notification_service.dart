@@ -8,11 +8,14 @@ class FirestoreNotificationService implements NotificationRepository {
   final FirebaseFirestore _firestore;
   final FirebaseFunctions _functions;
 
-  FirestoreNotificationService({FirebaseFirestore? firestore, FirebaseFunctions? functions})
-    : _firestore = firestore ?? FirebaseFirestore.instance,
-      _functions = functions ?? FirebaseFunctions.instance;
+  FirestoreNotificationService({
+    FirebaseFirestore? firestore,
+    FirebaseFunctions? functions,
+  }) : _firestore = firestore ?? FirebaseFirestore.instance,
+       _functions = functions ?? FirebaseFunctions.instance;
 
-  CollectionReference<Map<String, dynamic>> get _notifications => _firestore.collection('notifications');
+  CollectionReference<Map<String, dynamic>> get _notifications =>
+      _firestore.collection('notifications');
 
   @override
   Stream<List<AppNotification>> watchForUser(String uid) {
@@ -20,7 +23,11 @@ class FirestoreNotificationService implements NotificationRepository {
         .where('toUserId', isEqualTo: uid)
         .orderBy('createdAt', descending: true)
         .snapshots()
-        .map((snapshot) => snapshot.docs.map((doc) => AppNotification.fromMap(doc.id, doc.data())).toList());
+        .map(
+          (snapshot) => snapshot.docs
+              .map((doc) => AppNotification.fromMap(doc.id, doc.data()))
+              .toList(),
+        );
   }
 
   @override

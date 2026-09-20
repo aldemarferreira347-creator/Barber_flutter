@@ -13,27 +13,42 @@ class FirestoreBarbershopService implements BarbershopRepository {
   final StorageRepository _storage;
   final FirebaseFunctions _functions;
 
-  FirestoreBarbershopService({required this._storage, FirebaseFirestore? firestore, FirebaseFunctions? functions})
-    : _firestore = firestore ?? FirebaseFirestore.instance,
-      _functions = functions ?? FirebaseFunctions.instance;
+  FirestoreBarbershopService({
+    required this._storage,
+    FirebaseFirestore? firestore,
+    FirebaseFunctions? functions,
+  }) : _firestore = firestore ?? FirebaseFirestore.instance,
+       _functions = functions ?? FirebaseFunctions.instance;
 
-  CollectionReference<Map<String, dynamic>> get _barbershops => _firestore.collection('barbershops');
+  CollectionReference<Map<String, dynamic>> get _barbershops =>
+      _firestore.collection('barbershops');
 
   @override
   Stream<List<Barbershop>> watchAll() {
     return _barbershops
         .orderBy('name')
         .snapshots()
-        .map((snapshot) => snapshot.docs.map((doc) => Barbershop.fromMap(doc.id, doc.data())).toList());
+        .map(
+          (snapshot) => snapshot.docs
+              .map((doc) => Barbershop.fromMap(doc.id, doc.data()))
+              .toList(),
+        );
   }
 
   @override
   Stream<List<Barbershop>> watchApproved() {
     return _barbershops
-        .where('approvalStatus', isEqualTo: BarbershopApprovalStatus.approved.value)
+        .where(
+          'approvalStatus',
+          isEqualTo: BarbershopApprovalStatus.approved.value,
+        )
         .where('active', isEqualTo: true)
         .snapshots()
-        .map((snapshot) => snapshot.docs.map((doc) => Barbershop.fromMap(doc.id, doc.data())).toList());
+        .map(
+          (snapshot) => snapshot.docs
+              .map((doc) => Barbershop.fromMap(doc.id, doc.data()))
+              .toList(),
+        );
   }
 
   @override
@@ -41,7 +56,11 @@ class FirestoreBarbershopService implements BarbershopRepository {
     return _barbershops
         .where('ownerId', isEqualTo: ownerId)
         .snapshots()
-        .map((snapshot) => snapshot.docs.map((doc) => Barbershop.fromMap(doc.id, doc.data())).toList());
+        .map(
+          (snapshot) => snapshot.docs
+              .map((doc) => Barbershop.fromMap(doc.id, doc.data()))
+              .toList(),
+        );
   }
 
   @override
@@ -71,48 +90,67 @@ class FirestoreBarbershopService implements BarbershopRepository {
 
   @override
   Future<void> updateSchedule(String id, Map<String, DaySchedule> schedule) {
-    return _barbershops.doc(id).update({'schedule': weekScheduleToMap(schedule)});
+    return _barbershops.doc(id).update({
+      'schedule': weekScheduleToMap(schedule),
+    });
   }
 
   @override
   Future<void> updateLocation(String id, double latitude, double longitude) {
-    return _barbershops.doc(id).update({'location': GeoPoint(latitude, longitude)});
+    return _barbershops.doc(id).update({
+      'location': GeoPoint(latitude, longitude),
+    });
   }
 
   @override
-  Future<void> uploadPhoto(String id, {required String fileName, required Uint8List bytes}) async {
-    final url = await _storage.uploadBytes(path: 'barbershops/$id/profile/$fileName', bytes: bytes);
+  Future<void> uploadPhoto(
+    String id, {
+    required String fileName,
+    required Uint8List bytes,
+  }) async {
+    final url = await _storage.uploadBytes(
+      path: 'barbershops/$id/profile/$fileName',
+      bytes: bytes,
+    );
     await _barbershops.doc(id).update({'photoUrl': url});
   }
 
   @override
   Future<void> requestOwnership(String barbershopId) {
-    return _functions.httpsCallable('requestBarbershopOwnership').call<Map<String, dynamic>>({
-      'barbershopId': barbershopId,
-    });
+    return _functions
+        .httpsCallable('requestBarbershopOwnership')
+        .call<Map<String, dynamic>>({'barbershopId': barbershopId});
   }
 
   @override
   Future<void> resolveApproval(String id, {required bool approve}) {
     if (!approve) {
-      return _barbershops.doc(id).update({'approvalStatus': BarbershopApprovalStatus.rejected.value});
+      return _barbershops.doc(id).update({
+        'approvalStatus': BarbershopApprovalStatus.rejected.value,
+      });
     }
     // El primer ciclo de mensualidad arranca en la aprobación (30 días).
     return _barbershops.doc(id).update({
       'approvalStatus': BarbershopApprovalStatus.approved.value,
       'active': true,
       'paymentStatus': PaymentStatus.ok.value,
-      'paymentDueDate': Timestamp.fromDate(DateTime.now().add(const Duration(days: 30))),
+      'paymentDueDate': Timestamp.fromDate(
+        DateTime.now().add(const Duration(days: 30)),
+      ),
     });
   }
 
   @override
   Future<void> paySubscription(String id) {
-    return _functions.httpsCallable('payBarbershopSubscription').call<Map<String, dynamic>>({'barbershopId': id});
+    return _functions
+        .httpsCallable('payBarbershopSubscription')
+        .call<Map<String, dynamic>>({'barbershopId': id});
   }
 
   @override
   Future<void> cancelSubscription(String id) {
-    return _functions.httpsCallable('cancelBarbershopSubscription').call<Map<String, dynamic>>({'barbershopId': id});
+    return _functions
+        .httpsCallable('cancelBarbershopSubscription')
+        .call<Map<String, dynamic>>({'barbershopId': id});
   }
 }

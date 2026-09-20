@@ -17,7 +17,11 @@ class Product {
     this.active = true,
   });
 
-  factory Product.fromMap(String id, String barbershopId, Map<String, dynamic> map) {
+  factory Product.fromMap(
+    String id,
+    String barbershopId,
+    Map<String, dynamic> map,
+  ) {
     return Product(
       id: id,
       barbershopId: barbershopId,
@@ -30,6 +34,12 @@ class Product {
   }
 
   Map<String, dynamic> toMap() {
-    return {'name': name, 'description': description, 'price': price, 'photoUrl': photoUrl, 'active': active};
+    return {
+      'name': name,
+      'description': description,
+      'price': price,
+      'photoUrl': photoUrl,
+      'active': active,
+    };
   }
 }

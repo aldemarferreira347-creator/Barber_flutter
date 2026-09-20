@@ -14,16 +14,29 @@ class ClientHomeView extends StatelessWidget {
   const ClientHomeView({super.key});
 
   void _comingSoon(BuildContext context, String feature) {
-    ScaffoldMessenger.of(context).showSnackBar(SnackBar(content: Text('$feature próximamente')));
+    ScaffoldMessenger.of(context)
+        .showSnackBar(SnackBar(content: Text('$feature próximamente')));
   }
 
   @override
   Widget build(BuildContext context) {
     return RoleShell(
       tabs: [
-        const RoleTab(label: 'Inicio', icon: Icons.home_outlined, page: ClientDashboardTab()),
-        const RoleTab(label: 'Barberías', icon: Icons.storefront_outlined, page: ManageBarbershopsView()),
-        const RoleTab(label: 'Citas', icon: Icons.calendar_month_outlined, page: ClientAppointmentsView()),
+        const RoleTab(
+          label: 'Inicio',
+          icon: Icons.home_outlined,
+          page: ClientDashboardTab(),
+        ),
+        const RoleTab(
+          label: 'Barberías',
+          icon: Icons.storefront_outlined,
+          page: ManageBarbershopsView(),
+        ),
+        const RoleTab(
+          label: 'Citas',
+          icon: Icons.calendar_month_outlined,
+          page: ClientAppointmentsView(),
+        ),
         RoleTab(
           label: 'Perfil',
           icon: Icons.person_outline,
@@ -36,8 +49,11 @@ class ClientHomeView extends StatelessWidget {
                     ProfileMenuItem(
                       icon: Icons.notifications_none,
                       label: 'Notificaciones',
-                      onTap: () =>
-                          Navigator.of(context).push(MaterialPageRoute(builder: (_) => NotificationsView(uid: uid))),
+                      onTap: () => Navigator.of(context).push(
+                        MaterialPageRoute(
+                          builder: (_) => NotificationsView(uid: uid),
+                        ),
+                      ),
                     ),
                   ProfileMenuItem(
                     icon: Icons.payment_outlined,
@@ -48,13 +64,19 @@ class ClientHomeView extends StatelessWidget {
                     ProfileMenuItem(
                       icon: Icons.storefront_outlined,
                       label: 'Registrar mi barbería (ser Dueño)',
-                      onTap: () => Navigator.of(context)
-                          .push(MaterialPageRoute(builder: (_) => ManageBarbershopsView(ownerId: uid, canAdd: true))),
+                      onTap: () => Navigator.of(context).push(
+                        MaterialPageRoute(
+                          builder: (_) =>
+                              ManageBarbershopsView(ownerId: uid, canAdd: true),
+                        ),
+                      ),
                     ),
                   ProfileMenuItem(
                     icon: Icons.help_outline,
                     label: 'Ayuda',
-                    onTap: () => Navigator.of(context).push(MaterialPageRoute(builder: (_) => const HelpView())),
+                    onTap: () => Navigator.of(
+                      context,
+                    ).push(MaterialPageRoute(builder: (_) => const HelpView())),
                   ),
                 ],
               );

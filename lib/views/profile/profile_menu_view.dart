@@ -43,8 +43,12 @@ class ProfileMenuView extends StatelessWidget {
               child: Row(
                 children: [
                   Icon(
-                    option == current ? Icons.radio_button_checked : Icons.radio_button_off,
-                    color: option == current ? AppColors.accent : AppColors.textSecondary,
+                    option == current
+                        ? Icons.radio_button_checked
+                        : Icons.radio_button_off,
+                    color: option == current
+                        ? AppColors.accent
+                        : AppColors.textSecondary,
                     size: 20,
                   ),
                   const SizedBox(width: 10),
@@ -59,8 +63,13 @@ class ProfileMenuView extends StatelessWidget {
     final ok = await authController.chooseNotificationTone(tone);
     if (!context.mounted) return;
     if (!ok) {
-      ScaffoldMessenger.of(context)
-          .showSnackBar(SnackBar(content: Text(authController.errorMessage ?? 'No se pudo actualizar el tono')));
+      ScaffoldMessenger.of(context).showSnackBar(
+        SnackBar(
+          content: Text(
+            authController.errorMessage ?? 'No se pudo actualizar el tono',
+          ),
+        ),
+      );
     }
   }
 
@@ -68,7 +77,13 @@ class ProfileMenuView extends StatelessWidget {
   Widget build(BuildContext context) {
     final profile = context.watch<AuthController>().profile;
     final initials = (profile?.name.isNotEmpty ?? false)
-        ? profile!.name.trim().split(RegExp(r'\s+')).map((p) => p[0]).take(2).join().toUpperCase()
+        ? profile!.name
+              .trim()
+              .split(RegExp(r'\s+'))
+              .map((p) => p[0])
+              .take(2)
+              .join()
+              .toUpperCase()
         : '?';
 
     return Scaffold(
@@ -90,7 +105,10 @@ class ProfileMenuView extends StatelessWidget {
                   backgroundColor: AppColors.primary,
                   child: Text(
                     initials,
-                    style: const TextStyle(color: Colors.white, fontWeight: FontWeight.w700),
+                    style: const TextStyle(
+                      color: Colors.white,
+                      fontWeight: FontWeight.w700,
+                    ),
                   ),
                 ),
                 const SizedBox(width: 14),
@@ -98,13 +116,29 @@ class ProfileMenuView extends StatelessWidget {
                   child: Column(
                     crossAxisAlignment: CrossAxisAlignment.start,
                     children: [
-                      Text(profile?.name ?? '', style: const TextStyle(fontWeight: FontWeight.w700, fontSize: 16)),
+                      Text(
+                        profile?.name ?? '',
+                        style: const TextStyle(
+                          fontWeight: FontWeight.w700,
+                          fontSize: 16,
+                        ),
+                      ),
                       const SizedBox(height: 2),
-                      Text(profile?.email ?? '', style: TextStyle(color: AppColors.textSecondary, fontSize: 13)),
+                      Text(
+                        profile?.email ?? '',
+                        style: TextStyle(
+                          color: AppColors.textSecondary,
+                          fontSize: 13,
+                        ),
+                      ),
                       const SizedBox(height: 4),
                       Text(
                         'Rol: ${_roleLabel(profile?.role ?? UserRole.client)}',
-                        style: TextStyle(color: AppColors.accent, fontSize: 12, fontWeight: FontWeight.w600),
+                        style: TextStyle(
+                          color: AppColors.accent,
+                          fontSize: 12,
+                          fontWeight: FontWeight.w600,
+                        ),
                       ),
                     ],
                   ),
@@ -113,14 +147,21 @@ class ProfileMenuView extends StatelessWidget {
             ),
           ),
           const SizedBox(height: 18),
-          ActionListTile(icon: Icons.tune, label: 'Tono de notificaciones', onTap: () => _showToneDialog(context)),
+          ActionListTile(
+            icon: Icons.tune,
+            label: 'Tono de notificaciones',
+            onTap: () => _showToneDialog(context),
+          ),
           const SizedBox(height: 10),
           Consumer<ThemeController>(
             builder: (context, themeController, _) => Material(
               color: AppColors.surface,
               borderRadius: BorderRadius.circular(14),
               child: Container(
-                padding: const EdgeInsets.symmetric(horizontal: 14, vertical: 6),
+                padding: const EdgeInsets.symmetric(
+                  horizontal: 14,
+                  vertical: 6,
+                ),
                 decoration: BoxDecoration(
                   borderRadius: BorderRadius.circular(14),
                   border: Border.all(color: AppColors.border),
@@ -133,13 +174,23 @@ class ProfileMenuView extends StatelessWidget {
                         color: AppColors.accent.withValues(alpha: 0.12),
                         shape: BoxShape.circle,
                       ),
-                      child: Icon(Icons.dark_mode_outlined, color: AppColors.accent, size: 18),
+                      child: Icon(
+                        Icons.dark_mode_outlined,
+                        color: AppColors.accent,
+                        size: 18,
+                      ),
                     ),
                     const SizedBox(width: 12),
                     const Expanded(
-                      child: Text('Modo oscuro', style: TextStyle(fontWeight: FontWeight.w600)),
+                      child: Text(
+                        'Modo oscuro',
+                        style: TextStyle(fontWeight: FontWeight.w600),
+                      ),
                     ),
-                    Switch(value: themeController.isDark, onChanged: (value) => themeController.setDark(value)),
+                    Switch(
+                      value: themeController.isDark,
+                      onChanged: (value) => themeController.setDark(value),
+                    ),
                   ],
                 ),
               ),
@@ -147,7 +198,11 @@ class ProfileMenuView extends StatelessWidget {
           ),
           const SizedBox(height: 10),
           for (final item in items) ...[
-            ActionListTile(icon: item.icon, label: item.label, onTap: item.onTap),
+            ActionListTile(
+              icon: item.icon,
+              label: item.label,
+              onTap: item.onTap,
+            ),
             const SizedBox(height: 10),
           ],
           const SizedBox(height: 12),

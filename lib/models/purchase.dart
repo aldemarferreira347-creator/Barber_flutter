@@ -2,7 +2,13 @@ import 'package:cloud_firestore/cloud_firestore.dart';
 
 /// Estado de una compra de productos (spec 10.4/10.5). No confundir con
 /// [PaymentIntentStatus], que es el estado del PAGO asociado.
-enum PurchaseStatus { pendingPayment, pendingClaim, claimed, expired, paymentFailed }
+enum PurchaseStatus {
+  pendingPayment,
+  pendingClaim,
+  claimed,
+  expired,
+  paymentFailed,
+}
 
 extension PurchaseStatusX on PurchaseStatus {
   String get value => switch (this) {
@@ -99,12 +105,19 @@ class Purchase {
       buyerId: map['buyerId'] as String? ?? '',
       appointmentId: map['appointmentId'] as String?,
       items:
-          (map['items'] as List?)?.map((e) => PurchaseItem.fromMap(Map<String, dynamic>.from(e as Map))).toList() ??
+          (map['items'] as List?)
+              ?.map(
+                (e) =>
+                    PurchaseItem.fromMap(Map<String, dynamic>.from(e as Map)),
+              )
+              .toList() ??
           const [],
       totalAmount: (map['totalAmount'] as num?)?.toDouble() ?? 0,
       paymentId: map['paymentId'] as String?,
       claimCode: map['claimCode'] as String?,
-      status: PurchaseStatusX.fromValue(map['status'] as String? ?? 'pending_payment'),
+      status: PurchaseStatusX.fromValue(
+        map['status'] as String? ?? 'pending_payment',
+      ),
       createdAt: createdAtValue is Timestamp ? createdAtValue.toDate() : null,
       claimedAt: claimedAtValue is Timestamp ? claimedAtValue.toDate() : null,
       expiresAt: expiresAtValue is Timestamp ? expiresAtValue.toDate() : null,

@@ -39,9 +39,16 @@ class _ClaimPurchaseViewState extends State<ClaimPurchaseView> {
     });
     try {
       final repo = context.read<PurchaseRepository>();
-      final purchase = await repo.findByClaimCode(barbershopId: widget.barbershopId, claimCode: code);
+      final purchase = await repo.findByClaimCode(
+        barbershopId: widget.barbershopId,
+        claimCode: code,
+      );
       setState(() => _purchase = purchase);
-      if (purchase == null) setState(() => _error = 'No encontramos ninguna compra con ese código en esta barbería.');
+      if (purchase == null)
+        setState(
+          () => _error =
+              'No encontramos ninguna compra con ese código en esta barbería.',
+        );
     } catch (e) {
       setState(() => _error = 'No se pudo buscar el código: $e');
     } finally {
@@ -56,11 +63,14 @@ class _ClaimPurchaseViewState extends State<ClaimPurchaseView> {
     try {
       await context.read<PurchaseRepository>().claimPurchase(purchase.id);
       if (mounted) {
-        ScaffoldMessenger.of(context).showSnackBar(const SnackBar(content: Text('Compra marcada como entregada.')));
+        ScaffoldMessenger.of(context).showSnackBar(
+          const SnackBar(content: Text('Compra marcada como entregada.')),
+        );
         Navigator.of(context).pop();
       }
     } catch (e) {
-      if (mounted) setState(() => _error = 'No se pudo marcar como entregada: $e');
+      if (mounted)
+        setState(() => _error = 'No se pudo marcar como entregada: $e');
     } finally {
       if (mounted) setState(() => _claiming = false);
     }
@@ -69,7 +79,8 @@ class _ClaimPurchaseViewState extends State<ClaimPurchaseView> {
   @override
   Widget build(BuildContext context) {
     final purchase = _purchase;
-    final canClaim = purchase != null && purchase.status == PurchaseStatus.pendingClaim;
+    final canClaim =
+        purchase != null && purchase.status == PurchaseStatus.pendingClaim;
 
     return Scaffold(
       appBar: AppBar(title: const Text('Reclamar compra')),
@@ -84,13 +95,17 @@ class _ClaimPurchaseViewState extends State<ClaimPurchaseView> {
               decoration: InputDecoration(
                 labelText: 'Código de reclamo',
                 prefixIcon: const Icon(Icons.qr_code),
-                suffixIcon: IconButton(icon: const Icon(Icons.search), onPressed: _searching ? null : _search),
+                suffixIcon: IconButton(
+                  icon: const Icon(Icons.search),
+                  onPressed: _searching ? null : _search,
+                ),
               ),
               onSubmitted: (_) => _search(),
             ),
             const SizedBox(height: 16),
             if (_searching) const Center(child: CircularProgressIndicator()),
-            if (_error != null) Text(_error!, style: const TextStyle(color: AppColors.error)),
+            if (_error != null)
+              Text(_error!, style: const TextStyle(color: AppColors.error)),
             if (purchase != null) ...[
               Container(
                 padding: const EdgeInsets.all(14),
@@ -105,10 +120,16 @@ class _ClaimPurchaseViewState extends State<ClaimPurchaseView> {
                     Row(
                       mainAxisAlignment: MainAxisAlignment.spaceBetween,
                       children: [
-                        Text(purchase.status.label, style: const TextStyle(fontWeight: FontWeight.w700)),
+                        Text(
+                          purchase.status.label,
+                          style: const TextStyle(fontWeight: FontWeight.w700),
+                        ),
                         Text(
                           '\$${purchase.totalAmount.toStringAsFixed(0)}',
-                          style: TextStyle(fontWeight: FontWeight.w800, color: AppColors.accent),
+                          style: TextStyle(
+                            fontWeight: FontWeight.w800,
+                            color: AppColors.accent,
+                          ),
                         ),
                       ],
                     ),
@@ -119,9 +140,13 @@ class _ClaimPurchaseViewState extends State<ClaimPurchaseView> {
                         child: Row(
                           children: [
                             Icon(
-                              item.refunded ? Icons.remove_circle_outline : Icons.check_box_outlined,
+                              item.refunded
+                                  ? Icons.remove_circle_outline
+                                  : Icons.check_box_outlined,
                               size: 18,
-                              color: item.refunded ? AppColors.error : AppColors.success,
+                              color: item.refunded
+                                  ? AppColors.error
+                                  : AppColors.success,
                             ),
                             const SizedBox(width: 8),
                             Expanded(
@@ -129,7 +154,9 @@ class _ClaimPurchaseViewState extends State<ClaimPurchaseView> {
                                 '${item.productName} ×${item.quantity}${item.refunded ? ' (reembolsado)' : ''}',
                               ),
                             ),
-                            Text('\$${(item.unitPrice * item.quantity).toStringAsFixed(0)}'),
+                            Text(
+                              '\$${(item.unitPrice * item.quantity).toStringAsFixed(0)}',
+                            ),
                           ],
                         ),
                       ),
@@ -143,7 +170,10 @@ class _ClaimPurchaseViewState extends State<ClaimPurchaseView> {
                     ? const SizedBox(
                         height: 18,
                         width: 18,
-                        child: CircularProgressIndicator(strokeWidth: 2, color: Colors.white),
+                        child: CircularProgressIndicator(
+                          strokeWidth: 2,
+                          color: Colors.white,
+                        ),
                       )
                     : const Text('Marcar como entregado'),
               ),

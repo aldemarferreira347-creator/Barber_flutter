@@ -17,11 +17,21 @@ class RegisterSuccessView extends StatelessWidget {
               const Spacer(),
               Container(
                 padding: const EdgeInsets.all(20),
-                decoration: BoxDecoration(color: AppColors.success.withValues(alpha: 0.12), shape: BoxShape.circle),
-                child: const Icon(Icons.check, color: AppColors.success, size: 48),
+                decoration: BoxDecoration(
+                  color: AppColors.success.withValues(alpha: 0.12),
+                  shape: BoxShape.circle,
+                ),
+                child: const Icon(
+                  Icons.check,
+                  color: AppColors.success,
+                  size: 48,
+                ),
               ),
               const SizedBox(height: 20),
-              const Text('¡Registro exitoso!', style: TextStyle(fontSize: 22, fontWeight: FontWeight.w800)),
+              const Text(
+                '¡Registro exitoso!',
+                style: TextStyle(fontSize: 22, fontWeight: FontWeight.w800),
+              ),
               const SizedBox(height: 8),
               Text(
                 'Tu cuenta ha sido creada correctamente.\nAhora puedes iniciar sesión.',
@@ -32,18 +42,25 @@ class RegisterSuccessView extends StatelessWidget {
               SizedBox(
                 width: double.infinity,
                 child: FilledButton(
-                  onPressed: () => Navigator.of(context).popUntil((route) => route.isFirst),
+                  onPressed: () =>
+                      Navigator.of(context).popUntil((route) => route.isFirst),
                   child: const Text('Ir a iniciar sesión'),
                 ),
               ),
               const Spacer(),
               Container(
                 padding: const EdgeInsets.all(14),
-                decoration: BoxDecoration(color: AppColors.primary, shape: BoxShape.circle),
-                child: const BrandMark(size: 26),
+                decoration: BoxDecoration(
+                  color: AppColors.primary,
+                  shape: BoxShape.circle,
+                ),
+                child: const BrandMark(size: 26, color: Colors.white),
               ),
               const SizedBox(height: 8),
-              const Text('BarberFlow', style: TextStyle(fontWeight: FontWeight.w800)),
+              const Text(
+                'BarberFlow',
+                style: TextStyle(fontWeight: FontWeight.w800),
+              ),
               const SizedBox(height: 16),
             ],
           ),

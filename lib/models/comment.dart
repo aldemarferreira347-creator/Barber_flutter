@@ -6,7 +6,10 @@ extension CommentStatusX on CommentStatus {
   String get value => name;
 
   static CommentStatus fromValue(String value) {
-    return CommentStatus.values.firstWhere((s) => s.name == value, orElse: () => CommentStatus.rejected);
+    return CommentStatus.values.firstWhere(
+      (s) => s.name == value,
+      orElse: () => CommentStatus.rejected,
+    );
   }
 }
 
@@ -54,7 +57,9 @@ class Comment {
       clientName: map['clientName'] as String? ?? '',
       text: map['text'] as String? ?? '',
       photoUrl: map['photoUrl'] as String?,
-      status: CommentStatusX.fromValue(map['status'] as String? ?? CommentStatus.rejected.value),
+      status: CommentStatusX.fromValue(
+        map['status'] as String? ?? CommentStatus.rejected.value,
+      ),
       createdAt: createdAtValue is Timestamp ? createdAtValue.toDate() : null,
       replyText: map['replyText'] as String?,
       replyAt: replyAtValue is Timestamp ? replyAtValue.toDate() : null,

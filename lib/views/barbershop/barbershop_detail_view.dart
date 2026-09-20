@@ -14,11 +14,19 @@ import '../service/manage_services_view.dart';
 import '../widgets/status_badge.dart';
 import 'barbershop_reviews_view.dart';
 
-Future<void> _openInGoogleMaps(BuildContext context, double lat, double lng) async {
-  final uri = Uri.parse('https://www.google.com/maps/search/?api=1&query=$lat,$lng');
+Future<void> _openInGoogleMaps(
+  BuildContext context,
+  double lat,
+  double lng,
+) async {
+  final uri = Uri.parse(
+    'https://www.google.com/maps/search/?api=1&query=$lat,$lng',
+  );
   final opened = await launchUrl(uri, mode: LaunchMode.externalApplication);
   if (!opened && context.mounted) {
-    ScaffoldMessenger.of(context).showSnackBar(const SnackBar(content: Text('No se pudo abrir Google Maps')));
+    ScaffoldMessenger.of(context).showSnackBar(
+      const SnackBar(content: Text('No se pudo abrir Google Maps')),
+    );
   }
 }
 
@@ -55,7 +63,10 @@ class BarbershopDetailView extends StatelessWidget {
           final shop = snapshot.data;
           if (shop == null) {
             return Center(
-              child: Text('Esta barbería ya no existe', style: TextStyle(color: AppColors.textSecondary)),
+              child: Text(
+                'Esta barbería ya no existe',
+                style: TextStyle(color: AppColors.textSecondary),
+              ),
             );
           }
           return Scaffold(
@@ -63,7 +74,10 @@ class BarbershopDetailView extends StatelessWidget {
                 ? FloatingActionButton.extended(
                     onPressed: () => Navigator.of(context).push(
                       MaterialPageRoute(
-                        builder: (_) => BookAppointmentView(barbershopId: shop.id, barbershopName: shop.name),
+                        builder: (_) => BookAppointmentView(
+                          barbershopId: shop.id,
+                          barbershopName: shop.name,
+                        ),
                       ),
                     ),
                     icon: const Icon(Icons.calendar_month_outlined),
@@ -75,25 +89,42 @@ class BarbershopDetailView extends StatelessWidget {
               children: [
                 Semantics(
                   image: true,
-                  label: shop.photoUrl != null ? 'Foto de portada de ${shop.name}' : 'Sin foto de portada',
+                  label: shop.photoUrl != null
+                      ? 'Foto de portada de ${shop.name}'
+                      : 'Sin foto de portada',
                   child: Container(
                     height: 160,
                     decoration: BoxDecoration(
                       color: AppColors.primary,
                       borderRadius: BorderRadius.circular(16),
                       image: shop.photoUrl != null
-                          ? DecorationImage(image: NetworkImage(shop.photoUrl!), fit: BoxFit.cover)
+                          ? DecorationImage(
+                              image: NetworkImage(shop.photoUrl!),
+                              fit: BoxFit.cover,
+                            )
                           : null,
                     ),
                     alignment: Alignment.center,
-                    child: shop.photoUrl == null ? const Icon(Icons.storefront, color: Colors.white, size: 48) : null,
+                    child: shop.photoUrl == null
+                        ? const Icon(
+                            Icons.storefront,
+                            color: Colors.white,
+                            size: 48,
+                          )
+                        : null,
                   ),
                 ),
                 const SizedBox(height: 16),
                 Row(
                   children: [
                     Expanded(
-                      child: Text(shop.name, style: const TextStyle(fontSize: 20, fontWeight: FontWeight.w800)),
+                      child: Text(
+                        shop.name,
+                        style: const TextStyle(
+                          fontSize: 20,
+                          fontWeight: FontWeight.w800,
+                        ),
+                      ),
                     ),
                     StatusBadge.active(shop.active),
                   ],
@@ -106,44 +137,68 @@ class BarbershopDetailView extends StatelessWidget {
                       const SizedBox(width: 4),
                       Text(
                         '${shop.averageRating.toStringAsFixed(1)} (${shop.ratingCount})',
-                        style: TextStyle(color: AppColors.textSecondary, fontWeight: FontWeight.w600, fontSize: 13),
+                        style: TextStyle(
+                          color: AppColors.textSecondary,
+                          fontWeight: FontWeight.w600,
+                          fontSize: 13,
+                        ),
                       ),
                     ],
                   ),
                 ],
                 const SizedBox(height: 16),
-                _InfoRow(icon: Icons.location_on_outlined, label: shop.address ?? 'Sin dirección'),
-                _InfoRow(icon: Icons.phone_outlined, label: shop.phone ?? 'Sin teléfono'),
-                _InfoRow(icon: Icons.mail_outline, label: shop.email ?? 'Sin correo de contacto'),
+                _InfoRow(
+                  icon: Icons.location_on_outlined,
+                  label: shop.address ?? 'Sin dirección',
+                ),
+                _InfoRow(
+                  icon: Icons.phone_outlined,
+                  label: shop.phone ?? 'Sin teléfono',
+                ),
+                _InfoRow(
+                  icon: Icons.mail_outline,
+                  label: shop.email ?? 'Sin correo de contacto',
+                ),
                 if (shop.location != null) ...[
                   const SizedBox(height: 8),
                   OutlinedButton.icon(
-                    onPressed: () => _openInGoogleMaps(context, shop.location!.latitude, shop.location!.longitude),
+                    onPressed: () => _openInGoogleMaps(
+                      context,
+                      shop.location!.latitude,
+                      shop.location!.longitude,
+                    ),
                     icon: const Icon(Icons.map_outlined),
                     label: const Text('Ver ubicación en Google Maps'),
                   ),
                 ],
                 const SizedBox(height: 8),
                 OutlinedButton.icon(
-                  onPressed: () =>
-                      Navigator.of(context)
-                          .push(MaterialPageRoute(builder: (_) => ManageServicesView(barbershopId: shop.id))),
+                  onPressed: () => Navigator.of(context).push(
+                    MaterialPageRoute(
+                      builder: (_) => ManageServicesView(barbershopId: shop.id),
+                    ),
+                  ),
                   icon: const Icon(Icons.content_cut),
                   label: const Text('Ver servicios'),
                 ),
                 const SizedBox(height: 8),
                 OutlinedButton.icon(
-                  onPressed: () =>
-                      Navigator.of(context)
-                          .push(MaterialPageRoute(builder: (_) => ManageProductsView(barbershopId: shop.id))),
+                  onPressed: () => Navigator.of(context).push(
+                    MaterialPageRoute(
+                      builder: (_) => ManageProductsView(barbershopId: shop.id),
+                    ),
+                  ),
                   icon: const Icon(Icons.shopping_bag_outlined),
                   label: const Text('Ver productos'),
                 ),
                 const SizedBox(height: 8),
                 OutlinedButton.icon(
-                  onPressed: () =>
-                      Navigator.of(context)
-                          .push(MaterialPageRoute(builder: (_) => BarbershopReviewsView(barbershopId: shop.id))),
+                  onPressed: () => Navigator.of(context).push(
+                    MaterialPageRoute(
+                      builder: (_) =>
+                          BarbershopReviewsView(barbershopId: shop.id),
+                    ),
+                  ),
                   icon: const Icon(Icons.reviews_outlined),
                   label: const Text('Ver reseñas'),
                 ),
@@ -161,11 +216,20 @@ class BarbershopDetailView extends StatelessWidget {
                         child: Column(
                           crossAxisAlignment: CrossAxisAlignment.start,
                           children: [
-                            Text('Estado de pago', style: TextStyle(color: AppColors.textSecondary, fontSize: 12)),
+                            Text(
+                              'Estado de pago',
+                              style: TextStyle(
+                                color: AppColors.textSecondary,
+                                fontSize: 12,
+                              ),
+                            ),
                             const SizedBox(height: 4),
                             Text(
                               _paymentLabel(shop.paymentStatus),
-                              style: TextStyle(color: _paymentColor(shop.paymentStatus), fontWeight: FontWeight.w700),
+                              style: TextStyle(
+                                color: _paymentColor(shop.paymentStatus),
+                                fontWeight: FontWeight.w700,
+                              ),
                             ),
                           ],
                         ),
@@ -176,12 +240,17 @@ class BarbershopDetailView extends StatelessWidget {
                           children: [
                             Text(
                               'Fecha de vencimiento',
-                              style: TextStyle(color: AppColors.textSecondary, fontSize: 12),
+                              style: TextStyle(
+                                color: AppColors.textSecondary,
+                                fontSize: 12,
+                              ),
                             ),
                             const SizedBox(height: 4),
                             Text(
                               '${shop.paymentDueDate!.year}-${shop.paymentDueDate!.month.toString().padLeft(2, '0')}-${shop.paymentDueDate!.day.toString().padLeft(2, '0')}',
-                              style: const TextStyle(fontWeight: FontWeight.w600),
+                              style: const TextStyle(
+                                fontWeight: FontWeight.w600,
+                              ),
                             ),
                           ],
                         ),
@@ -190,16 +259,28 @@ class BarbershopDetailView extends StatelessWidget {
                 ),
                 if ((shop.description ?? '').isNotEmpty) ...[
                   const SizedBox(height: 16),
-                  const Text('Información general', style: TextStyle(fontWeight: FontWeight.w700)),
+                  const Text(
+                    'Información general',
+                    style: TextStyle(fontWeight: FontWeight.w700),
+                  ),
                   const SizedBox(height: 6),
-                  Text(shop.description!, style: TextStyle(color: AppColors.textSecondary)),
+                  Text(
+                    shop.description!,
+                    style: TextStyle(color: AppColors.textSecondary),
+                  ),
                 ],
                 if (shop.schedule.isNotEmpty) ...[
                   const SizedBox(height: 16),
-                  const Text('Horarios', style: TextStyle(fontWeight: FontWeight.w700)),
+                  const Text(
+                    'Horarios',
+                    style: TextStyle(fontWeight: FontWeight.w700),
+                  ),
                   const SizedBox(height: 8),
                   Container(
-                    padding: const EdgeInsets.symmetric(horizontal: 14, vertical: 4),
+                    padding: const EdgeInsets.symmetric(
+                      horizontal: 14,
+                      vertical: 4,
+                    ),
                     decoration: BoxDecoration(
                       color: AppColors.surface,
                       borderRadius: BorderRadius.circular(14),
@@ -212,13 +293,19 @@ class BarbershopDetailView extends StatelessWidget {
                             padding: const EdgeInsets.symmetric(vertical: 8),
                             child: Row(
                               children: [
-                                Expanded(child: Text(day[0].toUpperCase() + day.substring(1))),
+                                Expanded(
+                                  child: Text(
+                                    day[0].toUpperCase() + day.substring(1),
+                                  ),
+                                ),
                                 Text(
                                   shop.schedule[day]!.isOpen
                                       ? '${shop.schedule[day]!.openTime} – ${shop.schedule[day]!.closeTime}'
                                       : 'Cerrado',
                                   style: TextStyle(
-                                    color: shop.schedule[day]!.isOpen ? AppColors.textPrimary : AppColors.textSecondary,
+                                    color: shop.schedule[day]!.isOpen
+                                        ? AppColors.textPrimary
+                                        : AppColors.textSecondary,
                                     fontWeight: FontWeight.w600,
                                   ),
                                 ),

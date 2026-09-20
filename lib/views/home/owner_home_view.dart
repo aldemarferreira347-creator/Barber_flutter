@@ -17,16 +17,29 @@ class OwnerHomeView extends StatelessWidget {
   const OwnerHomeView({super.key});
 
   void _comingSoon(BuildContext context, String feature) {
-    ScaffoldMessenger.of(context).showSnackBar(SnackBar(content: Text('$feature próximamente')));
+    ScaffoldMessenger.of(context)
+        .showSnackBar(SnackBar(content: Text('$feature próximamente')));
   }
 
   @override
   Widget build(BuildContext context) {
     return RoleShell(
       tabs: [
-        const RoleTab(label: 'Inicio', icon: Icons.home_outlined, page: OwnerDashboardTab()),
-        const RoleTab(label: 'Servicios', icon: Icons.content_cut, page: OwnerServicesTab()),
-        const RoleTab(label: 'Citas', icon: Icons.calendar_month_outlined, page: OwnerAppointmentsTab()),
+        const RoleTab(
+          label: 'Inicio',
+          icon: Icons.home_outlined,
+          page: OwnerDashboardTab(),
+        ),
+        const RoleTab(
+          label: 'Servicios',
+          icon: Icons.content_cut,
+          page: OwnerServicesTab(),
+        ),
+        const RoleTab(
+          label: 'Citas',
+          icon: Icons.calendar_month_outlined,
+          page: OwnerAppointmentsTab(),
+        ),
         RoleTab(
           label: 'Más',
           icon: Icons.more_horiz,
@@ -39,26 +52,38 @@ class OwnerHomeView extends StatelessWidget {
                     ProfileMenuItem(
                       icon: Icons.notifications_none,
                       label: 'Notificaciones',
-                      onTap: () =>
-                          Navigator.of(context).push(MaterialPageRoute(builder: (_) => NotificationsView(uid: uid))),
+                      onTap: () => Navigator.of(context).push(
+                        MaterialPageRoute(
+                          builder: (_) => NotificationsView(uid: uid),
+                        ),
+                      ),
                     ),
                   ProfileMenuItem(
                     icon: Icons.shopping_bag_outlined,
                     label: 'Gestionar productos',
-                    onTap: () =>
-                        Navigator.of(context).push(MaterialPageRoute(builder: (_) => const OwnerProductsTab())),
+                    onTap: () => Navigator.of(context).push(
+                      MaterialPageRoute(
+                        builder: (_) => const OwnerProductsTab(),
+                      ),
+                    ),
                   ),
                   ProfileMenuItem(
                     icon: Icons.receipt_long_outlined,
                     label: 'Solicitudes de reembolso',
-                    onTap: () =>
-                        Navigator.of(context).push(MaterialPageRoute(builder: (_) => const OwnerRefundRequestsTab())),
+                    onTap: () => Navigator.of(context).push(
+                      MaterialPageRoute(
+                        builder: (_) => const OwnerRefundRequestsTab(),
+                      ),
+                    ),
                   ),
                   ProfileMenuItem(
                     icon: Icons.storefront_outlined,
                     label: 'Cerrar por evento externo',
-                    onTap: () =>
-                        Navigator.of(context).push(MaterialPageRoute(builder: (_) => const OwnerCloseShopTab())),
+                    onTap: () => Navigator.of(context).push(
+                      MaterialPageRoute(
+                        builder: (_) => const OwnerCloseShopTab(),
+                      ),
+                    ),
                   ),
                   ProfileMenuItem(
                     icon: Icons.settings_outlined,
@@ -68,7 +93,9 @@ class OwnerHomeView extends StatelessWidget {
                   ProfileMenuItem(
                     icon: Icons.help_outline,
                     label: 'Ayuda',
-                    onTap: () => Navigator.of(context).push(MaterialPageRoute(builder: (_) => const HelpView())),
+                    onTap: () => Navigator.of(
+                      context,
+                    ).push(MaterialPageRoute(builder: (_) => const HelpView())),
                   ),
                 ],
               );

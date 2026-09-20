@@ -39,7 +39,11 @@ class _RateAppointmentViewState extends State<RateAppointmentView> {
   }
 
   Future<void> _pickPhoto(ImageSource source) async {
-    final file = await _picker.pickImage(source: source, maxWidth: 1280, imageQuality: 85);
+    final file = await _picker.pickImage(
+      source: source,
+      maxWidth: 1280,
+      imageQuality: 85,
+    );
     if (file == null) return;
     final bytes = await file.readAsBytes();
     setState(() {
@@ -95,7 +99,8 @@ class _RateAppointmentViewState extends State<RateAppointmentView> {
         final commentRepo = context.read<CommentRepository>();
         String? photoUrl;
         if (_photoBytes != null) {
-          final fileName = '${DateTime.now().millisecondsSinceEpoch}_${_photoName ?? 'foto.jpg'}';
+          final fileName =
+              '${DateTime.now().millisecondsSinceEpoch}_${_photoName ?? 'foto.jpg'}';
           photoUrl = await commentRepo.uploadPhoto(
             appointmentId: widget.appointment.id,
             fileName: fileName,
@@ -114,11 +119,14 @@ class _RateAppointmentViewState extends State<RateAppointmentView> {
         final message = commentStatus == CommentStatus.rejected
             ? 'Gracias por calificar. Tu comentario no se publicó por contener lenguaje inapropiado.'
             : '¡Gracias por calificar!';
-        ScaffoldMessenger.of(context).showSnackBar(SnackBar(content: Text(message)));
+        ScaffoldMessenger.of(context)
+            .showSnackBar(SnackBar(content: Text(message)));
       }
     } catch (e) {
       if (mounted) {
-        ScaffoldMessenger.of(context).showSnackBar(SnackBar(content: Text('No se pudo enviar la calificación: $e')));
+        ScaffoldMessenger.of(context).showSnackBar(
+          SnackBar(content: Text('No se pudo enviar la calificación: $e')),
+        );
       }
     } finally {
       if (mounted) setState(() => _saving = false);
@@ -135,41 +143,72 @@ class _RateAppointmentViewState extends State<RateAppointmentView> {
         children: [
           _ConductGuidelines(),
           const SizedBox(height: 20),
-          Text('¿Cómo estuvo ${appointment.barberName}?', style: const TextStyle(fontWeight: FontWeight.w700)),
+          Text(
+            '¿Cómo estuvo ${appointment.barberName}?',
+            style: const TextStyle(fontWeight: FontWeight.w700),
+          ),
           const SizedBox(height: 8),
-          _StarPicker(value: _barberStars, onChanged: (v) => setState(() => _barberStars = v)),
+          _StarPicker(
+            value: _barberStars,
+            onChanged: (v) => setState(() => _barberStars = v),
+          ),
           const SizedBox(height: 20),
-          const Text('¿Cómo estuvo la barbería en general?', style: TextStyle(fontWeight: FontWeight.w700)),
+          const Text(
+            '¿Cómo estuvo la barbería en general?',
+            style: TextStyle(fontWeight: FontWeight.w700),
+          ),
           const SizedBox(height: 8),
-          _StarPicker(value: _shopStars, onChanged: (v) => setState(() => _shopStars = v)),
+          _StarPicker(
+            value: _shopStars,
+            onChanged: (v) => setState(() => _shopStars = v),
+          ),
           const SizedBox(height: 24),
-          const Text('Comentario (opcional)', style: TextStyle(fontWeight: FontWeight.w700)),
+          const Text(
+            'Comentario (opcional)',
+            style: TextStyle(fontWeight: FontWeight.w700),
+          ),
           const SizedBox(height: 8),
           TextField(
             controller: _commentController,
             maxLines: 3,
-            decoration: const InputDecoration(hintText: 'Cuéntanos cómo te fue...'),
+            decoration: const InputDecoration(
+              hintText: 'Cuéntanos cómo te fue...',
+            ),
           ),
           const SizedBox(height: 12),
           if (_photoBytes != null)
             ClipRRect(
               borderRadius: BorderRadius.circular(12),
-              child: Image.memory(_photoBytes!, height: 140, width: double.infinity, fit: BoxFit.cover),
+              child: Image.memory(
+                _photoBytes!,
+                height: 140,
+                width: double.infinity,
+                fit: BoxFit.cover,
+              ),
             ),
           const SizedBox(height: 8),
           OutlinedButton.icon(
             onPressed: _showPhotoOptions,
             icon: const Icon(Icons.add_a_photo_outlined),
-            label: Text(_photoBytes == null ? 'Adjuntar foto del resultado' : 'Cambiar foto'),
+            label: Text(
+              _photoBytes == null
+                  ? 'Adjuntar foto del resultado'
+                  : 'Cambiar foto',
+            ),
           ),
           const SizedBox(height: 24),
           FilledButton(
-            onPressed: (_barberStars > 0 && _shopStars > 0 && !_saving) ? _submit : null,
+            onPressed: (_barberStars > 0 && _shopStars > 0 && !_saving)
+                ? _submit
+                : null,
             child: _saving
                 ? const SizedBox(
                     height: 18,
                     width: 18,
-                    child: CircularProgressIndicator(strokeWidth: 2, color: Colors.white),
+                    child: CircularProgressIndicator(
+                      strokeWidth: 2,
+                      color: Colors.white,
+                    ),
                   )
                 : const Text('Enviar calificación'),
           ),
@@ -192,7 +231,11 @@ class _StarPicker extends StatelessWidget {
         for (var i = 1; i <= 5; i++)
           IconButton(
             onPressed: () => onChanged(i),
-            icon: Icon(i <= value ? Icons.star : Icons.star_border, color: AppColors.primary, size: 32),
+            icon: Icon(
+              i <= value ? Icons.star : Icons.star_border,
+              color: AppColors.primary,
+              size: 32,
+            ),
           ),
       ],
     );
@@ -212,7 +255,10 @@ class _ConductGuidelines extends StatelessWidget {
       child: Column(
         crossAxisAlignment: CrossAxisAlignment.start,
         children: [
-          const Text('Antes de calificar', style: TextStyle(fontWeight: FontWeight.w700)),
+          const Text(
+            'Antes de calificar',
+            style: TextStyle(fontWeight: FontWeight.w700),
+          ),
           const SizedBox(height: 8),
           Text(
             'La barbería debe garantizar puntualidad, higiene y buen trato. '

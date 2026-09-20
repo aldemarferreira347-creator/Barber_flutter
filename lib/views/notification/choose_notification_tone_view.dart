@@ -12,10 +12,12 @@ class ChooseNotificationToneView extends StatefulWidget {
   const ChooseNotificationToneView({super.key});
 
   @override
-  State<ChooseNotificationToneView> createState() => _ChooseNotificationToneViewState();
+  State<ChooseNotificationToneView> createState() =>
+      _ChooseNotificationToneViewState();
 }
 
-class _ChooseNotificationToneViewState extends State<ChooseNotificationToneView> {
+class _ChooseNotificationToneViewState
+    extends State<ChooseNotificationToneView> {
   NotificationTone? _selected;
   bool _saving = false;
 
@@ -23,12 +25,17 @@ class _ChooseNotificationToneViewState extends State<ChooseNotificationToneView>
     final tone = _selected;
     if (tone == null) return;
     setState(() => _saving = true);
-    final ok = await context.read<AuthController>().chooseNotificationTone(tone);
+    final ok = await context.read<AuthController>().chooseNotificationTone(
+      tone,
+    );
     if (!mounted) return;
     setState(() => _saving = false);
     if (!ok) {
-      final error = context.read<AuthController>().errorMessage ?? 'No se pudo guardar tu preferencia';
-      ScaffoldMessenger.of(context).showSnackBar(SnackBar(content: Text(error)));
+      final error =
+          context.read<AuthController>().errorMessage ??
+          'No se pudo guardar tu preferencia';
+      ScaffoldMessenger.of(context)
+          .showSnackBar(SnackBar(content: Text(error)));
     }
   }
 
@@ -65,21 +72,35 @@ class _ChooseNotificationToneViewState extends State<ChooseNotificationToneView>
                       child: Container(
                         padding: const EdgeInsets.all(16),
                         decoration: BoxDecoration(
-                          color: selected ? AppColors.accent.withValues(alpha: 0.08) : AppColors.surface,
+                          color: selected
+                              ? AppColors.accent.withValues(alpha: 0.08)
+                              : AppColors.surface,
                           borderRadius: BorderRadius.circular(14),
                           border: Border.all(
-                            color: selected ? AppColors.accent : AppColors.border,
+                            color: selected
+                                ? AppColors.accent
+                                : AppColors.border,
                             width: selected ? 2 : 1,
                           ),
                         ),
                         child: Row(
                           children: [
                             Icon(
-                              selected ? Icons.radio_button_checked : Icons.radio_button_off,
-                              color: selected ? AppColors.accent : AppColors.textSecondary,
+                              selected
+                                  ? Icons.radio_button_checked
+                                  : Icons.radio_button_off,
+                              color: selected
+                                  ? AppColors.accent
+                                  : AppColors.textSecondary,
                             ),
                             const SizedBox(width: 12),
-                            Text(tone.label, style: const TextStyle(fontWeight: FontWeight.w600, fontSize: 15)),
+                            Text(
+                              tone.label,
+                              style: const TextStyle(
+                                fontWeight: FontWeight.w600,
+                                fontSize: 15,
+                              ),
+                            ),
                           ],
                         ),
                       ),
@@ -96,7 +117,10 @@ class _ChooseNotificationToneViewState extends State<ChooseNotificationToneView>
                       ? const SizedBox(
                           width: 20,
                           height: 20,
-                          child: CircularProgressIndicator(strokeWidth: 2, color: Colors.white),
+                          child: CircularProgressIndicator(
+                            strokeWidth: 2,
+                            color: Colors.white,
+                          ),
                         )
                       : const Text('Continuar'),
                 ),

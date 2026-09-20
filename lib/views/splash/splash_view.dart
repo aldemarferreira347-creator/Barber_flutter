@@ -1,6 +1,7 @@
 import 'dart:async';
 
 import 'package:flutter/material.dart';
+import 'package:flutter_animate/flutter_animate.dart';
 
 import '../../theme/app_colors.dart';
 import '../widgets/auth_gate.dart';
@@ -19,7 +20,8 @@ class _SplashViewState extends State<SplashView> {
     super.initState();
     Timer(const Duration(milliseconds: 1400), () {
       if (!mounted) return;
-      Navigator.of(context).pushReplacement(MaterialPageRoute(builder: (_) => const AuthGate()));
+      Navigator.of(context)
+          .pushReplacement(MaterialPageRoute(builder: (_) => const AuthGate()));
     });
   }
 
@@ -42,21 +44,38 @@ class _SplashViewState extends State<SplashView> {
                   child: Column(
                     mainAxisSize: MainAxisSize.min,
                     children: [
-                      Container(
-                        padding: const EdgeInsets.all(18),
-                        decoration: BoxDecoration(color: Colors.white.withValues(alpha: 0.08), shape: BoxShape.circle),
-                        child: const BrandMark(size: 40),
-                      ),
+                      const BrandMark(size: 68, color: Colors.white)
+                          .animate()
+                          .scale(
+                            begin: const Offset(0.4, 0.4),
+                            curve: Curves.elasticOut,
+                            duration: 900.ms,
+                          )
+                          .fadeIn(duration: 400.ms),
                       const SizedBox(height: 18),
                       const Text(
-                        'BarberFlow',
-                        style: TextStyle(color: Colors.white, fontSize: 28, fontWeight: FontWeight.w800),
-                      ),
+                            'BarberFlow',
+                            style: TextStyle(
+                              color: Colors.white,
+                              fontSize: 28,
+                              fontWeight: FontWeight.w800,
+                            ),
+                          )
+                          .animate(delay: 350.ms)
+                          .fadeIn(duration: 500.ms)
+                          .slideY(
+                            begin: 0.3,
+                            end: 0,
+                            curve: Curves.easeOutCubic,
+                          ),
                       const SizedBox(height: 6),
                       Text(
                         'Tu barbería, siempre conectada',
-                        style: TextStyle(color: Colors.white.withValues(alpha: 0.7), fontSize: 14),
-                      ),
+                        style: TextStyle(
+                          color: Colors.white.withValues(alpha: 0.7),
+                          fontSize: 14,
+                        ),
+                      ).animate(delay: 550.ms).fadeIn(duration: 500.ms),
                     ],
                   ),
                 ),
@@ -65,8 +84,12 @@ class _SplashViewState extends State<SplashView> {
                 padding: const EdgeInsets.only(bottom: 28),
                 child: Text(
                   'Gestiona  ·  Organiza  ·  Crece',
-                  style: TextStyle(color: Colors.white.withValues(alpha: 0.45), fontSize: 12, letterSpacing: 0.4),
-                ),
+                  style: TextStyle(
+                    color: Colors.white.withValues(alpha: 0.45),
+                    fontSize: 12,
+                    letterSpacing: 0.4,
+                  ),
+                ).animate(delay: 800.ms).fadeIn(duration: 600.ms),
               ),
             ],
           ),

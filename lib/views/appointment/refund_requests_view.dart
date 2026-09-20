@@ -19,17 +19,31 @@ class RefundRequestsView extends StatelessWidget {
     RefundRequestStatus.rejected => AppColors.error,
   };
 
-  Future<void> _resolve(BuildContext context, RefundRequest request, bool approve) async {
+  Future<void> _resolve(
+    BuildContext context,
+    RefundRequest request,
+    bool approve,
+  ) async {
     try {
-      await context.read<RefundRequestRepository>().resolve(request.id, approve: approve);
+      await context.read<RefundRequestRepository>().resolve(
+        request.id,
+        approve: approve,
+      );
       if (context.mounted) {
-        ScaffoldMessenger.of(
-          context,
-        ).showSnackBar(SnackBar(content: Text(approve ? 'Reembolso aprobado y procesado.' : 'Solicitud rechazada.')));
+        ScaffoldMessenger.of(context).showSnackBar(
+          SnackBar(
+            content: Text(
+              approve
+                  ? 'Reembolso aprobado y procesado.'
+                  : 'Solicitud rechazada.',
+            ),
+          ),
+        );
       }
     } catch (e) {
       if (context.mounted) {
-        ScaffoldMessenger.of(context).showSnackBar(SnackBar(content: Text('No se pudo resolver: $e')));
+        ScaffoldMessenger.of(context)
+            .showSnackBar(SnackBar(content: Text('No se pudo resolver: $e')));
       }
     }
   }
@@ -76,9 +90,13 @@ class RefundRequestsView extends StatelessWidget {
                       mainAxisAlignment: MainAxisAlignment.spaceBetween,
                       children: [
                         Container(
-                          padding: const EdgeInsets.symmetric(horizontal: 10, vertical: 4),
+                          padding: const EdgeInsets.symmetric(
+                            horizontal: 10,
+                            vertical: 4,
+                          ),
                           decoration: BoxDecoration(
-                            color: _statusColor(request.status).withValues(alpha: 0.12),
+                            color: _statusColor(request.status)
+                                .withValues(alpha: 0.12),
                             borderRadius: BorderRadius.circular(20),
                           ),
                           child: Text(
@@ -93,12 +111,18 @@ class RefundRequestsView extends StatelessWidget {
                       ],
                     ),
                     const SizedBox(height: 8),
-                    Text(request.reason, style: const TextStyle(fontWeight: FontWeight.w600)),
+                    Text(
+                      request.reason,
+                      style: const TextStyle(fontWeight: FontWeight.w600),
+                    ),
                     if (request.purchaseId != null) ...[
                       const SizedBox(height: 4),
                       Text(
                         'Incluye productos por reembolsar',
-                        style: TextStyle(color: AppColors.textSecondary, fontSize: 12),
+                        style: TextStyle(
+                          color: AppColors.textSecondary,
+                          fontSize: 12,
+                        ),
                       ),
                     ],
                     if (request.status == RefundRequestStatus.pending) ...[
@@ -108,7 +132,10 @@ class RefundRequestsView extends StatelessWidget {
                         children: [
                           TextButton(
                             onPressed: () => _resolve(context, request, false),
-                            child: const Text('Rechazar', style: TextStyle(color: AppColors.error)),
+                            child: const Text(
+                              'Rechazar',
+                              style: TextStyle(color: AppColors.error),
+                            ),
                           ),
                           const SizedBox(width: 8),
                           FilledButton(

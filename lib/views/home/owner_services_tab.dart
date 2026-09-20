@@ -18,7 +18,9 @@ class OwnerServicesTab extends StatelessWidget {
     final barbershopService = context.read<BarbershopRepository>();
 
     return StreamBuilder<List<Barbershop>>(
-      stream: profile == null ? const Stream<List<Barbershop>>.empty() : barbershopService.watchByOwner(profile.uid),
+      stream: profile == null
+          ? const Stream<List<Barbershop>>.empty()
+          : barbershopService.watchByOwner(profile.uid),
       builder: (context, snapshot) {
         final shops = snapshot.data ?? [];
         if (shops.isEmpty) {
@@ -33,7 +35,10 @@ class OwnerServicesTab extends StatelessWidget {
             ),
           );
         }
-        return ManageServicesView(barbershopId: shops.first.id, canManage: true);
+        return ManageServicesView(
+          barbershopId: shops.first.id,
+          canManage: true,
+        );
       },
     );
   }

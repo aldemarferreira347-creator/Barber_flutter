@@ -9,7 +9,12 @@ class ComingSoonView extends StatelessWidget {
   final IconData icon;
   final String message;
 
-  const ComingSoonView({super.key, required this.title, required this.icon, required this.message});
+  const ComingSoonView({
+    super.key,
+    required this.title,
+    required this.icon,
+    required this.message,
+  });
 
   @override
   Widget build(BuildContext context) {

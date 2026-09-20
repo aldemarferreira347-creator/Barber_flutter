@@ -34,7 +34,11 @@ abstract class BarbershopRepository {
   Future<void> cancelSubscription(String id);
 
   /// Sube la foto de portada de la barbería y guarda su URL.
-  Future<void> uploadPhoto(String id, {required String fileName, required Uint8List bytes});
+  Future<void> uploadPhoto(
+    String id, {
+    required String fileName,
+    required Uint8List bytes,
+  });
 
   /// Bloqueo/desbloqueo selectivo — reservado al rol admin (impuesto también
   /// en firestore.rules, no solo en el cliente).

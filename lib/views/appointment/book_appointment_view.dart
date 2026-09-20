@@ -15,7 +15,11 @@ class BookAppointmentView extends StatefulWidget {
   final String barbershopId;
   final String barbershopName;
 
-  const BookAppointmentView({super.key, required this.barbershopId, required this.barbershopName});
+  const BookAppointmentView({
+    super.key,
+    required this.barbershopId,
+    required this.barbershopName,
+  });
 
   @override
   State<BookAppointmentView> createState() => _BookAppointmentViewState();
@@ -42,12 +46,24 @@ class _BookAppointmentViewState extends State<BookAppointmentView> {
       initialTime: TimeOfDay.fromDateTime(now.add(const Duration(hours: 1))),
     );
     if (time == null) return;
-    setState(() => _dateTime = DateTime(date.year, date.month, date.day, time.hour, time.minute));
+    setState(
+      () => _dateTime = DateTime(
+        date.year,
+        date.month,
+        date.day,
+        time.hour,
+        time.minute,
+      ),
+    );
   }
 
   Future<void> _confirm() async {
     final profile = context.read<AuthController>().profile;
-    if (profile == null || _service == null || _barber == null || _dateTime == null) return;
+    if (profile == null ||
+        _service == null ||
+        _barber == null ||
+        _dateTime == null)
+      return;
 
     setState(() => _saving = true);
     try {
@@ -86,14 +102,17 @@ class _BookAppointmentViewState extends State<BookAppointmentView> {
         ScaffoldMessenger.of(context).showSnackBar(
           SnackBar(
             content: Text(
-              _payNow ? '¡Cita pagada y horario reservado!' : '¡Cita solicitada! El barbero debe confirmarla.',
+              _payNow
+                  ? '¡Cita pagada y horario reservado!'
+                  : '¡Cita solicitada! El barbero debe confirmarla.',
             ),
           ),
         );
       }
     } catch (e) {
       if (mounted) {
-        ScaffoldMessenger.of(context).showSnackBar(SnackBar(content: Text('No se pudo agendar: $e')));
+        ScaffoldMessenger.of(context)
+            .showSnackBar(SnackBar(content: Text('No se pudo agendar: $e')));
       }
     } finally {
       if (mounted) setState(() => _saving = false);
@@ -110,12 +129,17 @@ class _BookAppointmentViewState extends State<BookAppointmentView> {
       body: ListView(
         padding: const EdgeInsets.all(16),
         children: [
-          const Text('1. Elige un servicio', style: TextStyle(fontWeight: FontWeight.w700)),
+          const Text(
+            '1. Elige un servicio',
+            style: TextStyle(fontWeight: FontWeight.w700),
+          ),
           const SizedBox(height: 10),
           StreamBuilder<List<Service>>(
             stream: serviceRepo.watchByBarbershop(widget.barbershopId),
             builder: (context, snapshot) {
-              final services = (snapshot.data ?? []).where((s) => s.active).toList();
+              final services = (snapshot.data ?? [])
+                  .where((s) => s.active)
+                  .toList();
               if (services.isEmpty) {
                 return const EmptyState(
                   icon: Icons.content_cut,
@@ -129,7 +153,8 @@ class _BookAppointmentViewState extends State<BookAppointmentView> {
                       (service) => _SelectableTile(
                         selected: _service?.id == service.id,
                         title: service.name,
-                        subtitle: '${service.durationMinutes} min · \$${service.price.toStringAsFixed(0)}',
+                        subtitle:
+                            '${service.durationMinutes} min · \$${service.price.toStringAsFixed(0)}',
                         onTap: () => setState(() => _service = service),
                       ),
                     )
@@ -138,12 +163,17 @@ class _BookAppointmentViewState extends State<BookAppointmentView> {
             },
           ),
           const SizedBox(height: 20),
-          const Text('2. Elige un barbero', style: TextStyle(fontWeight: FontWeight.w700)),
+          const Text(
+            '2. Elige un barbero',
+            style: TextStyle(fontWeight: FontWeight.w700),
+          ),
           const SizedBox(height: 10),
           StreamBuilder<List<AppUser>>(
             stream: userRepo.watchBarbersByBarbershop(widget.barbershopId),
             builder: (context, snapshot) {
-              final barbers = (snapshot.data ?? []).where((b) => b.available).toList();
+              final barbers = (snapshot.data ?? [])
+                  .where((b) => b.available)
+                  .toList();
               if (barbers.isEmpty) {
                 return const EmptyState(
                   icon: Icons.person_outline,
@@ -165,15 +195,25 @@ class _BookAppointmentViewState extends State<BookAppointmentView> {
             },
           ),
           const SizedBox(height: 20),
-          const Text('3. Elige fecha y hora', style: TextStyle(fontWeight: FontWeight.w700)),
+          const Text(
+            '3. Elige fecha y hora',
+            style: TextStyle(fontWeight: FontWeight.w700),
+          ),
           const SizedBox(height: 10),
           OutlinedButton.icon(
             onPressed: _pickDateTime,
             icon: const Icon(Icons.calendar_month_outlined),
-            label: Text(_dateTime == null ? 'Elegir fecha y hora' : _dateTime.toString().substring(0, 16)),
+            label: Text(
+              _dateTime == null
+                  ? 'Elegir fecha y hora'
+                  : _dateTime.toString().substring(0, 16),
+            ),
           ),
           const SizedBox(height: 20),
-          const Text('4. ¿Cómo quieres reservar?', style: TextStyle(fontWeight: FontWeight.w700)),
+          const Text(
+            '4. ¿Cómo quieres reservar?',
+            style: TextStyle(fontWeight: FontWeight.w700),
+          ),
           const SizedBox(height: 10),
           _SelectableTile(
             selected: !_payNow,
@@ -184,17 +224,27 @@ class _BookAppointmentViewState extends State<BookAppointmentView> {
           _SelectableTile(
             selected: _payNow,
             title: 'Pagar ahora con Nequi',
-            subtitle: 'Bloquea el horario de inmediato: nadie más podrá tomarlo.',
+            subtitle:
+                'Bloquea el horario de inmediato: nadie más podrá tomarlo.',
             onTap: () => setState(() => _payNow = true),
           ),
           const SizedBox(height: 24),
           FilledButton(
-            onPressed: (_service != null && _barber != null && _dateTime != null && !_saving) ? _confirm : null,
+            onPressed:
+                (_service != null &&
+                    _barber != null &&
+                    _dateTime != null &&
+                    !_saving)
+                ? _confirm
+                : null,
             child: _saving
                 ? const SizedBox(
                     height: 18,
                     width: 18,
-                    child: CircularProgressIndicator(strokeWidth: 2, color: Colors.white),
+                    child: CircularProgressIndicator(
+                      strokeWidth: 2,
+                      color: Colors.white,
+                    ),
                   )
                 : Text(_payNow ? 'Pagar y reservar' : 'Solicitar cita'),
           ),
@@ -210,7 +260,12 @@ class _SelectableTile extends StatelessWidget {
   final String? subtitle;
   final VoidCallback onTap;
 
-  const _SelectableTile({required this.selected, required this.title, required this.onTap, this.subtitle});
+  const _SelectableTile({
+    required this.selected,
+    required this.title,
+    required this.onTap,
+    this.subtitle,
+  });
 
   @override
   Widget build(BuildContext context) {
@@ -222,9 +277,13 @@ class _SelectableTile extends StatelessWidget {
         child: Container(
           padding: const EdgeInsets.symmetric(horizontal: 14, vertical: 12),
           decoration: BoxDecoration(
-            color: selected ? AppColors.accent.withValues(alpha: 0.08) : AppColors.surface,
+            color: selected
+                ? AppColors.accent.withValues(alpha: 0.08)
+                : AppColors.surface,
             borderRadius: BorderRadius.circular(14),
-            border: Border.all(color: selected ? AppColors.accent : AppColors.border),
+            border: Border.all(
+              color: selected ? AppColors.accent : AppColors.border,
+            ),
           ),
           child: Row(
             children: [
@@ -238,9 +297,18 @@ class _SelectableTile extends StatelessWidget {
                 child: Column(
                   crossAxisAlignment: CrossAxisAlignment.start,
                   children: [
-                    Text(title, style: const TextStyle(fontWeight: FontWeight.w600)),
+                    Text(
+                      title,
+                      style: const TextStyle(fontWeight: FontWeight.w600),
+                    ),
                     if (subtitle != null)
-                      Text(subtitle!, style: TextStyle(color: AppColors.textSecondary, fontSize: 12)),
+                      Text(
+                        subtitle!,
+                        style: TextStyle(
+                          color: AppColors.textSecondary,
+                          fontSize: 12,
+                        ),
+                      ),
                   ],
                 ),
               ),

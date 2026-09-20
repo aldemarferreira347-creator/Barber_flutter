@@ -30,13 +30,22 @@ class ManageBarbersView extends StatelessWidget {
             TextField(
               controller: controller,
               keyboardType: TextInputType.emailAddress,
-              decoration: const InputDecoration(labelText: 'Correo del barbero', prefixIcon: Icon(Icons.mail_outline)),
+              decoration: const InputDecoration(
+                labelText: 'Correo del barbero',
+                prefixIcon: Icon(Icons.mail_outline),
+              ),
             ),
           ],
         ),
         actions: [
-          TextButton(onPressed: () => Navigator.of(context).pop(), child: const Text('Cancelar')),
-          FilledButton(onPressed: () => Navigator.of(context).pop(controller.text.trim()), child: const Text('Buscar')),
+          TextButton(
+            onPressed: () => Navigator.of(context).pop(),
+            child: const Text('Cancelar'),
+          ),
+          FilledButton(
+            onPressed: () => Navigator.of(context).pop(controller.text.trim()),
+            child: const Text('Buscar'),
+          ),
         ],
       ),
     );
@@ -48,7 +57,9 @@ class ManageBarbersView extends StatelessWidget {
       if (user == null) {
         ScaffoldMessenger.of(context).showSnackBar(
           const SnackBar(
-            content: Text('No existe ninguna cuenta con ese correo. Pídele que se registre primero como cliente.'),
+            content: Text(
+              'No existe ninguna cuenta con ese correo. Pídele que se registre primero como cliente.',
+            ),
           ),
         );
         return;
@@ -56,18 +67,24 @@ class ManageBarbersView extends StatelessWidget {
       if (user.role != UserRole.client) {
         ScaffoldMessenger.of(context).showSnackBar(
           SnackBar(
-            content: Text('${user.name.isEmpty ? user.email : user.name} ya tiene otro rol y no se puede contratar.'),
+            content: Text(
+              '${user.name.isEmpty ? user.email : user.name} ya tiene otro rol y no se puede contratar.',
+            ),
           ),
         );
         return;
       }
       await repo.hireAsBarber(uid: user.uid, barbershopId: barbershopId);
       if (!context.mounted) return;
-      ScaffoldMessenger.of(context)
-          .showSnackBar(SnackBar(content: Text('${user.name} ahora es barbero de tu barbería.')));
+      ScaffoldMessenger.of(context).showSnackBar(
+        SnackBar(
+          content: Text('${user.name} ahora es barbero de tu barbería.'),
+        ),
+      );
     } catch (e) {
       if (context.mounted) {
-        ScaffoldMessenger.of(context).showSnackBar(SnackBar(content: Text('No se pudo contratar: $e')));
+        ScaffoldMessenger.of(context)
+            .showSnackBar(SnackBar(content: Text('No se pudo contratar: $e')));
       }
     }
   }
@@ -77,10 +94,18 @@ class ManageBarbersView extends StatelessWidget {
       context: context,
       builder: (context) => AlertDialog(
         title: const Text('Dar de baja'),
-        content: Text('¿Quitar a ${barber.name} como barbero de tu barbería? Volverá a ser cliente.'),
+        content: Text(
+          '¿Quitar a ${barber.name} como barbero de tu barbería? Volverá a ser cliente.',
+        ),
         actions: [
-          TextButton(onPressed: () => Navigator.of(context).pop(false), child: const Text('Cancelar')),
-          FilledButton(onPressed: () => Navigator.of(context).pop(true), child: const Text('Dar de baja')),
+          TextButton(
+            onPressed: () => Navigator.of(context).pop(false),
+            child: const Text('Cancelar'),
+          ),
+          FilledButton(
+            onPressed: () => Navigator.of(context).pop(true),
+            child: const Text('Dar de baja'),
+          ),
         ],
       ),
     );
@@ -89,7 +114,9 @@ class ManageBarbersView extends StatelessWidget {
       await context.read<UserRepository>().releaseFromBarbershop(barber.uid);
     } catch (e) {
       if (context.mounted) {
-        ScaffoldMessenger.of(context).showSnackBar(SnackBar(content: Text('No se pudo dar de baja: $e')));
+        ScaffoldMessenger.of(
+          context,
+        ).showSnackBar(SnackBar(content: Text('No se pudo dar de baja: $e')));
       }
     }
   }
@@ -139,7 +166,11 @@ class ManageBarbersView extends StatelessWidget {
                       backgroundColor: AppColors.primary,
                       child: Text(
                         barber.initials,
-                        style: const TextStyle(color: Colors.white, fontSize: 12, fontWeight: FontWeight.w700),
+                        style: const TextStyle(
+                          color: Colors.white,
+                          fontSize: 12,
+                          fontWeight: FontWeight.w700,
+                        ),
                       ),
                     ),
                     const SizedBox(width: 12),
@@ -147,12 +178,24 @@ class ManageBarbersView extends StatelessWidget {
                       child: Column(
                         crossAxisAlignment: CrossAxisAlignment.start,
                         children: [
-                          Text(barber.name, style: const TextStyle(fontWeight: FontWeight.w700)),
-                          Text(barber.email, style: TextStyle(color: AppColors.textSecondary, fontSize: 12)),
+                          Text(
+                            barber.name,
+                            style: const TextStyle(fontWeight: FontWeight.w700),
+                          ),
+                          Text(
+                            barber.email,
+                            style: TextStyle(
+                              color: AppColors.textSecondary,
+                              fontSize: 12,
+                            ),
+                          ),
                         ],
                       ),
                     ),
-                    TextButton(onPressed: () => _release(context, barber), child: const Text('Dar de baja')),
+                    TextButton(
+                      onPressed: () => _release(context, barber),
+                      child: const Text('Dar de baja'),
+                    ),
                   ],
                 ),
               );

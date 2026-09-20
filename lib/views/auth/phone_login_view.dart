@@ -26,14 +26,18 @@ class _PhoneLoginViewState extends State<PhoneLoginView> {
   Future<void> _sendCode(AuthController auth) async {
     final phone = _phoneController.text.trim();
     if (!phone.startsWith('+') || phone.length < 8) {
-      ScaffoldMessenger.of(context)
-          .showSnackBar(const SnackBar(content: Text('Usa formato internacional, ej. +573001234567')));
+      ScaffoldMessenger.of(context).showSnackBar(
+        const SnackBar(
+          content: Text('Usa formato internacional, ej. +573001234567'),
+        ),
+      );
       return;
     }
     final handle = await auth.startPhoneVerification(phone);
     if (handle == null) {
       if (mounted && auth.errorMessage != null) {
-        ScaffoldMessenger.of(context).showSnackBar(SnackBar(content: Text(auth.errorMessage!)));
+        ScaffoldMessenger.of(context)
+            .showSnackBar(SnackBar(content: Text(auth.errorMessage!)));
       }
       return;
     }
@@ -47,7 +51,8 @@ class _PhoneLoginViewState extends State<PhoneLoginView> {
     if (!mounted) return;
     if (!ok) {
       if (auth.errorMessage != null) {
-        ScaffoldMessenger.of(context).showSnackBar(SnackBar(content: Text(auth.errorMessage!)));
+        ScaffoldMessenger.of(context)
+            .showSnackBar(SnackBar(content: Text(auth.errorMessage!)));
       }
       return;
     }
@@ -73,12 +78,19 @@ class _PhoneLoginViewState extends State<PhoneLoginView> {
                 crossAxisAlignment: CrossAxisAlignment.stretch,
                 children: [
                   Text(
-                    codeStep ? 'Ingresa el código que te enviamos' : 'Te vamos a enviar un código por SMS',
-                    style: const TextStyle(fontSize: 18, fontWeight: FontWeight.w700),
+                    codeStep
+                        ? 'Ingresa el código que te enviamos'
+                        : 'Te vamos a enviar un código por SMS',
+                    style: const TextStyle(
+                      fontSize: 18,
+                      fontWeight: FontWeight.w700,
+                    ),
                   ),
                   const SizedBox(height: 4),
                   Text(
-                    codeStep ? 'Enviado a ${_phoneController.text}' : 'Escribe tu número con indicativo de país',
+                    codeStep
+                        ? 'Enviado a ${_phoneController.text}'
+                        : 'Escribe tu número con indicativo de país',
                     style: TextStyle(color: AppColors.textSecondary),
                   ),
                   const SizedBox(height: 20),
@@ -86,7 +98,10 @@ class _PhoneLoginViewState extends State<PhoneLoginView> {
                     TextField(
                       controller: _phoneController,
                       keyboardType: TextInputType.phone,
-                      decoration: const InputDecoration(labelText: 'Teléfono', prefixIcon: Icon(Icons.phone_outlined)),
+                      decoration: const InputDecoration(
+                        labelText: 'Teléfono',
+                        prefixIcon: Icon(Icons.phone_outlined),
+                      ),
                     ),
                     const SizedBox(height: 20),
                     FilledButton(
@@ -95,7 +110,10 @@ class _PhoneLoginViewState extends State<PhoneLoginView> {
                           ? const SizedBox(
                               height: 18,
                               width: 18,
-                              child: CircularProgressIndicator(strokeWidth: 2, color: Colors.white),
+                              child: CircularProgressIndicator(
+                                strokeWidth: 2,
+                                color: Colors.white,
+                              ),
                             )
                           : const Text('Enviar código'),
                     ),
@@ -115,7 +133,10 @@ class _PhoneLoginViewState extends State<PhoneLoginView> {
                           ? const SizedBox(
                               height: 18,
                               width: 18,
-                              child: CircularProgressIndicator(strokeWidth: 2, color: Colors.white),
+                              child: CircularProgressIndicator(
+                                strokeWidth: 2,
+                                color: Colors.white,
+                              ),
                             )
                           : const Text('Confirmar código'),
                     ),

@@ -56,12 +56,20 @@ class _AuthGateState extends State<AuthGate> {
                         color: AppColors.warning.withValues(alpha: 0.12),
                         shape: BoxShape.circle,
                       ),
-                      child: const Icon(Icons.error_outline, size: 40, color: AppColors.warning),
+                      child: const Icon(
+                        Icons.error_outline,
+                        size: 40,
+                        color: AppColors.warning,
+                      ),
                     ),
                     const SizedBox(height: 20),
                     Text(
                       'No pudimos cargar tu perfil',
-                      style: TextStyle(fontSize: 20, fontWeight: FontWeight.w800, color: AppColors.textPrimary),
+                      style: TextStyle(
+                        fontSize: 20,
+                        fontWeight: FontWeight.w800,
+                        color: AppColors.textPrimary,
+                      ),
                     ),
                     const SizedBox(height: 8),
                     Text(
@@ -73,7 +81,8 @@ class _AuthGateState extends State<AuthGate> {
                     SizedBox(
                       width: double.infinity,
                       child: OutlinedButton.icon(
-                        onPressed: () => context.read<AuthController>().signOut(),
+                        onPressed: () =>
+                            context.read<AuthController>().signOut(),
                         icon: const Icon(Icons.logout),
                         label: const Text('Cerrar sesión'),
                       ),
@@ -102,13 +111,24 @@ class _AuthGateState extends State<AuthGate> {
                   children: [
                     Container(
                       padding: const EdgeInsets.all(20),
-                      decoration: BoxDecoration(color: AppColors.error.withValues(alpha: 0.12), shape: BoxShape.circle),
-                      child: const Icon(Icons.lock_outline, size: 40, color: AppColors.error),
+                      decoration: BoxDecoration(
+                        color: AppColors.error.withValues(alpha: 0.12),
+                        shape: BoxShape.circle,
+                      ),
+                      child: const Icon(
+                        Icons.lock_outline,
+                        size: 40,
+                        color: AppColors.error,
+                      ),
                     ),
                     const SizedBox(height: 20),
                     Text(
                       'Cuenta bloqueada',
-                      style: TextStyle(fontSize: 20, fontWeight: FontWeight.w800, color: AppColors.textPrimary),
+                      style: TextStyle(
+                        fontSize: 20,
+                        fontWeight: FontWeight.w800,
+                        color: AppColors.textPrimary,
+                      ),
                     ),
                     const SizedBox(height: 8),
                     Text(
@@ -120,7 +140,8 @@ class _AuthGateState extends State<AuthGate> {
                     SizedBox(
                       width: double.infinity,
                       child: OutlinedButton.icon(
-                        onPressed: () => context.read<AuthController>().signOut(),
+                        onPressed: () =>
+                            context.read<AuthController>().signOut(),
                         icon: const Icon(Icons.logout),
                         label: const Text('Cerrar sesión'),
                       ),
@@ -164,10 +185,14 @@ class _OwnerGate extends StatelessWidget {
       stream: context.read<BarbershopRepository>().watchByOwner(ownerId),
       builder: (context, snapshot) {
         if (snapshot.connectionState == ConnectionState.waiting) {
-          return const Scaffold(body: Center(child: CircularProgressIndicator()));
+          return const Scaffold(
+            body: Center(child: CircularProgressIndicator()),
+          );
         }
         final shops = snapshot.data ?? const <Barbershop>[];
-        final hasApprovedShop = shops.any((s) => s.approvalStatus == BarbershopApprovalStatus.approved);
+        final hasApprovedShop = shops.any(
+          (s) => s.approvalStatus == BarbershopApprovalStatus.approved,
+        );
         return hasApprovedShop ? const OwnerHomeView() : const ClientHomeView();
       },
     );

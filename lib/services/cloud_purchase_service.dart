@@ -8,11 +8,14 @@ class CloudPurchaseService implements PurchaseRepository {
   final FirebaseFunctions _functions;
   final FirebaseFirestore _firestore;
 
-  CloudPurchaseService({FirebaseFunctions? functions, FirebaseFirestore? firestore})
-    : _functions = functions ?? FirebaseFunctions.instance,
-      _firestore = firestore ?? FirebaseFirestore.instance;
+  CloudPurchaseService({
+    FirebaseFunctions? functions,
+    FirebaseFirestore? firestore,
+  }) : _functions = functions ?? FirebaseFunctions.instance,
+       _firestore = firestore ?? FirebaseFirestore.instance;
 
-  CollectionReference<Map<String, dynamic>> get _purchases => _firestore.collection('purchases');
+  CollectionReference<Map<String, dynamic>> get _purchases =>
+      _firestore.collection('purchases');
 
   @override
   Future<String> createPurchase({
@@ -20,11 +23,15 @@ class CloudPurchaseService implements PurchaseRepository {
     required List<PurchaseItemInput> items,
     String? appointmentId,
   }) async {
-    final result = await _functions.httpsCallable('createPurchase').call<Map<String, dynamic>>({
-      'barbershopId': barbershopId,
-      'items': items.map((i) => {'productId': i.productId, 'quantity': i.quantity}).toList(),
-      'appointmentId': appointmentId,
-    });
+    final result = await _functions
+        .httpsCallable('createPurchase')
+        .call<Map<String, dynamic>>({
+          'barbershopId': barbershopId,
+          'items': items
+              .map((i) => {'productId': i.productId, 'quantity': i.quantity})
+              .toList(),
+          'appointmentId': appointmentId,
+        });
     return result.data['id'] as String;
   }
 
@@ -43,7 +50,11 @@ class CloudPurchaseService implements PurchaseRepository {
         .where('buyerId', isEqualTo: buyerId)
         .orderBy('createdAt', descending: true)
         .snapshots()
-        .map((snapshot) => snapshot.docs.map((doc) => Purchase.fromMap(doc.id, doc.data())).toList());
+        .map(
+          (snapshot) => snapshot.docs
+              .map((doc) => Purchase.fromMap(doc.id, doc.data()))
+              .toList(),
+        );
   }
 
   @override
@@ -52,11 +63,18 @@ class CloudPurchaseService implements PurchaseRepository {
         .where('barbershopId', isEqualTo: barbershopId)
         .orderBy('createdAt', descending: true)
         .snapshots()
-        .map((snapshot) => snapshot.docs.map((doc) => Purchase.fromMap(doc.id, doc.data())).toList());
+        .map(
+          (snapshot) => snapshot.docs
+              .map((doc) => Purchase.fromMap(doc.id, doc.data()))
+              .toList(),
+        );
   }
 
   @override
-  Future<Purchase?> findByClaimCode({required String barbershopId, required String claimCode}) async {
+  Future<Purchase?> findByClaimCode({
+    required String barbershopId,
+    required String claimCode,
+  }) async {
     final snapshot = await _purchases
         .where('barbershopId', isEqualTo: barbershopId)
         .where('claimCode', isEqualTo: claimCode.trim().toUpperCase())
@@ -68,11 +86,16 @@ class CloudPurchaseService implements PurchaseRepository {
 
   @override
   Future<void> claimPurchase(String purchaseId) {
-    return _functions.httpsCallable('claimPurchase').call<void>({'purchaseId': purchaseId});
+    return _functions.httpsCallable('claimPurchase').call<void>({
+      'purchaseId': purchaseId,
+    });
   }
 
   @override
-  Future<void> refundItems({required String purchaseId, required List<int> itemIndexes}) {
+  Future<void> refundItems({
+    required String purchaseId,
+    required List<int> itemIndexes,
+  }) {
     return _functions.httpsCallable('refundPurchaseItems').call<void>({
       'purchaseId': purchaseId,
       'itemIndexes': itemIndexes,

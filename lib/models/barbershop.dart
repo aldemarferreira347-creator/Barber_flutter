@@ -8,7 +8,10 @@ extension PaymentStatusX on PaymentStatus {
   String get value => name;
 
   static PaymentStatus fromValue(String value) {
-    return PaymentStatus.values.firstWhere((status) => status.name == value, orElse: () => PaymentStatus.ok);
+    return PaymentStatus.values.firstWhere(
+      (status) => status.name == value,
+      orElse: () => PaymentStatus.ok,
+    );
   }
 }
 
@@ -78,7 +81,8 @@ class Barbershop {
 
   /// Solo aparece en el catálogo del cliente si el admin ya la aprobó y no
   /// está bloqueada (spec 12.1/12.6).
-  bool get isVisibleInCatalog => active && approvalStatus == BarbershopApprovalStatus.approved;
+  bool get isVisibleInCatalog =>
+      active && approvalStatus == BarbershopApprovalStatus.approved;
 
   factory Barbershop.fromMap(String id, Map<String, dynamic> map) {
     final dueDateValue = map['paymentDueDate'];
@@ -94,9 +98,12 @@ class Barbershop {
       photoUrl: map['photoUrl'] as String?,
       active: map['active'] as bool? ?? true,
       approvalStatus: BarbershopApprovalStatusX.fromValue(
-        map['approvalStatus'] as String? ?? BarbershopApprovalStatus.pending.value,
+        map['approvalStatus'] as String? ??
+            BarbershopApprovalStatus.pending.value,
       ),
-      paymentStatus: PaymentStatusX.fromValue(map['paymentStatus'] as String? ?? PaymentStatus.ok.value),
+      paymentStatus: PaymentStatusX.fromValue(
+        map['paymentStatus'] as String? ?? PaymentStatus.ok.value,
+      ),
       paymentDueDate: dueDateValue is Timestamp ? dueDateValue.toDate() : null,
       schedule: weekScheduleFromMap(map['schedule'] as Map<String, dynamic>?),
       ratingSum: (map['ratingSum'] as num?)?.toInt() ?? 0,
@@ -117,8 +124,12 @@ class Barbershop {
       'active': active,
       'approvalStatus': approvalStatus.value,
       'paymentStatus': paymentStatus.value,
-      'paymentDueDate': paymentDueDate == null ? null : Timestamp.fromDate(paymentDueDate!),
-      'schedule': schedule.isEmpty ? weekScheduleToMap(weekScheduleFromMap(null)) : weekScheduleToMap(schedule),
+      'paymentDueDate': paymentDueDate == null
+          ? null
+          : Timestamp.fromDate(paymentDueDate!),
+      'schedule': schedule.isEmpty
+          ? weekScheduleToMap(weekScheduleFromMap(null))
+          : weekScheduleToMap(schedule),
     };
   }
 }

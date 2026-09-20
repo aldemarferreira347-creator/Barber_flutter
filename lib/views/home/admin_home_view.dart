@@ -11,15 +11,24 @@ class AdminHomeView extends StatelessWidget {
   const AdminHomeView({super.key});
 
   void _comingSoon(BuildContext context, String feature) {
-    ScaffoldMessenger.of(context).showSnackBar(SnackBar(content: Text('$feature próximamente')));
+    ScaffoldMessenger.of(context)
+        .showSnackBar(SnackBar(content: Text('$feature próximamente')));
   }
 
   @override
   Widget build(BuildContext context) {
     return RoleShell(
       tabs: [
-        const RoleTab(label: 'Inicio', icon: Icons.home_outlined, page: AdminDashboardTab()),
-        const RoleTab(label: 'Usuarios', icon: Icons.people_outline, page: ManageUsersView()),
+        const RoleTab(
+          label: 'Inicio',
+          icon: Icons.home_outlined,
+          page: AdminDashboardTab(),
+        ),
+        const RoleTab(
+          label: 'Usuarios',
+          icon: Icons.people_outline,
+          page: ManageUsersView(),
+        ),
         const RoleTab(
           label: 'Barberías',
           icon: Icons.storefront_outlined,
@@ -34,14 +43,19 @@ class AdminHomeView extends StatelessWidget {
                 ProfileMenuItem(
                   icon: Icons.people_outline,
                   label: 'Usuarios',
-                  onTap: () => Navigator.of(context).push(MaterialPageRoute(builder: (_) => const ManageUsersView())),
+                  onTap: () => Navigator.of(context).push(
+                    MaterialPageRoute(builder: (_) => const ManageUsersView()),
+                  ),
                 ),
                 ProfileMenuItem(
                   icon: Icons.storefront_outlined,
                   label: 'Barberías',
-                  onTap: () =>
-                      Navigator.of(context)
-                          .push(MaterialPageRoute(builder: (_) => const ManageBarbershopsView(adminControls: true))),
+                  onTap: () => Navigator.of(context).push(
+                    MaterialPageRoute(
+                      builder: (_) =>
+                          const ManageBarbershopsView(adminControls: true),
+                    ),
+                  ),
                 ),
                 ProfileMenuItem(
                   icon: Icons.settings_outlined,
@@ -51,7 +65,9 @@ class AdminHomeView extends StatelessWidget {
                 ProfileMenuItem(
                   icon: Icons.help_outline,
                   label: 'Ayuda',
-                  onTap: () => Navigator.of(context).push(MaterialPageRoute(builder: (_) => const HelpView())),
+                  onTap: () => Navigator.of(
+                    context,
+                  ).push(MaterialPageRoute(builder: (_) => const HelpView())),
                 ),
               ],
             ),

@@ -19,7 +19,11 @@ class Service {
     this.active = true,
   });
 
-  factory Service.fromMap(String id, String barbershopId, Map<String, dynamic> map) {
+  factory Service.fromMap(
+    String id,
+    String barbershopId,
+    Map<String, dynamic> map,
+  ) {
     return Service(
       id: id,
       barbershopId: barbershopId,

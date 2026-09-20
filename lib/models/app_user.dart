@@ -67,15 +67,22 @@ class AppUser {
       email: map['email'] as String? ?? '',
       name: map['name'] as String? ?? '',
       phone: map['phone'] as String?,
-      role: UserRoleX.fromValue(map['role'] as String? ?? UserRole.client.value),
+      role: UserRoleX.fromValue(
+        map['role'] as String? ?? UserRole.client.value,
+      ),
       barbershopId: map['barbershopId'] as String?,
       active: map['active'] as bool? ?? true,
       available: map['available'] as bool? ?? true,
       createdAt: createdAtValue is Timestamp ? createdAtValue.toDate() : null,
-      notificationTone: NotificationToneX.fromValue(map['notificationTone'] as String?),
-      fcmTokens: (map['fcmTokens'] as List?)?.whereType<String>().toList() ?? const [],
+      notificationTone: NotificationToneX.fromValue(
+        map['notificationTone'] as String?,
+      ),
+      fcmTokens:
+          (map['fcmTokens'] as List?)?.whereType<String>().toList() ?? const [],
       awaySince: awaySinceValue is Timestamp ? awaySinceValue.toDate() : null,
-      awayUntilEstimate: awayUntilEstimateValue is Timestamp ? awayUntilEstimateValue.toDate() : null,
+      awayUntilEstimate: awayUntilEstimateValue is Timestamp
+          ? awayUntilEstimateValue.toDate()
+          : null,
       ratingSum: (map['ratingSum'] as num?)?.toInt() ?? 0,
       ratingCount: (map['ratingCount'] as num?)?.toInt() ?? 0,
     );
@@ -113,7 +120,12 @@ class AppUser {
   String get initials {
     final trimmed = name.trim();
     if (trimmed.isEmpty) return '?';
-    return trimmed.split(RegExp(r'\s+')).map((p) => p[0]).take(2).join().toUpperCase();
+    return trimmed
+        .split(RegExp(r'\s+'))
+        .map((p) => p[0])
+        .take(2)
+        .join()
+        .toUpperCase();
   }
 
   Map<String, dynamic> toMap() {
@@ -126,7 +138,9 @@ class AppUser {
       'barbershopId': barbershopId,
       'active': active,
       'available': available,
-      'createdAt': createdAt == null ? FieldValue.serverTimestamp() : Timestamp.fromDate(createdAt!),
+      'createdAt': createdAt == null
+          ? FieldValue.serverTimestamp()
+          : Timestamp.fromDate(createdAt!),
       'notificationTone': notificationTone?.value,
       'fcmTokens': fcmTokens,
     };

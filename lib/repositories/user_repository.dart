@@ -30,7 +30,10 @@ abstract class UserRepository {
 
   /// El Dueño contrata a un Cliente existente como Barbero de su barbería
   /// (reservado a: el propio Dueño de esa barbería, impuesto en firestore.rules).
-  Future<void> hireAsBarber({required String uid, required String barbershopId});
+  Future<void> hireAsBarber({
+    required String uid,
+    required String barbershopId,
+  });
 
   /// El Dueño da de baja a un Barbero de su barbería: vuelve a Cliente.
   Future<void> releaseFromBarbershop(String uid);

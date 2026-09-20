@@ -48,6 +48,8 @@ dependencies:
   firebase_messaging: ^16.7.0
   cloud_functions: ^6.5.0
   shared_preferences: ^2.3.2
+  flutter_animate: ^4.5.2
+  shimmer: ^4.0.0
 
 dev_dependencies:
   flutter_test:

@@ -57,7 +57,11 @@ class PrivacyPolicyView extends StatelessWidget {
               children: [
                 Icon(Icons.mail_outline, color: AppColors.accent, size: 18),
                 const SizedBox(width: 10),
-                Expanded(child: Text('Dudas sobre tus datos: ${SupportInfo.supportEmail}')),
+                Expanded(
+                  child: Text(
+                    'Dudas sobre tus datos: ${SupportInfo.supportEmail}',
+                  ),
+                ),
               ],
             ),
           ),
@@ -80,9 +84,15 @@ class _Section extends StatelessWidget {
       child: Column(
         crossAxisAlignment: CrossAxisAlignment.start,
         children: [
-          Text(title, style: const TextStyle(fontWeight: FontWeight.w700, fontSize: 15)),
+          Text(
+            title,
+            style: const TextStyle(fontWeight: FontWeight.w700, fontSize: 15),
+          ),
           const SizedBox(height: 6),
-          Text(body, style: TextStyle(color: AppColors.textSecondary, height: 1.4)),
+          Text(
+            body,
+            style: TextStyle(color: AppColors.textSecondary, height: 1.4),
+          ),
         ],
       ),
     );

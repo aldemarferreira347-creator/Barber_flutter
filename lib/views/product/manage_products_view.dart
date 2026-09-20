@@ -14,7 +14,11 @@ class ManageProductsView extends StatelessWidget {
   final String barbershopId;
   final bool canManage;
 
-  const ManageProductsView({super.key, required this.barbershopId, this.canManage = false});
+  const ManageProductsView({
+    super.key,
+    required this.barbershopId,
+    this.canManage = false,
+  });
 
   @override
   Widget build(BuildContext context) {
@@ -24,9 +28,11 @@ class ManageProductsView extends StatelessWidget {
       appBar: AppBar(title: const Text('Productos')),
       floatingActionButton: canManage
           ? FloatingActionButton(
-              onPressed: () =>
-                  Navigator.of(context)
-                      .push(MaterialPageRoute(builder: (_) => AddProductView(barbershopId: barbershopId))),
+              onPressed: () => Navigator.of(context).push(
+                MaterialPageRoute(
+                  builder: (_) => AddProductView(barbershopId: barbershopId),
+                ),
+              ),
               child: const Icon(Icons.add),
             )
           : null,
@@ -42,7 +48,8 @@ class ManageProductsView extends StatelessWidget {
               child: EmptyState(
                 icon: Icons.shopping_bag_outlined,
                 title: 'Sin productos todavía',
-                subtitle: 'Añade ceras, tintes u otros productos con precio y foto.',
+                subtitle:
+                    'Añade ceras, tintes u otros productos con precio y foto.',
               ),
             );
           }
@@ -56,9 +63,11 @@ class ManageProductsView extends StatelessWidget {
                 borderRadius: BorderRadius.circular(14),
                 onTap: canManage || !product.active
                     ? null
-                    : () =>
-                          Navigator.of(context)
-                              .push(MaterialPageRoute(builder: (_) => BuyProductView(product: product))),
+                    : () => Navigator.of(context).push(
+                        MaterialPageRoute(
+                          builder: (_) => BuyProductView(product: product),
+                        ),
+                      ),
                 child: Container(
                   padding: const EdgeInsets.all(12),
                   decoration: BoxDecoration(
@@ -82,7 +91,10 @@ class ManageProductsView extends StatelessWidget {
                                 width: 56,
                                 height: 56,
                                 color: AppColors.background,
-                                child: Icon(Icons.shopping_bag_outlined, color: AppColors.textSecondary),
+                                child: Icon(
+                                  Icons.shopping_bag_outlined,
+                                  color: AppColors.textSecondary,
+                                ),
                               ),
                       ),
                       const SizedBox(width: 12),
@@ -90,23 +102,35 @@ class ManageProductsView extends StatelessWidget {
                         child: Column(
                           crossAxisAlignment: CrossAxisAlignment.start,
                           children: [
-                            Text(product.name, style: const TextStyle(fontWeight: FontWeight.w700)),
+                            Text(
+                              product.name,
+                              style: const TextStyle(
+                                fontWeight: FontWeight.w700,
+                              ),
+                            ),
                             if ((product.description ?? '').isNotEmpty)
                               Text(
                                 product.description!,
-                                style: TextStyle(color: AppColors.textSecondary, fontSize: 12),
+                                style: TextStyle(
+                                  color: AppColors.textSecondary,
+                                  fontSize: 12,
+                                ),
                               ),
                           ],
                         ),
                       ),
                       Text(
                         '\$${product.price.toStringAsFixed(0)}',
-                        style: TextStyle(fontWeight: FontWeight.w800, color: AppColors.accent),
+                        style: TextStyle(
+                          fontWeight: FontWeight.w800,
+                          color: AppColors.accent,
+                        ),
                       ),
                       if (canManage)
                         Switch(
                           value: product.active,
-                          onChanged: (value) => repo.setActive(barbershopId, product.id, value),
+                          onChanged: (value) =>
+                              repo.setActive(barbershopId, product.id, value),
                         ),
                     ],
                   ),

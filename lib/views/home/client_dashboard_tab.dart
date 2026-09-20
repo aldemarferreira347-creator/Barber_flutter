@@ -16,7 +16,9 @@ class ClientDashboardTab extends StatelessWidget {
   @override
   Widget build(BuildContext context) {
     final profile = context.watch<AuthController>().profile;
-    final greetingName = profile?.firstName.isNotEmpty == true ? profile!.firstName : 'Cliente';
+    final greetingName = profile?.firstName.isNotEmpty == true
+        ? profile!.firstName
+        : 'Cliente';
     final repo = context.read<AppointmentRepository>();
 
     return Scaffold(
@@ -27,26 +29,37 @@ class ClientDashboardTab extends StatelessWidget {
             IconButton(
               icon: const Icon(Icons.notifications_none),
               tooltip: 'Notificaciones',
-              onPressed: () =>
-                  Navigator.of(context).push(MaterialPageRoute(builder: (_) => NotificationsView(uid: profile.uid))),
+              onPressed: () => Navigator.of(context).push(
+                MaterialPageRoute(
+                  builder: (_) => NotificationsView(uid: profile.uid),
+                ),
+              ),
             ),
           Padding(
             padding: const EdgeInsets.only(right: 16, left: 4),
             child: CircleAvatar(
               radius: 16,
               backgroundColor: AppColors.primary,
-              child: const Icon(Icons.person_outline, color: Colors.white, size: 16),
+              child: const Icon(
+                Icons.person_outline,
+                color: Colors.white,
+                size: 16,
+              ),
             ),
           ),
         ],
       ),
       floatingActionButton: FloatingActionButton(
         tooltip: 'Ayuda',
-        onPressed: () => Navigator.of(context).push(MaterialPageRoute(builder: (_) => const HelpView())),
+        onPressed: () =>
+            Navigator.of(context)
+                .push(MaterialPageRoute(builder: (_) => const HelpView())),
         child: const Icon(Icons.help_outline),
       ),
       body: StreamBuilder<List<Appointment>>(
-        stream: profile == null ? const Stream<List<Appointment>>.empty() : repo.watchByClient(profile.uid),
+        stream: profile == null
+            ? const Stream<List<Appointment>>.empty()
+            : repo.watchByClient(profile.uid),
         builder: (context, snapshot) {
           final all = snapshot.data ?? [];
           final now = DateTime.now();
@@ -55,39 +68,71 @@ class ClientDashboardTab extends StatelessWidget {
                   .where(
                     (a) =>
                         a.date.isAfter(now) &&
-                        (a.status == AppointmentStatus.pending || a.status == AppointmentStatus.accepted),
+                        (a.status == AppointmentStatus.pending ||
+                            a.status == AppointmentStatus.accepted),
                   )
                   .toList()
                 ..sort((a, b) => a.date.compareTo(b.date));
           final today = upcoming
-              .where((a) => a.date.year == now.year && a.date.month == now.month && a.date.day == now.day)
+              .where(
+                (a) =>
+                    a.date.year == now.year &&
+                    a.date.month == now.month &&
+                    a.date.day == now.day,
+              )
               .length;
 
           return ListView(
             padding: const EdgeInsets.all(16),
             children: [
-              Text('Tu estilo, nuestra prioridad', style: TextStyle(color: AppColors.textSecondary)),
+              Text(
+                'Tu estilo, nuestra prioridad',
+                style: TextStyle(color: AppColors.textSecondary),
+              ),
               const SizedBox(height: 16),
               Container(
                 padding: const EdgeInsets.all(16),
-                decoration: BoxDecoration(color: AppColors.primary, borderRadius: BorderRadius.circular(16)),
+                decoration: BoxDecoration(
+                  color: AppColors.primary,
+                  borderRadius: BorderRadius.circular(16),
+                ),
                 child: Row(
                   children: [
                     Expanded(
                       child: Column(
                         crossAxisAlignment: CrossAxisAlignment.start,
                         children: [
-                          const Text('Hoy', style: TextStyle(color: Colors.white70, fontSize: 12)),
+                          const Text(
+                            'Hoy',
+                            style: TextStyle(
+                              color: Colors.white70,
+                              fontSize: 12,
+                            ),
+                          ),
                           const SizedBox(height: 4),
                           Text(
                             '$today',
-                            style: const TextStyle(color: Colors.white, fontSize: 28, fontWeight: FontWeight.w800),
+                            style: const TextStyle(
+                              color: Colors.white,
+                              fontSize: 28,
+                              fontWeight: FontWeight.w800,
+                            ),
                           ),
-                          const Text('Citas programadas', style: TextStyle(color: Colors.white70, fontSize: 12)),
+                          const Text(
+                            'Citas programadas',
+                            style: TextStyle(
+                              color: Colors.white70,
+                              fontSize: 12,
+                            ),
+                          ),
                         ],
                       ),
                     ),
-                    const Icon(Icons.calendar_month_outlined, color: Colors.white, size: 28),
+                    const Icon(
+                      Icons.calendar_month_outlined,
+                      color: Colors.white,
+                      size: 28,
+                    ),
                   ],
                 ),
               ),
@@ -97,22 +142,33 @@ class ClientDashboardTab extends StatelessWidget {
                 decoration: BoxDecoration(
                   color: AppColors.accent.withValues(alpha: 0.08),
                   borderRadius: BorderRadius.circular(16),
-                  border: Border.all(color: AppColors.accent.withValues(alpha: 0.2)),
+                  border: Border.all(
+                    color: AppColors.accent.withValues(alpha: 0.2),
+                  ),
                 ),
                 child: Column(
                   crossAxisAlignment: CrossAxisAlignment.start,
                   children: [
-                    const Text('¡Vamos por más!', style: TextStyle(fontWeight: FontWeight.w700)),
+                    const Text(
+                      '¡Vamos por más!',
+                      style: TextStyle(fontWeight: FontWeight.w700),
+                    ),
                     const SizedBox(height: 4),
                     Text(
                       'Agenda tu próxima cita y luce increíble.',
-                      style: TextStyle(color: AppColors.textSecondary, fontSize: 13),
+                      style: TextStyle(
+                        color: AppColors.textSecondary,
+                        fontSize: 13,
+                      ),
                     ),
                   ],
                 ),
               ),
               const SizedBox(height: 20),
-              const Text('Mis próximas citas', style: TextStyle(fontWeight: FontWeight.w700, fontSize: 15)),
+              const Text(
+                'Mis próximas citas',
+                style: TextStyle(fontWeight: FontWeight.w700, fontSize: 15),
+              ),
               const SizedBox(height: 10),
               if (upcoming.isEmpty)
                 Container(
@@ -130,7 +186,10 @@ class ClientDashboardTab extends StatelessWidget {
                 )
               else
                 for (final appointment in upcoming.take(3)) ...[
-                  AppointmentCard(appointment: appointment, subtitle: 'Con ${appointment.barberName}'),
+                  AppointmentCard(
+                    appointment: appointment,
+                    subtitle: 'Con ${appointment.barberName}',
+                  ),
                   const SizedBox(height: 10),
                 ],
             ],

@@ -8,11 +8,14 @@ class CloudRefundRequestService implements RefundRequestRepository {
   final FirebaseFirestore _firestore;
   final FirebaseFunctions _functions;
 
-  CloudRefundRequestService({FirebaseFirestore? firestore, FirebaseFunctions? functions})
-    : _firestore = firestore ?? FirebaseFirestore.instance,
-      _functions = functions ?? FirebaseFunctions.instance;
+  CloudRefundRequestService({
+    FirebaseFirestore? firestore,
+    FirebaseFunctions? functions,
+  }) : _firestore = firestore ?? FirebaseFirestore.instance,
+       _functions = functions ?? FirebaseFunctions.instance;
 
-  CollectionReference<Map<String, dynamic>> get _requests => _firestore.collection('refundRequests');
+  CollectionReference<Map<String, dynamic>> get _requests =>
+      _firestore.collection('refundRequests');
 
   @override
   Stream<List<RefundRequest>> watchByBarbershop(String barbershopId) {
@@ -20,7 +23,11 @@ class CloudRefundRequestService implements RefundRequestRepository {
         .where('barbershopId', isEqualTo: barbershopId)
         .orderBy('createdAt', descending: true)
         .snapshots()
-        .map((snapshot) => snapshot.docs.map((doc) => RefundRequest.fromMap(doc.id, doc.data())).toList());
+        .map(
+          (snapshot) => snapshot.docs
+              .map((doc) => RefundRequest.fromMap(doc.id, doc.data()))
+              .toList(),
+        );
   }
 
   @override
@@ -29,7 +36,11 @@ class CloudRefundRequestService implements RefundRequestRepository {
         .where('clientId', isEqualTo: clientId)
         .orderBy('createdAt', descending: true)
         .snapshots()
-        .map((snapshot) => snapshot.docs.map((doc) => RefundRequest.fromMap(doc.id, doc.data())).toList());
+        .map(
+          (snapshot) => snapshot.docs
+              .map((doc) => RefundRequest.fromMap(doc.id, doc.data()))
+              .toList(),
+        );
   }
 
   @override

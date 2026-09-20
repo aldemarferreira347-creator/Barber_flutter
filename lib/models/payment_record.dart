@@ -8,7 +8,10 @@ extension PaymentIntentStatusX on PaymentIntentStatus {
   String get value => name;
 
   static PaymentIntentStatus fromValue(String value) {
-    return PaymentIntentStatus.values.firstWhere((s) => s.name == value, orElse: () => PaymentIntentStatus.pending);
+    return PaymentIntentStatus.values.firstWhere(
+      (s) => s.name == value,
+      orElse: () => PaymentIntentStatus.pending,
+    );
   }
 }
 
@@ -19,7 +22,10 @@ extension PaymentCategoryX on PaymentCategory {
   String get value => name;
 
   static PaymentCategory fromValue(String value) {
-    return PaymentCategory.values.firstWhere((c) => c.name == value, orElse: () => PaymentCategory.appointment);
+    return PaymentCategory.values.firstWhere(
+      (c) => c.name == value,
+      orElse: () => PaymentCategory.appointment,
+    );
   }
 }
 
@@ -57,12 +63,18 @@ class PaymentRecord {
       id: id,
       payerId: map['payerId'] as String? ?? '',
       amount: (map['amount'] as num?)?.toDouble() ?? 0,
-      category: PaymentCategoryX.fromValue(map['category'] as String? ?? PaymentCategory.appointment.value),
+      category: PaymentCategoryX.fromValue(
+        map['category'] as String? ?? PaymentCategory.appointment.value,
+      ),
       relatedId: map['relatedId'] as String? ?? '',
       description: map['description'] as String?,
-      status: PaymentIntentStatusX.fromValue(map['status'] as String? ?? PaymentIntentStatus.pending.value),
+      status: PaymentIntentStatusX.fromValue(
+        map['status'] as String? ?? PaymentIntentStatus.pending.value,
+      ),
       createdAt: createdAtValue is Timestamp ? createdAtValue.toDate() : null,
-      resolvedAt: resolvedAtValue is Timestamp ? resolvedAtValue.toDate() : null,
+      resolvedAt: resolvedAtValue is Timestamp
+          ? resolvedAtValue.toDate()
+          : null,
       refundedAmount: (map['refundedAmount'] as num?)?.toDouble(),
     );
   }

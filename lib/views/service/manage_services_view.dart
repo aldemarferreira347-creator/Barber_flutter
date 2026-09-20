@@ -13,7 +13,11 @@ class ManageServicesView extends StatelessWidget {
   final String barbershopId;
   final bool canManage;
 
-  const ManageServicesView({super.key, required this.barbershopId, this.canManage = false});
+  const ManageServicesView({
+    super.key,
+    required this.barbershopId,
+    this.canManage = false,
+  });
 
   @override
   Widget build(BuildContext context) {
@@ -23,9 +27,11 @@ class ManageServicesView extends StatelessWidget {
       appBar: AppBar(title: const Text('Servicios')),
       floatingActionButton: canManage
           ? FloatingActionButton(
-              onPressed: () =>
-                  Navigator.of(context)
-                      .push(MaterialPageRoute(builder: (_) => AddServiceView(barbershopId: barbershopId))),
+              onPressed: () => Navigator.of(context).push(
+                MaterialPageRoute(
+                  builder: (_) => AddServiceView(barbershopId: barbershopId),
+                ),
+              ),
               child: const Icon(Icons.add),
             )
           : null,
@@ -68,13 +74,17 @@ class ManageServicesView extends StatelessWidget {
                               width: 56,
                               height: 56,
                               fit: BoxFit.cover,
-                              semanticLabel: 'Foto del servicio ${service.name}',
+                              semanticLabel:
+                                  'Foto del servicio ${service.name}',
                             )
                           : Container(
                               width: 56,
                               height: 56,
                               color: AppColors.background,
-                              child: Icon(Icons.content_cut, color: AppColors.textSecondary),
+                              child: Icon(
+                                Icons.content_cut,
+                                color: AppColors.textSecondary,
+                              ),
                             ),
                     ),
                     const SizedBox(width: 12),
@@ -82,22 +92,32 @@ class ManageServicesView extends StatelessWidget {
                       child: Column(
                         crossAxisAlignment: CrossAxisAlignment.start,
                         children: [
-                          Text(service.name, style: const TextStyle(fontWeight: FontWeight.w700)),
+                          Text(
+                            service.name,
+                            style: const TextStyle(fontWeight: FontWeight.w700),
+                          ),
                           Text(
                             '${service.durationMinutes} min',
-                            style: TextStyle(color: AppColors.textSecondary, fontSize: 12),
+                            style: TextStyle(
+                              color: AppColors.textSecondary,
+                              fontSize: 12,
+                            ),
                           ),
                         ],
                       ),
                     ),
                     Text(
                       '\$${service.price.toStringAsFixed(0)}',
-                      style: TextStyle(fontWeight: FontWeight.w800, color: AppColors.accent),
+                      style: TextStyle(
+                        fontWeight: FontWeight.w800,
+                        color: AppColors.accent,
+                      ),
                     ),
                     if (canManage)
                       Switch(
                         value: service.active,
-                        onChanged: (value) => repo.setActive(barbershopId, service.id, value),
+                        onChanged: (value) =>
+                            repo.setActive(barbershopId, service.id, value),
                       ),
                   ],
                 ),

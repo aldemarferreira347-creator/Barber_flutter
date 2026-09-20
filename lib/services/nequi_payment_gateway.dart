@@ -11,9 +11,11 @@ class NequiPaymentGateway implements PaymentGateway {
   final FirebaseFunctions _functions;
   final FirebaseFirestore _firestore;
 
-  NequiPaymentGateway({FirebaseFunctions? functions, FirebaseFirestore? firestore})
-    : _functions = functions ?? FirebaseFunctions.instance,
-      _firestore = firestore ?? FirebaseFirestore.instance;
+  NequiPaymentGateway({
+    FirebaseFunctions? functions,
+    FirebaseFirestore? firestore,
+  }) : _functions = functions ?? FirebaseFunctions.instance,
+       _firestore = firestore ?? FirebaseFirestore.instance;
 
   @override
   Future<String> requestPayment({
@@ -22,18 +24,22 @@ class NequiPaymentGateway implements PaymentGateway {
     required String relatedId,
     String? description,
   }) async {
-    final result = await _functions.httpsCallable('requestPayment').call<Map<String, dynamic>>({
-      'amount': amount,
-      'category': category.value,
-      'relatedId': relatedId,
-      'description': description,
-    });
+    final result = await _functions
+        .httpsCallable('requestPayment')
+        .call<Map<String, dynamic>>({
+          'amount': amount,
+          'category': category.value,
+          'relatedId': relatedId,
+          'description': description,
+        });
     return result.data['id'] as String;
   }
 
   @override
   Stream<PaymentRecord?> watchPayment(String paymentId) {
-    return _firestore.collection('payments').doc(paymentId).snapshots().map((doc) {
+    return _firestore.collection('payments').doc(paymentId).snapshots().map((
+      doc,
+    ) {
       final data = doc.data();
       if (!doc.exists || data == null) return null;
       return PaymentRecord.fromMap(doc.id, data);
@@ -42,6 +48,9 @@ class NequiPaymentGateway implements PaymentGateway {
 
   @override
   Future<void> refund(String paymentId, {double? amount}) {
-    return _functions.httpsCallable('refundPayment').call<void>({'paymentId': paymentId, 'amount': ?amount});
+    return _functions.httpsCallable('refundPayment').call<void>({
+      'paymentId': paymentId,
+      'amount': ?amount,
+    });
   }
 }

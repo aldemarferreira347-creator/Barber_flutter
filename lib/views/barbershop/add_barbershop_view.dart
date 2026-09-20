@@ -44,7 +44,11 @@ class _AddBarbershopViewState extends State<AddBarbershopView> {
   }
 
   Future<void> _pickPhoto(ImageSource source) async {
-    final file = await _picker.pickImage(source: source, maxWidth: 1280, imageQuality: 85);
+    final file = await _picker.pickImage(
+      source: source,
+      maxWidth: 1280,
+      imageQuality: 85,
+    );
     if (file == null) return;
     final bytes = await file.readAsBytes();
     setState(() {
@@ -88,7 +92,9 @@ class _AddBarbershopViewState extends State<AddBarbershopView> {
       final position = await _locationService.getCurrentPosition();
       setState(() => _position = position);
     } on LocationException catch (e) {
-      if (mounted) ScaffoldMessenger.of(context).showSnackBar(SnackBar(content: Text(e.message)));
+      if (mounted)
+        ScaffoldMessenger.of(context)
+            .showSnackBar(SnackBar(content: Text(e.message)));
     } finally {
       if (mounted) setState(() => _locating = false);
     }
@@ -119,21 +125,31 @@ class _AddBarbershopViewState extends State<AddBarbershopView> {
       // cambiar desde el cliente, así que esto lo confirma el backend.
       await repo.requestOwnership(id);
       if (_position != null) {
-        await repo.updateLocation(id, _position!.latitude, _position!.longitude);
+        await repo.updateLocation(
+          id,
+          _position!.latitude,
+          _position!.longitude,
+        );
       }
       if (_photoBytes != null) {
-        final fileName = '${DateTime.now().millisecondsSinceEpoch}_${_photoName ?? 'foto.jpg'}';
+        final fileName =
+            '${DateTime.now().millisecondsSinceEpoch}_${_photoName ?? 'foto.jpg'}';
         await repo.uploadPhoto(id, fileName: fileName, bytes: _photoBytes!);
       }
       if (mounted) {
         Navigator.of(context).pop();
         ScaffoldMessenger.of(context).showSnackBar(
-          const SnackBar(content: Text('Barbería registrada. Queda pendiente de revisión por el administrador.')),
+          const SnackBar(
+            content: Text(
+              'Barbería registrada. Queda pendiente de revisión por el administrador.',
+            ),
+          ),
         );
       }
     } catch (e) {
       if (mounted) {
-        ScaffoldMessenger.of(context).showSnackBar(SnackBar(content: Text('No se pudo guardar: $e')));
+        ScaffoldMessenger.of(context)
+            .showSnackBar(SnackBar(content: Text('No se pudo guardar: $e')));
       }
     } finally {
       if (mounted) setState(() => _saving = false);
@@ -161,18 +177,27 @@ class _AddBarbershopViewState extends State<AddBarbershopView> {
                       borderRadius: BorderRadius.circular(16),
                       border: Border.all(color: AppColors.border),
                       image: _photoBytes != null
-                          ? DecorationImage(image: MemoryImage(_photoBytes!), fit: BoxFit.cover)
+                          ? DecorationImage(
+                              image: MemoryImage(_photoBytes!),
+                              fit: BoxFit.cover,
+                            )
                           : null,
                     ),
                     child: _photoBytes == null
                         ? Column(
                             mainAxisAlignment: MainAxisAlignment.center,
                             children: [
-                              Icon(Icons.add_a_photo_outlined, color: AppColors.textSecondary),
+                              Icon(
+                                Icons.add_a_photo_outlined,
+                                color: AppColors.textSecondary,
+                              ),
                               const SizedBox(height: 6),
                               Text(
                                 'Añadir foto de portada',
-                                style: TextStyle(color: AppColors.textSecondary, fontSize: 12),
+                                style: TextStyle(
+                                  color: AppColors.textSecondary,
+                                  fontSize: 12,
+                                ),
                               ),
                             ],
                           )
@@ -186,7 +211,9 @@ class _AddBarbershopViewState extends State<AddBarbershopView> {
                 decoration: BoxDecoration(
                   color: AppColors.accent.withValues(alpha: 0.08),
                   borderRadius: BorderRadius.circular(12),
-                  border: Border.all(color: AppColors.accent.withValues(alpha: 0.2)),
+                  border: Border.all(
+                    color: AppColors.accent.withValues(alpha: 0.2),
+                  ),
                 ),
                 child: Row(
                   children: [
@@ -195,7 +222,10 @@ class _AddBarbershopViewState extends State<AddBarbershopView> {
                     Expanded(
                       child: Text(
                         'Tu barbería quedará pendiente de revisión. El administrador la aprobará antes de que aparezca en el catálogo.',
-                        style: TextStyle(fontSize: 12, color: AppColors.textSecondary),
+                        style: TextStyle(
+                          fontSize: 12,
+                          color: AppColors.textSecondary,
+                        ),
                       ),
                     ),
                   ],
@@ -204,20 +234,33 @@ class _AddBarbershopViewState extends State<AddBarbershopView> {
               const SizedBox(height: 20),
               TextFormField(
                 controller: _nameController,
-                decoration: const InputDecoration(labelText: 'Nombre', prefixIcon: Icon(Icons.storefront_outlined)),
-                validator: (value) => (value == null || value.trim().isEmpty) ? 'Requerido' : null,
+                decoration: const InputDecoration(
+                  labelText: 'Nombre',
+                  prefixIcon: Icon(Icons.storefront_outlined),
+                ),
+                validator: (value) => (value == null || value.trim().isEmpty)
+                    ? 'Requerido'
+                    : null,
               ),
               const SizedBox(height: 14),
               TextFormField(
                 controller: _addressController,
-                decoration: const InputDecoration(labelText: 'Dirección', prefixIcon: Icon(Icons.location_on_outlined)),
-                validator: (value) => (value == null || value.trim().isEmpty) ? 'Requerido' : null,
+                decoration: const InputDecoration(
+                  labelText: 'Dirección',
+                  prefixIcon: Icon(Icons.location_on_outlined),
+                ),
+                validator: (value) => (value == null || value.trim().isEmpty)
+                    ? 'Requerido'
+                    : null,
               ),
               const SizedBox(height: 14),
               TextFormField(
                 controller: _phoneController,
                 keyboardType: TextInputType.phone,
-                decoration: const InputDecoration(labelText: 'Teléfono', prefixIcon: Icon(Icons.phone_outlined)),
+                decoration: const InputDecoration(
+                  labelText: 'Teléfono',
+                  prefixIcon: Icon(Icons.phone_outlined),
+                ),
               ),
               const SizedBox(height: 14),
               TextFormField(
@@ -232,18 +275,31 @@ class _AddBarbershopViewState extends State<AddBarbershopView> {
               TextFormField(
                 controller: _descriptionController,
                 maxLines: 3,
-                decoration: const InputDecoration(labelText: 'Descripción', prefixIcon: Icon(Icons.notes_outlined)),
+                decoration: const InputDecoration(
+                  labelText: 'Descripción',
+                  prefixIcon: Icon(Icons.notes_outlined),
+                ),
               ),
               const SizedBox(height: 14),
               OutlinedButton.icon(
                 onPressed: _locating ? null : _useCurrentLocation,
                 icon: _locating
-                    ? const SizedBox(height: 16, width: 16, child: CircularProgressIndicator(strokeWidth: 2))
+                    ? const SizedBox(
+                        height: 16,
+                        width: 16,
+                        child: CircularProgressIndicator(strokeWidth: 2),
+                      )
                     : Icon(
-                        _position == null ? Icons.my_location_outlined : Icons.check_circle,
+                        _position == null
+                            ? Icons.my_location_outlined
+                            : Icons.check_circle,
                         color: _position == null ? null : AppColors.success,
                       ),
-                label: Text(_position == null ? 'Usar mi ubicación actual' : 'Ubicación guardada ✓'),
+                label: Text(
+                  _position == null
+                      ? 'Usar mi ubicación actual'
+                      : 'Ubicación guardada ✓',
+                ),
               ),
               const SizedBox(height: 24),
               FilledButton(
@@ -252,7 +308,10 @@ class _AddBarbershopViewState extends State<AddBarbershopView> {
                     ? const SizedBox(
                         height: 18,
                         width: 18,
-                        child: CircularProgressIndicator(strokeWidth: 2, color: Colors.white),
+                        child: CircularProgressIndicator(
+                          strokeWidth: 2,
+                          color: Colors.white,
+                        ),
                       )
                     : const Text('Guardar barbería'),
               ),

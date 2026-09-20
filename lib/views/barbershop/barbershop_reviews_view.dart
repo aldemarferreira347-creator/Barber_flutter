@@ -35,12 +35,15 @@ class BarbershopReviewsView extends StatelessWidget {
         stream: barbershopRepo.watchOne(barbershopId),
         builder: (context, shopSnapshot) {
           final shop = shopSnapshot.data;
-          if (shop == null) return const Center(child: CircularProgressIndicator());
+          if (shop == null)
+            return const Center(child: CircularProgressIndicator());
 
           final isStaff = profile != null && _isStaffOfShop(profile, shop);
 
           return StreamBuilder<List<Comment>>(
-            stream: context.read<CommentRepository>().watchPublishedByBarbershop(barbershopId),
+            stream: context
+                .read<CommentRepository>()
+                .watchPublishedByBarbershop(barbershopId),
             builder: (context, commentsSnapshot) {
               final comments = commentsSnapshot.data ?? const <Comment>[];
 
@@ -53,12 +56,18 @@ class BarbershopReviewsView extends StatelessWidget {
                     Padding(
                       padding: const EdgeInsets.symmetric(vertical: 24),
                       child: Center(
-                        child: Text('Todavía no hay comentarios.', style: TextStyle(color: AppColors.textSecondary)),
+                        child: Text(
+                          'Todavía no hay comentarios.',
+                          style: TextStyle(color: AppColors.textSecondary),
+                        ),
                       ),
                     )
                   else
                     for (final comment in comments) ...[
-                      _CommentCard(comment: comment, canReply: isStaff && !comment.hasReply),
+                      _CommentCard(
+                        comment: comment,
+                        canReply: isStaff && !comment.hasReply,
+                      ),
                       const SizedBox(height: 10),
                     ],
                 ],
@@ -93,13 +102,21 @@ class _AverageRatingHeader extends StatelessWidget {
             crossAxisAlignment: CrossAxisAlignment.start,
             children: [
               Text(
-                shop.ratingCount == 0 ? 'Sin calificaciones aún' : shop.averageRating.toStringAsFixed(1),
-                style: const TextStyle(fontSize: 20, fontWeight: FontWeight.w800),
+                shop.ratingCount == 0
+                    ? 'Sin calificaciones aún'
+                    : shop.averageRating.toStringAsFixed(1),
+                style: const TextStyle(
+                  fontSize: 20,
+                  fontWeight: FontWeight.w800,
+                ),
               ),
               if (shop.ratingCount > 0)
                 Text(
                   '${shop.ratingCount} calificación(es)',
-                  style: TextStyle(color: AppColors.textSecondary, fontSize: 12),
+                  style: TextStyle(
+                    color: AppColors.textSecondary,
+                    fontSize: 12,
+                  ),
                 ),
             ],
           ),
@@ -135,11 +152,16 @@ class _CommentCardState extends State<_CommentCard> {
     if (text.isEmpty) return;
     setState(() => _sending = true);
     try {
-      await context.read<CommentRepository>().replyToComment(commentId: widget.comment.appointmentId, replyText: text);
+      await context.read<CommentRepository>().replyToComment(
+        commentId: widget.comment.appointmentId,
+        replyText: text,
+      );
       if (mounted) setState(() => _replying = false);
     } catch (e) {
       if (mounted) {
-        ScaffoldMessenger.of(context).showSnackBar(SnackBar(content: Text('No se pudo enviar la respuesta: $e')));
+        ScaffoldMessenger.of(context).showSnackBar(
+          SnackBar(content: Text('No se pudo enviar la respuesta: $e')),
+        );
       }
     } finally {
       if (mounted) setState(() => _sending = false);
@@ -159,25 +181,39 @@ class _CommentCardState extends State<_CommentCard> {
       child: Column(
         crossAxisAlignment: CrossAxisAlignment.start,
         children: [
-          Text(comment.clientName, style: const TextStyle(fontWeight: FontWeight.w700)),
+          Text(
+            comment.clientName,
+            style: const TextStyle(fontWeight: FontWeight.w700),
+          ),
           const SizedBox(height: 6),
           Text(comment.text),
           if (comment.photoUrl != null) ...[
             const SizedBox(height: 10),
             ClipRRect(
               borderRadius: BorderRadius.circular(10),
-              child: Image.network(comment.photoUrl!, height: 140, width: double.infinity, fit: BoxFit.cover),
+              child: Image.network(
+                comment.photoUrl!,
+                height: 140,
+                width: double.infinity,
+                fit: BoxFit.cover,
+              ),
             ),
           ],
           if (comment.hasReply) ...[
             const SizedBox(height: 10),
             Container(
               padding: const EdgeInsets.all(10),
-              decoration: BoxDecoration(color: AppColors.background, borderRadius: BorderRadius.circular(10)),
+              decoration: BoxDecoration(
+                color: AppColors.background,
+                borderRadius: BorderRadius.circular(10),
+              ),
               child: Column(
                 crossAxisAlignment: CrossAxisAlignment.start,
                 children: [
-                  const Text('Respuesta de la barbería', style: TextStyle(fontWeight: FontWeight.w700, fontSize: 12)),
+                  const Text(
+                    'Respuesta de la barbería',
+                    style: TextStyle(fontWeight: FontWeight.w700, fontSize: 12),
+                  ),
                   const SizedBox(height: 4),
                   Text(comment.replyText!),
                 ],
@@ -192,7 +228,9 @@ class _CommentCardState extends State<_CommentCard> {
                   TextField(
                     controller: _replyController,
                     maxLines: 2,
-                    decoration: const InputDecoration(hintText: 'Responder a este comentario...'),
+                    decoration: const InputDecoration(
+                      hintText: 'Responder a este comentario...',
+                    ),
                   ),
                   const SizedBox(height: 8),
                   Align(
@@ -203,7 +241,10 @@ class _CommentCardState extends State<_CommentCard> {
                           ? const SizedBox(
                               height: 16,
                               width: 16,
-                              child: CircularProgressIndicator(strokeWidth: 2, color: Colors.white),
+                              child: CircularProgressIndicator(
+                                strokeWidth: 2,
+                                color: Colors.white,
+                              ),
                             )
                           : const Text('Enviar'),
                     ),
@@ -213,7 +254,10 @@ class _CommentCardState extends State<_CommentCard> {
             else
               Align(
                 alignment: Alignment.centerRight,
-                child: TextButton(onPressed: () => setState(() => _replying = true), child: const Text('Responder')),
+                child: TextButton(
+                  onPressed: () => setState(() => _replying = true),
+                  child: const Text('Responder'),
+                ),
               ),
           ],
         ],

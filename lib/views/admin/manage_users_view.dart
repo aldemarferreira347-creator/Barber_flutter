@@ -58,8 +58,14 @@ class _ManageUsersViewState extends State<ManageUsersView> {
           ],
         ),
         actions: [
-          TextButton(onPressed: () => Navigator.of(context).pop(false), child: const Text('Cancelar')),
-          FilledButton(onPressed: () => Navigator.of(context).pop(true), child: const Text('Enviar')),
+          TextButton(
+            onPressed: () => Navigator.of(context).pop(false),
+            child: const Text('Cancelar'),
+          ),
+          FilledButton(
+            onPressed: () => Navigator.of(context).pop(true),
+            child: const Text('Enviar'),
+          ),
         ],
       ),
     );
@@ -72,11 +78,14 @@ class _ManageUsersViewState extends State<ManageUsersView> {
         body: bodyController.text.trim(),
       );
       if (context.mounted) {
-        ScaffoldMessenger.of(context).showSnackBar(SnackBar(content: Text('Notificación enviada a ${user.name}')));
+        ScaffoldMessenger.of(context).showSnackBar(
+          SnackBar(content: Text('Notificación enviada a ${user.name}')),
+        );
       }
     } catch (e) {
       if (context.mounted) {
-        ScaffoldMessenger.of(context).showSnackBar(SnackBar(content: Text('No se pudo enviar: $e')));
+        ScaffoldMessenger.of(context)
+            .showSnackBar(SnackBar(content: Text('No se pudo enviar: $e')));
       }
     }
   }
@@ -95,8 +104,12 @@ class _ManageUsersViewState extends State<ManageUsersView> {
           crossAxisAlignment: CrossAxisAlignment.stretch,
           children: [
             TextField(
-              decoration: const InputDecoration(hintText: 'Buscar usuarios...', prefixIcon: Icon(Icons.search)),
-              onChanged: (value) => setState(() => _query = value.trim().toLowerCase()),
+              decoration: const InputDecoration(
+                hintText: 'Buscar usuarios...',
+                prefixIcon: Icon(Icons.search),
+              ),
+              onChanged: (value) =>
+                  setState(() => _query = value.trim().toLowerCase()),
             ),
             const SizedBox(height: 12),
             SizedBox(
@@ -135,12 +148,19 @@ class _ManageUsersViewState extends State<ManageUsersView> {
                   }
                   if (_query.isNotEmpty) {
                     users = users
-                        .where((u) => u.name.toLowerCase().contains(_query) || u.email.toLowerCase().contains(_query))
+                        .where(
+                          (u) =>
+                              u.name.toLowerCase().contains(_query) ||
+                              u.email.toLowerCase().contains(_query),
+                        )
                         .toList();
                   }
                   if (users.isEmpty) {
                     return Center(
-                      child: Text('No se encontraron usuarios', style: TextStyle(color: AppColors.textSecondary)),
+                      child: Text(
+                        'No se encontraron usuarios',
+                        style: TextStyle(color: AppColors.textSecondary),
+                      ),
                     );
                   }
                   return ListView.separated(
@@ -150,7 +170,13 @@ class _ManageUsersViewState extends State<ManageUsersView> {
                     itemBuilder: (context, index) {
                       final user = users[index];
                       final initials = user.name.isNotEmpty
-                          ? user.name.trim().split(RegExp(r'\s+')).map((p) => p[0]).take(2).join().toUpperCase()
+                          ? user.name
+                                .trim()
+                                .split(RegExp(r'\s+'))
+                                .map((p) => p[0])
+                                .take(2)
+                                .join()
+                                .toUpperCase()
                           : '?';
                       return Container(
                         padding: const EdgeInsets.all(12),
@@ -165,7 +191,11 @@ class _ManageUsersViewState extends State<ManageUsersView> {
                               backgroundColor: AppColors.primary,
                               child: Text(
                                 initials,
-                                style: const TextStyle(color: Colors.white, fontSize: 12, fontWeight: FontWeight.w700),
+                                style: const TextStyle(
+                                  color: Colors.white,
+                                  fontSize: 12,
+                                  fontWeight: FontWeight.w700,
+                                ),
                               ),
                             ),
                             const SizedBox(width: 12),
@@ -173,8 +203,19 @@ class _ManageUsersViewState extends State<ManageUsersView> {
                               child: Column(
                                 crossAxisAlignment: CrossAxisAlignment.start,
                                 children: [
-                                  Text(user.name, style: const TextStyle(fontWeight: FontWeight.w700)),
-                                  Text(user.email, style: TextStyle(color: AppColors.textSecondary, fontSize: 12)),
+                                  Text(
+                                    user.name,
+                                    style: const TextStyle(
+                                      fontWeight: FontWeight.w700,
+                                    ),
+                                  ),
+                                  Text(
+                                    user.email,
+                                    style: TextStyle(
+                                      color: AppColors.textSecondary,
+                                      fontSize: 12,
+                                    ),
+                                  ),
                                   const SizedBox(height: 4),
                                   if (user.uid == currentUid)
                                     Text(
@@ -188,9 +229,15 @@ class _ManageUsersViewState extends State<ManageUsersView> {
                                   else
                                     PopupMenuButton<UserRole>(
                                       initialValue: user.role,
-                                      onSelected: (role) => userService.setRole(user.uid, role),
+                                      onSelected: (role) =>
+                                          userService.setRole(user.uid, role),
                                       itemBuilder: (context) => UserRole.values
-                                          .map((role) => PopupMenuItem(value: role, child: Text(_roleLabel(role))))
+                                          .map(
+                                            (role) => PopupMenuItem(
+                                              value: role,
+                                              child: Text(_roleLabel(role)),
+                                            ),
+                                          )
                                           .toList(),
                                       child: Row(
                                         mainAxisSize: MainAxisSize.min,
@@ -203,7 +250,11 @@ class _ManageUsersViewState extends State<ManageUsersView> {
                                               fontWeight: FontWeight.w600,
                                             ),
                                           ),
-                                          Icon(Icons.arrow_drop_down, size: 16, color: AppColors.accent),
+                                          Icon(
+                                            Icons.arrow_drop_down,
+                                            size: 16,
+                                            color: AppColors.accent,
+                                          ),
                                         ],
                                       ),
                                     ),
@@ -211,7 +262,10 @@ class _ManageUsersViewState extends State<ManageUsersView> {
                               ),
                             ),
                             IconButton(
-                              icon: Icon(Icons.notifications_outlined, color: AppColors.accent),
+                              icon: Icon(
+                                Icons.notifications_outlined,
+                                color: AppColors.accent,
+                              ),
                               tooltip: 'Enviar notificación',
                               onPressed: () => _notify(context, user),
                             ),
@@ -221,7 +275,8 @@ class _ManageUsersViewState extends State<ManageUsersView> {
                                 StatusBadge.active(user.active),
                                 Switch(
                                   value: user.active,
-                                  onChanged: (value) => userService.setActive(user.uid, value),
+                                  onChanged: (value) =>
+                                      userService.setActive(user.uid, value),
                                 ),
                               ],
                             ),
@@ -245,7 +300,11 @@ class _RoleChip extends StatelessWidget {
   final bool selected;
   final VoidCallback onTap;
 
-  const _RoleChip({required this.label, required this.selected, required this.onTap});
+  const _RoleChip({
+    required this.label,
+    required this.selected,
+    required this.onTap,
+  });
 
   @override
   Widget build(BuildContext context) {
@@ -254,7 +313,10 @@ class _RoleChip extends StatelessWidget {
       selected: selected,
       onSelected: (_) => onTap(),
       selectedColor: AppColors.primary,
-      labelStyle: TextStyle(color: selected ? Colors.white : AppColors.textPrimary, fontWeight: FontWeight.w600),
+      labelStyle: TextStyle(
+        color: selected ? Colors.white : AppColors.textPrimary,
+        fontWeight: FontWeight.w600,
+      ),
       backgroundColor: AppColors.surface,
       side: BorderSide(color: AppColors.border),
     );

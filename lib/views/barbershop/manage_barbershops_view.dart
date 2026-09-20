@@ -16,7 +16,12 @@ class ManageBarbershopsView extends StatefulWidget {
   final bool canAdd;
   final bool adminControls;
 
-  const ManageBarbershopsView({super.key, this.ownerId, this.canAdd = false, this.adminControls = false});
+  const ManageBarbershopsView({
+    super.key,
+    this.ownerId,
+    this.canAdd = false,
+    this.adminControls = false,
+  });
 
   @override
   State<ManageBarbershopsView> createState() => _ManageBarbershopsViewState();
@@ -41,7 +46,9 @@ class _ManageBarbershopsViewState extends State<ManageBarbershopsView> {
       appBar: AppBar(title: const Text('Barberías')),
       floatingActionButton: widget.canAdd
           ? FloatingActionButton(
-              onPressed: () => Navigator.of(context).push(MaterialPageRoute(builder: (_) => const AddBarbershopView())),
+              onPressed: () => Navigator.of(context).push(
+                MaterialPageRoute(builder: (_) => const AddBarbershopView()),
+              ),
               child: const Icon(Icons.add),
             )
           : null,
@@ -51,8 +58,12 @@ class _ManageBarbershopsViewState extends State<ManageBarbershopsView> {
           crossAxisAlignment: CrossAxisAlignment.stretch,
           children: [
             TextField(
-              decoration: const InputDecoration(hintText: 'Buscar barberías...', prefixIcon: Icon(Icons.search)),
-              onChanged: (value) => setState(() => _query = value.trim().toLowerCase()),
+              decoration: const InputDecoration(
+                hintText: 'Buscar barberías...',
+                prefixIcon: Icon(Icons.search),
+              ),
+              onChanged: (value) =>
+                  setState(() => _query = value.trim().toLowerCase()),
             ),
             const SizedBox(height: 12),
             Expanded(
@@ -64,13 +75,16 @@ class _ManageBarbershopsViewState extends State<ManageBarbershopsView> {
                   }
                   var shops = snapshot.data ?? [];
                   if (_query.isNotEmpty) {
-                    shops = shops.where((s) => s.name.toLowerCase().contains(_query)).toList();
+                    shops = shops
+                        .where((s) => s.name.toLowerCase().contains(_query))
+                        .toList();
                   }
                   if (shops.isEmpty) {
                     return const EmptyState(
                       icon: Icons.storefront_outlined,
                       title: 'Sin barberías todavía',
-                      subtitle: 'Cuando se registre una barbería aparecerá aquí.',
+                      subtitle:
+                          'Cuando se registre una barbería aparecerá aquí.',
                     );
                   }
                   return ListView.separated(
@@ -80,9 +94,12 @@ class _ManageBarbershopsViewState extends State<ManageBarbershopsView> {
                       final shop = shops[index];
                       return InkWell(
                         borderRadius: BorderRadius.circular(14),
-                        onTap: () =>
-                            Navigator.of(context)
-                                .push(MaterialPageRoute(builder: (_) => BarbershopDetailView(barbershopId: shop.id))),
+                        onTap: () => Navigator.of(context).push(
+                          MaterialPageRoute(
+                            builder: (_) =>
+                                BarbershopDetailView(barbershopId: shop.id),
+                          ),
+                        ),
                         child: Container(
                           padding: const EdgeInsets.all(12),
                           decoration: BoxDecoration(
@@ -99,11 +116,18 @@ class _ManageBarbershopsViewState extends State<ManageBarbershopsView> {
                                   color: AppColors.primary,
                                   borderRadius: BorderRadius.circular(10),
                                   image: shop.photoUrl != null
-                                      ? DecorationImage(image: NetworkImage(shop.photoUrl!), fit: BoxFit.cover)
+                                      ? DecorationImage(
+                                          image: NetworkImage(shop.photoUrl!),
+                                          fit: BoxFit.cover,
+                                        )
                                       : null,
                                 ),
                                 child: shop.photoUrl == null
-                                    ? const Icon(Icons.storefront, color: Colors.white, size: 22)
+                                    ? const Icon(
+                                        Icons.storefront,
+                                        color: Colors.white,
+                                        size: 22,
+                                      )
                                     : null,
                               ),
                               const SizedBox(width: 12),
@@ -111,10 +135,18 @@ class _ManageBarbershopsViewState extends State<ManageBarbershopsView> {
                                 child: Column(
                                   crossAxisAlignment: CrossAxisAlignment.start,
                                   children: [
-                                    Text(shop.name, style: const TextStyle(fontWeight: FontWeight.w700)),
+                                    Text(
+                                      shop.name,
+                                      style: const TextStyle(
+                                        fontWeight: FontWeight.w700,
+                                      ),
+                                    ),
                                     Text(
                                       shop.address ?? '',
-                                      style: TextStyle(color: AppColors.textSecondary, fontSize: 12),
+                                      style: TextStyle(
+                                        color: AppColors.textSecondary,
+                                        fontSize: 12,
+                                      ),
                                     ),
                                   ],
                                 ),
@@ -122,7 +154,9 @@ class _ManageBarbershopsViewState extends State<ManageBarbershopsView> {
                               if (widget.adminControls)
                                 _AdminShopControls(shop: shop, service: service)
                               else if (widget.ownerId != null)
-                                _ApprovalStatusBadge(status: shop.approvalStatus)
+                                _ApprovalStatusBadge(
+                                  status: shop.approvalStatus,
+                                )
                               else
                                 StatusBadge.active(shop.active),
                             ],
@@ -155,10 +189,17 @@ class _ApprovalStatusBadge extends StatelessWidget {
     };
     return Container(
       padding: const EdgeInsets.symmetric(horizontal: 10, vertical: 4),
-      decoration: BoxDecoration(color: color.withValues(alpha: 0.12), borderRadius: BorderRadius.circular(20)),
+      decoration: BoxDecoration(
+        color: color.withValues(alpha: 0.12),
+        borderRadius: BorderRadius.circular(20),
+      ),
       child: Text(
         label,
-        style: TextStyle(color: color, fontSize: 12, fontWeight: FontWeight.w600),
+        style: TextStyle(
+          color: color,
+          fontSize: 12,
+          fontWeight: FontWeight.w600,
+        ),
       ),
     );
   }
@@ -177,10 +218,18 @@ class _AdminShopControls extends StatelessWidget {
       context: context,
       builder: (context) => AlertDialog(
         title: const Text('Rechazar barbería'),
-        content: Text('"${shop.name}" no aparecerá en el catálogo. Esta acción se puede revertir después.'),
+        content: Text(
+          '"${shop.name}" no aparecerá en el catálogo. Esta acción se puede revertir después.',
+        ),
         actions: [
-          TextButton(onPressed: () => Navigator.of(context).pop(false), child: const Text('Volver')),
-          FilledButton(onPressed: () => Navigator.of(context).pop(true), child: const Text('Sí, rechazar')),
+          TextButton(
+            onPressed: () => Navigator.of(context).pop(false),
+            child: const Text('Volver'),
+          ),
+          FilledButton(
+            onPressed: () => Navigator.of(context).pop(true),
+            child: const Text('Sí, rechazar'),
+          ),
         ],
       ),
     );
@@ -200,7 +249,10 @@ class _AdminShopControls extends StatelessWidget {
           ),
           IconButton(
             tooltip: 'Aprobar',
-            icon: const Icon(Icons.check_circle_outline, color: AppColors.success),
+            icon: const Icon(
+              Icons.check_circle_outline,
+              color: AppColors.success,
+            ),
             onPressed: () => service.resolveApproval(shop.id, approve: true),
           ),
         ],
@@ -211,7 +263,10 @@ class _AdminShopControls extends StatelessWidget {
       children: [
         _ApprovalStatusBadge(status: shop.approvalStatus),
         if (shop.approvalStatus == BarbershopApprovalStatus.approved)
-          Switch(value: shop.active, onChanged: (value) => service.setActive(shop.id, value)),
+          Switch(
+            value: shop.active,
+            onChanged: (value) => service.setActive(shop.id, value),
+          ),
       ],
     );
   }

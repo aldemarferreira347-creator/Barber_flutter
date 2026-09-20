@@ -9,5 +9,9 @@ abstract class ProductRepository {
 
   Future<void> setActive(String barbershopId, String productId, bool active);
 
-  Future<String> uploadPhoto({required String barbershopId, required String fileName, required Uint8List bytes});
+  Future<String> uploadPhoto({
+    required String barbershopId,
+    required String fileName,
+    required Uint8List bytes,
+  });
 }

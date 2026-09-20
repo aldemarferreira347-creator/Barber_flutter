@@ -27,7 +27,10 @@ class GoogleSignInSuccess extends GoogleSignInOutcome {
 class GoogleSignInRequiresPasswordLink extends GoogleSignInOutcome {
   final String email;
   final AuthCredential pendingGoogleCredential;
-  const GoogleSignInRequiresPasswordLink({required this.email, required this.pendingGoogleCredential});
+  const GoogleSignInRequiresPasswordLink({
+    required this.email,
+    required this.pendingGoogleCredential,
+  });
 }
 
 /// El usuario cerró el selector de cuenta de Google sin elegir ninguna.
@@ -42,9 +45,15 @@ abstract class AuthRepository {
 
   User? get currentUser;
 
-  Future<UserCredential> signIn({required String email, required String password});
+  Future<UserCredential> signIn({
+    required String email,
+    required String password,
+  });
 
-  Future<UserCredential> register({required String email, required String password});
+  Future<UserCredential> register({
+    required String email,
+    required String password,
+  });
 
   Future<void> sendPasswordResetEmail(String email);
 

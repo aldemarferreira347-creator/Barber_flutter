@@ -105,6 +105,64 @@ https://github.com/aldemarferreira347-creator/Barber_flutter :
     `ConstrainedBox(maxWidth: 400)`), ícono de app/favicon generado a
     partir del `BrandMark` (la Fase 13 ya lista esto como intervención
     humana pendiente en la sección de abajo).
+- **Rediseño visual "premium" (segunda vuelta, motor de animación)** — el
+  usuario pidió una mejora visual drástica ("que se vea de nivel premium,
+  con animaciones en todo") pero conservando la paleta de `AppColors` tal
+  cual (confirmado explícitamente: no se tocó ningún valor de color).
+  - `lib/theme/app_motion.dart` — transición de página global (fade +
+    slide + scale) vía `PageTransitionsTheme`, porque casi todas las
+    pantallas navegan con `Navigator.push(MaterialPageRoute(...))` en vez
+    de rutas nombradas; este es el único punto que anima TODAS las
+    transiciones de la app a la vez.
+  - `BrandMark` (`lib/views/widgets/brand_mark.dart`) rediseñado por
+    completo: pasó de un poste de barbería a una silueta de caballero con
+    barba + tijeras (`_BarberFacePainter`, dibujado a mano con `Path`),
+    siguiendo el mockup de referencia que compartió el usuario. Las
+    tijeras tienen un loop sutil de "corte". Color parametrizable
+    (blanco sobre fondo oscuro, `AppColors.primary` sobre fondo claro).
+  - Login/Registro reestructurados para igualar el mockup: sin banda de
+    color en la parte superior (antes había un `Container` con gradiente),
+    logo + wordmark directamente sobre el fondo claro, franja decorativa
+    oscura al final del scroll (`_LoginFooterStrip`) simulando la foto de
+    herramientas del mockup sin depender de un asset externo.
+  - `GradientButton` (`lib/views/widgets/gradient_button.dart`) — CTA
+    primario con degradado `accent → primary` (mismos tokens, no colores
+    nuevos) + sombra + micro-animación de presión (`PressableScale`).
+    Reemplaza `FilledButton` en Login, Registro y "Pagar con Nequi".
+  - `StatCard`, `ActionListTile`, `AppointmentCard`, `EmptyState`
+    (widgets compartidos por ~30 pantallas) ganaron sombra con tinte de
+    color, ícono con degradado sutil y animación de entrada
+    (fade + slide, escalonada por índice) — efecto de cascada sin tocar
+    cada pantalla una por una.
+  - `RoleShell` (`lib/views/widgets/role_shell.dart`) — bottom nav
+    reemplazado por una versión animada (píldora deslizante + iconos que
+    laten al seleccionarse) + `AnimatedBackground` (dos manchas de color
+    flotando) detrás del `IndexedStack`; afecta a los 4 dashboards de rol
+    a la vez.
+  - `ShimmerBox`/`ShimmerList` (`lib/views/widgets/shimmer_box.dart`,
+    paquete `shimmer`) listos para reemplazar spinners de carga en
+    `StreamBuilder`s — creados pero aún no aplicados en todas las listas.
+  - Paquetes nuevos: `flutter_animate` (animaciones declarativas),
+    `shimmer` (esqueletos de carga).
+  - **Gotcha de testing**: `EmptyState` tenía una animación de "pulso"
+    infinita (`controller.repeat(reverse: true)`) que dejaba un `Timer`
+    vivo después de que el árbol de widgets se destruía en los tests que
+    solo hacían `tester.pump()` (sin `pumpAndSettle`) — rompía 2 tests en
+    `client_appointments_view_test.dart`. Se cambió a una animación de
+    entrada de una sola vez y esos 2 tests pasaron a usar
+    `pumpAndSettle()`. Cualquier animación infinita nueva debe evitarse en
+    widgets que puedan aparecer en un test que no haga `pumpAndSettle`.
+  - Verificado en vivo con `flutter run -d web-server`: Login y Registro
+    revisados pantalla por pantalla (logo, degradados, franja inferior).
+    Dashboards de rol (Admin/Dueño/Barbero/Cliente) NO se verificaron en
+    vivo porque requieren sesión real contra Firebase — se validaron por
+    `flutter analyze` (limpio) y `flutter test` (52/52 en verde).
+  - **Pendiente si se sigue esta línea**: aplicar el mismo nivel de
+    detalle (fotografía/ilustración de fondo, franjas decorativas) a las
+    pantallas internas (Home de cada rol, Perfil, Gestión) si el usuario
+    comparte mockups de esas pantallas también; por ahora solo tienen el
+    motor de animación compartido (tarjetas, botones, nav) pero no un
+    rediseño de layout dedicado como Login/Registro.
 
 ## Historial — cierre de Fase 11
 

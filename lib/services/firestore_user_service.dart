@@ -9,9 +9,11 @@ import '../repositories/user_repository.dart';
 class FirestoreUserService implements UserRepository {
   final FirebaseFirestore _firestore;
 
-  FirestoreUserService({FirebaseFirestore? firestore}) : _firestore = firestore ?? FirebaseFirestore.instance;
+  FirestoreUserService({FirebaseFirestore? firestore})
+    : _firestore = firestore ?? FirebaseFirestore.instance;
 
-  CollectionReference<Map<String, dynamic>> get _users => _firestore.collection('users');
+  CollectionReference<Map<String, dynamic>> get _users =>
+      _firestore.collection('users');
 
   @override
   Future<void> createUserProfile(AppUser user) {
@@ -40,7 +42,11 @@ class FirestoreUserService implements UserRepository {
     return _users
         .orderBy('name')
         .snapshots()
-        .map((snapshot) => snapshot.docs.map((doc) => AppUser.fromMap(doc.id, doc.data())).toList());
+        .map(
+          (snapshot) => snapshot.docs
+              .map((doc) => AppUser.fromMap(doc.id, doc.data()))
+              .toList(),
+        );
   }
 
   @override
@@ -59,7 +65,11 @@ class FirestoreUserService implements UserRepository {
         .where('barbershopId', isEqualTo: barbershopId)
         .where('role', isEqualTo: UserRole.barber.value)
         .snapshots()
-        .map((snapshot) => snapshot.docs.map((doc) => AppUser.fromMap(doc.id, doc.data())).toList());
+        .map(
+          (snapshot) => snapshot.docs
+              .map((doc) => AppUser.fromMap(doc.id, doc.data()))
+              .toList(),
+        );
   }
 
   @override
@@ -80,13 +90,22 @@ class FirestoreUserService implements UserRepository {
   }
 
   @override
-  Future<void> hireAsBarber({required String uid, required String barbershopId}) {
-    return _users.doc(uid).update({'role': UserRole.barber.value, 'barbershopId': barbershopId});
+  Future<void> hireAsBarber({
+    required String uid,
+    required String barbershopId,
+  }) {
+    return _users.doc(uid).update({
+      'role': UserRole.barber.value,
+      'barbershopId': barbershopId,
+    });
   }
 
   @override
   Future<void> releaseFromBarbershop(String uid) {
-    return _users.doc(uid).update({'role': UserRole.client.value, 'barbershopId': null});
+    return _users.doc(uid).update({
+      'role': UserRole.client.value,
+      'barbershopId': null,
+    });
   }
 
   @override

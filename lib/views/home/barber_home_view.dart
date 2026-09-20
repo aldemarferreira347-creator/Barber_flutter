@@ -16,16 +16,30 @@ class BarberHomeView extends StatelessWidget {
   Widget build(BuildContext context) {
     return RoleShell(
       tabs: [
-        const RoleTab(label: 'Inicio', icon: Icons.home_outlined, page: BarberDashboardTab()),
-        const RoleTab(label: 'Citas', icon: Icons.calendar_month_outlined, page: BarberAppointmentsView()),
-        const RoleTab(label: 'Disponibilidad', icon: Icons.access_time, page: BarberAvailabilityView()),
+        const RoleTab(
+          label: 'Inicio',
+          icon: Icons.home_outlined,
+          page: BarberDashboardTab(),
+        ),
+        const RoleTab(
+          label: 'Citas',
+          icon: Icons.calendar_month_outlined,
+          page: BarberAppointmentsView(),
+        ),
+        const RoleTab(
+          label: 'Disponibilidad',
+          icon: Icons.access_time,
+          page: BarberAvailabilityView(),
+        ),
         RoleTab(
           label: 'Perfil',
           icon: Icons.person_outline,
           page: Builder(
             builder: (context) {
               final profile = context.watch<AuthController>().profile;
-              return ProfileMenuView(items: buildBarberProfileItems(context, profile));
+              return ProfileMenuView(
+                items: buildBarberProfileItems(context, profile),
+              );
             },
           ),
         ),

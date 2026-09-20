@@ -22,13 +22,22 @@ class FirebaseAuthService implements AuthRepository {
   User? get currentUser => _auth.currentUser;
 
   @override
-  Future<UserCredential> signIn({required String email, required String password}) {
+  Future<UserCredential> signIn({
+    required String email,
+    required String password,
+  }) {
     return _auth.signInWithEmailAndPassword(email: email, password: password);
   }
 
   @override
-  Future<UserCredential> register({required String email, required String password}) {
-    return _auth.createUserWithEmailAndPassword(email: email, password: password);
+  Future<UserCredential> register({
+    required String email,
+    required String password,
+  }) {
+    return _auth.createUserWithEmailAndPassword(
+      email: email,
+      password: password,
+    );
   }
 
   @override
@@ -44,12 +53,15 @@ class FirebaseAuthService implements AuthRepository {
     try {
       account = await _googleSignIn.authenticate();
     } on GoogleSignInException catch (e) {
-      if (e.code == GoogleSignInExceptionCode.canceled) return const GoogleSignInCancelled();
+      if (e.code == GoogleSignInExceptionCode.canceled)
+        return const GoogleSignInCancelled();
       rethrow;
     }
 
     final googleAuth = account.authentication;
-    final credential = GoogleAuthProvider.credential(idToken: googleAuth.idToken);
+    final credential = GoogleAuthProvider.credential(
+      idToken: googleAuth.idToken,
+    );
 
     try {
       final userCredential = await _auth.signInWithCredential(credential);
@@ -63,7 +75,10 @@ class FirebaseAuthService implements AuthRepository {
       // contraseña (spec 5.1).
       if (e.code != 'account-exists-with-different-credential') rethrow;
       final email = e.email ?? account.email;
-      return GoogleSignInRequiresPasswordLink(email: email, pendingGoogleCredential: credential);
+      return GoogleSignInRequiresPasswordLink(
+        email: email,
+        pendingGoogleCredential: credential,
+      );
     }
   }
 
@@ -73,7 +88,10 @@ class FirebaseAuthService implements AuthRepository {
     required String password,
     required AuthCredential pendingGoogleCredential,
   }) async {
-    final passwordCredential = EmailAuthProvider.credential(email: email, password: password);
+    final passwordCredential = EmailAuthProvider.credential(
+      email: email,
+      password: password,
+    );
     final userCredential = await _auth.signInWithCredential(passwordCredential);
     await userCredential.user!.linkWithCredential(pendingGoogleCredential);
     return userCredential;
@@ -99,7 +117,10 @@ class FirebaseAuthService implements AuthRepository {
         if (completer.isCompleted) return;
         completer.complete(
           PhoneCodeHandle((smsCode) {
-            final credential = PhoneAuthProvider.credential(verificationId: verificationId, smsCode: smsCode);
+            final credential = PhoneAuthProvider.credential(
+              verificationId: verificationId,
+              smsCode: smsCode,
+            );
             return _auth.signInWithCredential(credential);
           }),
         );

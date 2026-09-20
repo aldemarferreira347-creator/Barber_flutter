@@ -28,7 +28,8 @@ class _ScrollToTopFabState extends State<ScrollToTopFab> {
   }
 
   void _onScroll() {
-    final shouldShow = widget.controller.hasClients && widget.controller.offset > 400;
+    final shouldShow =
+        widget.controller.hasClients && widget.controller.offset > 400;
     if (shouldShow != _visible) setState(() => _visible = shouldShow);
   }
 
@@ -42,8 +43,11 @@ class _ScrollToTopFabState extends State<ScrollToTopFab> {
         child: FloatingActionButton.small(
           heroTag: null,
           tooltip: 'Volver arriba',
-          onPressed: () =>
-              widget.controller.animateTo(0, duration: const Duration(milliseconds: 300), curve: Curves.easeOut),
+          onPressed: () => widget.controller.animateTo(
+            0,
+            duration: const Duration(milliseconds: 300),
+            curve: Curves.easeOut,
+          ),
           child: const Icon(Icons.arrow_upward),
         ),
       ),

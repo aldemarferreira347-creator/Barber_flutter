@@ -10,18 +10,27 @@ class FirestoreProductService implements ProductRepository {
   final FirebaseFirestore _firestore;
   final StorageRepository _storage;
 
-  FirestoreProductService({required this._storage, FirebaseFirestore? firestore})
-    : _firestore = firestore ?? FirebaseFirestore.instance;
+  FirestoreProductService({
+    required this._storage,
+    FirebaseFirestore? firestore,
+  }) : _firestore = firestore ?? FirebaseFirestore.instance;
 
   CollectionReference<Map<String, dynamic>> _products(String barbershopId) =>
-      _firestore.collection('barbershops').doc(barbershopId).collection('products');
+      _firestore
+          .collection('barbershops')
+          .doc(barbershopId)
+          .collection('products');
 
   @override
   Stream<List<Product>> watchByBarbershop(String barbershopId) {
     return _products(barbershopId)
         .orderBy('name')
         .snapshots()
-        .map((snapshot) => snapshot.docs.map((doc) => Product.fromMap(doc.id, barbershopId, doc.data())).toList());
+        .map(
+          (snapshot) => snapshot.docs
+              .map((doc) => Product.fromMap(doc.id, barbershopId, doc.data()))
+              .toList(),
+        );
   }
 
   @override
@@ -35,7 +44,14 @@ class FirestoreProductService implements ProductRepository {
   }
 
   @override
-  Future<String> uploadPhoto({required String barbershopId, required String fileName, required Uint8List bytes}) {
-    return _storage.uploadBytes(path: 'barbershops/$barbershopId/products/$fileName', bytes: bytes);
+  Future<String> uploadPhoto({
+    required String barbershopId,
+    required String fileName,
+    required Uint8List bytes,
+  }) {
+    return _storage.uploadBytes(
+      path: 'barbershops/$barbershopId/products/$fileName',
+      bytes: bytes,
+    );
   }
 }

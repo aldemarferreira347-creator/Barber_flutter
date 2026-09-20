@@ -7,17 +7,25 @@ class CloudRatingService implements RatingRepository {
   final FirebaseFunctions _functions;
   final FirebaseFirestore _firestore;
 
-  CloudRatingService({FirebaseFunctions? functions, FirebaseFirestore? firestore})
-    : _functions = functions ?? FirebaseFunctions.instance,
-      _firestore = firestore ?? FirebaseFirestore.instance;
+  CloudRatingService({
+    FirebaseFunctions? functions,
+    FirebaseFirestore? firestore,
+  }) : _functions = functions ?? FirebaseFunctions.instance,
+       _firestore = firestore ?? FirebaseFirestore.instance;
 
   @override
-  Future<void> submitRating({required String appointmentId, required int barberStars, required int shopStars}) {
-    return _functions.httpsCallable('submitAppointmentRating').call<Map<String, dynamic>>({
-      'appointmentId': appointmentId,
-      'barberStars': barberStars,
-      'shopStars': shopStars,
-    });
+  Future<void> submitRating({
+    required String appointmentId,
+    required int barberStars,
+    required int shopStars,
+  }) {
+    return _functions
+        .httpsCallable('submitAppointmentRating')
+        .call<Map<String, dynamic>>({
+          'appointmentId': appointmentId,
+          'barberStars': barberStars,
+          'shopStars': shopStars,
+        });
   }
 
   @override

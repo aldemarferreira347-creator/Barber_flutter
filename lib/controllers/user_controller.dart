@@ -12,7 +12,8 @@ import '../services/firestore_user_service.dart';
 class UserController extends ChangeNotifier {
   final UserRepository _userService;
 
-  UserController({UserRepository? userService}) : _userService = userService ?? FirestoreUserService();
+  UserController({UserRepository? userService})
+    : _userService = userService ?? FirestoreUserService();
 
   StreamSubscription<AppUser?>? _subscription;
   AppUser? profile;

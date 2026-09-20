@@ -9,7 +9,11 @@ class EditScheduleView extends StatefulWidget {
   final String barbershopId;
   final Map<String, DaySchedule> initialSchedule;
 
-  const EditScheduleView({super.key, required this.barbershopId, required this.initialSchedule});
+  const EditScheduleView({
+    super.key,
+    required this.barbershopId,
+    required this.initialSchedule,
+  });
 
   @override
   State<EditScheduleView> createState() => _EditScheduleViewState();
@@ -22,7 +26,11 @@ class _EditScheduleViewState extends State<EditScheduleView> {
   @override
   void initState() {
     super.initState();
-    _schedule = Map.of(widget.initialSchedule.isEmpty ? weekScheduleFromMap(null) : widget.initialSchedule);
+    _schedule = Map.of(
+      widget.initialSchedule.isEmpty
+          ? weekScheduleFromMap(null)
+          : widget.initialSchedule,
+    );
   }
 
   Future<void> _pickTime(String day, bool isOpenTime) async {
@@ -35,20 +43,27 @@ class _EditScheduleViewState extends State<EditScheduleView> {
     );
     final picked = await showTimePicker(context: context, initialTime: initial);
     if (picked == null) return;
-    final formatted = '${picked.hour.toString().padLeft(2, '0')}:${picked.minute.toString().padLeft(2, '0')}';
+    final formatted =
+        '${picked.hour.toString().padLeft(2, '0')}:${picked.minute.toString().padLeft(2, '0')}';
     setState(() {
-      _schedule[day] = isOpenTime ? current.copyWith(openTime: formatted) : current.copyWith(closeTime: formatted);
+      _schedule[day] = isOpenTime
+          ? current.copyWith(openTime: formatted)
+          : current.copyWith(closeTime: formatted);
     });
   }
 
   Future<void> _save() async {
     setState(() => _saving = true);
     try {
-      await context.read<BarbershopRepository>().updateSchedule(widget.barbershopId, _schedule);
+      await context.read<BarbershopRepository>().updateSchedule(
+        widget.barbershopId,
+        _schedule,
+      );
       if (mounted) Navigator.of(context).pop();
     } catch (e) {
       if (mounted) {
-        ScaffoldMessenger.of(context).showSnackBar(SnackBar(content: Text('No se pudo guardar: $e')));
+        ScaffoldMessenger.of(context)
+            .showSnackBar(SnackBar(content: Text('No se pudo guardar: $e')));
       }
     } finally {
       if (mounted) setState(() => _saving = false);
@@ -81,12 +96,22 @@ class _EditScheduleViewState extends State<EditScheduleView> {
                   ),
                   Switch(
                     value: _schedule[day]!.isOpen,
-                    onChanged: (value) => setState(() => _schedule[day] = _schedule[day]!.copyWith(isOpen: value)),
+                    onChanged: (value) => setState(
+                      () => _schedule[day] = _schedule[day]!.copyWith(
+                        isOpen: value,
+                      ),
+                    ),
                   ),
                   if (_schedule[day]!.isOpen) ...[
-                    TextButton(onPressed: () => _pickTime(day, true), child: Text(_schedule[day]!.openTime)),
+                    TextButton(
+                      onPressed: () => _pickTime(day, true),
+                      child: Text(_schedule[day]!.openTime),
+                    ),
                     Text('–', style: TextStyle(color: AppColors.textSecondary)),
-                    TextButton(onPressed: () => _pickTime(day, false), child: Text(_schedule[day]!.closeTime)),
+                    TextButton(
+                      onPressed: () => _pickTime(day, false),
+                      child: Text(_schedule[day]!.closeTime),
+                    ),
                   ] else
                     Expanded(
                       child: Text(
@@ -107,7 +132,10 @@ class _EditScheduleViewState extends State<EditScheduleView> {
                 ? const SizedBox(
                     height: 18,
                     width: 18,
-                    child: CircularProgressIndicator(strokeWidth: 2, color: Colors.white),
+                    child: CircularProgressIndicator(
+                      strokeWidth: 2,
+                      color: Colors.white,
+                    ),
                   )
                 : const Text('Guardar horarios'),
           ),

@@ -31,10 +31,13 @@ class AuthController extends ChangeNotifier {
   final UserRepository _userService;
   final PushNotificationService _pushService;
 
-  AuthController({AuthRepository? authService, UserRepository? userService, PushNotificationService? pushService})
-    : _authService = authService ?? FirebaseAuthService(),
-      _userService = userService ?? FirestoreUserService(),
-      _pushService = pushService ?? PushNotificationService() {
+  AuthController({
+    AuthRepository? authService,
+    UserRepository? userService,
+    PushNotificationService? pushService,
+  }) : _authService = authService ?? FirebaseAuthService(),
+       _userService = userService ?? FirestoreUserService(),
+       _pushService = pushService ?? PushNotificationService() {
     _authSubscription = _authService.authStateChanges.listen(_onAuthChanged);
   }
 
@@ -184,13 +187,25 @@ class AuthController extends ChangeNotifier {
   /// crea su Dueño; Admin no se autorregistra nunca. No hay parámetro de rol
   /// a propósito, para que no exista forma de pedir otro rol desde aquí
   /// (defensa en profundidad: lo mismo se exige en firestore.rules).
-  Future<bool> register({required String email, required String password, required String name}) {
+  Future<bool> register({
+    required String email,
+    required String password,
+    required String name,
+  }) {
     return _runGuarded(() async {
       final normalizedEmail = email.trim().toLowerCase();
-      final credential = await _authService.register(email: normalizedEmail, password: password);
+      final credential = await _authService.register(
+        email: normalizedEmail,
+        password: password,
+      );
       final user = credential.user!;
       try {
-        final newUser = AppUser(uid: user.uid, email: normalizedEmail, name: name, role: UserRole.client);
+        final newUser = AppUser(
+          uid: user.uid,
+          email: normalizedEmail,
+          name: name,
+          role: UserRole.client,
+        );
         await _userService.createUserProfile(newUser);
       } catch (_) {
         // Si falla la escritura en Firestore, no dejamos una cuenta de Auth

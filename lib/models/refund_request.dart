@@ -12,7 +12,10 @@ extension RefundRequestStatusX on RefundRequestStatus {
   };
 
   static RefundRequestStatus fromValue(String value) {
-    return RefundRequestStatus.values.firstWhere((s) => s.name == value, orElse: () => RefundRequestStatus.pending);
+    return RefundRequestStatus.values.firstWhere(
+      (s) => s.name == value,
+      orElse: () => RefundRequestStatus.pending,
+    );
   }
 }
 
@@ -54,10 +57,16 @@ class RefundRequest {
       clientId: map['clientId'] as String? ?? '',
       reason: map['reason'] as String? ?? '',
       purchaseId: map['purchaseId'] as String?,
-      purchaseItemIndexes: (map['purchaseItemIndexes'] as List?)?.map((e) => (e as num).toInt()).toList(),
-      status: RefundRequestStatusX.fromValue(map['status'] as String? ?? 'pending'),
+      purchaseItemIndexes: (map['purchaseItemIndexes'] as List?)
+          ?.map((e) => (e as num).toInt())
+          .toList(),
+      status: RefundRequestStatusX.fromValue(
+        map['status'] as String? ?? 'pending',
+      ),
       createdAt: createdAtValue is Timestamp ? createdAtValue.toDate() : null,
-      resolvedAt: resolvedAtValue is Timestamp ? resolvedAtValue.toDate() : null,
+      resolvedAt: resolvedAtValue is Timestamp
+          ? resolvedAtValue.toDate()
+          : null,
     );
   }
 }

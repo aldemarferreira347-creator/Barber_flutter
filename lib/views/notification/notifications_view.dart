@@ -75,9 +75,15 @@ class _NotificationsViewState extends State<NotificationsView> {
                 child: Container(
                   padding: const EdgeInsets.all(14),
                   decoration: BoxDecoration(
-                    color: n.read ? AppColors.surface : AppColors.accent.withValues(alpha: 0.06),
+                    color: n.read
+                        ? AppColors.surface
+                        : AppColors.accent.withValues(alpha: 0.06),
                     borderRadius: BorderRadius.circular(14),
-                    border: Border.all(color: n.read ? AppColors.border : AppColors.accent.withValues(alpha: 0.3)),
+                    border: Border.all(
+                      color: n.read
+                          ? AppColors.border
+                          : AppColors.accent.withValues(alpha: 0.3),
+                    ),
                   ),
                   child: Row(
                     crossAxisAlignment: CrossAxisAlignment.start,
@@ -88,9 +94,20 @@ class _NotificationsViewState extends State<NotificationsView> {
                         child: Column(
                           crossAxisAlignment: CrossAxisAlignment.start,
                           children: [
-                            Text(n.title, style: const TextStyle(fontWeight: FontWeight.w700)),
+                            Text(
+                              n.title,
+                              style: const TextStyle(
+                                fontWeight: FontWeight.w700,
+                              ),
+                            ),
                             const SizedBox(height: 2),
-                            Text(n.body, style: TextStyle(color: AppColors.textSecondary, fontSize: 13)),
+                            Text(
+                              n.body,
+                              style: TextStyle(
+                                color: AppColors.textSecondary,
+                                fontSize: 13,
+                              ),
+                            ),
                           ],
                         ),
                       ),
@@ -98,7 +115,10 @@ class _NotificationsViewState extends State<NotificationsView> {
                         Container(
                           width: 8,
                           height: 8,
-                          decoration: BoxDecoration(color: AppColors.accent, shape: BoxShape.circle),
+                          decoration: BoxDecoration(
+                            color: AppColors.accent,
+                            shape: BoxShape.circle,
+                          ),
                         ),
                     ],
                   ),

@@ -64,18 +64,29 @@ class BarberApp extends StatelessWidget {
         Provider<UserRepository>(create: (_) => FirestoreUserService()),
         Provider<StorageRepository>(create: (_) => FirebaseStorageService()),
         ProxyProvider<StorageRepository, BarbershopRepository>(
-          update: (_, storage, _) => FirestoreBarbershopService(storage: storage),
+          update: (_, storage, _) =>
+              FirestoreBarbershopService(storage: storage),
         ),
         ProxyProvider<StorageRepository, ServiceRepository>(
           update: (_, storage, _) => FirestoreServiceService(storage: storage),
         ),
-        Provider<AppointmentRepository>(create: (_) => FirestoreAppointmentService()),
-        Provider<NotificationRepository>(create: (_) => FirestoreNotificationService()),
+        Provider<AppointmentRepository>(
+          create: (_) => FirestoreAppointmentService(),
+        ),
+        Provider<NotificationRepository>(
+          create: (_) => FirestoreNotificationService(),
+        ),
         Provider<PaymentGateway>(create: (_) => NequiPaymentGateway()),
         Provider<PurchaseRepository>(create: (_) => CloudPurchaseService()),
-        Provider<RefundRequestRepository>(create: (_) => CloudRefundRequestService()),
-        Provider<BarberAvailabilityRepository>(create: (_) => CloudBarberAvailabilityService()),
-        Provider<ShopClosureRepository>(create: (_) => CloudShopClosureService()),
+        Provider<RefundRequestRepository>(
+          create: (_) => CloudRefundRequestService(),
+        ),
+        Provider<BarberAvailabilityRepository>(
+          create: (_) => CloudBarberAvailabilityService(),
+        ),
+        Provider<ShopClosureRepository>(
+          create: (_) => CloudShopClosureService(),
+        ),
         Provider<RatingRepository>(create: (_) => CloudRatingService()),
         ProxyProvider<StorageRepository, ProductRepository>(
           update: (_, storage, _) => FirestoreProductService(storage: storage),
@@ -84,10 +95,15 @@ class BarberApp extends StatelessWidget {
           update: (_, storage, _) => CloudCommentService(storage: storage),
         ),
         ChangeNotifierProvider(
-          create: (context) =>
-              AuthController(authService: context.read<AuthRepository>(), userService: context.read<UserRepository>()),
+          create: (context) => AuthController(
+            authService: context.read<AuthRepository>(),
+            userService: context.read<UserRepository>(),
+          ),
         ),
-        ChangeNotifierProvider(create: (context) => UserController(userService: context.read<UserRepository>())),
+        ChangeNotifierProvider(
+          create: (context) =>
+              UserController(userService: context.read<UserRepository>()),
+        ),
       ],
       // Consumer, no solo Provider: al cambiar el modo oscuro necesitamos
       // reconstruir todo el árbol de la app, porque la mayoría de las

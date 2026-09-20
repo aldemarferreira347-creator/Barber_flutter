@@ -35,11 +35,14 @@ class BarberAvailabilityView extends StatelessWidget {
                 Container(
                   padding: const EdgeInsets.all(10),
                   decoration: BoxDecoration(
-                    color: (available ? AppColors.success : AppColors.error).withValues(alpha: 0.12),
+                    color: (available ? AppColors.success : AppColors.error)
+                        .withValues(alpha: 0.12),
                     shape: BoxShape.circle,
                   ),
                   child: Icon(
-                    available ? Icons.check_circle_outline : Icons.pause_circle_outline,
+                    available
+                        ? Icons.check_circle_outline
+                        : Icons.pause_circle_outline,
                     color: available ? AppColors.success : AppColors.error,
                   ),
                 ),
@@ -49,14 +52,19 @@ class BarberAvailabilityView extends StatelessWidget {
                     crossAxisAlignment: CrossAxisAlignment.start,
                     children: [
                       Text(
-                        available ? 'Disponible para citas nuevas' : 'Dado de baja temporalmente',
+                        available
+                            ? 'Disponible para citas nuevas'
+                            : 'Dado de baja temporalmente',
                         style: const TextStyle(fontWeight: FontWeight.w700),
                       ),
                       Text(
                         available
                             ? 'Los clientes pueden agendar contigo.'
                             : 'No aparecerás para que te agenden citas nuevas.',
-                        style: TextStyle(color: AppColors.textSecondary, fontSize: 12),
+                        style: TextStyle(
+                          color: AppColors.textSecondary,
+                          fontSize: 12,
+                        ),
                       ),
                     ],
                   ),
@@ -65,13 +73,20 @@ class BarberAvailabilityView extends StatelessWidget {
                   value: available,
                   onChanged: profile == null
                       ? null
-                      : (value) => context.read<UserRepository>().setAvailable(profile.uid, value),
+                      : (value) => context.read<UserRepository>().setAvailable(
+                          profile.uid,
+                          value,
+                        ),
                 ),
               ],
             ),
           ),
           const SizedBox(height: 16),
-          if (profile != null) _AwayControl(isAway: profile.isAway, awayUntilEstimate: profile.awayUntilEstimate),
+          if (profile != null)
+            _AwayControl(
+              isAway: profile.isAway,
+              awayUntilEstimate: profile.awayUntilEstimate,
+            ),
         ],
       ),
     );
@@ -100,10 +115,14 @@ class _AwayControlState extends State<_AwayControl> {
   Future<void> _markAway() async {
     setState(() => _busy = true);
     try {
-      await context.read<BarberAvailabilityRepository>().markAway(_selectedMinutes);
+      await context.read<BarberAvailabilityRepository>().markAway(
+        _selectedMinutes,
+      );
     } catch (e) {
       if (mounted) {
-        ScaffoldMessenger.of(context).showSnackBar(SnackBar(content: Text('No se pudo marcar la salida: $e')));
+        ScaffoldMessenger.of(context).showSnackBar(
+          SnackBar(content: Text('No se pudo marcar la salida: $e')),
+        );
       }
     } finally {
       if (mounted) setState(() => _busy = false);
@@ -116,7 +135,9 @@ class _AwayControlState extends State<_AwayControl> {
       await context.read<BarberAvailabilityRepository>().markReturned();
     } catch (e) {
       if (mounted) {
-        ScaffoldMessenger.of(context).showSnackBar(SnackBar(content: Text('No se pudo marcar el regreso: $e')));
+        ScaffoldMessenger.of(context).showSnackBar(
+          SnackBar(content: Text('No se pudo marcar el regreso: $e')),
+        );
       }
     } finally {
       if (mounted) setState(() => _busy = false);
@@ -145,7 +166,10 @@ class _AwayControlState extends State<_AwayControl> {
           children: [
             Icon(Icons.directions_walk, color: AppColors.warning),
             SizedBox(width: 10),
-            Text('Estás fuera de la tienda', style: TextStyle(fontWeight: FontWeight.w700)),
+            Text(
+              'Estás fuera de la tienda',
+              style: TextStyle(fontWeight: FontWeight.w700),
+            ),
           ],
         ),
         const SizedBox(height: 6),
@@ -174,7 +198,10 @@ class _AwayControlState extends State<_AwayControl> {
     return Column(
       crossAxisAlignment: CrossAxisAlignment.start,
       children: [
-        const Text('¿Vas a salir de la tienda?', style: TextStyle(fontWeight: FontWeight.w700)),
+        const Text(
+          '¿Vas a salir de la tienda?',
+          style: TextStyle(fontWeight: FontWeight.w700),
+        ),
         const SizedBox(height: 4),
         Text(
           'Indica cuánto tiempo estimas que tardarás — de eso depende hasta cuándo tus clientes siguen esperándote con normalidad.',

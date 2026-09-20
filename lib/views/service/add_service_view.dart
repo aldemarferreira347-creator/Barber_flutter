@@ -39,7 +39,11 @@ class _AddServiceViewState extends State<AddServiceView> {
   }
 
   Future<void> _pickPhoto(ImageSource source) async {
-    final file = await _picker.pickImage(source: source, maxWidth: 1280, imageQuality: 85);
+    final file = await _picker.pickImage(
+      source: source,
+      maxWidth: 1280,
+      imageQuality: 85,
+    );
     if (file == null) return;
     final bytes = await file.readAsBytes();
     setState(() {
@@ -55,8 +59,13 @@ class _AddServiceViewState extends State<AddServiceView> {
       final repo = context.read<ServiceRepository>();
       String? photoUrl;
       if (_photoBytes != null) {
-        final fileName = '${DateTime.now().millisecondsSinceEpoch}_${_photoName ?? 'foto.jpg'}';
-        photoUrl = await repo.uploadPhoto(barbershopId: widget.barbershopId, fileName: fileName, bytes: _photoBytes!);
+        final fileName =
+            '${DateTime.now().millisecondsSinceEpoch}_${_photoName ?? 'foto.jpg'}';
+        photoUrl = await repo.uploadPhoto(
+          barbershopId: widget.barbershopId,
+          fileName: fileName,
+          bytes: _photoBytes!,
+        );
       }
       await repo.create(
         Service(
@@ -72,7 +81,8 @@ class _AddServiceViewState extends State<AddServiceView> {
       if (mounted) Navigator.of(context).pop();
     } catch (e) {
       if (mounted) {
-        ScaffoldMessenger.of(context).showSnackBar(SnackBar(content: Text('No se pudo guardar: $e')));
+        ScaffoldMessenger.of(context)
+            .showSnackBar(SnackBar(content: Text('No se pudo guardar: $e')));
       }
     } finally {
       if (mounted) setState(() => _saving = false);
@@ -100,16 +110,28 @@ class _AddServiceViewState extends State<AddServiceView> {
                       borderRadius: BorderRadius.circular(16),
                       border: Border.all(color: AppColors.border),
                       image: _photoBytes != null
-                          ? DecorationImage(image: MemoryImage(_photoBytes!), fit: BoxFit.cover)
+                          ? DecorationImage(
+                              image: MemoryImage(_photoBytes!),
+                              fit: BoxFit.cover,
+                            )
                           : null,
                     ),
                     child: _photoBytes == null
                         ? Column(
                             mainAxisAlignment: MainAxisAlignment.center,
                             children: [
-                              Icon(Icons.add_a_photo_outlined, color: AppColors.textSecondary),
+                              Icon(
+                                Icons.add_a_photo_outlined,
+                                color: AppColors.textSecondary,
+                              ),
                               const SizedBox(height: 6),
-                              Text('Añadir foto', style: TextStyle(color: AppColors.textSecondary, fontSize: 12)),
+                              Text(
+                                'Añadir foto',
+                                style: TextStyle(
+                                  color: AppColors.textSecondary,
+                                  fontSize: 12,
+                                ),
+                              ),
                             ],
                           )
                         : null,
@@ -123,13 +145,18 @@ class _AddServiceViewState extends State<AddServiceView> {
                   labelText: 'Nombre del servicio',
                   prefixIcon: Icon(Icons.content_cut),
                 ),
-                validator: (value) => (value == null || value.trim().isEmpty) ? 'Requerido' : null,
+                validator: (value) => (value == null || value.trim().isEmpty)
+                    ? 'Requerido'
+                    : null,
               ),
               const SizedBox(height: 14),
               TextFormField(
                 controller: _descriptionController,
                 maxLines: 2,
-                decoration: const InputDecoration(labelText: 'Descripción', prefixIcon: Icon(Icons.notes_outlined)),
+                decoration: const InputDecoration(
+                  labelText: 'Descripción',
+                  prefixIcon: Icon(Icons.notes_outlined),
+                ),
               ),
               const SizedBox(height: 14),
               Row(
@@ -137,9 +164,17 @@ class _AddServiceViewState extends State<AddServiceView> {
                   Expanded(
                     child: TextFormField(
                       controller: _priceController,
-                      keyboardType: const TextInputType.numberWithOptions(decimal: true),
-                      decoration: const InputDecoration(labelText: 'Precio', prefixIcon: Icon(Icons.attach_money)),
-                      validator: (value) => (double.tryParse(value ?? '') == null) ? 'Inválido' : null,
+                      keyboardType: const TextInputType.numberWithOptions(
+                        decimal: true,
+                      ),
+                      decoration: const InputDecoration(
+                        labelText: 'Precio',
+                        prefixIcon: Icon(Icons.attach_money),
+                      ),
+                      validator: (value) =>
+                          (double.tryParse(value ?? '') == null)
+                          ? 'Inválido'
+                          : null,
                     ),
                   ),
                   const SizedBox(width: 12),
@@ -147,8 +182,13 @@ class _AddServiceViewState extends State<AddServiceView> {
                     child: TextFormField(
                       controller: _durationController,
                       keyboardType: TextInputType.number,
-                      decoration: const InputDecoration(labelText: 'Minutos', prefixIcon: Icon(Icons.timer_outlined)),
-                      validator: (value) => (int.tryParse(value ?? '') == null) ? 'Inválido' : null,
+                      decoration: const InputDecoration(
+                        labelText: 'Minutos',
+                        prefixIcon: Icon(Icons.timer_outlined),
+                      ),
+                      validator: (value) => (int.tryParse(value ?? '') == null)
+                          ? 'Inválido'
+                          : null,
                     ),
                   ),
                 ],
@@ -160,7 +200,10 @@ class _AddServiceViewState extends State<AddServiceView> {
                     ? const SizedBox(
                         height: 18,
                         width: 18,
-                        child: CircularProgressIndicator(strokeWidth: 2, color: Colors.white),
+                        child: CircularProgressIndicator(
+                          strokeWidth: 2,
+                          color: Colors.white,
+                        ),
                       )
                     : const Text('Guardar servicio'),
               ),

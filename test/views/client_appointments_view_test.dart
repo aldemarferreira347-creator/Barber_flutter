@@ -80,7 +80,7 @@ void main() {
     when(() => appointmentRepository.watchByClient(_kUid)).thenAnswer((_) => Stream.value(const []));
 
     await tester.pumpWidget(wrap());
-    await tester.pump();
+    await tester.pumpAndSettle();
 
     expect(find.text('No tienes citas programadas'), findsOneWidget);
   });
@@ -96,7 +96,7 @@ void main() {
     );
 
     await tester.pumpWidget(wrap());
-    await tester.pump();
+    await tester.pumpAndSettle();
 
     expect(find.text('Próximas'), findsOneWidget);
     expect(find.text('Historial'), findsOneWidget);
