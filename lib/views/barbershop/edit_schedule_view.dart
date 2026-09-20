@@ -1,9 +1,11 @@
 import 'package:flutter/material.dart';
+import 'package:flutter_animate/flutter_animate.dart';
 import 'package:provider/provider.dart';
 
 import '../../models/day_schedule.dart';
 import '../../repositories/barbershop_repository.dart';
 import '../../theme/app_colors.dart';
+import '../widgets/gradient_button.dart';
 
 class EditScheduleView extends StatefulWidget {
   final String barbershopId;
@@ -77,57 +79,66 @@ class _EditScheduleViewState extends State<EditScheduleView> {
       body: ListView(
         padding: const EdgeInsets.all(16),
         children: [
-          for (final day in kWeekdays) ...[
+          for (final entry in kWeekdays.indexed) ...[
             Container(
-              padding: const EdgeInsets.symmetric(horizontal: 14, vertical: 8),
-              decoration: BoxDecoration(
-                color: AppColors.surface,
-                borderRadius: BorderRadius.circular(14),
-                border: Border.all(color: AppColors.border),
-              ),
-              child: Row(
-                children: [
-                  Expanded(
-                    flex: 2,
-                    child: Text(
-                      day[0].toUpperCase() + day.substring(1),
-                      style: const TextStyle(fontWeight: FontWeight.w600),
-                    ),
+                  padding: const EdgeInsets.symmetric(
+                    horizontal: 14,
+                    vertical: 8,
                   ),
-                  Switch(
-                    value: _schedule[day]!.isOpen,
-                    onChanged: (value) => setState(
-                      () => _schedule[day] = _schedule[day]!.copyWith(
-                        isOpen: value,
-                      ),
-                    ),
+                  decoration: BoxDecoration(
+                    color: AppColors.surface,
+                    borderRadius: BorderRadius.circular(14),
+                    border: Border.all(color: AppColors.border),
                   ),
-                  if (_schedule[day]!.isOpen) ...[
-                    TextButton(
-                      onPressed: () => _pickTime(day, true),
-                      child: Text(_schedule[day]!.openTime),
-                    ),
-                    Text('–', style: TextStyle(color: AppColors.textSecondary)),
-                    TextButton(
-                      onPressed: () => _pickTime(day, false),
-                      child: Text(_schedule[day]!.closeTime),
-                    ),
-                  ] else
-                    Expanded(
-                      child: Text(
-                        'Cerrado',
-                        textAlign: TextAlign.end,
-                        style: TextStyle(color: AppColors.textSecondary),
+                  child: Row(
+                    children: [
+                      Expanded(
+                        flex: 2,
+                        child: Text(
+                          entry.$2[0].toUpperCase() + entry.$2.substring(1),
+                          style: const TextStyle(fontWeight: FontWeight.w600),
+                        ),
                       ),
-                    ),
-                ],
-              ),
-            ),
+                      Switch(
+                        value: _schedule[entry.$2]!.isOpen,
+                        onChanged: (value) => setState(
+                          () => _schedule[entry.$2] = _schedule[entry.$2]!
+                              .copyWith(isOpen: value),
+                        ),
+                      ),
+                      if (_schedule[entry.$2]!.isOpen) ...[
+                        TextButton(
+                          onPressed: () => _pickTime(entry.$2, true),
+                          child: Text(_schedule[entry.$2]!.openTime),
+                        ),
+                        Text(
+                          '–',
+                          style: TextStyle(color: AppColors.textSecondary),
+                        ),
+                        TextButton(
+                          onPressed: () => _pickTime(entry.$2, false),
+                          child: Text(_schedule[entry.$2]!.closeTime),
+                        ),
+                      ] else
+                        Expanded(
+                          child: Text(
+                            'Cerrado',
+                            textAlign: TextAlign.end,
+                            style: TextStyle(color: AppColors.textSecondary),
+                          ),
+                        ),
+                    ],
+                  ),
+                )
+                .animate(delay: (entry.$1 * 40).ms)
+                .fadeIn(duration: 260.ms)
+                .slideX(begin: 0.05, end: 0, curve: Curves.easeOutCubic),
             const SizedBox(height: 10),
           ],
           const SizedBox(height: 14),
-          FilledButton(
+          GradientButton(
             onPressed: _saving ? null : _save,
+            icon: _saving ? null : Icons.check_circle_outline,
             child: _saving
                 ? const SizedBox(
                     height: 18,

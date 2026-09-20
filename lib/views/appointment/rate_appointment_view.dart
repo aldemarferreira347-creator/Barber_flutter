@@ -1,6 +1,7 @@
 import 'dart:typed_data';
 
 import 'package:flutter/material.dart';
+import 'package:flutter_animate/flutter_animate.dart';
 import 'package:image_picker/image_picker.dart';
 import 'package:provider/provider.dart';
 
@@ -9,6 +10,8 @@ import '../../models/comment.dart';
 import '../../repositories/comment_repository.dart';
 import '../../repositories/rating_repository.dart';
 import '../../theme/app_colors.dart';
+import '../widgets/gradient_button.dart';
+import '../widgets/pressable_scale.dart';
 
 /// Calificación y comentario opcional de una cita pagada y completada
 /// (spec 7.1/7.2), con los lineamientos de conducta (spec 7.4) mostrados
@@ -141,12 +144,15 @@ class _RateAppointmentViewState extends State<RateAppointmentView> {
       body: ListView(
         padding: const EdgeInsets.all(16),
         children: [
-          _ConductGuidelines(),
+          const _ConductGuidelines(),
           const SizedBox(height: 20),
           Text(
-            '¿Cómo estuvo ${appointment.barberName}?',
-            style: const TextStyle(fontWeight: FontWeight.w700),
-          ),
+                '¿Cómo estuvo ${appointment.barberName}?',
+                style: const TextStyle(fontWeight: FontWeight.w700),
+              )
+              .animate()
+              .fadeIn(duration: 300.ms)
+              .slideX(begin: -0.05, end: 0, curve: Curves.easeOutCubic),
           const SizedBox(height: 8),
           _StarPicker(
             value: _barberStars,
@@ -154,9 +160,12 @@ class _RateAppointmentViewState extends State<RateAppointmentView> {
           ),
           const SizedBox(height: 20),
           const Text(
-            '¿Cómo estuvo la barbería en general?',
-            style: TextStyle(fontWeight: FontWeight.w700),
-          ),
+                '¿Cómo estuvo la barbería en general?',
+                style: TextStyle(fontWeight: FontWeight.w700),
+              )
+              .animate()
+              .fadeIn(duration: 300.ms)
+              .slideX(begin: -0.05, end: 0, curve: Curves.easeOutCubic),
           const SizedBox(height: 8),
           _StarPicker(
             value: _shopStars,
@@ -185,7 +194,7 @@ class _RateAppointmentViewState extends State<RateAppointmentView> {
                 width: double.infinity,
                 fit: BoxFit.cover,
               ),
-            ),
+            ).animate().fadeIn(duration: 280.ms).scaleXY(begin: 0.96, end: 1),
           const SizedBox(height: 8),
           OutlinedButton.icon(
             onPressed: _showPhotoOptions,
@@ -197,10 +206,11 @@ class _RateAppointmentViewState extends State<RateAppointmentView> {
             ),
           ),
           const SizedBox(height: 24),
-          FilledButton(
+          GradientButton(
             onPressed: (_barberStars > 0 && _shopStars > 0 && !_saving)
                 ? _submit
                 : null,
+            icon: _saving ? null : Icons.send_outlined,
             child: _saving
                 ? const SizedBox(
                     height: 18,
@@ -229,12 +239,24 @@ class _StarPicker extends StatelessWidget {
     return Row(
       children: [
         for (var i = 1; i <= 5; i++)
-          IconButton(
-            onPressed: () => onChanged(i),
-            icon: Icon(
-              i <= value ? Icons.star : Icons.star_border,
-              color: AppColors.primary,
-              size: 32,
+          PressableScale(
+            onTap: () => onChanged(i),
+            pressedScale: 0.8,
+            child: IconButton(
+              onPressed: () => onChanged(i),
+              icon:
+                  Icon(
+                        i <= value ? Icons.star : Icons.star_border,
+                        color: AppColors.primary,
+                        size: 32,
+                      )
+                      .animate(target: i <= value ? 1 : 0)
+                      .scaleXY(
+                        begin: 1,
+                        end: 1.15,
+                        curve: Curves.easeOutBack,
+                        duration: 200.ms,
+                      ),
             ),
           ),
       ],
@@ -243,31 +265,36 @@ class _StarPicker extends StatelessWidget {
 }
 
 class _ConductGuidelines extends StatelessWidget {
+  const _ConductGuidelines();
+
   @override
   Widget build(BuildContext context) {
     return Container(
-      padding: const EdgeInsets.all(14),
-      decoration: BoxDecoration(
-        color: AppColors.surface,
-        borderRadius: BorderRadius.circular(12),
-        border: Border.all(color: AppColors.border),
-      ),
-      child: Column(
-        crossAxisAlignment: CrossAxisAlignment.start,
-        children: [
-          const Text(
-            'Antes de calificar',
-            style: TextStyle(fontWeight: FontWeight.w700),
+          padding: const EdgeInsets.all(14),
+          decoration: BoxDecoration(
+            color: AppColors.surface,
+            borderRadius: BorderRadius.circular(12),
+            border: Border.all(color: AppColors.border),
           ),
-          const SizedBox(height: 8),
-          Text(
-            'La barbería debe garantizar puntualidad, higiene y buen trato. '
-            'Te pedimos que tu comentario sea constructivo: describe tu experiencia '
-            'con respeto, sin insultos ni lenguaje ofensivo.',
-            style: TextStyle(color: AppColors.textSecondary, fontSize: 13),
+          child: Column(
+            crossAxisAlignment: CrossAxisAlignment.start,
+            children: [
+              const Text(
+                'Antes de calificar',
+                style: TextStyle(fontWeight: FontWeight.w700),
+              ),
+              const SizedBox(height: 8),
+              Text(
+                'La barbería debe garantizar puntualidad, higiene y buen trato. '
+                'Te pedimos que tu comentario sea constructivo: describe tu experiencia '
+                'con respeto, sin insultos ni lenguaje ofensivo.',
+                style: TextStyle(color: AppColors.textSecondary, fontSize: 13),
+              ),
+            ],
           ),
-        ],
-      ),
-    );
+        )
+        .animate()
+        .fadeIn(duration: 320.ms)
+        .slideY(begin: -0.06, end: 0, curve: Curves.easeOutCubic);
   }
 }

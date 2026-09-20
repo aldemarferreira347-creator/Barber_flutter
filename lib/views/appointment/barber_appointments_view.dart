@@ -7,6 +7,7 @@ import '../../repositories/appointment_repository.dart';
 import '../../theme/app_colors.dart';
 import '../widgets/appointment_card.dart';
 import '../widgets/empty_state.dart';
+import '../widgets/shimmer_box.dart';
 
 class BarberAppointmentsView extends StatelessWidget {
   const BarberAppointmentsView({super.key});
@@ -62,7 +63,10 @@ class BarberAppointmentsView extends StatelessWidget {
               stream: repo.watchByBarber(profile.uid),
               builder: (context, snapshot) {
                 if (snapshot.connectionState == ConnectionState.waiting) {
-                  return const Center(child: CircularProgressIndicator());
+                  return const Padding(
+                    padding: EdgeInsets.all(16),
+                    child: ShimmerList(),
+                  );
                 }
                 final appointments = snapshot.data ?? [];
                 if (appointments.isEmpty) {
@@ -88,6 +92,7 @@ class BarberAppointmentsView extends StatelessWidget {
                     return AppointmentCard(
                       appointment: appointment,
                       subtitle: 'Cliente: ${appointment.clientName}',
+                      animationIndex: index,
                       actions: [
                         if (isPending) ...[
                           TextButton(

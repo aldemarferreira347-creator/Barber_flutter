@@ -1,8 +1,10 @@
 import 'package:flutter/material.dart';
+import 'package:flutter_animate/flutter_animate.dart';
 import 'package:provider/provider.dart';
 
 import '../../repositories/shop_closure_repository.dart';
 import '../../theme/app_colors.dart';
+import '../widgets/gradient_button.dart';
 
 /// Cierre de tienda por evento externo (spec 3.4): el dueño elige el rango
 /// de fechas/horas afectado y el motivo. Cada reserva pagada dentro de ese
@@ -107,21 +109,27 @@ class _CloseShopViewState extends State<CloseShopView> {
         mainAxisAlignment: MainAxisAlignment.center,
         children: [
           const Icon(
-            Icons.check_circle_outline,
-            color: AppColors.success,
-            size: 56,
-          ),
+                Icons.check_circle_outline,
+                color: AppColors.success,
+                size: 56,
+              )
+              .animate()
+              .fadeIn(duration: 320.ms)
+              .scaleXY(begin: 0.6, end: 1, curve: Curves.easeOutBack),
           const SizedBox(height: 16),
           Text(
             affected == 0
                 ? 'No había reservas pagadas afectadas en ese rango.'
                 : 'Se aplazaron $affected reserva(s) pagada(s) y se notificó a cada cliente.',
             textAlign: TextAlign.center,
-          ),
+          ).animate(delay: 120.ms).fadeIn(duration: 300.ms),
           const SizedBox(height: 20),
-          FilledButton(
-            onPressed: () => Navigator.of(context).pop(),
-            child: const Text('Listo'),
+          SizedBox(
+            width: 200,
+            child: GradientButton(
+              onPressed: () => Navigator.of(context).pop(),
+              child: const Text('Listo'),
+            ),
           ),
         ],
       ),
@@ -136,7 +144,7 @@ class _CloseShopViewState extends State<CloseShopView> {
           'Su calificación final tendrá un descuento obligatorio de 1 estrella, ya que el cierre afecta su experiencia '
           'aunque no dependa de la barbería.',
           style: TextStyle(color: AppColors.textSecondary, fontSize: 13),
-        ),
+        ).animate().fadeIn(duration: 300.ms),
         const SizedBox(height: 20),
         OutlinedButton.icon(
           onPressed: _pickFrom,
@@ -158,10 +166,11 @@ class _CloseShopViewState extends State<CloseShopView> {
           ),
         ),
         const SizedBox(height: 24),
-        FilledButton(
+        GradientButton(
           onPressed: (_from != null && _until != null && !_saving)
               ? _confirm
               : null,
+          icon: _saving ? null : Icons.event_busy_outlined,
           child: _saving
               ? const SizedBox(
                   height: 18,

@@ -1,4 +1,5 @@
 import 'package:flutter/material.dart';
+import 'package:flutter_animate/flutter_animate.dart';
 import 'package:provider/provider.dart';
 
 import '../../controllers/auth_controller.dart';
@@ -10,6 +11,9 @@ import '../../repositories/service_repository.dart';
 import '../../repositories/user_repository.dart';
 import '../../theme/app_colors.dart';
 import '../widgets/empty_state.dart';
+import '../widgets/gradient_button.dart';
+import '../widgets/pressable_scale.dart';
+import '../widgets/shimmer_box.dart';
 
 class BookAppointmentView extends StatefulWidget {
   final String barbershopId;
@@ -129,14 +133,14 @@ class _BookAppointmentViewState extends State<BookAppointmentView> {
       body: ListView(
         padding: const EdgeInsets.all(16),
         children: [
-          const Text(
-            '1. Elige un servicio',
-            style: TextStyle(fontWeight: FontWeight.w700),
-          ),
+          const _StepHeader('1. Elige un servicio'),
           const SizedBox(height: 10),
           StreamBuilder<List<Service>>(
             stream: serviceRepo.watchByBarbershop(widget.barbershopId),
             builder: (context, snapshot) {
+              if (snapshot.connectionState == ConnectionState.waiting) {
+                return const ShimmerList(count: 2, itemHeight: 58);
+              }
               final services = (snapshot.data ?? [])
                   .where((s) => s.active)
                   .toList();
@@ -148,29 +152,29 @@ class _BookAppointmentViewState extends State<BookAppointmentView> {
                 );
               }
               return Column(
-                children: services
-                    .map(
-                      (service) => _SelectableTile(
-                        selected: _service?.id == service.id,
-                        title: service.name,
-                        subtitle:
-                            '${service.durationMinutes} min · \$${service.price.toStringAsFixed(0)}',
-                        onTap: () => setState(() => _service = service),
-                      ),
-                    )
-                    .toList(),
+                children: [
+                  for (final entry in services.indexed)
+                    _SelectableTile(
+                      selected: _service?.id == entry.$2.id,
+                      title: entry.$2.name,
+                      subtitle:
+                          '${entry.$2.durationMinutes} min · \$${entry.$2.price.toStringAsFixed(0)}',
+                      animationIndex: entry.$1,
+                      onTap: () => setState(() => _service = entry.$2),
+                    ),
+                ],
               );
             },
           ),
           const SizedBox(height: 20),
-          const Text(
-            '2. Elige un barbero',
-            style: TextStyle(fontWeight: FontWeight.w700),
-          ),
+          const _StepHeader('2. Elige un barbero'),
           const SizedBox(height: 10),
           StreamBuilder<List<AppUser>>(
             stream: userRepo.watchBarbersByBarbershop(widget.barbershopId),
             builder: (context, snapshot) {
+              if (snapshot.connectionState == ConnectionState.waiting) {
+                return const ShimmerList(count: 2, itemHeight: 58);
+              }
               final barbers = (snapshot.data ?? [])
                   .where((b) => b.available)
                   .toList();
@@ -182,23 +186,20 @@ class _BookAppointmentViewState extends State<BookAppointmentView> {
                 );
               }
               return Column(
-                children: barbers
-                    .map(
-                      (barber) => _SelectableTile(
-                        selected: _barber?.uid == barber.uid,
-                        title: barber.name,
-                        onTap: () => setState(() => _barber = barber),
-                      ),
-                    )
-                    .toList(),
+                children: [
+                  for (final entry in barbers.indexed)
+                    _SelectableTile(
+                      selected: _barber?.uid == entry.$2.uid,
+                      title: entry.$2.name,
+                      animationIndex: entry.$1,
+                      onTap: () => setState(() => _barber = entry.$2),
+                    ),
+                ],
               );
             },
           ),
           const SizedBox(height: 20),
-          const Text(
-            '3. Elige fecha y hora',
-            style: TextStyle(fontWeight: FontWeight.w700),
-          ),
+          const _StepHeader('3. Elige fecha y hora'),
           const SizedBox(height: 10),
           OutlinedButton.icon(
             onPressed: _pickDateTime,
@@ -210,10 +211,7 @@ class _BookAppointmentViewState extends State<BookAppointmentView> {
             ),
           ),
           const SizedBox(height: 20),
-          const Text(
-            '4. ¿Cómo quieres reservar?',
-            style: TextStyle(fontWeight: FontWeight.w700),
-          ),
+          const _StepHeader('4. ¿Cómo quieres reservar?'),
           const SizedBox(height: 10),
           _SelectableTile(
             selected: !_payNow,
@@ -229,7 +227,7 @@ class _BookAppointmentViewState extends State<BookAppointmentView> {
             onTap: () => setState(() => _payNow = true),
           ),
           const SizedBox(height: 24),
-          FilledButton(
+          GradientButton(
             onPressed:
                 (_service != null &&
                     _barber != null &&
@@ -237,6 +235,9 @@ class _BookAppointmentViewState extends State<BookAppointmentView> {
                     !_saving)
                 ? _confirm
                 : null,
+            icon: _saving
+                ? null
+                : (_payNow ? Icons.lock_outline : Icons.event_available),
             child: _saving
                 ? const SizedBox(
                     height: 18,
@@ -254,68 +255,100 @@ class _BookAppointmentViewState extends State<BookAppointmentView> {
   }
 }
 
+class _StepHeader extends StatelessWidget {
+  final String label;
+
+  const _StepHeader(this.label);
+
+  @override
+  Widget build(BuildContext context) {
+    return Text(label, style: const TextStyle(fontWeight: FontWeight.w700))
+        .animate()
+        .fadeIn(duration: 300.ms)
+        .slideX(begin: -0.05, end: 0, curve: Curves.easeOutCubic);
+  }
+}
+
 class _SelectableTile extends StatelessWidget {
   final bool selected;
   final String title;
   final String? subtitle;
   final VoidCallback onTap;
+  final int animationIndex;
 
   const _SelectableTile({
     required this.selected,
     required this.title,
     required this.onTap,
     this.subtitle,
+    this.animationIndex = 0,
   });
 
   @override
   Widget build(BuildContext context) {
     return Padding(
-      padding: const EdgeInsets.only(bottom: 8),
-      child: InkWell(
-        onTap: onTap,
-        borderRadius: BorderRadius.circular(14),
-        child: Container(
-          padding: const EdgeInsets.symmetric(horizontal: 14, vertical: 12),
-          decoration: BoxDecoration(
-            color: selected
-                ? AppColors.accent.withValues(alpha: 0.08)
-                : AppColors.surface,
-            borderRadius: BorderRadius.circular(14),
-            border: Border.all(
-              color: selected ? AppColors.accent : AppColors.border,
+          padding: const EdgeInsets.only(bottom: 8),
+          child: PressableScale(
+            onTap: onTap,
+            child: AnimatedContainer(
+              duration: const Duration(milliseconds: 220),
+              curve: Curves.easeOutCubic,
+              padding: const EdgeInsets.symmetric(horizontal: 14, vertical: 12),
+              decoration: BoxDecoration(
+                color: selected
+                    ? AppColors.accent.withValues(alpha: 0.08)
+                    : AppColors.surface,
+                borderRadius: BorderRadius.circular(14),
+                border: Border.all(
+                  color: selected ? AppColors.accent : AppColors.border,
+                  width: selected ? 1.5 : 1,
+                ),
+                boxShadow: selected
+                    ? [
+                        BoxShadow(
+                          color: AppColors.accent.withValues(alpha: 0.15),
+                          blurRadius: 12,
+                          offset: const Offset(0, 4),
+                        ),
+                      ]
+                    : [],
+              ),
+              child: Row(
+                children: [
+                  Icon(
+                    selected ? Icons.check_circle : Icons.circle_outlined,
+                    color: selected
+                        ? AppColors.accent
+                        : AppColors.textSecondary,
+                    size: 20,
+                  ),
+                  const SizedBox(width: 12),
+                  Expanded(
+                    child: Column(
+                      crossAxisAlignment: CrossAxisAlignment.start,
+                      children: [
+                        Text(
+                          title,
+                          style: const TextStyle(fontWeight: FontWeight.w600),
+                        ),
+                        if (subtitle != null)
+                          Text(
+                            subtitle!,
+                            style: TextStyle(
+                              color: AppColors.textSecondary,
+                              fontSize: 12,
+                            ),
+                          ),
+                      ],
+                    ),
+                  ),
+                ],
+              ),
             ),
           ),
-          child: Row(
-            children: [
-              Icon(
-                selected ? Icons.check_circle : Icons.circle_outlined,
-                color: selected ? AppColors.accent : AppColors.textSecondary,
-                size: 20,
-              ),
-              const SizedBox(width: 12),
-              Expanded(
-                child: Column(
-                  crossAxisAlignment: CrossAxisAlignment.start,
-                  children: [
-                    Text(
-                      title,
-                      style: const TextStyle(fontWeight: FontWeight.w600),
-                    ),
-                    if (subtitle != null)
-                      Text(
-                        subtitle!,
-                        style: TextStyle(
-                          color: AppColors.textSecondary,
-                          fontSize: 12,
-                        ),
-                      ),
-                  ],
-                ),
-              ),
-            ],
-          ),
-        ),
-      ),
-    );
+        )
+        .animate(delay: (animationIndex * 60).ms)
+        .fadeIn(duration: 280.ms)
+        .slideX(begin: 0.06, end: 0, curve: Curves.easeOutCubic);
   }
 }

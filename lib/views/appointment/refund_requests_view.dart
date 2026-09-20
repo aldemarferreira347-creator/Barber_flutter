@@ -1,10 +1,12 @@
 import 'package:flutter/material.dart';
+import 'package:flutter_animate/flutter_animate.dart';
 import 'package:provider/provider.dart';
 
 import '../../models/refund_request.dart';
 import '../../repositories/refund_request_repository.dart';
 import '../../theme/app_colors.dart';
 import '../widgets/empty_state.dart';
+import '../widgets/shimmer_box.dart';
 
 /// Panel del dueño para aprobar/rechazar solicitudes de cancelación con
 /// justificación de citas pagadas (spec 6.3, 6.5).
@@ -58,7 +60,10 @@ class RefundRequestsView extends StatelessWidget {
         stream: repo.watchByBarbershop(barbershopId),
         builder: (context, snapshot) {
           if (snapshot.connectionState == ConnectionState.waiting) {
-            return const Center(child: CircularProgressIndicator());
+            return const Padding(
+              padding: EdgeInsets.all(16),
+              child: ShimmerList(),
+            );
           }
           final requests = snapshot.data ?? [];
           if (requests.isEmpty) {
@@ -77,77 +82,90 @@ class RefundRequestsView extends StatelessWidget {
             itemBuilder: (context, index) {
               final request = requests[index];
               return Container(
-                padding: const EdgeInsets.all(14),
-                decoration: BoxDecoration(
-                  color: AppColors.surface,
-                  borderRadius: BorderRadius.circular(14),
-                  border: Border.all(color: AppColors.border),
-                ),
-                child: Column(
-                  crossAxisAlignment: CrossAxisAlignment.start,
-                  children: [
-                    Row(
-                      mainAxisAlignment: MainAxisAlignment.spaceBetween,
-                      children: [
-                        Container(
-                          padding: const EdgeInsets.symmetric(
-                            horizontal: 10,
-                            vertical: 4,
-                          ),
-                          decoration: BoxDecoration(
-                            color: _statusColor(request.status)
-                                .withValues(alpha: 0.12),
-                            borderRadius: BorderRadius.circular(20),
-                          ),
-                          child: Text(
-                            request.status.label,
-                            style: TextStyle(
-                              color: _statusColor(request.status),
-                              fontSize: 12,
-                              fontWeight: FontWeight.w600,
-                            ),
-                          ),
+                    padding: const EdgeInsets.all(14),
+                    decoration: BoxDecoration(
+                      color: AppColors.surface,
+                      borderRadius: BorderRadius.circular(14),
+                      border: Border.all(color: AppColors.border),
+                      boxShadow: [
+                        BoxShadow(
+                          color: _statusColor(request.status)
+                              .withValues(alpha: 0.08),
+                          blurRadius: 14,
+                          offset: const Offset(0, 5),
                         ),
                       ],
                     ),
-                    const SizedBox(height: 8),
-                    Text(
-                      request.reason,
-                      style: const TextStyle(fontWeight: FontWeight.w600),
-                    ),
-                    if (request.purchaseId != null) ...[
-                      const SizedBox(height: 4),
-                      Text(
-                        'Incluye productos por reembolsar',
-                        style: TextStyle(
-                          color: AppColors.textSecondary,
-                          fontSize: 12,
+                    child: Column(
+                      crossAxisAlignment: CrossAxisAlignment.start,
+                      children: [
+                        Row(
+                          mainAxisAlignment: MainAxisAlignment.spaceBetween,
+                          children: [
+                            Container(
+                              padding: const EdgeInsets.symmetric(
+                                horizontal: 10,
+                                vertical: 4,
+                              ),
+                              decoration: BoxDecoration(
+                                color: _statusColor(request.status)
+                                    .withValues(alpha: 0.12),
+                                borderRadius: BorderRadius.circular(20),
+                              ),
+                              child: Text(
+                                request.status.label,
+                                style: TextStyle(
+                                  color: _statusColor(request.status),
+                                  fontSize: 12,
+                                  fontWeight: FontWeight.w600,
+                                ),
+                              ),
+                            ),
+                          ],
                         ),
-                      ),
-                    ],
-                    if (request.status == RefundRequestStatus.pending) ...[
-                      const SizedBox(height: 12),
-                      Row(
-                        mainAxisAlignment: MainAxisAlignment.end,
-                        children: [
-                          TextButton(
-                            onPressed: () => _resolve(context, request, false),
-                            child: const Text(
-                              'Rechazar',
-                              style: TextStyle(color: AppColors.error),
+                        const SizedBox(height: 8),
+                        Text(
+                          request.reason,
+                          style: const TextStyle(fontWeight: FontWeight.w600),
+                        ),
+                        if (request.purchaseId != null) ...[
+                          const SizedBox(height: 4),
+                          Text(
+                            'Incluye productos por reembolsar',
+                            style: TextStyle(
+                              color: AppColors.textSecondary,
+                              fontSize: 12,
                             ),
                           ),
-                          const SizedBox(width: 8),
-                          FilledButton(
-                            onPressed: () => _resolve(context, request, true),
-                            child: const Text('Aprobar reembolso'),
+                        ],
+                        if (request.status == RefundRequestStatus.pending) ...[
+                          const SizedBox(height: 12),
+                          Row(
+                            mainAxisAlignment: MainAxisAlignment.end,
+                            children: [
+                              TextButton(
+                                onPressed: () =>
+                                    _resolve(context, request, false),
+                                child: const Text(
+                                  'Rechazar',
+                                  style: TextStyle(color: AppColors.error),
+                                ),
+                              ),
+                              const SizedBox(width: 8),
+                              FilledButton(
+                                onPressed: () =>
+                                    _resolve(context, request, true),
+                                child: const Text('Aprobar reembolso'),
+                              ),
+                            ],
                           ),
                         ],
-                      ),
-                    ],
-                  ],
-                ),
-              );
+                      ],
+                    ),
+                  )
+                  .animate(delay: (index * 70).ms)
+                  .fadeIn(duration: 320.ms)
+                  .slideY(begin: 0.12, end: 0, curve: Curves.easeOutCubic);
             },
           );
         },

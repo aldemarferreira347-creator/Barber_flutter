@@ -1,10 +1,13 @@
 import 'package:flutter/material.dart';
+import 'package:flutter_animate/flutter_animate.dart';
 import 'package:provider/provider.dart';
 
 import '../../models/barbershop.dart';
 import '../../repositories/barbershop_repository.dart';
 import '../../theme/app_colors.dart';
 import '../widgets/empty_state.dart';
+import '../widgets/pressable_scale.dart';
+import '../widgets/shimmer_box.dart';
 import '../widgets/status_badge.dart';
 import 'add_barbershop_view.dart';
 import 'barbershop_detail_view.dart';
@@ -71,7 +74,7 @@ class _ManageBarbershopsViewState extends State<ManageBarbershopsView> {
                 stream: stream,
                 builder: (context, snapshot) {
                   if (snapshot.connectionState == ConnectionState.waiting) {
-                    return const Center(child: CircularProgressIndicator());
+                    return const ShimmerList();
                   }
                   var shops = snapshot.data ?? [];
                   if (_query.isNotEmpty) {
@@ -92,77 +95,108 @@ class _ManageBarbershopsViewState extends State<ManageBarbershopsView> {
                     separatorBuilder: (_, _) => const SizedBox(height: 10),
                     itemBuilder: (context, index) {
                       final shop = shops[index];
-                      return InkWell(
-                        borderRadius: BorderRadius.circular(14),
-                        onTap: () => Navigator.of(context).push(
-                          MaterialPageRoute(
-                            builder: (_) =>
-                                BarbershopDetailView(barbershopId: shop.id),
-                          ),
-                        ),
-                        child: Container(
-                          padding: const EdgeInsets.all(12),
-                          decoration: BoxDecoration(
-                            color: AppColors.surface,
-                            borderRadius: BorderRadius.circular(14),
-                            border: Border.all(color: AppColors.border),
-                          ),
-                          child: Row(
-                            children: [
-                              Container(
-                                width: 48,
-                                height: 48,
-                                decoration: BoxDecoration(
-                                  color: AppColors.primary,
-                                  borderRadius: BorderRadius.circular(10),
-                                  image: shop.photoUrl != null
-                                      ? DecorationImage(
-                                          image: NetworkImage(shop.photoUrl!),
-                                          fit: BoxFit.cover,
+                      return PressableScale(
+                            onTap: () => Navigator.of(context).push(
+                              MaterialPageRoute(
+                                builder: (_) =>
+                                    BarbershopDetailView(barbershopId: shop.id),
+                              ),
+                            ),
+                            child: Material(
+                              color: AppColors.surface,
+                              borderRadius: BorderRadius.circular(14),
+                              elevation: 1,
+                              shadowColor: AppColors.textPrimary.withValues(
+                                alpha: 0.08,
+                              ),
+                              child: InkWell(
+                                borderRadius: BorderRadius.circular(14),
+                                onTap: () => Navigator.of(context).push(
+                                  MaterialPageRoute(
+                                    builder: (_) => BarbershopDetailView(
+                                      barbershopId: shop.id,
+                                    ),
+                                  ),
+                                ),
+                                child: Container(
+                                  padding: const EdgeInsets.all(12),
+                                  decoration: BoxDecoration(
+                                    borderRadius: BorderRadius.circular(14),
+                                    border: Border.all(color: AppColors.border),
+                                  ),
+                                  child: Row(
+                                    children: [
+                                      Container(
+                                        width: 48,
+                                        height: 48,
+                                        decoration: BoxDecoration(
+                                          color: AppColors.primary,
+                                          borderRadius: BorderRadius.circular(
+                                            10,
+                                          ),
+                                          image: shop.photoUrl != null
+                                              ? DecorationImage(
+                                                  image: NetworkImage(
+                                                    shop.photoUrl!,
+                                                  ),
+                                                  fit: BoxFit.cover,
+                                                )
+                                              : null,
+                                        ),
+                                        child: shop.photoUrl == null
+                                            ? const Icon(
+                                                Icons.storefront,
+                                                color: Colors.white,
+                                                size: 22,
+                                              )
+                                            : null,
+                                      ),
+                                      const SizedBox(width: 12),
+                                      Expanded(
+                                        child: Column(
+                                          crossAxisAlignment:
+                                              CrossAxisAlignment.start,
+                                          children: [
+                                            Text(
+                                              shop.name,
+                                              style: const TextStyle(
+                                                fontWeight: FontWeight.w700,
+                                              ),
+                                            ),
+                                            Text(
+                                              shop.address ?? '',
+                                              style: TextStyle(
+                                                color: AppColors.textSecondary,
+                                                fontSize: 12,
+                                              ),
+                                            ),
+                                          ],
+                                        ),
+                                      ),
+                                      if (widget.adminControls)
+                                        _AdminShopControls(
+                                          shop: shop,
+                                          service: service,
                                         )
-                                      : null,
-                                ),
-                                child: shop.photoUrl == null
-                                    ? const Icon(
-                                        Icons.storefront,
-                                        color: Colors.white,
-                                        size: 22,
-                                      )
-                                    : null,
-                              ),
-                              const SizedBox(width: 12),
-                              Expanded(
-                                child: Column(
-                                  crossAxisAlignment: CrossAxisAlignment.start,
-                                  children: [
-                                    Text(
-                                      shop.name,
-                                      style: const TextStyle(
-                                        fontWeight: FontWeight.w700,
-                                      ),
-                                    ),
-                                    Text(
-                                      shop.address ?? '',
-                                      style: TextStyle(
-                                        color: AppColors.textSecondary,
-                                        fontSize: 12,
-                                      ),
-                                    ),
-                                  ],
+                                      else if (widget.ownerId != null)
+                                        _ApprovalStatusBadge(
+                                          status: shop.approvalStatus,
+                                        )
+                                      else
+                                        StatusBadge.active(shop.active),
+                                    ],
+                                  ),
                                 ),
                               ),
-                              if (widget.adminControls)
-                                _AdminShopControls(shop: shop, service: service)
-                              else if (widget.ownerId != null)
-                                _ApprovalStatusBadge(
-                                  status: shop.approvalStatus,
-                                )
-                              else
-                                StatusBadge.active(shop.active),
-                            ],
-                          ),
-                        ),
-                      );
+                            ),
+                          )
+                          .animate(delay: (index * 60).ms)
+                          .fadeIn(duration: 300.ms)
+                          .slideY(
+                            begin: 0.1,
+                            end: 0,
+                            curve: Curves.easeOutCubic,
+                          );
                     },
                   );
                 },

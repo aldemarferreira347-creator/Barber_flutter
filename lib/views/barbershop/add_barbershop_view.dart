@@ -1,6 +1,7 @@
 import 'dart:typed_data';
 
 import 'package:flutter/material.dart';
+import 'package:flutter_animate/flutter_animate.dart';
 import 'package:geolocator/geolocator.dart';
 import 'package:image_picker/image_picker.dart';
 import 'package:provider/provider.dart';
@@ -10,6 +11,14 @@ import '../../models/barbershop.dart';
 import '../../repositories/barbershop_repository.dart';
 import '../../services/location_service.dart';
 import '../../theme/app_colors.dart';
+import '../widgets/gradient_button.dart';
+
+Widget _entrance(Widget child, int index) {
+  return child
+      .animate(delay: (index * 60).ms)
+      .fadeIn(duration: 300.ms)
+      .slideY(begin: 0.08, end: 0, curve: Curves.easeOutCubic);
+}
 
 class AddBarbershopView extends StatefulWidget {
   const AddBarbershopView({super.key});
@@ -166,144 +175,182 @@ class _AddBarbershopViewState extends State<AddBarbershopView> {
           key: _formKey,
           child: ListView(
             children: [
-              Center(
-                child: GestureDetector(
-                  onTap: _showPhotoOptions,
-                  child: Container(
-                    width: double.infinity,
-                    height: 140,
-                    decoration: BoxDecoration(
-                      color: AppColors.surface,
-                      borderRadius: BorderRadius.circular(16),
-                      border: Border.all(color: AppColors.border),
-                      image: _photoBytes != null
-                          ? DecorationImage(
-                              image: MemoryImage(_photoBytes!),
-                              fit: BoxFit.cover,
+              _entrance(
+                Center(
+                  child: GestureDetector(
+                    onTap: _showPhotoOptions,
+                    child: Container(
+                      width: double.infinity,
+                      height: 140,
+                      decoration: BoxDecoration(
+                        color: AppColors.surface,
+                        borderRadius: BorderRadius.circular(16),
+                        border: Border.all(color: AppColors.border),
+                        image: _photoBytes != null
+                            ? DecorationImage(
+                                image: MemoryImage(_photoBytes!),
+                                fit: BoxFit.cover,
+                              )
+                            : null,
+                        boxShadow: [
+                          BoxShadow(
+                            color: AppColors.textPrimary.withValues(
+                              alpha: 0.06,
+                            ),
+                            blurRadius: 14,
+                            offset: const Offset(0, 6),
+                          ),
+                        ],
+                      ),
+                      child: _photoBytes == null
+                          ? Column(
+                              mainAxisAlignment: MainAxisAlignment.center,
+                              children: [
+                                Icon(
+                                  Icons.add_a_photo_outlined,
+                                  color: AppColors.textSecondary,
+                                ),
+                                const SizedBox(height: 6),
+                                Text(
+                                  'Añadir foto de portada',
+                                  style: TextStyle(
+                                    color: AppColors.textSecondary,
+                                    fontSize: 12,
+                                  ),
+                                ),
+                              ],
                             )
                           : null,
                     ),
-                    child: _photoBytes == null
-                        ? Column(
-                            mainAxisAlignment: MainAxisAlignment.center,
-                            children: [
-                              Icon(
-                                Icons.add_a_photo_outlined,
-                                color: AppColors.textSecondary,
-                              ),
-                              const SizedBox(height: 6),
-                              Text(
-                                'Añadir foto de portada',
-                                style: TextStyle(
-                                  color: AppColors.textSecondary,
-                                  fontSize: 12,
-                                ),
-                              ),
-                            ],
-                          )
-                        : null,
                   ),
                 ),
+                0,
               ),
               const SizedBox(height: 16),
-              Container(
-                padding: const EdgeInsets.all(12),
-                decoration: BoxDecoration(
-                  color: AppColors.accent.withValues(alpha: 0.08),
-                  borderRadius: BorderRadius.circular(12),
-                  border: Border.all(
-                    color: AppColors.accent.withValues(alpha: 0.2),
+              _entrance(
+                Container(
+                  padding: const EdgeInsets.all(12),
+                  decoration: BoxDecoration(
+                    color: AppColors.accent.withValues(alpha: 0.08),
+                    borderRadius: BorderRadius.circular(12),
+                    border: Border.all(
+                      color: AppColors.accent.withValues(alpha: 0.2),
+                    ),
                   ),
-                ),
-                child: Row(
-                  children: [
-                    Icon(Icons.info_outline, size: 18, color: AppColors.accent),
-                    const SizedBox(width: 8),
-                    Expanded(
-                      child: Text(
-                        'Tu barbería quedará pendiente de revisión. El administrador la aprobará antes de que aparezca en el catálogo.',
-                        style: TextStyle(
-                          fontSize: 12,
-                          color: AppColors.textSecondary,
+                  child: Row(
+                    children: [
+                      Icon(
+                        Icons.info_outline,
+                        size: 18,
+                        color: AppColors.accent,
+                      ),
+                      const SizedBox(width: 8),
+                      Expanded(
+                        child: Text(
+                          'Tu barbería quedará pendiente de revisión. El administrador la aprobará antes de que aparezca en el catálogo.',
+                          style: TextStyle(
+                            fontSize: 12,
+                            color: AppColors.textSecondary,
+                          ),
                         ),
                       ),
-                    ),
-                  ],
+                    ],
+                  ),
                 ),
+                1,
               ),
               const SizedBox(height: 20),
-              TextFormField(
-                controller: _nameController,
-                decoration: const InputDecoration(
-                  labelText: 'Nombre',
-                  prefixIcon: Icon(Icons.storefront_outlined),
+              _entrance(
+                TextFormField(
+                  controller: _nameController,
+                  decoration: const InputDecoration(
+                    labelText: 'Nombre',
+                    prefixIcon: Icon(Icons.storefront_outlined),
+                  ),
+                  validator: (value) => (value == null || value.trim().isEmpty)
+                      ? 'Requerido'
+                      : null,
                 ),
-                validator: (value) => (value == null || value.trim().isEmpty)
-                    ? 'Requerido'
-                    : null,
+                2,
               ),
               const SizedBox(height: 14),
-              TextFormField(
-                controller: _addressController,
-                decoration: const InputDecoration(
-                  labelText: 'Dirección',
-                  prefixIcon: Icon(Icons.location_on_outlined),
+              _entrance(
+                TextFormField(
+                  controller: _addressController,
+                  decoration: const InputDecoration(
+                    labelText: 'Dirección',
+                    prefixIcon: Icon(Icons.location_on_outlined),
+                  ),
+                  validator: (value) => (value == null || value.trim().isEmpty)
+                      ? 'Requerido'
+                      : null,
                 ),
-                validator: (value) => (value == null || value.trim().isEmpty)
-                    ? 'Requerido'
-                    : null,
+                3,
               ),
               const SizedBox(height: 14),
-              TextFormField(
-                controller: _phoneController,
-                keyboardType: TextInputType.phone,
-                decoration: const InputDecoration(
-                  labelText: 'Teléfono',
-                  prefixIcon: Icon(Icons.phone_outlined),
+              _entrance(
+                TextFormField(
+                  controller: _phoneController,
+                  keyboardType: TextInputType.phone,
+                  decoration: const InputDecoration(
+                    labelText: 'Teléfono',
+                    prefixIcon: Icon(Icons.phone_outlined),
+                  ),
                 ),
+                4,
               ),
               const SizedBox(height: 14),
-              TextFormField(
-                controller: _emailController,
-                keyboardType: TextInputType.emailAddress,
-                decoration: const InputDecoration(
-                  labelText: 'Correo de contacto',
-                  prefixIcon: Icon(Icons.mail_outline),
+              _entrance(
+                TextFormField(
+                  controller: _emailController,
+                  keyboardType: TextInputType.emailAddress,
+                  decoration: const InputDecoration(
+                    labelText: 'Correo de contacto',
+                    prefixIcon: Icon(Icons.mail_outline),
+                  ),
                 ),
+                5,
               ),
               const SizedBox(height: 14),
-              TextFormField(
-                controller: _descriptionController,
-                maxLines: 3,
-                decoration: const InputDecoration(
-                  labelText: 'Descripción',
-                  prefixIcon: Icon(Icons.notes_outlined),
+              _entrance(
+                TextFormField(
+                  controller: _descriptionController,
+                  maxLines: 3,
+                  decoration: const InputDecoration(
+                    labelText: 'Descripción',
+                    prefixIcon: Icon(Icons.notes_outlined),
+                  ),
                 ),
+                6,
               ),
               const SizedBox(height: 14),
-              OutlinedButton.icon(
-                onPressed: _locating ? null : _useCurrentLocation,
-                icon: _locating
-                    ? const SizedBox(
-                        height: 16,
-                        width: 16,
-                        child: CircularProgressIndicator(strokeWidth: 2),
-                      )
-                    : Icon(
-                        _position == null
-                            ? Icons.my_location_outlined
-                            : Icons.check_circle,
-                        color: _position == null ? null : AppColors.success,
-                      ),
-                label: Text(
-                  _position == null
-                      ? 'Usar mi ubicación actual'
-                      : 'Ubicación guardada ✓',
+              _entrance(
+                OutlinedButton.icon(
+                  onPressed: _locating ? null : _useCurrentLocation,
+                  icon: _locating
+                      ? const SizedBox(
+                          height: 16,
+                          width: 16,
+                          child: CircularProgressIndicator(strokeWidth: 2),
+                        )
+                      : Icon(
+                          _position == null
+                              ? Icons.my_location_outlined
+                              : Icons.check_circle,
+                          color: _position == null ? null : AppColors.success,
+                        ),
+                  label: Text(
+                    _position == null
+                        ? 'Usar mi ubicación actual'
+                        : 'Ubicación guardada ✓',
+                  ),
                 ),
+                7,
               ),
               const SizedBox(height: 24),
-              FilledButton(
+              GradientButton(
                 onPressed: _saving ? null : _submit,
+                icon: _saving ? null : Icons.storefront_outlined,
                 child: _saving
                     ? const SizedBox(
                         height: 18,

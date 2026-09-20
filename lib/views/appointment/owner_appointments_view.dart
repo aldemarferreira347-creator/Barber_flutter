@@ -5,6 +5,7 @@ import '../../models/appointment.dart';
 import '../../repositories/appointment_repository.dart';
 import '../widgets/appointment_card.dart';
 import '../widgets/empty_state.dart';
+import '../widgets/shimmer_box.dart';
 
 class OwnerAppointmentsView extends StatelessWidget {
   final String barbershopId;
@@ -21,7 +22,10 @@ class OwnerAppointmentsView extends StatelessWidget {
         stream: repo.watchByBarbershop(barbershopId),
         builder: (context, snapshot) {
           if (snapshot.connectionState == ConnectionState.waiting) {
-            return const Center(child: CircularProgressIndicator());
+            return const Padding(
+              padding: EdgeInsets.all(16),
+              child: ShimmerList(),
+            );
           }
           final appointments = snapshot.data ?? [];
           if (appointments.isEmpty) {
@@ -43,6 +47,7 @@ class OwnerAppointmentsView extends StatelessWidget {
                 appointment: appointment,
                 subtitle:
                     '${appointment.clientName} con ${appointment.barberName}',
+                animationIndex: index,
               );
             },
           );

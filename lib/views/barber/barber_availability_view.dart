@@ -1,10 +1,12 @@
 import 'package:flutter/material.dart';
+import 'package:flutter_animate/flutter_animate.dart';
 import 'package:provider/provider.dart';
 
 import '../../controllers/user_controller.dart';
 import '../../repositories/barber_availability_repository.dart';
 import '../../repositories/user_repository.dart';
 import '../../theme/app_colors.dart';
+import '../widgets/gradient_button.dart';
 
 /// El barbero marca si está disponible para recibir citas nuevas — "darse
 /// de baja" temporalmente sin dejar la barbería (la gestión de horas
@@ -24,69 +26,80 @@ class BarberAvailabilityView extends StatelessWidget {
         padding: const EdgeInsets.all(16),
         children: [
           Container(
-            padding: const EdgeInsets.all(16),
-            decoration: BoxDecoration(
-              color: AppColors.surface,
-              borderRadius: BorderRadius.circular(16),
-              border: Border.all(color: AppColors.border),
-            ),
-            child: Row(
-              children: [
-                Container(
-                  padding: const EdgeInsets.all(10),
-                  decoration: BoxDecoration(
-                    color: (available ? AppColors.success : AppColors.error)
-                        .withValues(alpha: 0.12),
-                    shape: BoxShape.circle,
-                  ),
-                  child: Icon(
-                    available
-                        ? Icons.check_circle_outline
-                        : Icons.pause_circle_outline,
-                    color: available ? AppColors.success : AppColors.error,
-                  ),
+                padding: const EdgeInsets.all(16),
+                decoration: BoxDecoration(
+                  color: AppColors.surface,
+                  borderRadius: BorderRadius.circular(16),
+                  border: Border.all(color: AppColors.border),
+                  boxShadow: [
+                    BoxShadow(
+                      color: (available ? AppColors.success : AppColors.error)
+                          .withValues(alpha: 0.1),
+                      blurRadius: 16,
+                      offset: const Offset(0, 6),
+                    ),
+                  ],
                 ),
-                const SizedBox(width: 14),
-                Expanded(
-                  child: Column(
-                    crossAxisAlignment: CrossAxisAlignment.start,
-                    children: [
-                      Text(
-                        available
-                            ? 'Disponible para citas nuevas'
-                            : 'Dado de baja temporalmente',
-                        style: const TextStyle(fontWeight: FontWeight.w700),
+                child: Row(
+                  children: [
+                    Container(
+                      padding: const EdgeInsets.all(10),
+                      decoration: BoxDecoration(
+                        color: (available ? AppColors.success : AppColors.error)
+                            .withValues(alpha: 0.12),
+                        shape: BoxShape.circle,
                       ),
-                      Text(
+                      child: Icon(
                         available
-                            ? 'Los clientes pueden agendar contigo.'
-                            : 'No aparecerás para que te agenden citas nuevas.',
-                        style: TextStyle(
-                          color: AppColors.textSecondary,
-                          fontSize: 12,
-                        ),
+                            ? Icons.check_circle_outline
+                            : Icons.pause_circle_outline,
+                        color: available ? AppColors.success : AppColors.error,
                       ),
-                    ],
-                  ),
+                    ),
+                    const SizedBox(width: 14),
+                    Expanded(
+                      child: Column(
+                        crossAxisAlignment: CrossAxisAlignment.start,
+                        children: [
+                          Text(
+                            available
+                                ? 'Disponible para citas nuevas'
+                                : 'Dado de baja temporalmente',
+                            style: const TextStyle(fontWeight: FontWeight.w700),
+                          ),
+                          Text(
+                            available ? 'Los clientes pueden agendar contigo.' : 'No aparecerás para que te agenden citas nuevas.',
+                            style: TextStyle(
+                              color: AppColors.textSecondary,
+                              fontSize: 12,
+                            ),
+                          ),
+                        ],
+                      ),
+                    ),
+                    Switch(
+                      value: available,
+                      onChanged: profile == null
+                          ? null
+                          : (value) => context
+                                .read<UserRepository>()
+                                .setAvailable(profile.uid, value),
+                    ),
+                  ],
                 ),
-                Switch(
-                  value: available,
-                  onChanged: profile == null
-                      ? null
-                      : (value) => context.read<UserRepository>().setAvailable(
-                          profile.uid,
-                          value,
-                        ),
-                ),
-              ],
-            ),
-          ),
+              )
+              .animate()
+              .fadeIn(duration: 320.ms)
+              .slideY(begin: -0.06, end: 0, curve: Curves.easeOutCubic),
           const SizedBox(height: 16),
           if (profile != null)
             _AwayControl(
-              isAway: profile.isAway,
-              awayUntilEstimate: profile.awayUntilEstimate,
-            ),
+                  isAway: profile.isAway,
+                  awayUntilEstimate: profile.awayUntilEstimate,
+                )
+                .animate(delay: 100.ms)
+                .fadeIn(duration: 320.ms)
+                .slideY(begin: 0.08, end: 0, curve: Curves.easeOutCubic),
         ],
       ),
     );
@@ -185,10 +198,10 @@ class _AwayControlState extends State<_AwayControl> {
           style: TextStyle(color: AppColors.textSecondary, fontSize: 12),
         ),
         const SizedBox(height: 14),
-        FilledButton.icon(
+        GradientButton(
           onPressed: _busy ? null : _markReturned,
-          icon: const Icon(Icons.check),
-          label: const Text('Marcar regreso'),
+          icon: Icons.check,
+          child: const Text('Marcar regreso'),
         ),
       ],
     );
