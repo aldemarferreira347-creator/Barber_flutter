@@ -28,72 +28,82 @@ class _SplashViewState extends State<SplashView> {
   @override
   Widget build(BuildContext context) {
     return Scaffold(
-      body: Container(
-        decoration: BoxDecoration(
-          gradient: RadialGradient(
-            center: Alignment.topCenter,
-            radius: 1.3,
-            colors: [const Color(0xFF1E293B), AppColors.primary],
+      body: Stack(
+        fit: StackFit.expand,
+        children: [
+          Image.asset('lib/views/img/fondo.png', fit: BoxFit.cover),
+          DecoratedBox(
+            decoration: BoxDecoration(
+              gradient: LinearGradient(
+                begin: Alignment.topCenter,
+                end: Alignment.bottomCenter,
+                colors: [
+                  AppColors.primary.withValues(alpha: 0.55),
+                  const Color(0xFF1E293B).withValues(alpha: 0.75),
+                  const Color(0xFF0B1220).withValues(alpha: 0.92),
+                ],
+              ),
+            ),
           ),
-        ),
-        child: SafeArea(
-          child: Column(
-            children: [
-              Expanded(
-                child: Center(
-                  child: Column(
-                    mainAxisSize: MainAxisSize.min,
-                    children: [
-                      const BrandMark(size: 68, color: Colors.white)
-                          .animate()
-                          .scale(
-                            begin: const Offset(0.4, 0.4),
-                            curve: Curves.elasticOut,
-                            duration: 900.ms,
-                          )
-                          .fadeIn(duration: 400.ms),
-                      const SizedBox(height: 18),
-                      const Text(
-                            'BarberFlow',
-                            style: TextStyle(
-                              color: Colors.white,
-                              fontSize: 28,
-                              fontWeight: FontWeight.w800,
+          SafeArea(
+            child: Column(
+              children: [
+                Expanded(
+                  child: Center(
+                    child: Column(
+                      mainAxisSize: MainAxisSize.min,
+                      children: [
+                        const BrandMark(size: 68, color: Colors.white)
+                            .animate()
+                            .scale(
+                              begin: const Offset(0.4, 0.4),
+                              curve: Curves.elasticOut,
+                              duration: 900.ms,
+                            )
+                            .fadeIn(duration: 400.ms),
+                        const SizedBox(height: 18),
+                        const Text(
+                              'BarberFlow',
+                              style: TextStyle(
+                                color: Colors.white,
+                                fontSize: 28,
+                                fontWeight: FontWeight.w800,
+                              ),
+                            )
+                            .animate(delay: 350.ms)
+                            .fadeIn(duration: 500.ms)
+                            .slideY(
+                              begin: 0.3,
+                              end: 0,
+                              curve: Curves.easeOutCubic,
                             ),
-                          )
-                          .animate(delay: 350.ms)
-                          .fadeIn(duration: 500.ms)
-                          .slideY(
-                            begin: 0.3,
-                            end: 0,
-                            curve: Curves.easeOutCubic,
+                        const SizedBox(height: 6),
+                        Text(
+                          'Tu barbería, siempre conectada',
+                          style: TextStyle(
+                            color: Colors.white.withValues(alpha: 0.7),
+                            fontSize: 14,
                           ),
-                      const SizedBox(height: 6),
-                      Text(
-                        'Tu barbería, siempre conectada',
-                        style: TextStyle(
-                          color: Colors.white.withValues(alpha: 0.7),
-                          fontSize: 14,
-                        ),
-                      ).animate(delay: 550.ms).fadeIn(duration: 500.ms),
-                    ],
+                        ).animate(delay: 550.ms).fadeIn(duration: 500.ms),
+                      ],
+                    ),
                   ),
                 ),
-              ),
-              Padding(
-                padding: const EdgeInsets.only(bottom: 28),
-                child: Text(
-                  'Gestiona  ·  Organiza  ·  Crece',
-                  style: TextStyle(
-                    color: Colors.white.withValues(alpha: 0.45),
-                    fontSize: 12,
-                    letterSpacing: 0.4,
-                  ),
-                ).animate(delay: 800.ms).fadeIn(duration: 600.ms),
-              ),
-            ],
+                Padding(
+                  padding: const EdgeInsets.only(bottom: 28),
+                  child: Text(
+                    'Gestiona  ·  Organiza  ·  Crece',
+                    style: TextStyle(
+                      color: Colors.white.withValues(alpha: 0.45),
+                      fontSize: 12,
+                      letterSpacing: 0.4,
+                    ),
+                  ).animate(delay: 800.ms).fadeIn(duration: 600.ms),
+                ),
+              ],
+            ),
           ),
-        ),
+        ],
       ),
     );
   }
