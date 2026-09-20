@@ -157,12 +157,38 @@ https://github.com/aldemarferreira347-creator/Barber_flutter :
     Dashboards de rol (Admin/Dueño/Barbero/Cliente) NO se verificaron en
     vivo porque requieren sesión real contra Firebase — se validaron por
     `flutter analyze` (limpio) y `flutter test` (52/52 en verde).
-  - **Pendiente si se sigue esta línea**: aplicar el mismo nivel de
-    detalle (fotografía/ilustración de fondo, franjas decorativas) a las
-    pantallas internas (Home de cada rol, Perfil, Gestión) si el usuario
-    comparte mockups de esas pantallas también; por ahora solo tienen el
-    motor de animación compartido (tarjetas, botones, nav) pero no un
-    rediseño de layout dedicado como Login/Registro.
+  - **Hecho**: el usuario compartió el mockup de los 4 Home de rol
+    (Admin/Dueño/Barbero/Cliente) — se rediseñaron los 4
+    `*_dashboard_tab.dart` para igualarlo: banda oscura de saludo + campana
+    (`lib/views/widgets/dashboard_scaffold.dart`, nuevo, compartido por los
+    4), "hoja" clara con esquinas redondeadas montada encima, tarjeta
+    promocional al final de cada uno (`lib/views/widgets/promo_banner_card.dart`,
+    nuevo — variante clara para Dueño, oscura/con foto para el resto).
+    `ActionListTile` ganó `subtitle` y `trailing` opcionales para las filas
+    de dos líneas y la fila de "Estado de pago" con badge en vez de chevron.
+    Grid 2x2 de `StatCard` para Admin.
+  - **Adaptaciones a datos reales (no inventadas)**: el mockup de Admin
+    muestra "Citas hoy" (no existe una consulta cross-barbería de citas —
+    se reemplazó por "Barberías activas", dato real); el mockup de Cliente
+    muestra "Servicios populares" con fotos de barberos (no hay ese
+    concepto ni fotos de barberos en el modelo — se usa "Barberías
+    destacadas" con datos reales de `BarbershopRepository.watchAll()`,
+    foto de la barbería si tiene, rating real si existe).
+  - **Estructura de navegación (tabs) sin tocar**: los 4 dashboards
+    mantienen exactamente los mismos tabs de `RoleShell` que ya existían
+    (ver `admin_home_view.dart`, etc.) — el mockup muestra algunos tabs
+    distintos (p. ej. "Alertas" para Admin, "Servicios" en vez de "Citas"
+    para Cliente) que implicarían features nuevas (una bandeja de alertas,
+    un catálogo de servicios cross-barbería) y no solo un ajuste visual;
+    se dejó fuera de esta pasada por la misma razón que el selector de rol
+    en Registro — es una decisión de producto, no de diseño.
+  - Verificado con un test de humo nuevo
+    (`test/views/role_dashboards_smoke_test.dart`, 6 casos) que monta los
+    4 dashboards con providers/repos mockeados y confirma que construyen
+    sin excepciones (`RenderFlex overflow`, nulls, etc. — cosas que
+    `flutter analyze` no detecta por ser errores de runtime). No se
+    verificó en el navegador real porque requeriría una sesión de
+    Firebase autenticada por rol.
 
 ## Historial — cierre de Fase 11
 

@@ -12,7 +12,9 @@ import '../barbershop/edit_schedule_view.dart';
 import '../notification/notifications_view.dart';
 import '../service/manage_services_view.dart';
 import '../widgets/action_list_tile.dart';
+import '../widgets/dashboard_scaffold.dart';
 import '../widgets/empty_state.dart';
+import '../widgets/promo_banner_card.dart';
 import '../widgets/status_badge.dart';
 
 class OwnerDashboardTab extends StatelessWidget {
@@ -25,8 +27,8 @@ class OwnerDashboardTab extends StatelessWidget {
 
   String _paymentLabel(PaymentStatus status) => switch (status) {
     PaymentStatus.ok => 'Mensualidad al día',
-    PaymentStatus.overdue => 'Mensualidad vencida (en gracia)',
-    PaymentStatus.blocked => 'Bloqueada por mensualidad',
+    PaymentStatus.overdue => 'En mora',
+    PaymentStatus.blocked => 'Bloqueada',
   };
 
   Color _paymentColor(PaymentStatus status) => switch (status) {
@@ -101,84 +103,70 @@ class OwnerDashboardTab extends StatelessWidget {
         ? profile!.firstName
         : 'Dueño';
 
-    return Scaffold(
-      appBar: AppBar(
-        title: Text('Hola, $greetingName 👋'),
-        actions: [
-          if (profile != null)
-            IconButton(
-              icon: const Icon(Icons.notifications_none),
-              tooltip: 'Notificaciones',
-              onPressed: () => Navigator.of(context).push(
-                MaterialPageRoute(
-                  builder: (_) => NotificationsView(uid: profile.uid),
-                ),
+    return DashboardScaffold(
+      greeting: 'Hola, $greetingName 👋',
+      subtitle: 'Tu barbería en buenas manos',
+      onNotifications: profile == null
+          ? null
+          : () => Navigator.of(context).push(
+              MaterialPageRoute(
+                builder: (_) => NotificationsView(uid: profile.uid),
               ),
             ),
-          Padding(
-            padding: const EdgeInsets.only(right: 16, left: 4),
-            child: CircleAvatar(
-              radius: 16,
-              backgroundColor: AppColors.primary,
-              child: const Icon(
-                Icons.storefront_outlined,
-                color: Colors.white,
-                size: 16,
-              ),
-            ),
-          ),
-        ],
-      ),
-      body: StreamBuilder<List<Barbershop>>(
-        stream: profile == null
-            ? const Stream<List<Barbershop>>.empty()
-            : barbershopService.watchByOwner(profile.uid),
-        builder: (context, snapshot) {
-          final shops = snapshot.data ?? [];
-          final approvedShops = shops
-              .where(
-                (s) => s.approvalStatus == BarbershopApprovalStatus.approved,
-              )
-              .toList();
-          final shop = approvedShops.isNotEmpty ? approvedShops.first : null;
-          final otherShops = shops.where((s) => s.id != shop?.id).toList();
-          final barbershopRepo = context.read<BarbershopRepository>();
-
-          return ListView(
-            padding: const EdgeInsets.all(16),
-            children: [
-              Text(
-                'Tu barbería en buenas manos',
-                style: TextStyle(color: AppColors.textSecondary),
-              ),
-              const SizedBox(height: 16),
-              if (shop == null)
-                Column(
-                  children: [
-                    const EmptyState(
-                      icon: Icons.storefront_outlined,
-                      title: 'Aún no tienes una barbería',
-                      subtitle: 'Registra los datos básicos para empezar a gestionarla.',
-                    ),
-                    const SizedBox(height: 12),
-                    FilledButton.icon(
-                      onPressed: () => Navigator.of(context).push(
-                        MaterialPageRoute(
-                          builder: (_) => const AddBarbershopView(),
-                        ),
-                      ),
-                      icon: const Icon(Icons.add),
-                      label: const Text('Registrar barbería'),
-                    ),
-                  ],
+      children: [
+        StreamBuilder<List<Barbershop>>(
+          stream: profile == null
+              ? const Stream<List<Barbershop>>.empty()
+              : barbershopService.watchByOwner(profile.uid),
+          builder: (context, snapshot) {
+            final shops = snapshot.data ?? [];
+            final approvedShops = shops
+                .where(
+                  (s) => s.approvalStatus == BarbershopApprovalStatus.approved,
                 )
-              else ...[
+                .toList();
+            final shop = approvedShops.isNotEmpty ? approvedShops.first : null;
+            final otherShops = shops.where((s) => s.id != shop?.id).toList();
+            final barbershopRepo = context.read<BarbershopRepository>();
+
+            if (shop == null) {
+              return Column(
+                children: [
+                  const EmptyState(
+                    icon: Icons.storefront_outlined,
+                    title: 'Aún no tienes una barbería',
+                    subtitle: 'Registra los datos básicos para empezar a gestionarla.',
+                  ),
+                  const SizedBox(height: 12),
+                  FilledButton.icon(
+                    onPressed: () => Navigator.of(context).push(
+                      MaterialPageRoute(
+                        builder: (_) => const AddBarbershopView(),
+                      ),
+                    ),
+                    icon: const Icon(Icons.add),
+                    label: const Text('Registrar barbería'),
+                  ),
+                ],
+              );
+            }
+
+            return Column(
+              crossAxisAlignment: CrossAxisAlignment.stretch,
+              children: [
                 Container(
                   padding: const EdgeInsets.all(14),
                   decoration: BoxDecoration(
                     color: AppColors.surface,
                     borderRadius: BorderRadius.circular(16),
                     border: Border.all(color: AppColors.border),
+                    boxShadow: [
+                      BoxShadow(
+                        color: AppColors.textPrimary.withValues(alpha: 0.06),
+                        blurRadius: 14,
+                        offset: const Offset(0, 6),
+                      ),
+                    ],
                   ),
                   child: Row(
                     children: [
@@ -188,11 +176,16 @@ class OwnerDashboardTab extends StatelessWidget {
                         decoration: BoxDecoration(
                           color: AppColors.primary,
                           borderRadius: BorderRadius.circular(10),
+                          image: shop.photoUrl != null
+                              ? DecorationImage(
+                                  image: NetworkImage(shop.photoUrl!),
+                                  fit: BoxFit.cover,
+                                )
+                              : null,
                         ),
-                        child: const Icon(
-                          Icons.storefront,
-                          color: Colors.white,
-                        ),
+                        child: shop.photoUrl == null
+                            ? const Icon(Icons.storefront, color: Colors.white)
+                            : null,
                       ),
                       const SizedBox(width: 12),
                       Expanded(
@@ -200,18 +193,34 @@ class OwnerDashboardTab extends StatelessWidget {
                           crossAxisAlignment: CrossAxisAlignment.start,
                           children: [
                             Text(
-                              'Mi barbería',
-                              style: TextStyle(
-                                color: AppColors.textSecondary,
-                                fontSize: 12,
-                              ),
-                            ),
-                            Text(
                               shop.name,
                               style: const TextStyle(
                                 fontWeight: FontWeight.w700,
                               ),
                             ),
+                            if ((shop.address ?? '').isNotEmpty) ...[
+                              const SizedBox(height: 2),
+                              Row(
+                                children: [
+                                  Icon(
+                                    Icons.location_on_outlined,
+                                    size: 12,
+                                    color: AppColors.textSecondary,
+                                  ),
+                                  const SizedBox(width: 3),
+                                  Expanded(
+                                    child: Text(
+                                      shop.address!,
+                                      overflow: TextOverflow.ellipsis,
+                                      style: TextStyle(
+                                        color: AppColors.textSecondary,
+                                        fontSize: 12,
+                                      ),
+                                    ),
+                                  ),
+                                ],
+                              ),
+                            ],
                           ],
                         ),
                       ),
@@ -220,30 +229,16 @@ class OwnerDashboardTab extends StatelessWidget {
                   ),
                 ),
                 const SizedBox(height: 12),
-                Container(
-                  padding: const EdgeInsets.all(14),
-                  decoration: BoxDecoration(
-                    color: _paymentColor(shop.paymentStatus)
-                        .withValues(alpha: 0.08),
-                    borderRadius: BorderRadius.circular(14),
-                    border: Border.all(
-                      color: _paymentColor(shop.paymentStatus)
-                          .withValues(alpha: 0.25),
-                    ),
-                  ),
-                  child: Row(
-                    children: [
-                      Expanded(
-                        child: Text(
-                          _paymentLabel(shop.paymentStatus),
-                          style: TextStyle(
-                            color: _paymentColor(shop.paymentStatus),
-                            fontWeight: FontWeight.w700,
-                          ),
-                        ),
-                      ),
-                      if (shop.paymentStatus == PaymentStatus.ok)
-                        TextButton(
+                ActionListTile(
+                  icon: Icons.shield_outlined,
+                  label: 'Estado de pago',
+                  subtitle: shop.paymentDueDate != null
+                      ? 'Vence el ${shop.paymentDueDate!.day}/${shop.paymentDueDate!.month}/${shop.paymentDueDate!.year}'
+                      : null,
+                  iconColor: _paymentColor(shop.paymentStatus),
+                  animationIndex: 0,
+                  trailing: shop.paymentStatus == PaymentStatus.ok
+                      ? TextButton(
                           onPressed: () => _cancelSubscription(
                             context,
                             barbershopRepo,
@@ -251,25 +246,33 @@ class OwnerDashboardTab extends StatelessWidget {
                           ),
                           child: const Text(
                             'Cancelar',
-                            style: TextStyle(color: AppColors.error),
+                            style: TextStyle(
+                              color: AppColors.error,
+                              fontSize: 12,
+                            ),
                           ),
                         )
-                      else
-                        FilledButton(
+                      : FilledButton(
                           onPressed: () => _paySubscription(
                             context,
                             barbershopRepo,
                             shop.id,
                           ),
-                          child: const Text('Pagar mensualidad'),
+                          style: FilledButton.styleFrom(
+                            minimumSize: const Size(0, 34),
+                            padding: const EdgeInsets.symmetric(horizontal: 12),
+                          ),
+                          child: Text(
+                            _paymentLabel(shop.paymentStatus),
+                            style: const TextStyle(fontSize: 12),
+                          ),
                         ),
-                    ],
-                  ),
                 ),
-                const SizedBox(height: 20),
+                const SizedBox(height: 10),
                 ActionListTile(
                   icon: Icons.info_outline,
                   label: 'Ver información',
+                  animationIndex: 1,
                   onTap: () => Navigator.of(context).push(
                     MaterialPageRoute(
                       builder: (_) =>
@@ -281,6 +284,7 @@ class OwnerDashboardTab extends StatelessWidget {
                 ActionListTile(
                   icon: Icons.content_cut,
                   label: 'Gestionar barberos',
+                  animationIndex: 2,
                   onTap: () => Navigator.of(context).push(
                     MaterialPageRoute(
                       builder: (_) => ManageBarbersView(barbershopId: shop.id),
@@ -291,6 +295,7 @@ class OwnerDashboardTab extends StatelessWidget {
                 ActionListTile(
                   icon: Icons.design_services_outlined,
                   label: 'Gestionar servicios',
+                  animationIndex: 3,
                   onTap: () => Navigator.of(context).push(
                     MaterialPageRoute(
                       builder: (_) => ManageServicesView(
@@ -304,6 +309,7 @@ class OwnerDashboardTab extends StatelessWidget {
                 ActionListTile(
                   icon: Icons.schedule_outlined,
                   label: 'Horarios de atención',
+                  animationIndex: 4,
                   onTap: () => Navigator.of(context).push(
                     MaterialPageRoute(
                       builder: (_) => EditScheduleView(
@@ -317,45 +323,66 @@ class OwnerDashboardTab extends StatelessWidget {
                 ActionListTile(
                   icon: Icons.bar_chart_outlined,
                   label: 'Ver estadísticas',
+                  animationIndex: 5,
                   onTap: () => _comingSoon(context, 'Las estadísticas'),
+                ),
+                const SizedBox(height: 20),
+                const PromoBannerCard(
+                  light: true,
+                  icon: Icons.trending_up,
+                  title: 'Haz crecer tu barbería',
+                  subtitle:
+                      'Revisa tus estadísticas y toma mejores decisiones.',
                 ),
                 // spec 12.2: un dueño puede tener varias barberías, cada una
                 // con su propia aprobación y mensualidad — independientes.
-                const SizedBox(height: 20),
-                Row(
-                  children: [
-                    const Expanded(
-                      child: Text(
-                        'Tus barberías',
-                        style: TextStyle(
-                          fontWeight: FontWeight.w700,
-                          fontSize: 15,
+                if (otherShops.isNotEmpty) ...[
+                  const SizedBox(height: 20),
+                  Row(
+                    children: [
+                      const Expanded(
+                        child: Text(
+                          'Tus barberías',
+                          style: TextStyle(
+                            fontWeight: FontWeight.w700,
+                            fontSize: 15,
+                          ),
                         ),
                       ),
-                    ),
-                    TextButton.icon(
+                      TextButton.icon(
+                        onPressed: () => Navigator.of(context).push(
+                          MaterialPageRoute(
+                            builder: (_) => const AddBarbershopView(),
+                          ),
+                        ),
+                        icon: const Icon(Icons.add, size: 18),
+                        label: const Text('Otra barbería'),
+                      ),
+                    ],
+                  ),
+                  const SizedBox(height: 8),
+                  for (final other in otherShops) ...[
+                    _OtherShopTile(shop: other),
+                    const SizedBox(height: 8),
+                  ],
+                ] else
+                  Align(
+                    alignment: Alignment.centerRight,
+                    child: TextButton.icon(
                       onPressed: () => Navigator.of(context).push(
                         MaterialPageRoute(
                           builder: (_) => const AddBarbershopView(),
                         ),
                       ),
                       icon: const Icon(Icons.add, size: 18),
-                      label: const Text('Otra barbería'),
+                      label: const Text('Registrar otra barbería'),
                     ),
-                  ],
-                ),
-                if (otherShops.isNotEmpty) ...[
-                  const SizedBox(height: 8),
-                  for (final other in otherShops) ...[
-                    _OtherShopTile(shop: other),
-                    const SizedBox(height: 8),
-                  ],
-                ],
+                  ),
               ],
-            ],
-          );
-        },
-      ),
+            );
+          },
+        ),
+      ],
     );
   }
 }

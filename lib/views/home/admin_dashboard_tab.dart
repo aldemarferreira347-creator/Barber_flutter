@@ -13,6 +13,8 @@ import '../admin/manage_users_view.dart';
 import '../barbershop/manage_barbershops_view.dart';
 import '../notification/notifications_view.dart';
 import '../widgets/action_list_tile.dart';
+import '../widgets/dashboard_scaffold.dart';
+import '../widgets/promo_banner_card.dart';
 import '../widgets/stat_card.dart';
 
 class AdminDashboardTab extends StatefulWidget {
@@ -68,134 +70,115 @@ class _AdminDashboardTabState extends State<AdminDashboardTab> {
         ? profile!.firstName
         : 'Admin';
 
-    return Scaffold(
-      appBar: AppBar(
-        title: Text('Hola, $greetingName 👋'),
-        actions: [
-          if (profile != null)
-            IconButton(
-              icon: const Icon(Icons.notifications_none),
-              tooltip: 'Notificaciones',
-              onPressed: () => Navigator.of(context).push(
-                MaterialPageRoute(
-                  builder: (_) => NotificationsView(uid: profile.uid),
-                ),
-              ),
-            ),
-          Padding(
-            padding: const EdgeInsets.only(right: 16, left: 4),
-            child: CircleAvatar(
-              radius: 16,
-              backgroundColor: AppColors.primary,
-              child: const Icon(
-                Icons.shield_outlined,
-                color: Colors.white,
-                size: 16,
-              ),
-            ),
-          ),
-        ],
+    return DashboardScaffold(
+      greeting: 'Hola, $greetingName 👋',
+      subtitle: 'Panel de administración',
+      avatar: CircleAvatar(
+        radius: 22,
+        backgroundColor: Colors.white.withValues(alpha: 0.15),
+        child: const Icon(Icons.shield_outlined, color: Colors.white, size: 20),
       ),
-      body: ListView(
-        padding: const EdgeInsets.all(16),
-        children: [
-          Text(
-            'Panel de administración',
-            style: TextStyle(color: AppColors.textSecondary),
-          ),
-          const SizedBox(height: 16),
-          StreamBuilder<List<AppUser>>(
-            stream: userService.watchAll(),
-            builder: (context, userSnapshot) {
-              final users = userSnapshot.data ?? [];
-              return StreamBuilder<List<Barbershop>>(
-                stream: barbershopService.watchAll(),
-                builder: (context, shopSnapshot) {
-                  final shops = shopSnapshot.data ?? [];
-                  final activeShops = shops.where((s) => s.active).length;
-                  final overdueShops = shops
-                      .where((s) => s.paymentStatus != PaymentStatus.ok)
-                      .length;
-                  return Column(
-                    children: [
-                      Row(
-                        children: [
-                          Expanded(
-                            child: StatCard(
-                              icon: Icons.people_outline,
-                              value: '${users.length}',
-                              label: 'Usuarios registrados',
-                              iconColor: AppColors.accent,
-                            ),
-                          ),
-                        ],
-                      ),
-                      const SizedBox(height: 12),
-                      Row(
-                        children: [
-                          Expanded(
-                            child: StatCard(
-                              icon: Icons.storefront_outlined,
-                              value: '$activeShops',
-                              label: 'Barberías activas',
-                              iconColor: AppColors.success,
-                            ),
-                          ),
-                        ],
-                      ),
-                      const SizedBox(height: 12),
-                      Row(
-                        children: [
-                          Expanded(
-                            child: StatCard(
-                              icon: Icons.warning_amber_outlined,
-                              value: '$overdueShops',
-                              label: 'Barberías con pago pendiente',
-                              iconColor: AppColors.warning,
-                            ),
-                          ),
-                        ],
-                      ),
-                    ],
-                  );
-                },
-              );
-            },
-          ),
-          const SizedBox(height: 24),
-          const Text(
-            'Acciones rápidas',
-            style: TextStyle(fontWeight: FontWeight.w700, fontSize: 15),
-          ),
-          const SizedBox(height: 10),
-          ActionListTile(
-            icon: Icons.people_outline,
-            label: 'Gestionar usuarios',
-            onTap: () => Navigator.of(
-              context,
-            ).push(MaterialPageRoute(builder: (_) => const ManageUsersView())),
-          ),
-          const SizedBox(height: 10),
-          ActionListTile(
-            icon: Icons.storefront_outlined,
-            label: 'Ver todas las barberías',
-            onTap: () => Navigator.of(context).push(
+      onNotifications: profile == null
+          ? null
+          : () => Navigator.of(context).push(
               MaterialPageRoute(
-                builder: (_) =>
-                    const ManageBarbershopsView(adminControls: true),
+                builder: (_) => NotificationsView(uid: profile.uid),
               ),
             ),
-          ),
-          const SizedBox(height: 10),
-          ActionListTile(
-            icon: Icons.settings_outlined,
-            label: 'Configuración del sistema',
-            onTap: () => ScaffoldMessenger.of(context).showSnackBar(
-              const SnackBar(content: Text('La configuración próximamente')),
+      children: [
+        StreamBuilder<List<AppUser>>(
+          stream: userService.watchAll(),
+          builder: (context, userSnapshot) {
+            final users = userSnapshot.data ?? [];
+            return StreamBuilder<List<Barbershop>>(
+              stream: barbershopService.watchAll(),
+              builder: (context, shopSnapshot) {
+                final shops = shopSnapshot.data ?? [];
+                final overdueShops = shops
+                    .where((s) => s.paymentStatus != PaymentStatus.ok)
+                    .length;
+                return GridView.count(
+                  crossAxisCount: 2,
+                  shrinkWrap: true,
+                  physics: const NeverScrollableScrollPhysics(),
+                  mainAxisSpacing: 12,
+                  crossAxisSpacing: 12,
+                  childAspectRatio: 1.5,
+                  children: [
+                    StatCard(
+                      icon: Icons.storefront_outlined,
+                      value: '${shops.length}',
+                      label: 'Barberías registradas',
+                      iconColor: AppColors.accent,
+                      animationIndex: 0,
+                    ),
+                    StatCard(
+                      icon: Icons.people_outline,
+                      value: '${users.length}',
+                      label: 'Usuarios activos',
+                      iconColor: AppColors.success,
+                      animationIndex: 1,
+                    ),
+                    StatCard(
+                      icon: Icons.storefront,
+                      value: '${shops.where((s) => s.active).length}',
+                      label: 'Barberías activas',
+                      iconColor: AppColors.accent,
+                      animationIndex: 2,
+                    ),
+                    StatCard(
+                      icon: Icons.warning_amber_outlined,
+                      value: '$overdueShops',
+                      label: 'Barberías en alerta',
+                      iconColor: AppColors.warning,
+                      animationIndex: 3,
+                    ),
+                  ],
+                );
+              },
+            );
+          },
+        ),
+        const SizedBox(height: 24),
+        const Text(
+          'Acciones rápidas',
+          style: TextStyle(fontWeight: FontWeight.w700, fontSize: 15),
+        ),
+        const SizedBox(height: 10),
+        ActionListTile(
+          icon: Icons.people_outline,
+          label: 'Gestionar usuarios',
+          animationIndex: 0,
+          onTap: () => Navigator.of(context)
+              .push(MaterialPageRoute(builder: (_) => const ManageUsersView())),
+        ),
+        const SizedBox(height: 10),
+        ActionListTile(
+          icon: Icons.storefront_outlined,
+          label: 'Ver todas las barberías',
+          animationIndex: 1,
+          onTap: () => Navigator.of(context).push(
+            MaterialPageRoute(
+              builder: (_) => const ManageBarbershopsView(adminControls: true),
             ),
           ),
-        ],
-      ),
+        ),
+        const SizedBox(height: 10),
+        ActionListTile(
+          icon: Icons.settings_outlined,
+          label: 'Configuración del sistema',
+          animationIndex: 2,
+          onTap: () => ScaffoldMessenger.of(context).showSnackBar(
+            const SnackBar(content: Text('La configuración próximamente')),
+          ),
+        ),
+        const SizedBox(height: 24),
+        const PromoBannerCard(
+          icon: Icons.admin_panel_settings_outlined,
+          title: 'Control total',
+          subtitle: 'Gestiona todo el sistema desde un solo lugar.',
+        ),
+      ],
     );
   }
 }

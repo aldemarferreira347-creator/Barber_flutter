@@ -8,16 +8,20 @@ import 'pressable_scale.dart';
 class ActionListTile extends StatelessWidget {
   final IconData icon;
   final String label;
+  final String? subtitle;
   final VoidCallback? onTap;
   final Color? iconColor;
+  final Widget? trailing;
   final int animationIndex;
 
   const ActionListTile({
     super.key,
     required this.icon,
     required this.label,
+    this.subtitle,
     this.onTap,
     this.iconColor,
+    this.trailing,
     this.animationIndex = 0,
   });
 
@@ -62,15 +66,35 @@ class ActionListTile extends StatelessWidget {
                     ),
                     const SizedBox(width: 12),
                     Expanded(
-                      child: Text(
-                        label,
-                        style: TextStyle(
-                          fontWeight: FontWeight.w600,
-                          color: AppColors.textPrimary,
-                        ),
+                      child: Column(
+                        crossAxisAlignment: CrossAxisAlignment.start,
+                        mainAxisSize: MainAxisSize.min,
+                        children: [
+                          Text(
+                            label,
+                            style: TextStyle(
+                              fontWeight: FontWeight.w600,
+                              color: AppColors.textPrimary,
+                            ),
+                          ),
+                          if (subtitle != null) ...[
+                            const SizedBox(height: 2),
+                            Text(
+                              subtitle!,
+                              style: TextStyle(
+                                fontSize: 12,
+                                color: AppColors.textSecondary,
+                              ),
+                            ),
+                          ],
+                        ],
                       ),
                     ),
-                    Icon(Icons.chevron_right, color: AppColors.textSecondary),
+                    trailing ??
+                        Icon(
+                          Icons.chevron_right,
+                          color: AppColors.textSecondary,
+                        ),
                   ],
                 ),
               ),
