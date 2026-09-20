@@ -1,10 +1,12 @@
 import 'package:flutter/material.dart';
+import 'package:flutter_animate/flutter_animate.dart';
 import 'package:provider/provider.dart';
 
 import '../../models/service.dart';
 import '../../repositories/service_repository.dart';
 import '../../theme/app_colors.dart';
 import '../widgets/empty_state.dart';
+import '../widgets/shimmer_box.dart';
 import 'add_service_view.dart';
 
 /// Lista de servicios de una barbería. [canManage] controla si se puede
@@ -39,7 +41,10 @@ class ManageServicesView extends StatelessWidget {
         stream: repo.watchByBarbershop(barbershopId),
         builder: (context, snapshot) {
           if (snapshot.connectionState == ConnectionState.waiting) {
-            return const Center(child: CircularProgressIndicator());
+            return const Padding(
+              padding: EdgeInsets.all(16),
+              child: ShimmerList(),
+            );
           }
           final services = snapshot.data ?? [];
           if (services.isEmpty) {
@@ -58,70 +63,82 @@ class ManageServicesView extends StatelessWidget {
             itemBuilder: (context, index) {
               final service = services[index];
               return Container(
-                padding: const EdgeInsets.all(12),
-                decoration: BoxDecoration(
-                  color: AppColors.surface,
-                  borderRadius: BorderRadius.circular(14),
-                  border: Border.all(color: AppColors.border),
-                ),
-                child: Row(
-                  children: [
-                    ClipRRect(
-                      borderRadius: BorderRadius.circular(10),
-                      child: service.photoUrl != null
-                          ? Image.network(
-                              service.photoUrl!,
-                              width: 56,
-                              height: 56,
-                              fit: BoxFit.cover,
-                              semanticLabel:
-                                  'Foto del servicio ${service.name}',
-                            )
-                          : Container(
-                              width: 56,
-                              height: 56,
-                              color: AppColors.background,
-                              child: Icon(
-                                Icons.content_cut,
-                                color: AppColors.textSecondary,
+                    padding: const EdgeInsets.all(12),
+                    decoration: BoxDecoration(
+                      color: AppColors.surface,
+                      borderRadius: BorderRadius.circular(14),
+                      border: Border.all(color: AppColors.border),
+                      boxShadow: [
+                        BoxShadow(
+                          color: AppColors.textPrimary.withValues(alpha: 0.05),
+                          blurRadius: 12,
+                          offset: const Offset(0, 5),
+                        ),
+                      ],
+                    ),
+                    child: Row(
+                      children: [
+                        ClipRRect(
+                          borderRadius: BorderRadius.circular(10),
+                          child: service.photoUrl != null
+                              ? Image.network(
+                                  service.photoUrl!,
+                                  width: 56,
+                                  height: 56,
+                                  fit: BoxFit.cover,
+                                  semanticLabel:
+                                      'Foto del servicio ${service.name}',
+                                )
+                              : Container(
+                                  width: 56,
+                                  height: 56,
+                                  color: AppColors.background,
+                                  child: Icon(
+                                    Icons.content_cut,
+                                    color: AppColors.textSecondary,
+                                  ),
+                                ),
+                        ),
+                        const SizedBox(width: 12),
+                        Expanded(
+                          child: Column(
+                            crossAxisAlignment: CrossAxisAlignment.start,
+                            children: [
+                              Text(
+                                service.name,
+                                style: const TextStyle(
+                                  fontWeight: FontWeight.w700,
+                                ),
                               ),
-                            ),
-                    ),
-                    const SizedBox(width: 12),
-                    Expanded(
-                      child: Column(
-                        crossAxisAlignment: CrossAxisAlignment.start,
-                        children: [
-                          Text(
-                            service.name,
-                            style: const TextStyle(fontWeight: FontWeight.w700),
+                              Text(
+                                '${service.durationMinutes} min',
+                                style: TextStyle(
+                                  color: AppColors.textSecondary,
+                                  fontSize: 12,
+                                ),
+                              ),
+                            ],
                           ),
-                          Text(
-                            '${service.durationMinutes} min',
-                            style: TextStyle(
-                              color: AppColors.textSecondary,
-                              fontSize: 12,
-                            ),
+                        ),
+                        Text(
+                          '\$${service.price.toStringAsFixed(0)}',
+                          style: TextStyle(
+                            fontWeight: FontWeight.w800,
+                            color: AppColors.accent,
                           ),
-                        ],
-                      ),
+                        ),
+                        if (canManage)
+                          Switch(
+                            value: service.active,
+                            onChanged: (value) =>
+                                repo.setActive(barbershopId, service.id, value),
+                          ),
+                      ],
                     ),
-                    Text(
-                      '\$${service.price.toStringAsFixed(0)}',
-                      style: TextStyle(
-                        fontWeight: FontWeight.w800,
-                        color: AppColors.accent,
-                      ),
-                    ),
-                    if (canManage)
-                      Switch(
-                        value: service.active,
-                        onChanged: (value) =>
-                            repo.setActive(barbershopId, service.id, value),
-                      ),
-                  ],
-                ),
-              );
+                  )
+                  .animate(delay: (index * 60).ms)
+                  .fadeIn(duration: 300.ms)
+                  .slideX(begin: 0.08, end: 0, curve: Curves.easeOutCubic);
             },
           );
         },

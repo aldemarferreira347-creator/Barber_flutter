@@ -1,12 +1,21 @@
 import 'dart:typed_data';
 
 import 'package:flutter/material.dart';
+import 'package:flutter_animate/flutter_animate.dart';
 import 'package:image_picker/image_picker.dart';
 import 'package:provider/provider.dart';
 
 import '../../models/product.dart';
 import '../../repositories/product_repository.dart';
 import '../../theme/app_colors.dart';
+import '../widgets/gradient_button.dart';
+
+Widget _entrance(Widget child, int index) {
+  return child
+      .animate(delay: (index * 60).ms)
+      .fadeIn(duration: 300.ms)
+      .slideY(begin: 0.08, end: 0, curve: Curves.easeOutCubic);
+}
 
 class AddProductView extends StatefulWidget {
   final String barbershopId;
@@ -96,81 +105,104 @@ class _AddProductViewState extends State<AddProductView> {
           key: _formKey,
           child: ListView(
             children: [
-              Center(
-                child: GestureDetector(
-                  onTap: () => _showPhotoOptions(context),
-                  child: Container(
-                    width: 140,
-                    height: 140,
-                    decoration: BoxDecoration(
-                      color: AppColors.surface,
-                      borderRadius: BorderRadius.circular(16),
-                      border: Border.all(color: AppColors.border),
-                      image: _photoBytes != null
-                          ? DecorationImage(
-                              image: MemoryImage(_photoBytes!),
-                              fit: BoxFit.cover,
+              _entrance(
+                Center(
+                  child: GestureDetector(
+                    onTap: () => _showPhotoOptions(context),
+                    child: Container(
+                      width: 140,
+                      height: 140,
+                      decoration: BoxDecoration(
+                        color: AppColors.surface,
+                        borderRadius: BorderRadius.circular(16),
+                        border: Border.all(color: AppColors.border),
+                        image: _photoBytes != null
+                            ? DecorationImage(
+                                image: MemoryImage(_photoBytes!),
+                                fit: BoxFit.cover,
+                              )
+                            : null,
+                        boxShadow: [
+                          BoxShadow(
+                            color: AppColors.textPrimary.withValues(
+                              alpha: 0.06,
+                            ),
+                            blurRadius: 14,
+                            offset: const Offset(0, 6),
+                          ),
+                        ],
+                      ),
+                      child: _photoBytes == null
+                          ? Column(
+                              mainAxisAlignment: MainAxisAlignment.center,
+                              children: [
+                                Icon(
+                                  Icons.add_a_photo_outlined,
+                                  color: AppColors.textSecondary,
+                                ),
+                                const SizedBox(height: 6),
+                                Text(
+                                  'Añadir foto',
+                                  style: TextStyle(
+                                    color: AppColors.textSecondary,
+                                    fontSize: 12,
+                                  ),
+                                ),
+                              ],
                             )
                           : null,
                     ),
-                    child: _photoBytes == null
-                        ? Column(
-                            mainAxisAlignment: MainAxisAlignment.center,
-                            children: [
-                              Icon(
-                                Icons.add_a_photo_outlined,
-                                color: AppColors.textSecondary,
-                              ),
-                              const SizedBox(height: 6),
-                              Text(
-                                'Añadir foto',
-                                style: TextStyle(
-                                  color: AppColors.textSecondary,
-                                  fontSize: 12,
-                                ),
-                              ),
-                            ],
-                          )
-                        : null,
                   ),
                 ),
+                0,
               ),
               const SizedBox(height: 20),
-              TextFormField(
-                controller: _nameController,
-                decoration: const InputDecoration(
-                  labelText: 'Nombre del producto',
-                  prefixIcon: Icon(Icons.shopping_bag_outlined),
+              _entrance(
+                TextFormField(
+                  controller: _nameController,
+                  decoration: const InputDecoration(
+                    labelText: 'Nombre del producto',
+                    prefixIcon: Icon(Icons.shopping_bag_outlined),
+                  ),
+                  validator: (value) => (value == null || value.trim().isEmpty)
+                      ? 'Requerido'
+                      : null,
                 ),
-                validator: (value) => (value == null || value.trim().isEmpty)
-                    ? 'Requerido'
-                    : null,
+                1,
               ),
               const SizedBox(height: 14),
-              TextFormField(
-                controller: _descriptionController,
-                maxLines: 2,
-                decoration: const InputDecoration(
-                  labelText: 'Descripción',
-                  prefixIcon: Icon(Icons.notes_outlined),
+              _entrance(
+                TextFormField(
+                  controller: _descriptionController,
+                  maxLines: 2,
+                  decoration: const InputDecoration(
+                    labelText: 'Descripción',
+                    prefixIcon: Icon(Icons.notes_outlined),
+                  ),
                 ),
+                2,
               ),
               const SizedBox(height: 14),
-              TextFormField(
-                controller: _priceController,
-                keyboardType: const TextInputType.numberWithOptions(
-                  decimal: true,
+              _entrance(
+                TextFormField(
+                  controller: _priceController,
+                  keyboardType: const TextInputType.numberWithOptions(
+                    decimal: true,
+                  ),
+                  decoration: const InputDecoration(
+                    labelText: 'Precio',
+                    prefixIcon: Icon(Icons.attach_money),
+                  ),
+                  validator: (value) => (double.tryParse(value ?? '') == null)
+                      ? 'Inválido'
+                      : null,
                 ),
-                decoration: const InputDecoration(
-                  labelText: 'Precio',
-                  prefixIcon: Icon(Icons.attach_money),
-                ),
-                validator: (value) =>
-                    (double.tryParse(value ?? '') == null) ? 'Inválido' : null,
+                3,
               ),
               const SizedBox(height: 24),
-              FilledButton(
+              GradientButton(
                 onPressed: _saving ? null : _submit,
+                icon: _saving ? null : Icons.shopping_bag_outlined,
                 child: _saving
                     ? const SizedBox(
                         height: 18,

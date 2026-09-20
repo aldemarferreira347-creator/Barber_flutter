@@ -1,9 +1,11 @@
 import 'package:flutter/material.dart';
+import 'package:flutter_animate/flutter_animate.dart';
 import 'package:provider/provider.dart';
 
 import '../../models/purchase.dart';
 import '../../repositories/purchase_repository.dart';
 import '../../theme/app_colors.dart';
+import '../widgets/gradient_button.dart';
 
 /// El barbero introduce el código de reclamo de una compra (spec 10.4),
 /// revisa el checklist de productos y la marca como entregada.
@@ -108,64 +110,77 @@ class _ClaimPurchaseViewState extends State<ClaimPurchaseView> {
               Text(_error!, style: const TextStyle(color: AppColors.error)),
             if (purchase != null) ...[
               Container(
-                padding: const EdgeInsets.all(14),
-                decoration: BoxDecoration(
-                  color: AppColors.surface,
-                  borderRadius: BorderRadius.circular(14),
-                  border: Border.all(color: AppColors.border),
-                ),
-                child: Column(
-                  crossAxisAlignment: CrossAxisAlignment.start,
-                  children: [
-                    Row(
-                      mainAxisAlignment: MainAxisAlignment.spaceBetween,
-                      children: [
-                        Text(
-                          purchase.status.label,
-                          style: const TextStyle(fontWeight: FontWeight.w700),
-                        ),
-                        Text(
-                          '\$${purchase.totalAmount.toStringAsFixed(0)}',
-                          style: TextStyle(
-                            fontWeight: FontWeight.w800,
-                            color: AppColors.accent,
-                          ),
+                    padding: const EdgeInsets.all(14),
+                    decoration: BoxDecoration(
+                      color: AppColors.surface,
+                      borderRadius: BorderRadius.circular(14),
+                      border: Border.all(color: AppColors.border),
+                      boxShadow: [
+                        BoxShadow(
+                          color: AppColors.accent.withValues(alpha: 0.08),
+                          blurRadius: 14,
+                          offset: const Offset(0, 5),
                         ),
                       ],
                     ),
-                    const Divider(height: 20),
-                    for (final item in purchase.items)
-                      Padding(
-                        padding: const EdgeInsets.symmetric(vertical: 4),
-                        child: Row(
+                    child: Column(
+                      crossAxisAlignment: CrossAxisAlignment.start,
+                      children: [
+                        Row(
+                          mainAxisAlignment: MainAxisAlignment.spaceBetween,
                           children: [
-                            Icon(
-                              item.refunded
-                                  ? Icons.remove_circle_outline
-                                  : Icons.check_box_outlined,
-                              size: 18,
-                              color: item.refunded
-                                  ? AppColors.error
-                                  : AppColors.success,
-                            ),
-                            const SizedBox(width: 8),
-                            Expanded(
-                              child: Text(
-                                '${item.productName} ×${item.quantity}${item.refunded ? ' (reembolsado)' : ''}',
+                            Text(
+                              purchase.status.label,
+                              style: const TextStyle(
+                                fontWeight: FontWeight.w700,
                               ),
                             ),
                             Text(
-                              '\$${(item.unitPrice * item.quantity).toStringAsFixed(0)}',
+                              '\$${purchase.totalAmount.toStringAsFixed(0)}',
+                              style: TextStyle(
+                                fontWeight: FontWeight.w800,
+                                color: AppColors.accent,
+                              ),
                             ),
                           ],
                         ),
-                      ),
-                  ],
-                ),
-              ),
+                        const Divider(height: 20),
+                        for (final item in purchase.items)
+                          Padding(
+                            padding: const EdgeInsets.symmetric(vertical: 4),
+                            child: Row(
+                              children: [
+                                Icon(
+                                  item.refunded
+                                      ? Icons.remove_circle_outline
+                                      : Icons.check_box_outlined,
+                                  size: 18,
+                                  color: item.refunded
+                                      ? AppColors.error
+                                      : AppColors.success,
+                                ),
+                                const SizedBox(width: 8),
+                                Expanded(
+                                  child: Text(
+                                    '${item.productName} ×${item.quantity}${item.refunded ? ' (reembolsado)' : ''}',
+                                  ),
+                                ),
+                                Text(
+                                  '\$${(item.unitPrice * item.quantity).toStringAsFixed(0)}',
+                                ),
+                              ],
+                            ),
+                          ),
+                      ],
+                    ),
+                  )
+                  .animate()
+                  .fadeIn(duration: 320.ms)
+                  .slideY(begin: 0.08, end: 0, curve: Curves.easeOutCubic),
               const SizedBox(height: 16),
-              FilledButton(
+              GradientButton(
                 onPressed: canClaim && !_claiming ? _claim : null,
+                icon: _claiming ? null : Icons.check_circle_outline,
                 child: _claiming
                     ? const SizedBox(
                         height: 18,
