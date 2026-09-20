@@ -189,6 +189,49 @@ https://github.com/aldemarferreira347-creator/Barber_flutter :
     `flutter analyze` no detecta por ser errores de runtime). No se
     verificó en el navegador real porque requeriría una sesión de
     Firebase autenticada por rol.
+  - **Pase de animaciones sobre el resto del sistema** (pedido explícito:
+    "continúa arreglando todas las vistas, con animaciones, calidad
+    premium"), cubriendo las ~25 pantallas de flujo restantes sin tocar
+    `AppColors`, reutilizando los widgets premium ya existentes
+    (`GradientButton`, `PressableScale`, `ActionListTile`, `ShimmerBox`/
+    `ShimmerList`) en vez de crear una solución distinta por pantalla:
+    - **Citas**: `barber/owner/client_appointments_view`,
+      `book_appointment_view`, `rate_appointment_view`,
+      `refund_requests_view` — tarjetas con entrada escalonada
+      (`AppointmentCard.animationIndex`), shimmer de carga en vez de
+      spinner centrado, selección animada al agendar, estrellas con
+      rebote al calificar, `GradientButton` en los CTA principales.
+    - **Barbería/barberos**: `manage_barbershops_view`,
+      `barbershop_detail_view`, `barbershop_reviews_view`,
+      `close_shop_view`, `edit_schedule_view`, `add_barbershop_view`,
+      `barber_availability_view`, `manage_barbers_view` — tarjetas con
+      sombra + `PressableScale` + entrada animada, hero de detalle con
+      fade/scale, formularios con campos en cascada.
+    - **Productos/servicios**: `manage_products_view`, `add_product_view`,
+      `buy_product_view`, `claim_purchase_view`, `manage_services_view`,
+      `add_service_view` — mismo tratamiento; cantidad con
+      `AnimatedSwitcher`, código de reclamo con entrada elástica.
+    - **Notificaciones/perfil/admin/ayuda/teléfono**:
+      `notifications_view`, `choose_notification_tone_view`,
+      `profile_menu_view`, `manage_users_view`, `help_view` (los 3
+      accesos de contacto ahora usan `ActionListTile` en vez de
+      Material/InkWell repetido), `privacy_policy_view`,
+      `phone_login_view` (pasos con transición animada, `GradientButton`).
+  - **Gotcha de testing encontrado y corregido**: al cambiar el botón
+    "Continuar" de `ChooseNotificationToneView` de `FilledButton` a
+    `GradientButton`, `test/views/choose_notification_tone_view_test.dart`
+    dejó de encontrar el widget por tipo — se actualizó el test para
+    buscar `GradientButton` en su lugar, y se añadió `pumpAndSettle()`
+    tras `pumpWidget` (la entrada animada del texto deja un timer
+    pendiente si el test no espera a que termine). Regla general: al
+    envolver un botón existente en un widget de animación, revisar si
+    algún test lo ubica por `find.byType(FilledButton)`.
+  - Verificado con `flutter analyze` (sin issues nuevos, solo los mismos
+    6 lints preexistentes de estilo) y `flutter test` (58/58, sin
+    regresiones). No se verificó en navegador en vivo por el volumen de
+    pantallas (la mayoría requiere sesión Firebase autenticada); se confió
+    en los widgets compartidos ya verificados visualmente antes
+    (Splash/Login/Registro/Dashboards) más la cobertura de tests.
 
 ## Historial — cierre de Fase 11
 

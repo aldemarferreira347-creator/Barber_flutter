@@ -1,4 +1,5 @@
 import 'package:flutter/material.dart';
+import 'package:flutter_animate/flutter_animate.dart';
 import 'package:provider/provider.dart';
 
 import '../../controllers/auth_controller.dart';
@@ -8,6 +9,7 @@ import '../../repositories/notification_repository.dart';
 import '../../repositories/user_repository.dart';
 import '../../theme/app_colors.dart';
 import '../widgets/scroll_to_top_fab.dart';
+import '../widgets/shimmer_box.dart';
 import '../widgets/status_badge.dart';
 
 class ManageUsersView extends StatefulWidget {
@@ -140,7 +142,7 @@ class _ManageUsersViewState extends State<ManageUsersView> {
                 stream: userService.watchAll(),
                 builder: (context, snapshot) {
                   if (snapshot.connectionState == ConnectionState.waiting) {
-                    return const Center(child: CircularProgressIndicator());
+                    return const ShimmerList();
                   }
                   var users = snapshot.data ?? [];
                   if (_roleFilter != null) {
@@ -179,110 +181,128 @@ class _ManageUsersViewState extends State<ManageUsersView> {
                                 .toUpperCase()
                           : '?';
                       return Container(
-                        padding: const EdgeInsets.all(12),
-                        decoration: BoxDecoration(
-                          color: AppColors.surface,
-                          borderRadius: BorderRadius.circular(14),
-                          border: Border.all(color: AppColors.border),
-                        ),
-                        child: Row(
-                          children: [
-                            CircleAvatar(
-                              backgroundColor: AppColors.primary,
-                              child: Text(
-                                initials,
-                                style: const TextStyle(
-                                  color: Colors.white,
-                                  fontSize: 12,
-                                  fontWeight: FontWeight.w700,
-                                ),
-                              ),
-                            ),
-                            const SizedBox(width: 12),
-                            Expanded(
-                              child: Column(
-                                crossAxisAlignment: CrossAxisAlignment.start,
-                                children: [
-                                  Text(
-                                    user.name,
-                                    style: const TextStyle(
-                                      fontWeight: FontWeight.w700,
-                                    ),
+                            padding: const EdgeInsets.all(12),
+                            decoration: BoxDecoration(
+                              color: AppColors.surface,
+                              borderRadius: BorderRadius.circular(14),
+                              border: Border.all(color: AppColors.border),
+                              boxShadow: [
+                                BoxShadow(
+                                  color: AppColors.textPrimary.withValues(
+                                    alpha: 0.05,
                                   ),
-                                  Text(
-                                    user.email,
-                                    style: TextStyle(
-                                      color: AppColors.textSecondary,
-                                      fontSize: 12,
-                                    ),
-                                  ),
-                                  const SizedBox(height: 4),
-                                  if (user.uid == currentUid)
-                                    Text(
-                                      _roleLabel(user.role),
-                                      style: TextStyle(
-                                        color: AppColors.accent,
-                                        fontSize: 12,
-                                        fontWeight: FontWeight.w600,
-                                      ),
-                                    )
-                                  else
-                                    PopupMenuButton<UserRole>(
-                                      initialValue: user.role,
-                                      onSelected: (role) =>
-                                          userService.setRole(user.uid, role),
-                                      itemBuilder: (context) => UserRole.values
-                                          .map(
-                                            (role) => PopupMenuItem(
-                                              value: role,
-                                              child: Text(_roleLabel(role)),
-                                            ),
-                                          )
-                                          .toList(),
-                                      child: Row(
-                                        mainAxisSize: MainAxisSize.min,
-                                        children: [
-                                          Text(
-                                            _roleLabel(user.role),
-                                            style: TextStyle(
-                                              color: AppColors.accent,
-                                              fontSize: 12,
-                                              fontWeight: FontWeight.w600,
-                                            ),
-                                          ),
-                                          Icon(
-                                            Icons.arrow_drop_down,
-                                            size: 16,
-                                            color: AppColors.accent,
-                                          ),
-                                        ],
-                                      ),
-                                    ),
-                                ],
-                              ),
-                            ),
-                            IconButton(
-                              icon: Icon(
-                                Icons.notifications_outlined,
-                                color: AppColors.accent,
-                              ),
-                              tooltip: 'Enviar notificación',
-                              onPressed: () => _notify(context, user),
-                            ),
-                            Column(
-                              crossAxisAlignment: CrossAxisAlignment.end,
-                              children: [
-                                StatusBadge.active(user.active),
-                                Switch(
-                                  value: user.active,
-                                  onChanged: (value) =>
-                                      userService.setActive(user.uid, value),
+                                  blurRadius: 12,
+                                  offset: const Offset(0, 5),
                                 ),
                               ],
                             ),
-                          ],
-                        ),
-                      );
+                            child: Row(
+                              children: [
+                                CircleAvatar(
+                                  backgroundColor: AppColors.primary,
+                                  child: Text(
+                                    initials,
+                                    style: const TextStyle(
+                                      color: Colors.white,
+                                      fontSize: 12,
+                                      fontWeight: FontWeight.w700,
+                                    ),
+                                  ),
+                                ),
+                                const SizedBox(width: 12),
+                                Expanded(
+                                  child: Column(
+                                    crossAxisAlignment:
+                                        CrossAxisAlignment.start,
+                                    children: [
+                                      Text(
+                                        user.name,
+                                        style: const TextStyle(
+                                          fontWeight: FontWeight.w700,
+                                        ),
+                                      ),
+                                      Text(
+                                        user.email,
+                                        style: TextStyle(
+                                          color: AppColors.textSecondary,
+                                          fontSize: 12,
+                                        ),
+                                      ),
+                                      const SizedBox(height: 4),
+                                      if (user.uid == currentUid)
+                                        Text(
+                                          _roleLabel(user.role),
+                                          style: TextStyle(
+                                            color: AppColors.accent,
+                                            fontSize: 12,
+                                            fontWeight: FontWeight.w600,
+                                          ),
+                                        )
+                                      else
+                                        PopupMenuButton<UserRole>(
+                                          initialValue: user.role,
+                                          onSelected: (role) => userService
+                                              .setRole(user.uid, role),
+                                          itemBuilder: (context) => UserRole
+                                              .values
+                                              .map(
+                                                (role) => PopupMenuItem(
+                                                  value: role,
+                                                  child: Text(_roleLabel(role)),
+                                                ),
+                                              )
+                                              .toList(),
+                                          child: Row(
+                                            mainAxisSize: MainAxisSize.min,
+                                            children: [
+                                              Text(
+                                                _roleLabel(user.role),
+                                                style: TextStyle(
+                                                  color: AppColors.accent,
+                                                  fontSize: 12,
+                                                  fontWeight: FontWeight.w600,
+                                                ),
+                                              ),
+                                              Icon(
+                                                Icons.arrow_drop_down,
+                                                size: 16,
+                                                color: AppColors.accent,
+                                              ),
+                                            ],
+                                          ),
+                                        ),
+                                    ],
+                                  ),
+                                ),
+                                IconButton(
+                                  icon: Icon(
+                                    Icons.notifications_outlined,
+                                    color: AppColors.accent,
+                                  ),
+                                  tooltip: 'Enviar notificación',
+                                  onPressed: () => _notify(context, user),
+                                ),
+                                Column(
+                                  crossAxisAlignment: CrossAxisAlignment.end,
+                                  children: [
+                                    StatusBadge.active(user.active),
+                                    Switch(
+                                      value: user.active,
+                                      onChanged: (value) => userService
+                                          .setActive(user.uid, value),
+                                    ),
+                                  ],
+                                ),
+                              ],
+                            ),
+                          )
+                          .animate(delay: (index * 50).ms)
+                          .fadeIn(duration: 280.ms)
+                          .slideX(
+                            begin: 0.06,
+                            end: 0,
+                            curve: Curves.easeOutCubic,
+                          );
                     },
                   );
                 },

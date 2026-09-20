@@ -6,6 +6,7 @@ import 'package:barber/repositories/auth_repository.dart';
 import 'package:barber/repositories/user_repository.dart';
 import 'package:barber/services/push_notification_service.dart';
 import 'package:barber/views/notification/choose_notification_tone_view.dart';
+import 'package:barber/views/widgets/gradient_button.dart';
 import 'package:firebase_auth/firebase_auth.dart';
 import 'package:flutter/material.dart';
 import 'package:flutter_test/flutter_test.dart';
@@ -47,8 +48,9 @@ void main() {
 
   testWidgets('el botón Continuar está deshabilitado hasta elegir un tono', (tester) async {
     await tester.pumpWidget(wrap());
+    await tester.pumpAndSettle();
 
-    final button = tester.widget<FilledButton>(find.byType(FilledButton));
+    final button = tester.widget<GradientButton>(find.byType(GradientButton));
     expect(button.onPressed, isNull);
   });
 
@@ -56,14 +58,15 @@ void main() {
     when(() => userRepository.setNotificationTone(_kUid, NotificationTone.informal)).thenAnswer((_) async {});
 
     await tester.pumpWidget(wrap());
+    await tester.pumpAndSettle();
 
     await tester.tap(find.text(NotificationTone.informal.label));
-    await tester.pump();
+    await tester.pumpAndSettle();
 
-    final button = tester.widget<FilledButton>(find.byType(FilledButton));
+    final button = tester.widget<GradientButton>(find.byType(GradientButton));
     expect(button.onPressed, isNotNull);
 
-    await tester.tap(find.byType(FilledButton));
+    await tester.tap(find.byType(GradientButton));
     await tester.pumpAndSettle();
 
     verify(() => userRepository.setNotificationTone(_kUid, NotificationTone.informal)).called(1);

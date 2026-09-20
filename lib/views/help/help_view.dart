@@ -1,8 +1,10 @@
 import 'package:flutter/material.dart';
+import 'package:flutter_animate/flutter_animate.dart';
 import 'package:url_launcher/url_launcher.dart';
 
 import '../../support_info.dart';
 import '../../theme/app_colors.dart';
+import '../widgets/action_list_tile.dart';
 import 'privacy_policy_view.dart';
 
 class HelpView extends StatelessWidget {
@@ -59,15 +61,25 @@ class HelpView extends StatelessWidget {
         padding: const EdgeInsets.all(16),
         children: [
           const Text(
-            'Preguntas frecuentes',
-            style: TextStyle(fontWeight: FontWeight.w700, fontSize: 15),
-          ),
+                'Preguntas frecuentes',
+                style: TextStyle(fontWeight: FontWeight.w700, fontSize: 15),
+              )
+              .animate()
+              .fadeIn(duration: 300.ms)
+              .slideX(begin: -0.05, end: 0, curve: Curves.easeOutCubic),
           const SizedBox(height: 8),
           Container(
             decoration: BoxDecoration(
               color: AppColors.surface,
               borderRadius: BorderRadius.circular(14),
               border: Border.all(color: AppColors.border),
+              boxShadow: [
+                BoxShadow(
+                  color: AppColors.textPrimary.withValues(alpha: 0.05),
+                  blurRadius: 14,
+                  offset: const Offset(0, 6),
+                ),
+              ],
             ),
             child: Theme(
               data: Theme.of(context).copyWith(dividerColor: AppColors.border),
@@ -102,87 +114,39 @@ class HelpView extends StatelessWidget {
           ),
           const SizedBox(height: 24),
           const Text(
-            'Contáctanos',
-            style: TextStyle(fontWeight: FontWeight.w700, fontSize: 15),
-          ),
+                'Contáctanos',
+                style: TextStyle(fontWeight: FontWeight.w700, fontSize: 15),
+              )
+              .animate(delay: 100.ms)
+              .fadeIn(duration: 300.ms)
+              .slideX(begin: -0.05, end: 0, curve: Curves.easeOutCubic),
           const SizedBox(height: 8),
-          Material(
-            color: AppColors.surface,
-            borderRadius: BorderRadius.circular(14),
-            child: InkWell(
-              borderRadius: BorderRadius.circular(14),
-              onTap: () => _launch(
-                context,
-                Uri(scheme: 'mailto', path: SupportInfo.supportEmail),
-              ),
-              child: Container(
-                padding: const EdgeInsets.all(14),
-                decoration: BoxDecoration(
-                  borderRadius: BorderRadius.circular(14),
-                  border: Border.all(color: AppColors.border),
-                ),
-                child: Row(
-                  children: [
-                    Icon(Icons.mail_outline, color: AppColors.accent),
-                    const SizedBox(width: 12),
-                    Expanded(child: Text(SupportInfo.supportEmail)),
-                    Icon(Icons.chevron_right, color: AppColors.textSecondary),
-                  ],
-                ),
-              ),
+          ActionListTile(
+            icon: Icons.mail_outline,
+            label: SupportInfo.supportEmail,
+            animationIndex: 0,
+            onTap: () => _launch(
+              context,
+              Uri(scheme: 'mailto', path: SupportInfo.supportEmail),
             ),
           ),
           const SizedBox(height: 10),
-          Material(
-            color: AppColors.surface,
-            borderRadius: BorderRadius.circular(14),
-            child: InkWell(
-              borderRadius: BorderRadius.circular(14),
-              onTap: () => _launch(
-                context,
-                Uri(scheme: 'tel', path: SupportInfo.supportPhone),
-              ),
-              child: Container(
-                padding: const EdgeInsets.all(14),
-                decoration: BoxDecoration(
-                  borderRadius: BorderRadius.circular(14),
-                  border: Border.all(color: AppColors.border),
-                ),
-                child: Row(
-                  children: [
-                    Icon(Icons.phone_outlined, color: AppColors.accent),
-                    const SizedBox(width: 12),
-                    Expanded(child: Text(SupportInfo.supportPhone)),
-                    Icon(Icons.chevron_right, color: AppColors.textSecondary),
-                  ],
-                ),
-              ),
+          ActionListTile(
+            icon: Icons.phone_outlined,
+            label: SupportInfo.supportPhone,
+            animationIndex: 1,
+            onTap: () => _launch(
+              context,
+              Uri(scheme: 'tel', path: SupportInfo.supportPhone),
             ),
           ),
           const SizedBox(height: 10),
-          Material(
-            color: AppColors.surface,
-            borderRadius: BorderRadius.circular(14),
-            child: InkWell(
-              borderRadius: BorderRadius.circular(14),
-              onTap: () => Navigator.of(context).push(
-                MaterialPageRoute(builder: (_) => const PrivacyPolicyView()),
-              ),
-              child: Container(
-                padding: const EdgeInsets.all(14),
-                decoration: BoxDecoration(
-                  borderRadius: BorderRadius.circular(14),
-                  border: Border.all(color: AppColors.border),
-                ),
-                child: Row(
-                  children: [
-                    Icon(Icons.privacy_tip_outlined, color: AppColors.accent),
-                    const SizedBox(width: 12),
-                    const Expanded(child: Text('Política de privacidad')),
-                    Icon(Icons.chevron_right, color: AppColors.textSecondary),
-                  ],
-                ),
-              ),
+          ActionListTile(
+            icon: Icons.privacy_tip_outlined,
+            label: 'Política de privacidad',
+            animationIndex: 2,
+            onTap: () => Navigator.of(context).push(
+              MaterialPageRoute(builder: (_) => const PrivacyPolicyView()),
             ),
           ),
         ],

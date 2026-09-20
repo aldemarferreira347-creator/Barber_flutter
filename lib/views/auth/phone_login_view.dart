@@ -1,8 +1,10 @@
 import 'package:flutter/material.dart';
+import 'package:flutter_animate/flutter_animate.dart';
 import 'package:provider/provider.dart';
 
 import '../../controllers/auth_controller.dart';
 import '../../theme/app_colors.dart';
+import '../widgets/gradient_button.dart';
 
 class PhoneLoginView extends StatefulWidget {
   const PhoneLoginView({super.key});
@@ -77,6 +79,15 @@ class _PhoneLoginViewState extends State<PhoneLoginView> {
               child: Column(
                 crossAxisAlignment: CrossAxisAlignment.stretch,
                 children: [
+                  Icon(
+                        codeStep ? Icons.sms_outlined : Icons.phone_iphone,
+                        size: 48,
+                        color: AppColors.accent,
+                      )
+                      .animate()
+                      .fadeIn(duration: 320.ms)
+                      .scaleXY(begin: 0.7, end: 1, curve: Curves.easeOutBack),
+                  const SizedBox(height: 16),
                   Text(
                     codeStep
                         ? 'Ingresa el código que te enviamos'
@@ -85,27 +96,31 @@ class _PhoneLoginViewState extends State<PhoneLoginView> {
                       fontSize: 18,
                       fontWeight: FontWeight.w700,
                     ),
-                  ),
+                  ).animate(delay: 80.ms).fadeIn(duration: 300.ms),
                   const SizedBox(height: 4),
                   Text(
                     codeStep
                         ? 'Enviado a ${_phoneController.text}'
                         : 'Escribe tu número con indicativo de país',
                     style: TextStyle(color: AppColors.textSecondary),
-                  ),
+                  ).animate(delay: 120.ms).fadeIn(duration: 300.ms),
                   const SizedBox(height: 20),
                   if (!codeStep) ...[
                     TextField(
-                      controller: _phoneController,
-                      keyboardType: TextInputType.phone,
-                      decoration: const InputDecoration(
-                        labelText: 'Teléfono',
-                        prefixIcon: Icon(Icons.phone_outlined),
-                      ),
-                    ),
+                          controller: _phoneController,
+                          keyboardType: TextInputType.phone,
+                          decoration: const InputDecoration(
+                            labelText: 'Teléfono',
+                            prefixIcon: Icon(Icons.phone_outlined),
+                          ),
+                        )
+                        .animate(delay: 160.ms)
+                        .fadeIn(duration: 300.ms)
+                        .slideY(begin: 0.1, end: 0, curve: Curves.easeOutCubic),
                     const SizedBox(height: 20),
-                    FilledButton(
+                    GradientButton(
                       onPressed: auth.isBusy ? null : () => _sendCode(auth),
+                      icon: auth.isBusy ? null : Icons.send_outlined,
                       child: auth.isBusy
                           ? const SizedBox(
                               height: 18,
@@ -119,16 +134,20 @@ class _PhoneLoginViewState extends State<PhoneLoginView> {
                     ),
                   ] else ...[
                     TextField(
-                      controller: _codeController,
-                      keyboardType: TextInputType.number,
-                      decoration: const InputDecoration(
-                        labelText: 'Código de 6 dígitos',
-                        prefixIcon: Icon(Icons.sms_outlined),
-                      ),
-                    ),
+                          controller: _codeController,
+                          keyboardType: TextInputType.number,
+                          decoration: const InputDecoration(
+                            labelText: 'Código de 6 dígitos',
+                            prefixIcon: Icon(Icons.sms_outlined),
+                          ),
+                        )
+                        .animate(delay: 160.ms)
+                        .fadeIn(duration: 300.ms)
+                        .slideY(begin: 0.1, end: 0, curve: Curves.easeOutCubic),
                     const SizedBox(height: 20),
-                    FilledButton(
+                    GradientButton(
                       onPressed: auth.isBusy ? null : () => _confirmCode(auth),
+                      icon: auth.isBusy ? null : Icons.check_circle_outline,
                       child: auth.isBusy
                           ? const SizedBox(
                               height: 18,
