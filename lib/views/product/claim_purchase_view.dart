@@ -46,11 +46,12 @@ class _ClaimPurchaseViewState extends State<ClaimPurchaseView> {
         claimCode: code,
       );
       setState(() => _purchase = purchase);
-      if (purchase == null)
+      if (purchase == null) {
         setState(
           () => _error =
               'No encontramos ninguna compra con ese código en esta barbería.',
         );
+      }
     } catch (e) {
       setState(() => _error = 'No se pudo buscar el código: $e');
     } finally {
@@ -71,8 +72,9 @@ class _ClaimPurchaseViewState extends State<ClaimPurchaseView> {
         Navigator.of(context).pop();
       }
     } catch (e) {
-      if (mounted)
+      if (mounted) {
         setState(() => _error = 'No se pudo marcar como entregada: $e');
+      }
     } finally {
       if (mounted) setState(() => _claiming = false);
     }

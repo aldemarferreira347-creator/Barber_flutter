@@ -63,8 +63,11 @@ class _CloseShopViewState extends State<CloseShopView> {
   Future<void> _confirm() async {
     final from = _from;
     final until = _until;
-    if (from == null || until == null || _reasonController.text.trim().isEmpty)
+    if (from == null ||
+        until == null ||
+        _reasonController.text.trim().isEmpty) {
       return;
+    }
 
     setState(() => _saving = true);
     try {

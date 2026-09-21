@@ -41,47 +41,48 @@ class DefaultFirebaseOptions {
   }
 
   static const FirebaseOptions web = FirebaseOptions(
-    apiKey: 'AIzaSyC_ZY8fh8DplPGvhEt1zGBCYW6wnmEon5c',
-    appId: '1:520100424312:web:5ccad4b98d424f00cb9b8d',
-    messagingSenderId: '520100424312',
-    projectId: 'barber-c61c5',
-    authDomain: 'barber-c61c5.firebaseapp.com',
-    storageBucket: 'barber-c61c5.firebasestorage.app',
-    measurementId: 'G-3XNGVNTH03',
+    apiKey: 'AIzaSyBBvbj7Ww-OzuQiND_ccNIh0SyrepFrcBs',
+    appId: '1:715905788902:web:8f6cc48fb4190feb0ec427',
+    messagingSenderId: '715905788902',
+    projectId: 'barber-5082f',
+    authDomain: 'barber-5082f.firebaseapp.com',
+    storageBucket: 'barber-5082f.firebasestorage.app',
+    measurementId: 'G-MCKX97H52Z',
   );
 
   static const FirebaseOptions android = FirebaseOptions(
-    apiKey: 'AIzaSyAejJRIXNIE-rxCTJhNISn4OIhr_RVK8_k',
-    appId: '1:520100424312:android:018b84195249f2abcb9b8d',
-    messagingSenderId: '520100424312',
-    projectId: 'barber-c61c5',
-    storageBucket: 'barber-c61c5.firebasestorage.app',
+    apiKey: 'AIzaSyDUZqrDqSUEHIhddya3A06zFYHxBJgImA4',
+    appId: '1:715905788902:android:eb4c7aab17be35790ec427',
+    messagingSenderId: '715905788902',
+    projectId: 'barber-5082f',
+    storageBucket: 'barber-5082f.firebasestorage.app',
   );
   static const FirebaseOptions ios = FirebaseOptions(
-    apiKey: 'AIzaSyCRLz-l4cKE3ILay63jdER2TxNdF94Eu0Y',
-    appId: '1:520100424312:ios:daff3055da3c4fcbcb9b8d',
-    messagingSenderId: '520100424312',
-    projectId: 'barber-c61c5',
-    storageBucket: 'barber-c61c5.firebasestorage.app',
+    apiKey: 'AIzaSyAgkHpBJgzsjzXepNCWh4ckNCU-8ltCSyk',
+    appId: '1:715905788902:ios:19a3c313ff11643c0ec427',
+    messagingSenderId: '715905788902',
+    projectId: 'barber-5082f',
+    storageBucket: 'barber-5082f.firebasestorage.app',
+    iosClientId: '715905788902-o6qnsn29ii6l4f6krlbsb7s3gv9gcfdh.apps.googleusercontent.com',
     iosBundleId: 'com.example.barber',
   );
-
   static const FirebaseOptions macos = FirebaseOptions(
-    apiKey: 'AIzaSyCRLz-l4cKE3ILay63jdER2TxNdF94Eu0Y',
-    appId: '1:520100424312:ios:daff3055da3c4fcbcb9b8d',
-    messagingSenderId: '520100424312',
-    projectId: 'barber-c61c5',
-    storageBucket: 'barber-c61c5.firebasestorage.app',
+    apiKey: 'AIzaSyAgkHpBJgzsjzXepNCWh4ckNCU-8ltCSyk',
+    appId: '1:715905788902:ios:19a3c313ff11643c0ec427',
+    messagingSenderId: '715905788902',
+    projectId: 'barber-5082f',
+    storageBucket: 'barber-5082f.firebasestorage.app',
+    iosClientId: '715905788902-o6qnsn29ii6l4f6krlbsb7s3gv9gcfdh.apps.googleusercontent.com',
     iosBundleId: 'com.example.barber',
   );
 
   static const FirebaseOptions windows = FirebaseOptions(
-    apiKey: 'AIzaSyC_ZY8fh8DplPGvhEt1zGBCYW6wnmEon5c',
-    appId: '1:520100424312:web:ca5d39cc392966d4cb9b8d',
-    messagingSenderId: '520100424312',
-    projectId: 'barber-c61c5',
-    authDomain: 'barber-c61c5.firebaseapp.com',
-    storageBucket: 'barber-c61c5.firebasestorage.app',
-    measurementId: 'G-4T5Q75MZ3P',
+    apiKey: 'AIzaSyBBvbj7Ww-OzuQiND_ccNIh0SyrepFrcBs',
+    appId: '1:715905788902:web:233e5ebfe82477670ec427',
+    messagingSenderId: '715905788902',
+    projectId: 'barber-5082f',
+    authDomain: 'barber-5082f.firebaseapp.com',
+    storageBucket: 'barber-5082f.firebasestorage.app',
+    measurementId: 'G-0L9QFKRD73',
   );
 }

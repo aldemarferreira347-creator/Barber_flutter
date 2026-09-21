@@ -131,4 +131,19 @@ class FirestoreUserService implements UserRepository {
       'fcmTokens': FieldValue.arrayRemove([token]),
     });
   }
+
+  @override
+  Future<void> updateName(String uid, String name) {
+    return _users.doc(uid).update({'name': name.trim()});
+  }
+
+  @override
+  Future<void> updateEmail(String uid, String email) {
+    return _users.doc(uid).update({'email': email.trim().toLowerCase()});
+  }
+
+  @override
+  Future<void> deleteUser(String uid) {
+    return _users.doc(uid).delete();
+  }
 }

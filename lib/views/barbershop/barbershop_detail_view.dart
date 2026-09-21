@@ -12,6 +12,7 @@ import '../../theme/app_colors.dart';
 import '../appointment/book_appointment_view.dart';
 import '../product/manage_products_view.dart';
 import '../service/manage_services_view.dart';
+import '../widgets/error_state.dart';
 import '../widgets/shimmer_box.dart';
 import '../widgets/status_badge.dart';
 import 'barbershop_reviews_view.dart';
@@ -59,6 +60,14 @@ class BarbershopDetailView extends StatelessWidget {
       body: StreamBuilder<Barbershop?>(
         stream: service.watchOne(barbershopId),
         builder: (context, snapshot) {
+          if (snapshot.hasError) {
+            return const Center(
+              child: ErrorState(
+                title: 'No pudimos cargar la barbería',
+                subtitle: 'Verifica tu conexión e inténtalo de nuevo.',
+              ),
+            );
+          }
           if (snapshot.connectionState == ConnectionState.waiting) {
             return ListView(
               padding: const EdgeInsets.all(16),

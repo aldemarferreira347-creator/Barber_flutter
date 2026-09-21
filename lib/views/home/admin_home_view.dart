@@ -10,11 +10,6 @@ import 'admin_dashboard_tab.dart';
 class AdminHomeView extends StatelessWidget {
   const AdminHomeView({super.key});
 
-  void _comingSoon(BuildContext context, String feature) {
-    ScaffoldMessenger.of(context)
-        .showSnackBar(SnackBar(content: Text('$feature próximamente')));
-  }
-
   @override
   Widget build(BuildContext context) {
     return RoleShell(
@@ -56,11 +51,6 @@ class AdminHomeView extends StatelessWidget {
                           const ManageBarbershopsView(adminControls: true),
                     ),
                   ),
-                ),
-                ProfileMenuItem(
-                  icon: Icons.settings_outlined,
-                  label: 'Configuración del sistema',
-                  onTap: () => _comingSoon(context, 'La configuración'),
                 ),
                 ProfileMenuItem(
                   icon: Icons.help_outline,

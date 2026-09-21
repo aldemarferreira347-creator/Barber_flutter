@@ -10,6 +10,7 @@ import '../../models/user_role.dart';
 import '../../repositories/barbershop_repository.dart';
 import '../../repositories/comment_repository.dart';
 import '../../theme/app_colors.dart';
+import '../widgets/error_state.dart';
 import '../widgets/shimmer_box.dart';
 
 bool _isStaffOfShop(AppUser profile, Barbershop shop) {
@@ -36,6 +37,14 @@ class BarbershopReviewsView extends StatelessWidget {
       body: StreamBuilder<Barbershop?>(
         stream: barbershopRepo.watchOne(barbershopId),
         builder: (context, shopSnapshot) {
+          if (shopSnapshot.hasError) {
+            return const Center(
+              child: ErrorState(
+                title: 'No pudimos cargar las reseñas',
+                subtitle: 'Verifica tu conexión e inténtalo de nuevo.',
+              ),
+            );
+          }
           final shop = shopSnapshot.data;
           if (shop == null) {
             return const Padding(
@@ -51,6 +60,14 @@ class BarbershopReviewsView extends StatelessWidget {
                 .read<CommentRepository>()
                 .watchPublishedByBarbershop(barbershopId),
             builder: (context, commentsSnapshot) {
+              if (commentsSnapshot.hasError) {
+                return const Center(
+                  child: ErrorState(
+                    title: 'No pudimos cargar los comentarios',
+                    subtitle: 'Verifica tu conexión e inténtalo de nuevo.',
+                  ),
+                );
+              }
               final comments = commentsSnapshot.data ?? const <Comment>[];
 
               return ListView(

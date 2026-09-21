@@ -13,7 +13,9 @@ import '../admin/manage_users_view.dart';
 import '../barbershop/manage_barbershops_view.dart';
 import '../notification/notifications_view.dart';
 import '../widgets/action_list_tile.dart';
+import '../widgets/brand_mark.dart';
 import '../widgets/dashboard_scaffold.dart';
+import '../widgets/error_state.dart';
 import '../widgets/promo_banner_card.dart';
 import '../widgets/stat_card.dart';
 
@@ -73,10 +75,17 @@ class _AdminDashboardTabState extends State<AdminDashboardTab> {
     return DashboardScaffold(
       greeting: 'Hola, $greetingName 👋',
       subtitle: 'Panel de administración',
-      avatar: CircleAvatar(
+      avatar: const CircleAvatar(
         radius: 22,
-        backgroundColor: Colors.white.withValues(alpha: 0.15),
-        child: const Icon(Icons.shield_outlined, color: Colors.white, size: 20),
+        backgroundColor: Colors.white,
+        child: Padding(
+          padding: EdgeInsets.all(4),
+          child: BrandMark(
+            size: 26,
+            color: Color(0xFF0F172A),
+            spin: false,
+          ),
+        ),
       ),
       onNotifications: profile == null
           ? null
@@ -89,10 +98,22 @@ class _AdminDashboardTabState extends State<AdminDashboardTab> {
         StreamBuilder<List<AppUser>>(
           stream: userService.watchAll(),
           builder: (context, userSnapshot) {
+            if (userSnapshot.hasError) {
+              return const ErrorState(
+                title: 'No pudimos cargar las estadísticas',
+                subtitle: 'Verifica tu conexión e inténtalo de nuevo.',
+              );
+            }
             final users = userSnapshot.data ?? [];
             return StreamBuilder<List<Barbershop>>(
               stream: barbershopService.watchAll(),
               builder: (context, shopSnapshot) {
+                if (shopSnapshot.hasError) {
+                  return const ErrorState(
+                    title: 'No pudimos cargar las estadísticas',
+                    subtitle: 'Verifica tu conexión e inténtalo de nuevo.',
+                  );
+                }
                 final shops = shopSnapshot.data ?? [];
                 final overdueShops = shops
                     .where((s) => s.paymentStatus != PaymentStatus.ok)
@@ -155,21 +176,13 @@ class _AdminDashboardTabState extends State<AdminDashboardTab> {
         const SizedBox(height: 10),
         ActionListTile(
           icon: Icons.storefront_outlined,
-          label: 'Ver todas las barberías',
+          label: 'Gestión de barberías',
+          subtitle: 'Aprobaciones, estado y mensualidad',
           animationIndex: 1,
           onTap: () => Navigator.of(context).push(
             MaterialPageRoute(
               builder: (_) => const ManageBarbershopsView(adminControls: true),
             ),
-          ),
-        ),
-        const SizedBox(height: 10),
-        ActionListTile(
-          icon: Icons.settings_outlined,
-          label: 'Configuración del sistema',
-          animationIndex: 2,
-          onTap: () => ScaffoldMessenger.of(context).showSnackBar(
-            const SnackBar(content: Text('La configuración próximamente')),
           ),
         ),
         const SizedBox(height: 24),

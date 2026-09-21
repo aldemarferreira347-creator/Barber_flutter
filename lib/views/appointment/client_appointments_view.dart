@@ -9,6 +9,7 @@ import '../../repositories/rating_repository.dart';
 import '../../theme/app_colors.dart';
 import '../widgets/appointment_card.dart';
 import '../widgets/empty_state.dart';
+import '../widgets/error_state.dart';
 import '../widgets/shimmer_box.dart';
 import 'rate_appointment_view.dart';
 
@@ -215,6 +216,11 @@ class ClientAppointmentsView extends StatelessWidget {
           : StreamBuilder<List<Appointment>>(
               stream: repo.watchByClient(profile.uid),
               builder: (context, snapshot) {
+                if (snapshot.hasError) {
+                  return const Center(
+                    child: ErrorState(title: 'No pudimos cargar tus citas'),
+                  );
+                }
                 if (snapshot.connectionState == ConnectionState.waiting) {
                   return const Padding(
                     padding: EdgeInsets.all(16),
@@ -247,7 +253,12 @@ class ClientAppointmentsView extends StatelessWidget {
                       .read<RatingRepository>()
                       .watchRatedAppointmentIds(profile.uid),
                   builder: (context, ratedSnapshot) {
-                    final ratedIds = ratedSnapshot.data ?? const <String>{};
+                    // Este stream solo decide si se muestra el botón
+                    // "Calificar" por cita; si falla, no bloqueamos el
+                    // historial completo, simplemente no mostramos el botón.
+                    final ratedIds = ratedSnapshot.hasError
+                        ? const <String>{}
+                        : (ratedSnapshot.data ?? const <String>{});
 
                     return ListView(
                       padding: const EdgeInsets.all(16),

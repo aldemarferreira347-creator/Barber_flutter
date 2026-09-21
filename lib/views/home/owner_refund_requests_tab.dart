@@ -6,6 +6,7 @@ import '../../models/barbershop.dart';
 import '../../repositories/barbershop_repository.dart';
 import '../appointment/refund_requests_view.dart';
 import '../widgets/empty_state.dart';
+import '../widgets/error_state.dart';
 
 /// Resuelve la barbería del dueño autenticado y muestra sus solicitudes de
 /// reembolso — mismo patrón que OwnerServicesTab/OwnerProductsTab.
@@ -22,6 +23,17 @@ class OwnerRefundRequestsTab extends StatelessWidget {
           ? const Stream<List<Barbershop>>.empty()
           : barbershopService.watchByOwner(profile.uid),
       builder: (context, snapshot) {
+        if (snapshot.hasError) {
+          return Scaffold(
+            appBar: AppBar(title: const Text('Solicitudes de reembolso')),
+            body: const Center(
+              child: ErrorState(
+                title: 'No pudimos cargar tu barbería',
+                subtitle: 'Verifica tu conexión e inténtalo de nuevo.',
+              ),
+            ),
+          );
+        }
         final shops = snapshot.data ?? [];
         if (shops.isEmpty) {
           return Scaffold(

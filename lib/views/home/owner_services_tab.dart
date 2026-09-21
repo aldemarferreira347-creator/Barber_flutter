@@ -6,6 +6,7 @@ import '../../models/barbershop.dart';
 import '../../repositories/barbershop_repository.dart';
 import '../service/manage_services_view.dart';
 import '../widgets/empty_state.dart';
+import '../widgets/error_state.dart';
 
 /// Resuelve la barbería del dueño autenticado y muestra sus servicios —
 /// el tab "Servicios" no conoce el id de la barbería de antemano.
@@ -22,6 +23,17 @@ class OwnerServicesTab extends StatelessWidget {
           ? const Stream<List<Barbershop>>.empty()
           : barbershopService.watchByOwner(profile.uid),
       builder: (context, snapshot) {
+        if (snapshot.hasError) {
+          return Scaffold(
+            appBar: AppBar(title: const Text('Servicios')),
+            body: const Center(
+              child: ErrorState(
+                title: 'No pudimos cargar tu barbería',
+                subtitle: 'Verifica tu conexión e inténtalo de nuevo.',
+              ),
+            ),
+          );
+        }
         final shops = snapshot.data ?? [];
         if (shops.isEmpty) {
           return Scaffold(

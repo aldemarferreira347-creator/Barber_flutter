@@ -6,6 +6,7 @@ import '../../models/barbershop.dart';
 import '../../repositories/barbershop_repository.dart';
 import '../barbershop/close_shop_view.dart';
 import '../widgets/empty_state.dart';
+import '../widgets/error_state.dart';
 
 /// Resuelve la barbería del dueño autenticado antes de abrir el cierre por
 /// evento externo — mismo patrón que OwnerServicesTab/OwnerProductsTab.
@@ -22,6 +23,17 @@ class OwnerCloseShopTab extends StatelessWidget {
           ? const Stream<List<Barbershop>>.empty()
           : barbershopService.watchByOwner(profile.uid),
       builder: (context, snapshot) {
+        if (snapshot.hasError) {
+          return Scaffold(
+            appBar: AppBar(title: const Text('Cerrar por evento externo')),
+            body: const Center(
+              child: ErrorState(
+                title: 'No pudimos cargar tu barbería',
+                subtitle: 'Verifica tu conexión e inténtalo de nuevo.',
+              ),
+            ),
+          );
+        }
         final shops = snapshot.data ?? [];
         if (shops.isEmpty) {
           return Scaffold(

@@ -10,19 +10,19 @@ class AppColors {
   static bool isDark = false;
 
   static Color get primary =>
-      isDark ? const Color(0xFF3B82F6) : const Color(0xFF0F172A);
+      isDark ? const Color(0xFF2563EB) : const Color(0xFF0F172A);
   static Color get accent =>
-      isDark ? const Color(0xFF60A5FA) : const Color(0xFF3B82F6);
+      isDark ? const Color(0xFF3B82F6) : const Color(0xFF2563EB);
   static const success = Color(0xFF10B981);
   static const warning = Color(0xFFF59E0B);
   static const error = Color(0xFFEF4444);
   static Color get background =>
-      isDark ? const Color(0xFF0B1220) : const Color(0xFFF1F5F9);
-  static Color get surface => isDark ? const Color(0xFF16213A) : Colors.white;
+      isDark ? const Color(0xFF09090B) : const Color(0xFFF1F5F9);
+  static Color get surface => isDark ? const Color(0xFF18181B) : Colors.white;
   static Color get textPrimary =>
-      isDark ? const Color(0xFFF1F5F9) : const Color(0xFF0F172A);
+      isDark ? const Color(0xFFFAFAFA) : const Color(0xFF0F172A);
   static Color get textSecondary =>
-      isDark ? const Color(0xFF94A3B8) : const Color(0xFF64748B);
+      isDark ? const Color(0xFFA1A1AA) : const Color(0xFF64748B);
   static Color get border =>
-      isDark ? const Color(0xFF2A3855) : const Color(0xFFE2E8F0);
+      isDark ? const Color(0xFF27272A) : const Color(0xFFE2E8F0);
 }

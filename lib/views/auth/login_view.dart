@@ -4,9 +4,8 @@ import 'package:flutter_animate/flutter_animate.dart';
 import 'package:provider/provider.dart';
 
 import '../../controllers/auth_controller.dart';
-import '../../theme/app_colors.dart';
 import '../widgets/brand_mark.dart';
-import '../widgets/gradient_button.dart';
+import '../widgets/custom_icons.dart';
 import 'phone_login_view.dart';
 import 'register_view.dart';
 
@@ -168,266 +167,487 @@ class _LoginViewState extends State<LoginView> {
   @override
   Widget build(BuildContext context) {
     final auth = context.watch<AuthController>();
+
     return Scaffold(
-      backgroundColor: AppColors.surface,
-      body: SafeArea(
-        child: SingleChildScrollView(
-          padding: const EdgeInsets.fromLTRB(24, 16, 24, 0),
-          child: Center(
-            child: ConstrainedBox(
-              constraints: const BoxConstraints(maxWidth: 400),
-              child: Form(
-                key: _formKey,
-                child: Column(
-                  crossAxisAlignment: CrossAxisAlignment.stretch,
-                  children: [
-                    const _LoginHero()
-                        .animate()
-                        .scale(
-                          begin: const Offset(0.7, 0.7),
-                          curve: Curves.elasticOut,
-                          duration: 800.ms,
-                        )
-                        .fadeIn(duration: 300.ms),
-                    const SizedBox(height: 28),
-                    const Text(
-                          'Iniciar sesión',
-                          style: TextStyle(
-                            fontSize: 22,
-                            fontWeight: FontWeight.w800,
+      backgroundColor: Colors.black,
+      body: Stack(
+        fit: StackFit.expand,
+        children: [
+          // Fondo oscuro de la barbería visible en la parte inferior
+          Image.asset(
+            'lib/views/img/fondo.png',
+            fit: BoxFit.cover,
+            alignment: Alignment.bottomCenter,
+          ),
+          DecoratedBox(
+            decoration: BoxDecoration(
+              gradient: LinearGradient(
+                begin: Alignment.topCenter,
+                end: Alignment.bottomCenter,
+                colors: [
+                  Colors.black.withValues(alpha: 0.15),
+                  Colors.black.withValues(alpha: 0.65),
+                ],
+              ),
+            ),
+          ),
+          // Contenedor blanco con bordes inferiores redondeados.
+          // Se usa SingleChildScrollView directamente como child del Container
+          // para que la tarjeta blanca ocupe solo el espacio de su contenido.
+          SafeArea(
+            bottom: false,
+            child: SingleChildScrollView(
+              child: Container(
+                width: double.infinity,
+                decoration: BoxDecoration(
+                  color: Colors.white,
+                  borderRadius: const BorderRadius.only(
+                    bottomLeft: Radius.circular(32),
+                    bottomRight: Radius.circular(32),
+                  ),
+                  boxShadow: [
+                    BoxShadow(
+                      color: Colors.black.withValues(alpha: 0.30),
+                      blurRadius: 24,
+                      offset: const Offset(0, 10),
+                    ),
+                  ],
+                ),
+                padding: const EdgeInsets.fromLTRB(20, 24, 20, 28),
+                child: Center(
+                  child: ConstrainedBox(
+                    constraints: const BoxConstraints(maxWidth: 480),
+                    child: Form(
+                      key: _formKey,
+                      child: Column(
+                        crossAxisAlignment: CrossAxisAlignment.stretch,
+                        children: [
+                          // Cabecera con logo BarberFlow
+                          Center(
+                            child: Column(
+                              mainAxisSize: MainAxisSize.min,
+                              children: [
+                                const BrandMark(
+                                  size: 58,
+                                  color: Color(0xFF0F172A),
+                                  spin: false,
+                                )
+                                    .animate()
+                                    .scale(
+                                      begin: const Offset(0.7, 0.7),
+                                      curve: Curves.elasticOut,
+                                      duration: 800.ms,
+                                    )
+                                    .fadeIn(duration: 300.ms),
+                                const SizedBox(height: 8),
+                                const Text(
+                                  'BarberFlow',
+                                  style: TextStyle(
+                                    color: Color(0xFF0F172A),
+                                    fontSize: 24,
+                                    fontWeight: FontWeight.w800,
+                                    letterSpacing: -0.3,
+                                  ),
+                                ),
+                                const SizedBox(height: 4),
+                                const Text(
+                                  'Tu barbería, siempre conectada',
+                                  style: TextStyle(
+                                    color: Color(0xFF64748B),
+                                    fontSize: 13,
+                                  ),
+                                ),
+                              ],
+                            ),
                           ),
-                        )
-                        .animate()
-                        .fadeIn(duration: 320.ms)
-                        .slideY(
-                          begin: 0.15,
-                          end: 0,
-                          curve: Curves.easeOutCubic,
-                        ),
-                    const SizedBox(height: 4),
-                    Text(
-                      'Accede a tu cuenta para continuar',
-                      style: TextStyle(color: AppColors.textSecondary),
-                    ).animate(delay: 60.ms).fadeIn(duration: 320.ms),
-                    const SizedBox(height: 24),
-                    TextFormField(
-                          controller: _emailController,
-                          keyboardType: TextInputType.emailAddress,
-                          decoration: const InputDecoration(
-                            labelText: 'Correo electrónico',
-                            prefixIcon: Icon(Icons.mail_outline),
-                          ),
-                          validator: (value) =>
-                              (value == null || !value.contains('@'))
-                              ? 'Correo inválido'
-                              : null,
-                        )
-                        .animate(delay: 120.ms)
-                        .fadeIn(duration: 320.ms)
-                        .slideY(begin: 0.2, end: 0, curve: Curves.easeOutCubic),
-                    const SizedBox(height: 14),
-                    TextFormField(
-                          controller: _passwordController,
-                          obscureText: _obscurePassword,
-                          decoration: InputDecoration(
-                            labelText: 'Contraseña',
-                            prefixIcon: const Icon(Icons.lock_outline),
-                            suffixIcon: IconButton(
-                              icon: Icon(
-                                _obscurePassword
-                                    ? Icons.visibility_outlined
-                                    : Icons.visibility_off_outlined,
+                          const SizedBox(height: 26),
+
+                          // Título "Iniciar sesión"
+                          Center(
+                            child: Column(
+                              children: [
+                                const Text(
+                                  'Iniciar sesión',
+                                  textAlign: TextAlign.center,
+                                  style: TextStyle(
+                                    fontSize: 22,
+                                    fontWeight: FontWeight.w800,
+                                    color: Color(0xFF0F172A),
+                                  ),
+                                ),
+                                const SizedBox(height: 4),
+                                const Text(
+                                  'Accede a tu cuenta para continuar',
+                                  textAlign: TextAlign.center,
+                                  style: TextStyle(
+                                    color: Color(0xFF64748B),
+                                    fontSize: 14,
+                                  ),
+                                ),
+                              ],
+                            ),
+                          )
+                              .animate()
+                              .fadeIn(duration: 300.ms)
+                              .slideY(
+                                begin: 0.15,
+                                end: 0,
+                                curve: Curves.easeOutCubic,
                               ),
-                              onPressed: () => setState(
-                                () => _obscurePassword = !_obscurePassword,
+                          const SizedBox(height: 20),
+
+                          // Campo: Correo electrónico
+                          TextFormField(
+                                controller: _emailController,
+                                keyboardType: TextInputType.emailAddress,
+                                style: const TextStyle(
+                                  color: Color(0xFF0F172A),
+                                  fontSize: 14,
+                                ),
+                                decoration: InputDecoration(
+                                  hintText: 'Correo electrónico',
+                                  hintStyle: const TextStyle(
+                                    color: Color(0xFF94A3B8),
+                                    fontSize: 14,
+                                  ),
+                                  prefixIcon: const Icon(
+                                    Icons.mail_outline,
+                                    color: Color(0xFF64748B),
+                                    size: 20,
+                                  ),
+                                  filled: true,
+                                  fillColor: Colors.white,
+                                  contentPadding:
+                                      const EdgeInsets.symmetric(
+                                        horizontal: 18,
+                                        vertical: 16,
+                                      ),
+                                  enabledBorder: OutlineInputBorder(
+                                    borderRadius: BorderRadius.circular(14),
+                                    borderSide: const BorderSide(
+                                      color: Color(0xFFE2E8F0),
+                                    ),
+                                  ),
+                                  focusedBorder: OutlineInputBorder(
+                                    borderRadius: BorderRadius.circular(14),
+                                    borderSide: const BorderSide(
+                                      color: Color(0xFF3B82F6),
+                                      width: 1.5,
+                                    ),
+                                  ),
+                                  errorBorder: OutlineInputBorder(
+                                    borderRadius: BorderRadius.circular(14),
+                                    borderSide: const BorderSide(
+                                      color: Color(0xFFEF4444),
+                                    ),
+                                  ),
+                                  focusedErrorBorder: OutlineInputBorder(
+                                    borderRadius: BorderRadius.circular(14),
+                                    borderSide: const BorderSide(
+                                      color: Color(0xFFEF4444),
+                                      width: 1.5,
+                                    ),
+                                  ),
+                                ),
+                                validator: (value) =>
+                                    (value == null || !value.contains('@'))
+                                        ? 'Correo inválido'
+                                        : null,
+                              )
+                              .animate(delay: 100.ms)
+                              .fadeIn(duration: 300.ms)
+                              .slideY(
+                                begin: 0.15,
+                                end: 0,
+                                curve: Curves.easeOutCubic,
+                              ),
+                          const SizedBox(height: 16),
+
+                          // Campo: Contraseña
+                          TextFormField(
+                                controller: _passwordController,
+                                obscureText: _obscurePassword,
+                                style: const TextStyle(
+                                  color: Color(0xFF0F172A),
+                                  fontSize: 14,
+                                ),
+                                decoration: InputDecoration(
+                                  hintText: 'Contraseña',
+                                  hintStyle: const TextStyle(
+                                    color: Color(0xFF94A3B8),
+                                    fontSize: 14,
+                                  ),
+                                  prefixIcon: const Icon(
+                                    Icons.lock_outline,
+                                    color: Color(0xFF64748B),
+                                    size: 20,
+                                  ),
+                                  suffixIcon: IconButton(
+                                    icon: Icon(
+                                      _obscurePassword
+                                          ? Icons.visibility_off_outlined
+                                          : Icons.visibility_outlined,
+                                      color: const Color(0xFF64748B),
+                                      size: 20,
+                                    ),
+                                    onPressed: () => setState(
+                                      () => _obscurePassword =
+                                          !_obscurePassword,
+                                    ),
+                                  ),
+                                  filled: true,
+                                  fillColor: Colors.white,
+                                  contentPadding:
+                                      const EdgeInsets.symmetric(
+                                        horizontal: 16,
+                                        vertical: 16,
+                                      ),
+                                  enabledBorder: OutlineInputBorder(
+                                    borderRadius: BorderRadius.circular(14),
+                                    borderSide: const BorderSide(
+                                      color: Color(0xFFE2E8F0),
+                                    ),
+                                  ),
+                                  focusedBorder: OutlineInputBorder(
+                                    borderRadius: BorderRadius.circular(14),
+                                    borderSide: const BorderSide(
+                                      color: Color(0xFF3B82F6),
+                                      width: 1.5,
+                                    ),
+                                  ),
+                                  errorBorder: OutlineInputBorder(
+                                    borderRadius: BorderRadius.circular(14),
+                                    borderSide: const BorderSide(
+                                      color: Color(0xFFEF4444),
+                                    ),
+                                  ),
+                                  focusedErrorBorder: OutlineInputBorder(
+                                    borderRadius: BorderRadius.circular(14),
+                                    borderSide: const BorderSide(
+                                      color: Color(0xFFEF4444),
+                                      width: 1.5,
+                                    ),
+                                  ),
+                                ),
+                                validator: (value) =>
+                                    (value == null || value.length < 6)
+                                        ? 'Mínimo 6 caracteres'
+                                        : null,
+                              )
+                              .animate(delay: 150.ms)
+                              .fadeIn(duration: 300.ms)
+                              .slideY(
+                                begin: 0.15,
+                                end: 0,
+                                curve: Curves.easeOutCubic,
+                              ),
+
+                          // ¿Olvidaste tu contraseña?
+                          Align(
+                            alignment: Alignment.centerRight,
+                            child: TextButton(
+                              onPressed: auth.isBusy
+                                  ? null
+                                  : () => _forgotPassword(auth),
+                              style: TextButton.styleFrom(
+                                padding: const EdgeInsets.symmetric(
+                                  vertical: 4,
+                                ),
+                                minimumSize: Size.zero,
+                                tapTargetSize:
+                                    MaterialTapTargetSize.shrinkWrap,
+                              ),
+                              child: const Text(
+                                '¿Olvidaste tu contraseña?',
+                                style: TextStyle(
+                                  color: Color(0xFF64748B),
+                                  fontSize: 12,
+                                ),
                               ),
                             ),
                           ),
-                          validator: (value) =>
-                              (value == null || value.length < 6)
-                              ? 'Mínimo 6 caracteres'
-                              : null,
-                        )
-                        .animate(delay: 180.ms)
-                        .fadeIn(duration: 320.ms)
-                        .slideY(begin: 0.2, end: 0, curve: Curves.easeOutCubic),
-                    Align(
-                      alignment: Alignment.centerRight,
-                      child: TextButton(
-                        onPressed: auth.isBusy
-                            ? null
-                            : () => _forgotPassword(auth),
-                        child: const Text('¿Olvidaste tu contraseña?'),
-                      ),
-                    ),
-                    const SizedBox(height: 8),
-                    GradientButton(
-                          onPressed: auth.isBusy ? null : () => _submit(auth),
-                          child: auth.isBusy
-                              ? const SizedBox(
-                                  height: 18,
-                                  width: 18,
-                                  child: CircularProgressIndicator(
-                                    strokeWidth: 2,
-                                    color: Colors.white,
+                          const SizedBox(height: 16),
+
+                          // Botón "Iniciar sesión"
+                          SizedBox(
+                                height: 54,
+                                child: ElevatedButton(
+                                  onPressed: auth.isBusy
+                                      ? null
+                                      : () => _submit(auth),
+                                  style: ElevatedButton.styleFrom(
+                                    backgroundColor: const Color(0xFF0F172A),
+                                    foregroundColor: Colors.white,
+                                    disabledBackgroundColor: const Color(
+                                      0xFF0F172A,
+                                    ).withValues(alpha: 0.6),
+                                    shape: RoundedRectangleBorder(
+                                      borderRadius: BorderRadius.circular(14),
+                                    ),
+                                    elevation: 0,
                                   ),
-                                )
-                              : const Text('Iniciar sesión'),
-                        )
-                        .animate(delay: 240.ms)
-                        .fadeIn(duration: 320.ms)
-                        .slideY(begin: 0.2, end: 0, curve: Curves.easeOutCubic),
-                    const SizedBox(height: 12),
-                    Center(
-                      child: TextButton(
-                        onPressed: () => Navigator.of(context).push(
-                          MaterialPageRoute(
-                            builder: (_) => const RegisterView(),
+                                  child: auth.isBusy
+                                      ? const SizedBox(
+                                          height: 20,
+                                          width: 20,
+                                          child: CircularProgressIndicator(
+                                            strokeWidth: 2,
+                                            color: Colors.white,
+                                          ),
+                                        )
+                                      : const Text(
+                                          'Iniciar sesión',
+                                          style: TextStyle(
+                                            fontSize: 15,
+                                            fontWeight: FontWeight.w600,
+                                          ),
+                                        ),
+                                ),
+                              )
+                              .animate(delay: 200.ms)
+                              .fadeIn(duration: 300.ms)
+                              .slideY(
+                                begin: 0.15,
+                                end: 0,
+                                curve: Curves.easeOutCubic,
+                              ),
+                          const SizedBox(height: 16),
+
+                          // "¿No tienes una cuenta? Regístrate"
+                          Center(
+                            child: GestureDetector(
+                              onTap: () => Navigator.of(context).push(
+                                MaterialPageRoute(
+                                  builder: (_) => const RegisterView(),
+                                ),
+                              ),
+                              child: Wrap(
+                                alignment: WrapAlignment.center,
+                                crossAxisAlignment: WrapCrossAlignment.center,
+                                children: const [
+                                  Text(
+                                    '¿No tienes una cuenta? ',
+                                    style: TextStyle(
+                                      fontSize: 14,
+                                      color: Color(0xFF64748B),
+                                    ),
+                                  ),
+                                  Text(
+                                    'Regístrate',
+                                    style: TextStyle(
+                                      fontSize: 14,
+                                      color: Color(0xFF2563EB),
+                                      fontWeight: FontWeight.w600,
+                                    ),
+                                  ),
+                                ],
+                              ),
+                            ),
                           ),
-                        ),
-                        child: RichText(
-                          text: TextSpan(
-                            style: TextStyle(color: AppColors.textSecondary),
+                          const SizedBox(height: 16),
+
+                          // Divisor con "o"
+                          const Row(
                             children: [
-                              const TextSpan(text: '¿No tienes una cuenta? '),
-                              TextSpan(
-                                text: 'Regístrate',
-                                style: TextStyle(
-                                  color: AppColors.accent,
-                                  fontWeight: FontWeight.w600,
+                              Expanded(
+                                child: Divider(
+                                  color: Color(0xFFE2E8F0),
+                                  height: 1,
+                                  thickness: 1,
+                                ),
+                              ),
+                              Padding(
+                                padding: EdgeInsets.symmetric(horizontal: 14),
+                                child: Text(
+                                  'o',
+                                  style: TextStyle(
+                                    color: Color(0xFF94A3B8),
+                                    fontSize: 13,
+                                    fontWeight: FontWeight.w500,
+                                  ),
+                                ),
+                              ),
+                              Expanded(
+                                child: Divider(
+                                  color: Color(0xFFE2E8F0),
+                                  height: 1,
+                                  thickness: 1,
                                 ),
                               ),
                             ],
                           ),
-                        ),
-                      ),
-                    ),
-                    const SizedBox(height: 12),
-                    Row(
-                      children: [
-                        const Expanded(child: Divider()),
-                        Padding(
-                          padding: const EdgeInsets.symmetric(horizontal: 10),
-                          child: Text(
-                            'o',
-                            style: TextStyle(color: AppColors.textSecondary),
-                          ),
-                        ),
-                        const Expanded(child: Divider()),
-                      ],
-                    ),
-                    const SizedBox(height: 12),
-                    OutlinedButton.icon(
-                      onPressed: auth.isBusy ? null : () => _submitGoogle(auth),
-                      icon: const Icon(Icons.g_mobiledata, size: 26),
-                      label: const Text('Continuar con Google'),
-                    ),
-                    const SizedBox(height: 10),
-                    OutlinedButton.icon(
-                      onPressed: auth.isBusy
-                          ? null
-                          : () => Navigator.of(context).push(
-                              MaterialPageRoute(
-                                builder: (_) => const PhoneLoginView(),
+                          const SizedBox(height: 16),
+
+                          // Botón "Continuar con Google"
+                          SizedBox(
+                            height: 54,
+                            child: OutlinedButton(
+                              onPressed: auth.isBusy
+                                  ? null
+                                  : () => _submitGoogle(auth),
+                              style: OutlinedButton.styleFrom(
+                                backgroundColor: Colors.white,
+                                side: const BorderSide(
+                                  color: Color(0xFFE2E8F0),
+                                ),
+                                shape: RoundedRectangleBorder(
+                                  borderRadius: BorderRadius.circular(14),
+                                ),
+                                elevation: 0,
+                              ),
+                              child: const Row(
+                                mainAxisAlignment: MainAxisAlignment.center,
+                                children: [
+                                  GoogleLogo(size: 20),
+                                  SizedBox(width: 10),
+                                  Text(
+                                    'Continuar con Google',
+                                    style: TextStyle(
+                                      color: Color(0xFF0F172A),
+                                      fontWeight: FontWeight.w600,
+                                      fontSize: 14,
+                                    ),
+                                  ),
+                                ],
                               ),
                             ),
-                      icon: const Icon(Icons.phone_outlined),
-                      label: const Text('Continuar con teléfono'),
+                          ),
+                          const SizedBox(height: 10),
+
+                          // Opción alternativa por teléfono
+                          Center(
+                            child: TextButton.icon(
+                              onPressed: auth.isBusy
+                                  ? null
+                                  : () => Navigator.of(context).push(
+                                      MaterialPageRoute(
+                                        builder: (_) => const PhoneLoginView(),
+                                      ),
+                                    ),
+                              icon: const Icon(
+                                Icons.phone_outlined,
+                                size: 16,
+                                color: Color(0xFF64748B),
+                              ),
+                              label: const Text(
+                                'Continuar con teléfono',
+                                style: TextStyle(
+                                  color: Color(0xFF64748B),
+                                  fontSize: 13,
+                                ),
+                              ),
+                            ),
+                          ),
+                        ],
+                      ),
                     ),
-                    const SizedBox(height: 28),
-                    const _LoginFooterStrip()
-                        .animate(delay: 300.ms)
-                        .fadeIn(duration: 500.ms),
-                    const SizedBox(height: 16),
-                  ],
+                  ),
                 ),
               ),
             ),
           ),
-        ),
+        ],
       ),
-    );
-  }
-}
-
-class _LoginFooterStrip extends StatelessWidget {
-  const _LoginFooterStrip();
-
-  @override
-  Widget build(BuildContext context) {
-    return ClipRRect(
-      borderRadius: BorderRadius.circular(20),
-      child: Container(
-        height: 96,
-        decoration: BoxDecoration(
-          gradient: LinearGradient(
-            begin: Alignment.topLeft,
-            end: Alignment.bottomRight,
-            colors: [AppColors.primary, const Color(0xFF1E293B)],
-          ),
-        ),
-        child: Stack(
-          children: [
-            Positioned(
-              right: -10,
-              top: -14,
-              child: Icon(
-                Icons.content_cut,
-                size: 60,
-                color: Colors.white.withValues(alpha: 0.08),
-              ),
-            ),
-            Positioned(
-              left: 16,
-              bottom: -18,
-              child: Icon(
-                Icons.storefront_outlined,
-                size: 70,
-                color: Colors.white.withValues(alpha: 0.06),
-              ),
-            ),
-            Center(
-              child: Text(
-                'Miles de barberías ya confían en BarberFlow',
-                textAlign: TextAlign.center,
-                style: TextStyle(
-                  color: Colors.white.withValues(alpha: 0.85),
-                  fontSize: 12,
-                  fontWeight: FontWeight.w600,
-                ),
-              ),
-            ),
-          ],
-        ),
-      ),
-    );
-  }
-}
-
-class _LoginHero extends StatelessWidget {
-  const _LoginHero();
-
-  @override
-  Widget build(BuildContext context) {
-    return Column(
-      mainAxisSize: MainAxisSize.min,
-      children: [
-        const BrandMark(size: 56),
-        const SizedBox(height: 10),
-        Text(
-          'BarberFlow',
-          style: TextStyle(
-            color: AppColors.primary,
-            fontSize: 24,
-            fontWeight: FontWeight.w800,
-          ),
-        ),
-        const SizedBox(height: 4),
-        Text(
-          'Tu barbería, siempre conectada',
-          style: TextStyle(color: AppColors.textSecondary, fontSize: 13),
-        ),
-      ],
     );
   }
 }

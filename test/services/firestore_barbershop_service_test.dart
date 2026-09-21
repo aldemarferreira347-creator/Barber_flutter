@@ -32,6 +32,9 @@ class MockQueryDocumentSnapshot extends Mock implements QueryDocumentSnapshot<Ma
 // ignore: subtype_of_sealed_class
 class MockDocumentReference extends Mock implements DocumentReference<Map<String, dynamic>> {}
 
+// ignore: subtype_of_sealed_class
+class MockDocumentSnapshot extends Mock implements DocumentSnapshot<Map<String, dynamic>> {}
+
 void main() {
   late MockStorageRepository storage;
   late MockFirebaseFirestore firestore;
@@ -49,7 +52,12 @@ void main() {
     functions = MockFirebaseFunctions();
     collection = MockCollectionReference();
     when(() => firestore.collection('barbershops')).thenReturn(collection);
-    service = FirestoreBarbershopService(storage: storage, firestore: firestore, functions: functions);
+    service = FirestoreBarbershopService(
+      storage: storage,
+      firestore: firestore,
+      functions: functions,
+      simulatedApprovalDelay: Duration.zero,
+    );
   });
 
   test('uploadPhoto sube la foto y guarda su URL en el documento', () async {
@@ -101,26 +109,60 @@ void main() {
     verify(() => callable.call<Map<String, dynamic>>({'barbershopId': 'shop1'})).called(1);
   });
 
-  test('paySubscription llama a la función con el barbershopId', () async {
-    final callable = MockHttpsCallable();
-    when(() => functions.httpsCallable('payBarbershopSubscription')).thenReturn(callable);
-    when(() => callable.call<Map<String, dynamic>>(any()))
-        .thenAnswer((_) async => MockHttpsCallableResult<Map<String, dynamic>>());
+  test(
+    'paySubscription simula el pago (payments/{id}) y renueva la mensualidad 30 días',
+    () async {
+      final shopDocRef = MockDocumentReference();
+      final shopSnap = MockDocumentSnapshot();
+      final paymentsCollection = MockCollectionReference();
+      final paymentDocRef = MockDocumentReference();
 
-    await service.paySubscription('shop1');
+      when(() => collection.doc('shop1')).thenReturn(shopDocRef);
+      when(() => shopDocRef.get()).thenAnswer((_) async => shopSnap);
+      when(() => shopSnap.id).thenReturn('shop1');
+      when(() => shopSnap.data()).thenReturn({
+        'name': 'BarberFlow',
+        'ownerId': 'owner1',
+        'approvalStatus': 'approved',
+      });
+      when(() => shopDocRef.update(any())).thenAnswer((_) async {});
 
-    verify(() => callable.call<Map<String, dynamic>>({'barbershopId': 'shop1'})).called(1);
-  });
+      when(() => firestore.collection('payments')).thenReturn(paymentsCollection);
+      when(() => paymentsCollection.add(any())).thenAnswer((_) async => paymentDocRef);
+      when(() => paymentDocRef.update(any())).thenAnswer((_) async {});
 
-  test('cancelSubscription llama a la función con el barbershopId', () async {
-    final callable = MockHttpsCallable();
-    when(() => functions.httpsCallable('cancelBarbershopSubscription')).thenReturn(callable);
-    when(() => callable.call<Map<String, dynamic>>(any()))
-        .thenAnswer((_) async => MockHttpsCallableResult<Map<String, dynamic>>());
+      await service.paySubscription('shop1');
+
+      final paymentCreate =
+          Map<String, dynamic>.from(verify(() => paymentsCollection.add(captureAny())).captured.single as Map);
+      expect(paymentCreate['payerId'], 'owner1');
+      expect(paymentCreate['category'], 'subscription');
+      expect(paymentCreate['relatedId'], 'shop1');
+      expect(paymentCreate['status'], 'pending');
+
+      final paymentResolve =
+          Map<String, dynamic>.from(verify(() => paymentDocRef.update(captureAny())).captured.single as Map);
+      expect(paymentResolve['status'], 'approved');
+
+      final shopUpdate =
+          Map<String, dynamic>.from(verify(() => shopDocRef.update(captureAny())).captured.single as Map);
+      expect(shopUpdate['paymentStatus'], 'ok');
+      expect(shopUpdate['active'], true);
+      final dueDate = (shopUpdate['paymentDueDate'] as Timestamp).toDate();
+      final daysAhead = dueDate.difference(DateTime.now()).inHours / 24;
+      expect(daysAhead, greaterThan(29));
+      expect(daysAhead, lessThan(31));
+    },
+  );
+
+  test('cancelSubscription bloquea la barbería de inmediato, sin período de gracia', () async {
+    final docRef = MockDocumentReference();
+    when(() => collection.doc('shop1')).thenReturn(docRef);
+    when(() => docRef.update(any())).thenAnswer((_) async {});
 
     await service.cancelSubscription('shop1');
 
-    verify(() => callable.call<Map<String, dynamic>>({'barbershopId': 'shop1'})).called(1);
+    verify(() => docRef.update({'paymentStatus': 'blocked', 'active': false})).called(1);
   });
 
   group('resolveApproval', () {

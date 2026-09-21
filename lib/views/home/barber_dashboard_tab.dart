@@ -12,6 +12,7 @@ import '../notification/notifications_view.dart';
 import '../service/manage_services_view.dart';
 import '../widgets/action_list_tile.dart';
 import '../widgets/dashboard_scaffold.dart';
+import '../widgets/error_state.dart';
 import '../widgets/promo_banner_card.dart';
 import '../widgets/status_badge.dart';
 
@@ -141,6 +142,12 @@ class BarberDashboardTab extends StatelessWidget {
           StreamBuilder<Barbershop?>(
             stream: context.read<BarbershopRepository>().watchOne(barbershopId),
             builder: (context, shopSnapshot) {
+              if (shopSnapshot.hasError) {
+                return const ErrorState(
+                  title: 'No se pudo cargar tu barbería',
+                  subtitle: 'Verifica tu conexión e inténtalo de nuevo.',
+                );
+              }
               final shop = shopSnapshot.data;
               if (shop == null) return const SizedBox.shrink();
               return InkWell(

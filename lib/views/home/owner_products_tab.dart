@@ -6,6 +6,7 @@ import '../../models/barbershop.dart';
 import '../../repositories/barbershop_repository.dart';
 import '../product/manage_products_view.dart';
 import '../widgets/empty_state.dart';
+import '../widgets/error_state.dart';
 
 /// Resuelve la barbería del dueño autenticado y muestra sus productos —
 /// mismo patrón que OwnerServicesTab.
@@ -22,6 +23,17 @@ class OwnerProductsTab extends StatelessWidget {
           ? const Stream<List<Barbershop>>.empty()
           : barbershopService.watchByOwner(profile.uid),
       builder: (context, snapshot) {
+        if (snapshot.hasError) {
+          return Scaffold(
+            appBar: AppBar(title: const Text('Productos')),
+            body: const Center(
+              child: ErrorState(
+                title: 'No pudimos cargar tu barbería',
+                subtitle: 'Verifica tu conexión e inténtalo de nuevo.',
+              ),
+            ),
+          );
+        }
         final shops = snapshot.data ?? [];
         if (shops.isEmpty) {
           return Scaffold(

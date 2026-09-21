@@ -1,4 +1,5 @@
 import 'package:flutter/material.dart';
+import 'package:flutter_animate/flutter_animate.dart';
 
 /// Transición de página "premium" (fade + slide + scale sutil) aplicada
 /// globalmente vía [ThemeData.pageTransitionsTheme]. Como casi todas las
@@ -16,6 +17,15 @@ class AppPageTransitionsBuilder extends PageTransitionsBuilder {
     Animation<double> secondaryAnimation,
     Widget child,
   ) {
+    // "Reducir movimiento" del sistema (iOS Reduce Motion / Android Remove
+    // animations): la navegación es el movimiento más grande e intenso de
+    // la app, así que aquí es donde más importa respetarlo — un simple
+    // fade corto evita el salto brusco sin el slide/scale que puede
+    // resultar incómodo para quienes activaron esa preferencia.
+    if (MediaQuery.of(context).disableAnimations) {
+      return FadeTransition(opacity: animation, child: child);
+    }
+
     final curved = CurvedAnimation(
       parent: animation,
       curve: Curves.easeOutCubic,
@@ -57,4 +67,21 @@ class AppMotion {
   static const medium = Duration(milliseconds: 320);
   static const slow = Duration(milliseconds: 600);
   static const curve = Curves.easeOutCubic;
+
+  /// Sincroniza el motor de animación (`flutter_animate`) con la
+  /// preferencia de accesibilidad "reducir movimiento" del sistema.
+  ///
+  /// Los `.animate()` desperdigados por las vistas casi siempre fijan su
+  /// propia duración por efecto, así que esto no los apaga a todos por sí
+  /// solo — pero sí es la base para cualquier efecto que no la fije
+  /// explícitamente, y evita que la app dependa de un valor por defecto
+  /// "normal" cuando el sistema pidió lo contrario. Se llama en cada
+  /// build de [BuildContext] raíz (ver `main.dart`), así que reacciona en
+  /// vivo si el usuario cambia el ajuste con la app abierta.
+  static void syncAccessibility(BuildContext context) {
+    final reduceMotion = MediaQuery.of(context).disableAnimations;
+    Animate.defaultDuration = reduceMotion
+        ? Duration.zero
+        : const Duration(milliseconds: 300);
+  }
 }

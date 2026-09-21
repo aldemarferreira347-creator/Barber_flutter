@@ -142,6 +142,18 @@ class ClientDashboardTab extends StatelessWidget {
           child: StreamBuilder<List<Barbershop>>(
             stream: context.read<BarbershopRepository>().watchAll(),
             builder: (context, snapshot) {
+              if (snapshot.hasError) {
+                return Center(
+                  child: Text(
+                    'No se pudieron cargar las barberías',
+                    textAlign: TextAlign.center,
+                    style: TextStyle(
+                      color: AppColors.textSecondary,
+                      fontSize: 13,
+                    ),
+                  ),
+                );
+              }
               final shops = (snapshot.data ?? [])
                   .where((s) => s.active)
                   .take(6)
@@ -270,7 +282,9 @@ class ClientDashboardTab extends StatelessWidget {
             return ActionListTile(
               icon: Icons.calendar_month_outlined,
               label: 'Tus próximas citas',
-              subtitle: upcoming.isEmpty
+              subtitle: snapshot.hasError
+                  ? 'No se pudo cargar'
+                  : upcoming.isEmpty
                   ? 'No tienes citas programadas'
                   : '${upcoming.length} cita(s) programada(s)',
               onTap: () => Navigator.of(context).push(

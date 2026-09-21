@@ -36,7 +36,9 @@ class DashboardScaffold extends StatelessWidget {
           gradient: LinearGradient(
             begin: Alignment.topLeft,
             end: Alignment.bottomRight,
-            colors: [AppColors.primary, const Color(0xFF1E293B)],
+            colors: AppColors.isDark
+                ? const [Color(0xFF18181B), Color(0xFF09090B)]
+                : [AppColors.primary, const Color(0xFF1E293B)],
           ),
         ),
         child: SafeArea(

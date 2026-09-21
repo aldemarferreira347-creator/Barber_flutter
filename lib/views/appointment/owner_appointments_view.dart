@@ -5,6 +5,7 @@ import '../../models/appointment.dart';
 import '../../repositories/appointment_repository.dart';
 import '../widgets/appointment_card.dart';
 import '../widgets/empty_state.dart';
+import '../widgets/error_state.dart';
 import '../widgets/shimmer_box.dart';
 
 class OwnerAppointmentsView extends StatelessWidget {
@@ -21,6 +22,11 @@ class OwnerAppointmentsView extends StatelessWidget {
       body: StreamBuilder<List<Appointment>>(
         stream: repo.watchByBarbershop(barbershopId),
         builder: (context, snapshot) {
+          if (snapshot.hasError) {
+            return const Center(
+              child: ErrorState(title: 'No pudimos cargar las citas'),
+            );
+          }
           if (snapshot.connectionState == ConnectionState.waiting) {
             return const Padding(
               padding: EdgeInsets.all(16),

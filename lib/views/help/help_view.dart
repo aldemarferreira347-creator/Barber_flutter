@@ -5,6 +5,7 @@ import 'package:url_launcher/url_launcher.dart';
 import '../../support_info.dart';
 import '../../theme/app_colors.dart';
 import '../widgets/action_list_tile.dart';
+import '../widgets/brand_mark.dart';
 import 'privacy_policy_view.dart';
 
 class HelpView extends StatelessWidget {
@@ -149,6 +150,28 @@ class HelpView extends StatelessWidget {
               MaterialPageRoute(builder: (_) => const PrivacyPolicyView()),
             ),
           ),
+          const SizedBox(height: 28),
+          Center(
+            child: Column(
+              mainAxisSize: MainAxisSize.min,
+              children: [
+                BrandMark(
+                  size: 32,
+                  color: AppColors.textSecondary.withValues(alpha: 0.5),
+                  spin: false,
+                ),
+                const SizedBox(height: 6),
+                Text(
+                  'BarberFlow • Tu barbería, siempre conectada',
+                  style: TextStyle(
+                    color: AppColors.textSecondary.withValues(alpha: 0.6),
+                    fontSize: 12,
+                    fontWeight: FontWeight.w500,
+                  ),
+                ),
+              ],
+            ),
+          ).animate(delay: 200.ms).fadeIn(duration: 300.ms),
         ],
       ),
     );

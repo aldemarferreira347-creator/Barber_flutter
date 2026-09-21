@@ -6,6 +6,7 @@ import '../../models/app_notification.dart';
 import '../../repositories/notification_repository.dart';
 import '../../theme/app_colors.dart';
 import '../widgets/empty_state.dart';
+import '../widgets/error_state.dart';
 import '../widgets/scroll_to_top_fab.dart';
 import '../widgets/shimmer_box.dart';
 
@@ -49,6 +50,13 @@ class _NotificationsViewState extends State<NotificationsView> {
       body: StreamBuilder<List<AppNotification>>(
         stream: repo.watchForUser(widget.uid),
         builder: (context, snapshot) {
+          if (snapshot.hasError) {
+            return const Center(
+              child: ErrorState(
+                title: 'No pudimos cargar las notificaciones',
+              ),
+            );
+          }
           final notifications = snapshot.data ?? [];
           if (snapshot.connectionState == ConnectionState.waiting) {
             return const Padding(

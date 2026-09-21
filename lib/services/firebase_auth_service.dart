@@ -53,15 +53,31 @@ class FirebaseAuthService implements AuthRepository {
     try {
       account = await _googleSignIn.authenticate();
     } on GoogleSignInException catch (e) {
-      if (e.code == GoogleSignInExceptionCode.canceled)
+      if (e.code == GoogleSignInExceptionCode.canceled) {
         return const GoogleSignInCancelled();
+      }
       rethrow;
     }
 
     final googleAuth = account.authentication;
-    final credential = GoogleAuthProvider.credential(
-      idToken: googleAuth.idToken,
-    );
+    final idToken = googleAuth.idToken;
+    if (idToken == null) {
+      // Sin idToken no hay credencial válida que darle a Firebase. Casi
+      // siempre significa que falta registrar la huella SHA-1 del
+      // certificado de firma de esta app en la consola de Firebase (en
+      // Android, el plugin usa Credential Manager, que la necesita para
+      // emitir el idToken) — sin este chequeo, GoogleAuthProvider.credential
+      // lanzaría un ArgumentError críptico que ningún catch de más arriba
+      // esperaba, y el error desaparecía en silencio.
+      throw FirebaseAuthException(
+        code: 'google-sign-in-misconfigured',
+        message:
+            'No se pudo completar el inicio de sesión con Google. '
+            'Verifica la configuración de Firebase para esta app '
+            '(huella SHA-1 registrada) e inténtalo de nuevo.',
+      );
+    }
+    final credential = GoogleAuthProvider.credential(idToken: idToken);
 
     try {
       final userCredential = await _auth.signInWithCredential(credential);

@@ -7,6 +7,7 @@ import '../../models/user_role.dart';
 import '../../repositories/user_repository.dart';
 import '../../theme/app_colors.dart';
 import '../widgets/empty_state.dart';
+import '../widgets/error_state.dart';
 import '../widgets/shimmer_box.dart';
 
 class ManageBarbersView extends StatelessWidget {
@@ -136,6 +137,11 @@ class ManageBarbersView extends StatelessWidget {
       body: StreamBuilder<List<AppUser>>(
         stream: repo.watchBarbersByBarbershop(barbershopId),
         builder: (context, snapshot) {
+          if (snapshot.hasError) {
+            return const Center(
+              child: ErrorState(title: 'No pudimos cargar los barberos'),
+            );
+          }
           final barbers = snapshot.data ?? [];
           if (snapshot.connectionState == ConnectionState.waiting) {
             return const Padding(

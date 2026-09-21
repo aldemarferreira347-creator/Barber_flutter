@@ -72,6 +72,18 @@ service cloud.firestore {
             request.resource.data.role == resource.data.role &&
             request.resource.data.active == resource.data.active) ||
           isAdmin() ||
+          // Auto-promoción Cliente -> Dueño al registrar su primera
+          // barbería (spec 12.1). Antes pasaba por requestBarbershopOwnership
+          // (Admin SDK), pero esa vía requiere el plan Blaze; esto la
+          // reemplaza sin abrir hueco de seguridad porque el rol 'owner'
+          // por sí solo no da NINGÚN permiso adicional — cada acción de
+          // dueño (servicios, productos, horario, etc.) revalida por su
+          // cuenta isOwnerOfShop(), que exige un barbershops/{id}.ownerId
+          // == uid real, sin importar el rol declarado en users/{uid}.
+          (request.auth.uid == uid &&
+            resource.data.role == 'client' &&
+            request.resource.data.role == 'owner' &&
+            request.resource.data.active == resource.data.active) ||
           // Dueño contrata a un Cliente existente como Barbero de su negocio.
           (resource.data.role == 'client' &&
             request.resource.data.role == 'barber' &&
@@ -119,7 +131,25 @@ service cloud.firestore {
           // inflar su propio promedio editando el documento.
           request.resource.data.ratingSum == resource.data.ratingSum &&
           request.resource.data.ratingCount == resource.data.ratingCount) ||
-        isAdmin()
+        isAdmin() ||
+        // El dueño paga/renueva la mensualidad de SU barbería (spec 12.5).
+        // Antes pasaba por payBarbershopSubscription (Admin SDK) — sin
+        // plan Blaze, la app simula el pago y escribe esto directo; la
+        // regla exige la transición exacta ("queda al día y activa") y
+        // que NINGÚN otro campo se toque en la misma escritura.
+        (resource.data.ownerId == request.auth.uid &&
+          resource.data.approvalStatus == 'approved' &&
+          request.resource.data.active == true &&
+          request.resource.data.paymentStatus == 'ok' &&
+          request.resource.data.diff(resource.data).affectedKeys()
+            .hasOnly(['active', 'paymentStatus', 'paymentDueDate'])) ||
+        // El dueño cancela la membresía directamente: bloquea de inmediato,
+        // sin período de gracia (spec 12.5) — antes cancelBarbershopSubscription.
+        (resource.data.ownerId == request.auth.uid &&
+          request.resource.data.active == false &&
+          request.resource.data.paymentStatus == 'blocked' &&
+          request.resource.data.diff(resource.data).affectedKeys()
+            .hasOnly(['active', 'paymentStatus']))
       );
 
       allow delete: if isAdmin();
@@ -144,11 +174,12 @@ service cloud.firestore {
     }
 
     // appointments/{id}: el cliente crea su propia cita SIN pago (status
-    // 'pending', paid false) — las citas PAGADAS solo las crea
-    // bookPaidAppointment (Admin SDK, bloquea el horario en transacción,
-    // spec 6.1/6.2), nunca un create() directo del cliente. 'paid' y
-    // 'paymentId' quedan congelados para el cliente una vez creada la cita
-    // (solo el backend los toca, vía las Cloud Functions de esta fase).
+    // 'pending', paid false) directo. Las citas PAGADAS (spec 6.1/6.2)
+    // antes solo las creaba bookPaidAppointment (Admin SDK, con bloqueo
+    // transaccional del horario) — sin plan Blaze, la app corre la misma
+    // transacción directo (ver appointmentSlots) y esta regla exige que el
+    // precio no se falsifique y que haya un pago real (simulado) de ese
+    // mismo cliente detrás.
     match /appointments/{appointmentId} {
       allow read: if isSignedIn() && (
         resource.data.clientId == request.auth.uid ||
@@ -160,7 +191,17 @@ service cloud.firestore {
       allow create: if isSignedIn()
         && request.resource.data.clientId == request.auth.uid
         && request.resource.data.status == 'pending'
-        && request.resource.data.paid == false;
+        && (
+          request.resource.data.paid == false ||
+          (request.resource.data.paid == true &&
+            request.resource.data.rescheduleHistory == [] &&
+            request.resource.data.forcedRatingPenalty == false &&
+            get(/databases/$(database)/documents/barbershops/$(request.resource.data.barbershopId)/services/$(request.resource.data.serviceId)).data.active == true &&
+            request.resource.data.servicePrice ==
+              get(/databases/$(database)/documents/barbershops/$(request.resource.data.barbershopId)/services/$(request.resource.data.serviceId)).data.price &&
+            request.resource.data.paymentId is string &&
+            get(/databases/$(database)/documents/payments/$(request.resource.data.paymentId)).data.payerId == request.auth.uid)
+        );
 
       allow update: if isSignedIn()
         && request.resource.data.paid == resource.data.paid
@@ -179,19 +220,40 @@ service cloud.firestore {
           (resource.data.clientId == request.auth.uid &&
             resource.data.paid == false &&
             resource.data.status == 'pending' &&
-            request.resource.data.status == 'cancelled')
+            request.resource.data.status == 'cancelled') ||
+          // El cliente pospone su propia cita PAGADA (spec 6.4) — el
+          // barbero y el dueño ya podían por la rama de arriba, sin
+          // restricción de campos. Antes pasaba por postponeAppointment
+          // (Admin SDK) con la misma transacción atómica que ahora corre
+          // en el cliente (ver appointmentSlots).
+          (resource.data.clientId == request.auth.uid &&
+            resource.data.paid == true &&
+            !(resource.data.status in ['cancelled', 'completed']) &&
+            request.resource.data.status == 'postponed')
         );
 
       allow delete: if false;
     }
 
-    // appointmentSlots/{id}: bloqueo de horario de una cita pagada — lo
-    // crea/borra únicamente bookPaidAppointment/postponeAppointment/
-    // resolveAppointmentRefund (Admin SDK, dentro de una transacción). El
-    // cliente no necesita leerlo: si el horario ya está tomado, la Cloud
-    // Function que intenta reservarlo simplemente falla con un error claro.
+    // appointmentSlots/{id}: bloqueo de horario de una cita pagada (spec
+    // 6.2/6.4). Antes lo creaba/borraba solo el backend (Admin SDK, dentro
+    // de una transacción); sin plan Blaze, el cliente hace la misma
+    // transacción (create() atómico: si el horario ya está tomado, falla
+    // entero y no se crea ni la cita ni el pago). Nadie necesita leerlo.
+    //
+    // Alcance aceptado: cualquier usuario autenticado puede borrar
+    // cualquier slot (no solo el propio) — el peor caso es liberar por
+    // error o mala fe el horario de una cita ajena, no un problema de
+    // datos ni de dinero real mientras el pago siga simulado; acotarlo más
+    // exigiría cruzar con appointments solo para esto.
     match /appointmentSlots/{id} {
-      allow read, write: if false;
+      allow read: if false;
+      allow create: if isSignedIn()
+        && request.resource.data.keys().hasOnly(['appointmentId', 'barberId', 'createdAt'])
+        && request.resource.data.barberId is string
+        && request.resource.data.appointmentId is string;
+      allow update: if false;
+      allow delete: if isSignedIn();
     }
 
     // shopClosures/{id}: registro de auditoría de cierres por evento
@@ -202,28 +264,79 @@ service cloud.firestore {
       allow write: if false;
     }
 
-    // refundRequests/{id}: la ÚNICA vía de escritura es el backend
-    // (requestAppointmentRefund/resolveAppointmentRefund, Admin SDK) — ni
-    // el cliente ni el dueño pueden aprobar su propia solicitud editando
-    // el documento directamente. El cliente lee las suyas; el dueño de esa
-    // barbería (o el admin) lee las de su barbería para revisarlas.
+    // refundRequests/{id}: antes la única vía de escritura era el backend
+    // (requestAppointmentRefund/resolveAppointmentRefund, Admin SDK); sin
+    // plan Blaze, el cliente crea su propia solicitud (spec 6.3) y el
+    // dueño de esa barbería (o el admin) la resuelve (spec 6.5), cada uno
+    // acotado a exactamente esa transición. El cliente lee las suyas; el
+    // dueño de esa barbería (o el admin) lee las de su barbería.
     match /refundRequests/{id} {
       allow read: if isSignedIn() && (
         resource.data.clientId == request.auth.uid ||
         isOwnerOfShop(resource.data.barbershopId) ||
         isAdmin()
       );
-      allow write: if false;
+
+      allow create: if isSignedIn()
+        && request.resource.data.clientId == request.auth.uid
+        && request.resource.data.status == 'pending'
+        && request.resource.data.reason is string
+        && request.resource.data.reason.size() > 0
+        && request.resource.data.resolvedAt == null
+        && request.resource.data.resolvedBy == null
+        && get(/databases/$(database)/documents/appointments/$(request.resource.data.appointmentId)).data.clientId == request.auth.uid
+        && get(/databases/$(database)/documents/appointments/$(request.resource.data.appointmentId)).data.paid == true
+        && get(/databases/$(database)/documents/appointments/$(request.resource.data.appointmentId)).data.status != 'cancelled';
+
+      allow update: if isSignedIn()
+        && resource.data.status == 'pending'
+        && (isOwnerOfShop(resource.data.barbershopId) || isAdmin())
+        && request.resource.data.status in ['approved', 'rejected']
+        && request.resource.data.resolvedBy == request.auth.uid
+        && request.resource.data.diff(resource.data).affectedKeys().hasOnly(['status', 'resolvedAt', 'resolvedBy']);
+
+      allow delete: if false;
     }
 
-    // payments/{id}: la ÚNICA vía de escritura es el backend (Cloud
-    // Functions requestPayment/refundPayment, con Admin SDK, que no pasa
-    // por estas reglas) — evita que el cliente pueda fabricar un pago
-    // 'approved' o alterar su monto/estado. El pagador (o el admin) puede
-    // leer sus propios pagos para seguir el estado en vivo.
+    // payments/{id}: la pasarela sigue simulada (no hay Nequi real ni
+    // plan Blaze para correr requestPayment/refundPayment en el backend),
+    // así que la propia app crea el registro "pendiente" y lo marca
+    // "aprobado" tras un breve delay, igual que hacía SimulatedNequiGateway
+    // del lado del servidor. El pagador nunca puede fabricar un pago ya
+    // aprobado de una, ni tocar su monto una vez creado.
     match /payments/{id} {
       allow read: if isSignedIn() && (resource.data.payerId == request.auth.uid || isAdmin());
-      allow write: if false;
+
+      allow create: if isSignedIn()
+        && request.resource.data.payerId == request.auth.uid
+        && request.resource.data.status == 'pending'
+        && request.resource.data.resolvedAt == null
+        && request.resource.data.refundedAmount == null;
+
+      allow update: if isSignedIn() && (
+        // El pagador resuelve su propio pago simulado: aprobado tras el
+        // delay, o rechazado si algo falló después de crearlo (p.ej. el
+        // horario se lo ganó otro cliente) y hay que dejar constancia sin
+        // dejarlo "pendiente" para siempre.
+        (resource.data.payerId == request.auth.uid &&
+          resource.data.status == 'pending' &&
+          request.resource.data.status in ['approved', 'rejected'] &&
+          request.resource.data.diff(resource.data).affectedKeys().hasOnly(['status', 'resolvedAt'])) ||
+        // Reembolso al aprobar una solicitud de cancelación de cita (spec
+        // 6.5): lo dispara el dueño de esa barbería (o el admin), no
+        // necesariamente el propio pagador. Acotado a categoría
+        // 'appointment' — otras categorías se migran aparte.
+        (resource.data.category == 'appointment' &&
+          resource.data.status == 'approved' &&
+          request.resource.data.status == 'refunded' &&
+          request.resource.data.refundedAmount is number &&
+          request.resource.data.refundedAmount > 0 &&
+          request.resource.data.refundedAmount <= resource.data.amount &&
+          request.resource.data.diff(resource.data).affectedKeys().hasOnly(['status', 'refundedAmount', 'resolvedAt']) &&
+          (isAdmin() || isOwnerOfShop(get(/databases/$(database)/documents/appointments/$(resource.data.relatedId)).data.barbershopId)))
+      );
+
+      allow delete: if false;
     }
 
     // purchases/{id}: la ÚNICA vía de escritura es el backend

@@ -8,6 +8,7 @@ import '../../models/user_role.dart';
 import '../../theme/app_colors.dart';
 import '../../theme/theme_controller.dart';
 import '../widgets/action_list_tile.dart';
+import '../widgets/brand_mark.dart';
 
 class ProfileMenuItem {
   final IconData icon;
@@ -232,6 +233,28 @@ class ProfileMenuView extends StatelessWidget {
               label: const Text('Cerrar sesión'),
             ),
           ).animate(delay: 200.ms).fadeIn(duration: 300.ms),
+          const SizedBox(height: 28),
+          Center(
+            child: Column(
+              mainAxisSize: MainAxisSize.min,
+              children: [
+                BrandMark(
+                  size: 32,
+                  color: AppColors.textSecondary.withValues(alpha: 0.5),
+                  spin: false,
+                ),
+                const SizedBox(height: 6),
+                Text(
+                  'BarberFlow v1.0.0',
+                  style: TextStyle(
+                    color: AppColors.textSecondary.withValues(alpha: 0.6),
+                    fontSize: 12,
+                    fontWeight: FontWeight.w500,
+                  ),
+                ),
+              ],
+            ),
+          ).animate(delay: 250.ms).fadeIn(duration: 300.ms),
         ],
       ),
     );

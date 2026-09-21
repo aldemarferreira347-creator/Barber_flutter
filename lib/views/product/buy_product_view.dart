@@ -7,6 +7,7 @@ import '../../models/product.dart';
 import '../../models/purchase.dart';
 import '../../repositories/purchase_repository.dart';
 import '../../theme/app_colors.dart';
+import '../widgets/error_state.dart';
 import '../widgets/gradient_button.dart';
 
 /// Compra directa de un producto (spec 10.3), sin necesidad de una cita.
@@ -143,6 +144,13 @@ class _BuyProductViewState extends State<BuyProductView> {
     return StreamBuilder<Purchase?>(
       stream: repo.watchPurchase(purchaseId),
       builder: (context, snapshot) {
+        if (snapshot.hasError) {
+          return const Center(
+            child: ErrorState(
+              title: 'No pudimos cargar el estado de tu compra',
+            ),
+          );
+        }
         final purchase = snapshot.data;
         if (purchase == null ||
             purchase.status == PurchaseStatus.pendingPayment) {

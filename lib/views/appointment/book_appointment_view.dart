@@ -11,6 +11,7 @@ import '../../repositories/service_repository.dart';
 import '../../repositories/user_repository.dart';
 import '../../theme/app_colors.dart';
 import '../widgets/empty_state.dart';
+import '../widgets/error_state.dart';
 import '../widgets/gradient_button.dart';
 import '../widgets/pressable_scale.dart';
 import '../widgets/shimmer_box.dart';
@@ -66,8 +67,9 @@ class _BookAppointmentViewState extends State<BookAppointmentView> {
     if (profile == null ||
         _service == null ||
         _barber == null ||
-        _dateTime == null)
+        _dateTime == null) {
       return;
+    }
 
     setState(() => _saving = true);
     try {
@@ -138,6 +140,11 @@ class _BookAppointmentViewState extends State<BookAppointmentView> {
           StreamBuilder<List<Service>>(
             stream: serviceRepo.watchByBarbershop(widget.barbershopId),
             builder: (context, snapshot) {
+              if (snapshot.hasError) {
+                return const ErrorState(
+                  title: 'No pudimos cargar los servicios',
+                );
+              }
               if (snapshot.connectionState == ConnectionState.waiting) {
                 return const ShimmerList(count: 2, itemHeight: 58);
               }
@@ -172,6 +179,11 @@ class _BookAppointmentViewState extends State<BookAppointmentView> {
           StreamBuilder<List<AppUser>>(
             stream: userRepo.watchBarbersByBarbershop(widget.barbershopId),
             builder: (context, snapshot) {
+              if (snapshot.hasError) {
+                return const ErrorState(
+                  title: 'No pudimos cargar los barberos',
+                );
+              }
               if (snapshot.connectionState == ConnectionState.waiting) {
                 return const ShimmerList(count: 2, itemHeight: 58);
               }

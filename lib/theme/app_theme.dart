@@ -1,4 +1,5 @@
 import 'package:flutter/material.dart';
+import 'package:google_fonts/google_fonts.dart';
 
 import 'app_colors.dart';
 import 'app_motion.dart';
@@ -18,11 +19,18 @@ class AppTheme {
       brightness: AppColors.isDark ? Brightness.dark : Brightness.light,
     );
 
+    // Plus Jakarta Sans: geométrica, moderna y ligeramente distintiva —
+    // reemplaza la Roboto por defecto para que la app no se sienta genérica,
+    // manteniendo excelente legibilidad en textos largos.
+    final baseTextTheme = GoogleFonts.plusJakartaSansTextTheme(
+      ThemeData(brightness: colorScheme.brightness).textTheme,
+    );
+
     return ThemeData(
       useMaterial3: true,
       colorScheme: colorScheme,
       scaffoldBackgroundColor: AppColors.background,
-      fontFamily: 'Roboto',
+      fontFamily: GoogleFonts.plusJakartaSans().fontFamily,
       splashFactory: InkSparkle.splashFactory,
       pageTransitionsTheme: const PageTransitionsTheme(
         builders: {
@@ -38,26 +46,34 @@ class AppTheme {
         foregroundColor: AppColors.textPrimary,
         elevation: 0,
         centerTitle: false,
-        titleTextStyle: TextStyle(
+        titleTextStyle: GoogleFonts.plusJakartaSans(
           color: AppColors.textPrimary,
           fontSize: 20,
           fontWeight: FontWeight.w700,
+          letterSpacing: -0.3,
         ),
       ),
-      textTheme: TextTheme(
-        headlineSmall: TextStyle(
-          fontWeight: FontWeight.w700,
+      textTheme: baseTextTheme.copyWith(
+        headlineSmall: baseTextTheme.headlineSmall?.copyWith(
+          fontWeight: FontWeight.w800,
+          letterSpacing: -0.4,
           color: AppColors.textPrimary,
         ),
-        titleLarge: TextStyle(
+        titleLarge: baseTextTheme.titleLarge?.copyWith(
           fontWeight: FontWeight.w700,
+          letterSpacing: -0.3,
           color: AppColors.textPrimary,
         ),
-        titleMedium: TextStyle(
+        titleMedium: baseTextTheme.titleMedium?.copyWith(
           fontWeight: FontWeight.w600,
           color: AppColors.textPrimary,
         ),
-        bodyMedium: TextStyle(color: AppColors.textSecondary),
+        bodyLarge: baseTextTheme.bodyLarge?.copyWith(
+          color: AppColors.textPrimary,
+        ),
+        bodyMedium: baseTextTheme.bodyMedium?.copyWith(
+          color: AppColors.textSecondary,
+        ),
       ),
       inputDecorationTheme: InputDecorationTheme(
         filled: true,

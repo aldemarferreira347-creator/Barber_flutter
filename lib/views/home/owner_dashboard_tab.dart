@@ -14,6 +14,7 @@ import '../service/manage_services_view.dart';
 import '../widgets/action_list_tile.dart';
 import '../widgets/dashboard_scaffold.dart';
 import '../widgets/empty_state.dart';
+import '../widgets/error_state.dart';
 import '../widgets/promo_banner_card.dart';
 import '../widgets/status_badge.dart';
 
@@ -119,6 +120,12 @@ class OwnerDashboardTab extends StatelessWidget {
               ? const Stream<List<Barbershop>>.empty()
               : barbershopService.watchByOwner(profile.uid),
           builder: (context, snapshot) {
+            if (snapshot.hasError) {
+              return const ErrorState(
+                title: 'No pudimos cargar tu barbería',
+                subtitle: 'Verifica tu conexión e inténtalo de nuevo.',
+              );
+            }
             final shops = snapshot.data ?? [];
             final approvedShops = shops
                 .where(

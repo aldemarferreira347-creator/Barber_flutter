@@ -13,6 +13,7 @@ import '../home/barber_home_view.dart';
 import '../home/client_home_view.dart';
 import '../home/owner_home_view.dart';
 import '../notification/choose_notification_tone_view.dart';
+import 'error_state.dart';
 
 /// Decide qué pantalla mostrar según el estado de sesión y el rol del
 /// usuario autenticado, y mantiene el UserController sincronizado con el uid activo.
@@ -184,6 +185,13 @@ class _OwnerGate extends StatelessWidget {
     return StreamBuilder<List<Barbershop>>(
       stream: context.read<BarbershopRepository>().watchByOwner(ownerId),
       builder: (context, snapshot) {
+        if (snapshot.hasError) {
+          return const Scaffold(
+            body: Center(
+              child: ErrorState(title: 'No pudimos cargar tu barbería'),
+            ),
+          );
+        }
         if (snapshot.connectionState == ConnectionState.waiting) {
           return const Scaffold(
             body: Center(child: CircularProgressIndicator()),

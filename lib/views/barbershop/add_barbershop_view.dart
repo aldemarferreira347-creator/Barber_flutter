@@ -8,7 +8,9 @@ import 'package:provider/provider.dart';
 
 import '../../controllers/auth_controller.dart';
 import '../../models/barbershop.dart';
+import '../../models/user_role.dart';
 import '../../repositories/barbershop_repository.dart';
+import '../../repositories/user_repository.dart';
 import '../../services/location_service.dart';
 import '../../theme/app_colors.dart';
 import '../widgets/gradient_button.dart';
@@ -101,9 +103,10 @@ class _AddBarbershopViewState extends State<AddBarbershopView> {
       final position = await _locationService.getCurrentPosition();
       setState(() => _position = position);
     } on LocationException catch (e) {
-      if (mounted)
+      if (mounted) {
         ScaffoldMessenger.of(context)
             .showSnackBar(SnackBar(content: Text(e.message)));
+      }
     } finally {
       if (mounted) setState(() => _locating = false);
     }
@@ -111,11 +114,13 @@ class _AddBarbershopViewState extends State<AddBarbershopView> {
 
   Future<void> _submit() async {
     if (!_formKey.currentState!.validate()) return;
-    final ownerId = context.read<AuthController>().profile?.uid;
+    final auth = context.read<AuthController>();
+    final ownerId = auth.profile?.uid;
     if (ownerId == null) return;
 
     setState(() => _saving = true);
     final repo = context.read<BarbershopRepository>();
+    final userRepo = context.read<UserRepository>();
     try {
       final id = await repo.create(
         Barbershop(
@@ -130,9 +135,16 @@ class _AddBarbershopViewState extends State<AddBarbershopView> {
           approvalStatus: BarbershopApprovalStatus.pending,
         ),
       );
-      // Solicitud de rol de Dueño (spec 12.1): el rol propio no se puede
-      // cambiar desde el cliente, así que esto lo confirma el backend.
-      await repo.requestOwnership(id);
+      // Solicitud de rol de Dueño (spec 12.1). Antes pasaba por la función
+      // en la nube requestBarbershopOwnership (Admin SDK, porque el rol
+      // propio está congelado por firestore.rules para el resto de
+      // transiciones) — sin plan Blaze esa función no se puede desplegar,
+      // así que aquí se hace directo contra Firestore; la regla tiene una
+      // rama dedicada y acotada solo a client->owner (ver firestore.rules).
+      if (auth.profile?.role == UserRole.client) {
+        await userRepo.setRole(ownerId, UserRole.owner);
+        await auth.refreshProfile();
+      }
       if (_position != null) {
         await repo.updateLocation(
           id,

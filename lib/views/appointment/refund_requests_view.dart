@@ -6,6 +6,7 @@ import '../../models/refund_request.dart';
 import '../../repositories/refund_request_repository.dart';
 import '../../theme/app_colors.dart';
 import '../widgets/empty_state.dart';
+import '../widgets/error_state.dart';
 import '../widgets/shimmer_box.dart';
 
 /// Panel del dueño para aprobar/rechazar solicitudes de cancelación con
@@ -59,6 +60,13 @@ class RefundRequestsView extends StatelessWidget {
       body: StreamBuilder<List<RefundRequest>>(
         stream: repo.watchByBarbershop(barbershopId),
         builder: (context, snapshot) {
+          if (snapshot.hasError) {
+            return const Center(
+              child: ErrorState(
+                title: 'No pudimos cargar las solicitudes',
+              ),
+            );
+          }
           if (snapshot.connectionState == ConnectionState.waiting) {
             return const Padding(
               padding: EdgeInsets.all(16),

@@ -1,26 +1,51 @@
 {
   "project_info": {
-    "project_number": "520100424312",
-    "project_id": "barber-c61c5",
-    "storage_bucket": "barber-c61c5.firebasestorage.app"
+    "project_number": "715905788902",
+    "project_id": "barber-5082f",
+    "storage_bucket": "barber-5082f.firebasestorage.app"
   },
   "client": [
     {
       "client_info": {
-        "mobilesdk_app_id": "1:520100424312:android:018b84195249f2abcb9b8d",
+        "mobilesdk_app_id": "1:715905788902:android:eb4c7aab17be35790ec427",
         "android_client_info": {
           "package_name": "com.example.barber"
         }
       },
-      "oauth_client": [],
+      "oauth_client": [
+        {
+          "client_id": "715905788902-pnto3e40n8p6hfcta52avjm0n0m2ljrm.apps.googleusercontent.com",
+          "client_type": 1,
+          "android_info": {
+            "package_name": "com.example.barber",
+            "certificate_hash": "21d55f860102a7e1c6114a5426da6d50009e4391"
+          }
+        },
+        {
+          "client_id": "715905788902-h5jadkml6im1u3nbt9mscksl16avbmeb.apps.googleusercontent.com",
+          "client_type": 3
+        }
+      ],
       "api_key": [
         {
-          "current_key": "AIzaSyAejJRIXNIE-rxCTJhNISn4OIhr_RVK8_k"
+          "current_key": "AIzaSyDUZqrDqSUEHIhddya3A06zFYHxBJgImA4"
         }
       ],
       "services": {
         "appinvite_service": {
-          "other_platform_oauth_client": []
+          "other_platform_oauth_client": [
+            {
+              "client_id": "715905788902-h5jadkml6im1u3nbt9mscksl16avbmeb.apps.googleusercontent.com",
+              "client_type": 3
+            },
+            {
+              "client_id": "715905788902-o6qnsn29ii6l4f6krlbsb7s3gv9gcfdh.apps.googleusercontent.com",
+              "client_type": 2,
+              "ios_info": {
+                "bundle_id": "com.example.barber"
+              }
+            }
+          ]
         }
       }
     }

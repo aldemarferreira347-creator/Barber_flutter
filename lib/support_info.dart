@@ -6,6 +6,6 @@
 class SupportInfo {
   SupportInfo._();
 
-  static const supportEmail = 'soporte@barberflow.com';
-  static const supportPhone = '+573000000000';
+  static const supportEmail = 'contacto.barberflow@gmail.com';
+  static const supportPhone = '+573104840917';
 }

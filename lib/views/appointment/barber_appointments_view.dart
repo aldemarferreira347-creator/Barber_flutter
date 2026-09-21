@@ -7,6 +7,7 @@ import '../../repositories/appointment_repository.dart';
 import '../../theme/app_colors.dart';
 import '../widgets/appointment_card.dart';
 import '../widgets/empty_state.dart';
+import '../widgets/error_state.dart';
 import '../widgets/shimmer_box.dart';
 
 class BarberAppointmentsView extends StatelessWidget {
@@ -62,6 +63,11 @@ class BarberAppointmentsView extends StatelessWidget {
           : StreamBuilder<List<Appointment>>(
               stream: repo.watchByBarber(profile.uid),
               builder: (context, snapshot) {
+                if (snapshot.hasError) {
+                  return const Center(
+                    child: ErrorState(title: 'No pudimos cargar tus citas'),
+                  );
+                }
                 if (snapshot.connectionState == ConnectionState.waiting) {
                   return const Padding(
                     padding: EdgeInsets.all(16),

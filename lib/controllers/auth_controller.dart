@@ -1,6 +1,7 @@
 import 'dart:async';
 
 import 'package:firebase_auth/firebase_auth.dart';
+import 'package:firebase_core/firebase_core.dart';
 import 'package:flutter/foundation.dart';
 
 import '../models/app_user.dart';
@@ -48,6 +49,19 @@ class AuthController extends ChangeNotifier {
   AppUser? profile;
   String? errorMessage;
   bool isBusy = false;
+
+  /// Vuelve a cargar el perfil desde Firestore sin pasar por un cambio de
+  /// sesión. [profile] solo se refresca normalmente en `_onAuthChanged`
+  /// (sign in/out) — cuando algo cambia el perfil del usuario actual en
+  /// medio de la sesión (p.ej. auto-promoción a Dueño al registrar una
+  /// barbería), hay que pedirlo explícitamente o la UI se queda mostrando
+  /// el rol viejo hasta el próximo inicio de sesión.
+  Future<void> refreshProfile() async {
+    final uid = profile?.uid;
+    if (uid == null) return;
+    profile = await _userService.fetchUserProfile(uid);
+    notifyListeners();
+  }
 
   Future<void> _onAuthChanged(User? user) async {
     if (user == null) {
@@ -111,6 +125,13 @@ class AuthController extends ChangeNotifier {
       return outcome;
     } on FirebaseException catch (e) {
       errorMessage = e.message ?? 'Error de autenticación';
+      return null;
+    } catch (e) {
+      // Cualquier otra falla (plugin de Google, Play Services, Credential
+      // Manager, etc.) no debe desaparecer en silencio: sin este catch, la
+      // vista no recibe outcome ni errorMessage y el botón "Continuar con
+      // Google" parece no hacer nada al tocarlo.
+      errorMessage = 'No se pudo iniciar sesión con Google: $e';
       return null;
     } finally {
       isBusy = false;
@@ -220,6 +241,68 @@ class AuthController extends ChangeNotifier {
       // quede autenticado con un perfil que la UI todavía no confirmó.
       await _authService.signOut();
     });
+  }
+
+  /// Registra un nuevo usuario desde el panel admin sin afectar la sesión
+  /// actual del administrador. Usa una instancia secundaria de FirebaseApp
+  /// para crear la cuenta de Auth y luego la descarta.
+  ///
+  /// Devuelve `true` si el registro fue exitoso, `false` si hubo un error
+  /// (ver [errorMessage]). El nuevo usuario queda con estado activo y el
+  /// [role] elegido por el admin.
+  Future<bool> adminRegisterUser({
+    required String email,
+    required String password,
+    required String name,
+    required UserRole role,
+  }) async {
+    isBusy = true;
+    errorMessage = null;
+    notifyListeners();
+    FirebaseApp? tempApp;
+    try {
+      final normalizedEmail = email.trim().toLowerCase();
+
+      // Creamos una segunda instancia de FirebaseApp con las mismas opciones
+      // que la principal para poder usar Firebase Auth en paralelo sin
+      // cerrar la sesión del admin.
+      final options = Firebase.app().options;
+      tempApp = await Firebase.initializeApp(
+        name: '_admin_register_${DateTime.now().millisecondsSinceEpoch}',
+        options: options,
+      );
+
+      final tempAuth = FirebaseAuth.instanceFor(app: tempApp);
+      final credential = await tempAuth.createUserWithEmailAndPassword(
+        email: normalizedEmail,
+        password: password,
+      );
+      final newUid = credential.user!.uid;
+
+      // Perfil en Firestore con el rol elegido por el admin
+      final newUser = AppUser(
+        uid: newUid,
+        email: normalizedEmail,
+        name: name.trim(),
+        role: role,
+      );
+      await _userService.createUserProfile(newUser);
+
+      // Cerramos la sesión en la app temporal y la eliminamos
+      await tempAuth.signOut();
+      return true;
+    } on FirebaseException catch (e) {
+      errorMessage = e.message ?? 'Error al registrar usuario';
+      return false;
+    } finally {
+      if (tempApp != null) {
+        try {
+          await tempApp.delete();
+        } catch (_) {}
+      }
+      isBusy = false;
+      notifyListeners();
+    }
   }
 
   /// Elige o cambia el tono de notificaciones del usuario actual (spec 3.5).
