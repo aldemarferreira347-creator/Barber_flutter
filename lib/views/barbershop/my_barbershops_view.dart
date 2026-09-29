@@ -12,6 +12,7 @@ import '../widgets/pressable_scale.dart';
 import '../widgets/shimmer_box.dart';
 import 'add_barbershop_view.dart';
 import 'approval_status_badge.dart';
+import 'owner_alerts_section.dart';
 import 'owner_barbershop_manage_view.dart';
 
 /// "Mis barberías": las barberías que administra el usuario autenticado y
@@ -115,6 +116,7 @@ class MyBarbershopsView extends StatelessWidget {
                     return ListView(
                       padding: const EdgeInsets.fromLTRB(16, 16, 16, 96),
                       children: [
+                        OwnerAlertsSection(shops: shops),
                         for (var i = 0; i < shops.length; i++) ...[
                           _ShopTile(
                                 shop: shops[i],

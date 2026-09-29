@@ -20,6 +20,7 @@ import 'barbershop_reviews_view.dart';
 import 'close_shop_view.dart';
 import 'edit_barbershop_view.dart';
 import 'edit_schedule_view.dart';
+import 'payment_insight.dart';
 
 /// Panel de gestión de UNA barbería: revisar sus datos, editarlos y entrar a
 /// sus barberos, servicios, productos, horario, citas, reseñas, reembolsos y
@@ -106,6 +107,64 @@ class OwnerBarbershopManageView extends StatelessWidget {
     }
   }
 
+  /// Espejo de la regla de borrado de firestore.rules: una barbería viva
+  /// (aprobada y con mensualidad vigente) no se borra — primero se cancela la
+  /// membresía, que la bloquea; una pendiente o rechazada sí se borra directo.
+  static bool canDelete(Barbershop shop) =>
+      shop.approvalStatus != BarbershopApprovalStatus.approved ||
+      shop.paymentStatus == PaymentStatus.blocked;
+
+  Future<void> _delete(
+    BuildContext context,
+    BarbershopRepository repo,
+    Barbershop shop,
+  ) async {
+    final messenger = ScaffoldMessenger.of(context);
+    if (!canDelete(shop)) {
+      messenger.showSnackBar(
+        const SnackBar(
+          content: Text(
+            'Esta barbería está activa. Cancela primero la membresía para poder eliminarla.',
+          ),
+        ),
+      );
+      return;
+    }
+    final navigator = Navigator.of(context);
+    final confirmed = await showDialog<bool>(
+      context: context,
+      builder: (context) => AlertDialog(
+        title: const Text('Eliminar barbería'),
+        content: Text(
+          '¿Eliminar "${shop.name}" definitivamente? No se puede deshacer y sus barberos, servicios y productos dejarán de ser accesibles.',
+        ),
+        actions: [
+          TextButton(
+            onPressed: () => Navigator.of(context).pop(false),
+            child: const Text('Volver'),
+          ),
+          FilledButton(
+            style: FilledButton.styleFrom(backgroundColor: AppColors.error),
+            onPressed: () => Navigator.of(context).pop(true),
+            child: const Text('Eliminar'),
+          ),
+        ],
+      ),
+    );
+    if (confirmed != true) return;
+    try {
+      await repo.delete(shop.id);
+      navigator.pop();
+      messenger.showSnackBar(
+        SnackBar(content: Text('"${shop.name}" fue eliminada')),
+      );
+    } catch (e) {
+      messenger.showSnackBar(
+        SnackBar(content: Text('No se pudo eliminar: $e')),
+      );
+    }
+  }
+
   @override
   Widget build(BuildContext context) {
     final repo = context.read<BarbershopRepository>();
@@ -158,12 +217,16 @@ class OwnerBarbershopManageView extends StatelessWidget {
             children: [
               _Header(shop: shop),
               const SizedBox(height: 12),
-              if (!approved)
-                _Notice(
-                  text: switch (shop.approvalStatus) {
-                    BarbershopApprovalStatus.rejected => 'El administrador rechazó esta barbería. Puedes ajustar los datos, pero no aparecerá en el catálogo.',
-                    _ => 'Pendiente de revisión: el administrador debe aprobarla antes de que aparezca en el catálogo y de arrancar tu mensualidad.',
-                  },
+              for (final alert in shopAlerts(shop))
+                ShopAlertBanner(
+                  alert: alert,
+                  // Toda alerta de una barbería aprobada es de mensualidad.
+                  actionLabel: approved
+                      ? 'Pagar ${formatCop(kBarbershopMonthlyFee)}'
+                      : null,
+                  onAction: approved
+                      ? () => _paySubscription(context, repo, shop.id)
+                      : null,
                 ),
               if (approved) ...[
                 ActionListTile(
@@ -283,6 +346,16 @@ class OwnerBarbershopManageView extends StatelessWidget {
                 onTap: () =>
                     _push(context, CloseShopView(barbershopId: shop.id)),
               ),
+              const SizedBox(height: 10),
+              ActionListTile(
+                icon: Icons.delete_outline,
+                label: 'Eliminar barbería',
+                subtitle: canDelete(shop)
+                    ? 'Borra la barbería definitivamente'
+                    : 'Primero cancela la membresía',
+                iconColor: AppColors.error,
+                onTap: () => _delete(context, repo, shop),
+              ),
             ],
           );
         },
@@ -347,37 +420,6 @@ class _Header extends StatelessWidget {
                 const SizedBox(height: 6),
                 ApprovalStatusBadge(status: shop.approvalStatus),
               ],
-            ),
-          ),
-        ],
-      ),
-    );
-  }
-}
-
-class _Notice extends StatelessWidget {
-  final String text;
-
-  const _Notice({required this.text});
-
-  @override
-  Widget build(BuildContext context) {
-    return Container(
-      margin: const EdgeInsets.only(bottom: 10),
-      padding: const EdgeInsets.all(12),
-      decoration: BoxDecoration(
-        color: AppColors.warning.withValues(alpha: 0.10),
-        borderRadius: BorderRadius.circular(12),
-        border: Border.all(color: AppColors.warning.withValues(alpha: 0.3)),
-      ),
-      child: Row(
-        children: [
-          const Icon(Icons.info_outline, size: 18, color: AppColors.warning),
-          const SizedBox(width: 8),
-          Expanded(
-            child: Text(
-              text,
-              style: TextStyle(fontSize: 12, color: AppColors.textSecondary),
             ),
           ),
         ],

@@ -157,6 +157,34 @@ void main() {
       expect(find.text('Citas de esta barbería'), findsOneWidget);
     });
 
+    testWidgets('alerta y ofrece pagar cuando la mensualidad está vencida', (
+      tester,
+    ) async {
+      authController.profile = _user(UserRole.owner);
+      final overdue = Barbershop(
+        id: 's1',
+        ownerId: _uid,
+        name: 'Barbería Central',
+        active: true,
+        approvalStatus: BarbershopApprovalStatus.approved,
+        paymentStatus: PaymentStatus.overdue,
+        paymentDueDate: DateTime.now().subtract(const Duration(days: 1)),
+      );
+      when(() => barbershops.watchOne('s1'))
+          .thenAnswer((_) => Stream.value(overdue));
+
+      await tester.pumpWidget(
+        wrap(const OwnerBarbershopManageView(barbershopId: 's1')),
+      );
+      await tester.pumpAndSettle();
+
+      expect(find.text('Mensualidad vencida'), findsOneWidget);
+      expect(
+        find.text('Pagar ${formatCop(kBarbershopMonthlyFee)}'),
+        findsWidgets,
+      );
+    });
+
     testWidgets('NO deja gestionar la barbería de otro dueño', (tester) async {
       authController.profile = _user(UserRole.owner);
       when(() => barbershops.watchOne('s9')).thenAnswer(

@@ -55,6 +55,11 @@ abstract class BarbershopRepository {
   /// pago aprobado, firestore.rules rechaza la creación.
   Future<String> createPaid(Barbershop barbershop);
 
+  /// Borra la barbería (Delete del CRUD del dueño). firestore.rules solo lo
+  /// permite si no está aprobada o si ya se canceló su membresía (bloqueada);
+  /// el admin puede siempre.
+  Future<void> delete(String id);
+
   /// Edita los datos básicos de una barbería propia (nunca sus estados de
   /// aprobación, bloqueo o pago).
   Future<void> updateInfo(

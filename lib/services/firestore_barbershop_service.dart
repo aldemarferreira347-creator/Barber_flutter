@@ -194,6 +194,9 @@ class FirestoreBarbershopService implements BarbershopRepository {
   }
 
   @override
+  Future<void> delete(String id) => _barbershops.doc(id).delete();
+
+  @override
   Future<void> updateInfo(
     String id, {
     required String name,

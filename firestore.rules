@@ -192,7 +192,13 @@ service cloud.firestore {
             .hasOnly(['active', 'paymentStatus']))
       );
 
-      allow delete: if isAdmin();
+      // El dueño borra su barbería solo si aún no está aprobada, o si ya
+      // canceló la membresía (bloqueada): una barbería viva con citas y pagos
+      // no desaparece de un toque. El admin puede siempre.
+      allow delete: if isAdmin() || (isSignedIn() &&
+        resource.data.ownerId == request.auth.uid &&
+        (resource.data.approvalStatus != 'approved' ||
+          resource.data.paymentStatus == 'blocked'));
 
       // servicios de la barbería: el dueño de ESA barbería (o el admin) los
       // administra; cualquier usuario autenticado puede verlos (catálogo).

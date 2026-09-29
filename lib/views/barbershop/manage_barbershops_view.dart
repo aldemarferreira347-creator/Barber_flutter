@@ -13,102 +13,7 @@ import '../widgets/status_badge.dart';
 import 'approval_status_badge.dart';
 import 'owner_barbershop_manage_view.dart';
 import 'barbershop_detail_view.dart';
-
-/// Días de gracia entre el vencimiento y el bloqueo automático (spec 12.5),
-/// espejo exacto de GRACE_PERIOD_MS en
-/// functions/src/barbershops/subscriptionService.ts (3 a 5 días, punto
-/// medio = 4). Se usa también como ventana simétrica de aviso "vence
-/// pronto" antes del vencimiento, para que el admin no se entere del
-/// vencimiento el mismo día que ocurre.
-const _paymentWindowDays = 4;
-
-enum _PaymentInsightLevel { ok, dueSoon, grace, graceExpired, blocked }
-
-class _PaymentInsight {
-  final String label;
-  final String? detail;
-  final Color color;
-  final _PaymentInsightLevel level;
-
-  const _PaymentInsight({
-    required this.label,
-    this.detail,
-    required this.color,
-    required this.level,
-  });
-}
-
-_PaymentInsight _paymentInsight(Barbershop shop, {DateTime? now}) {
-  final today = now ?? DateTime.now();
-
-  if (shop.paymentStatus == PaymentStatus.blocked) {
-    return const _PaymentInsight(
-      label: 'Bloqueada',
-      detail: 'Sin acceso hasta regularizar el pago',
-      color: AppColors.error,
-      level: _PaymentInsightLevel.blocked,
-    );
-  }
-
-  final due = shop.paymentDueDate;
-
-  if (shop.paymentStatus == PaymentStatus.overdue) {
-    if (due == null) {
-      return const _PaymentInsight(
-        label: 'En mora',
-        color: AppColors.warning,
-        level: _PaymentInsightLevel.grace,
-      );
-    }
-    final daysOverdue = today.difference(due).inDays;
-    final daysLeft = _paymentWindowDays - daysOverdue;
-    if (daysLeft > 0) {
-      return _PaymentInsight(
-        label: 'Período de gracia',
-        detail: daysLeft == 1
-            ? 'Queda 1 día antes del bloqueo automático'
-            : 'Quedan $daysLeft días antes del bloqueo automático',
-        color: AppColors.warning,
-        level: _PaymentInsightLevel.grace,
-      );
-    }
-    return const _PaymentInsight(
-      label: 'Gracia vencida',
-      detail: 'Ya debería bloquearse por impago',
-      color: AppColors.error,
-      level: _PaymentInsightLevel.graceExpired,
-    );
-  }
-
-  // paymentStatus == ok
-  if (due == null) {
-    return const _PaymentInsight(
-      label: 'Al día',
-      color: AppColors.success,
-      level: _PaymentInsightLevel.ok,
-    );
-  }
-  final daysUntilDue = due.difference(today).inDays;
-  if (daysUntilDue <= _paymentWindowDays) {
-    final detail = daysUntilDue <= 0
-        ? 'Vence hoy'
-        : daysUntilDue == 1
-        ? 'Vence mañana'
-        : 'Vence en $daysUntilDue días';
-    return _PaymentInsight(
-      label: 'Vence pronto',
-      detail: detail,
-      color: AppColors.warning,
-      level: _PaymentInsightLevel.dueSoon,
-    );
-  }
-  return _PaymentInsight(
-    label: 'Al día',
-    detail: 'Vence el ${due.day}/${due.month}/${due.year}',
-    color: AppColors.success,
-    level: _PaymentInsightLevel.ok,
-  );
-}
+import 'payment_insight.dart';
 
 enum _AdminShopFilter { pending, ok, dueSoon, grace, blocked }
 
@@ -146,15 +51,15 @@ class _ManageBarbershopsViewState extends State<ManageBarbershopsView> {
     if (shop.approvalStatus != BarbershopApprovalStatus.approved) {
       return false;
     }
-    final level = _paymentInsight(shop).level;
+    final level = paymentInsight(shop).level;
     return switch (filter) {
       _AdminShopFilter.pending => false, // ya cubierto arriba
-      _AdminShopFilter.ok => level == _PaymentInsightLevel.ok,
-      _AdminShopFilter.dueSoon => level == _PaymentInsightLevel.dueSoon,
+      _AdminShopFilter.ok => level == PaymentInsightLevel.ok,
+      _AdminShopFilter.dueSoon => level == PaymentInsightLevel.dueSoon,
       _AdminShopFilter.grace =>
-        level == _PaymentInsightLevel.grace ||
-            level == _PaymentInsightLevel.graceExpired,
-      _AdminShopFilter.blocked => level == _PaymentInsightLevel.blocked,
+        level == PaymentInsightLevel.grace ||
+            level == PaymentInsightLevel.graceExpired,
+      _AdminShopFilter.blocked => level == PaymentInsightLevel.blocked,
     };
   }
 
@@ -172,7 +77,7 @@ class _ManageBarbershopsViewState extends State<ManageBarbershopsView> {
       backgroundColor: Colors.transparent,
       builder: (sheetCtx) => _ShopActionsSheet(
         shop: shop,
-        insight: _paymentInsight(shop),
+        insight: paymentInsight(shop),
         onApprove: () => _approve(context, service, shop),
         onReject: () => _confirmReject(context, service, shop),
         onViewInfo: () => Navigator.of(context).push(
@@ -522,7 +427,7 @@ class _ManageBarbershopsViewState extends State<ManageBarbershopsView> {
                                                       BarbershopApprovalStatus
                                                           .approved)
                                                     _PaymentBadge(
-                                                      insight: _paymentInsight(
+                                                      insight: paymentInsight(
                                                         shop,
                                                       ),
                                                     ),
@@ -568,7 +473,7 @@ class _ManageBarbershopsViewState extends State<ManageBarbershopsView> {
 }
 
 class _PaymentBadge extends StatelessWidget {
-  final _PaymentInsight insight;
+  final PaymentInsight insight;
 
   const _PaymentBadge({required this.insight});
 
@@ -690,7 +595,7 @@ class _ActionMenuButtonState extends State<_ActionMenuButton>
 
 class _ShopActionsSheet extends StatelessWidget {
   final Barbershop shop;
-  final _PaymentInsight insight;
+  final PaymentInsight insight;
   final VoidCallback onApprove;
   final VoidCallback onReject;
   final VoidCallback onViewInfo;

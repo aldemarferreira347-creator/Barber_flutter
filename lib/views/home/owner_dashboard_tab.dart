@@ -8,6 +8,7 @@ import '../../theme/app_colors.dart';
 import '../barbershop/add_barbershop_view.dart';
 import '../barbershop/approval_status_badge.dart';
 import '../barbershop/my_barbershops_view.dart';
+import '../barbershop/owner_alerts_section.dart';
 import '../barbershop/owner_barbershop_manage_view.dart';
 import '../notification/notifications_view.dart';
 import '../widgets/dashboard_scaffold.dart';
@@ -80,6 +81,7 @@ class OwnerDashboardTab extends StatelessWidget {
             return Column(
               crossAxisAlignment: CrossAxisAlignment.stretch,
               children: [
+                OwnerAlertsSection(shops: shops),
                 Row(
                   children: [
                     const Expanded(

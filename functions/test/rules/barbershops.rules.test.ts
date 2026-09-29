@@ -2,7 +2,7 @@ import { readFileSync } from 'fs';
 import { join } from 'path';
 
 import { assertFails, assertSucceeds, initializeTestEnvironment, RulesTestEnvironment } from '@firebase/rules-unit-testing';
-import { doc, setDoc } from 'firebase/firestore';
+import { deleteDoc, doc, setDoc } from 'firebase/firestore';
 
 const PROJECT_ID = 'demo-barber';
 const SHOP_ID = 'shop1';
@@ -139,5 +139,51 @@ describe('firestore.rules — barbershops/{id} (spec 12.1: aprobación del admin
         paymentDueDate: new Date(),
       }),
     );
+  });
+
+  describe('borrar la barbería (Delete del CRUD del dueño)', () => {
+    async function seedShop(fields: Record<string, unknown>) {
+      await testEnv.withSecurityRulesDisabled(async (context) => {
+        await setDoc(doc(context.firestore(), `barbershops/${SHOP_ID}`), {
+          ownerId: OWNER_UID,
+          name: 'BarberFlow Centro',
+          active: false,
+          paymentStatus: 'ok',
+          ...fields,
+        });
+      });
+    }
+
+    it('el dueño borra una barbería pendiente o rechazada', async () => {
+      const db = testEnv.authenticatedContext(OWNER_UID).firestore();
+      await seedShop({ approvalStatus: 'pending' });
+      await assertSucceeds(deleteDoc(doc(db, `barbershops/${SHOP_ID}`)));
+      await seedShop({ approvalStatus: 'rejected' });
+      await assertSucceeds(deleteDoc(doc(db, `barbershops/${SHOP_ID}`)));
+    });
+
+    it('el dueño NO borra una barbería aprobada y vigente', async () => {
+      await seedShop({ approvalStatus: 'approved', active: true });
+      const db = testEnv.authenticatedContext(OWNER_UID).firestore();
+      await assertFails(deleteDoc(doc(db, `barbershops/${SHOP_ID}`)));
+    });
+
+    it('el dueño sí la borra una vez cancelada la membresía (bloqueada)', async () => {
+      await seedShop({ approvalStatus: 'approved', paymentStatus: 'blocked' });
+      const db = testEnv.authenticatedContext(OWNER_UID).firestore();
+      await assertSucceeds(deleteDoc(doc(db, `barbershops/${SHOP_ID}`)));
+    });
+
+    it('otro usuario nunca borra la barbería ajena, aunque esté pendiente', async () => {
+      await seedShop({ approvalStatus: 'pending' });
+      const db = testEnv.authenticatedContext('intruso').firestore();
+      await assertFails(deleteDoc(doc(db, `barbershops/${SHOP_ID}`)));
+    });
+
+    it('el admin borra cualquiera', async () => {
+      await seedShop({ approvalStatus: 'approved', active: true });
+      const db = testEnv.authenticatedContext(ADMIN_UID).firestore();
+      await assertSucceeds(deleteDoc(doc(db, `barbershops/${SHOP_ID}`)));
+    });
   });
 });
