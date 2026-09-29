@@ -53,7 +53,8 @@ class BarbershopDetailView extends StatelessWidget {
   @override
   Widget build(BuildContext context) {
     final service = context.read<BarbershopRepository>();
-    final role = context.watch<AuthController>().profile?.role;
+    final profile = context.watch<AuthController>().profile;
+    final role = profile?.role;
 
     return Scaffold(
       appBar: AppBar(title: const Text('Detalle de barbería')),
@@ -93,7 +94,11 @@ class BarbershopDetailView extends StatelessWidget {
             );
           }
           return Scaffold(
-            floatingActionButton: role == UserRole.client
+            // Reservan los Clientes y también los Dueños (en barberías
+            // ajenas: no tiene sentido agendarse en la propia).
+            floatingActionButton:
+                (role == UserRole.client ||
+                    (role == UserRole.owner && shop.ownerId != profile?.uid))
                 ? FloatingActionButton.extended(
                     onPressed: () => Navigator.of(context).push(
                       MaterialPageRoute(

@@ -128,3 +128,47 @@ describe('storage.rules — barbershops/{shopId}/products', () => {
     await assertFails(uploadBytes(fileRef, fakeImageOfSize(1024)));
   });
 });
+
+describe('storage.rules — barbershopDrafts/{uid}_{n}/profile (foto de borrador)', () => {
+  let testEnv: RulesTestEnvironment;
+
+  beforeAll(async () => {
+    testEnv = await initializeTestEnvironment({
+      projectId: PROJECT_ID,
+      storage: {
+        rules: readFileSync(join(__dirname, '../../../storage.rules'), 'utf8'),
+        host: '127.0.0.1',
+        port: 9199,
+      },
+    });
+  });
+
+  afterAll(async () => {
+    await testEnv.cleanup();
+  });
+
+  it('el dueño sube la foto de su propio cupo de borrador', async () => {
+    const storage = testEnv.authenticatedContext(OWNER_UID).storage();
+    const fileRef = ref(storage, `barbershopDrafts/${OWNER_UID}_1/profile/cover.png`);
+    await assertSucceeds(uploadBytes(fileRef, fakeImageOfSize(1024)));
+  });
+
+  it('rechaza subir a un cupo ajeno, a un cupo fuera de 1..5, o sin sesión', async () => {
+    const other = testEnv.authenticatedContext(OTHER_UID).storage();
+    await assertFails(uploadBytes(ref(other, `barbershopDrafts/${OWNER_UID}_1/profile/cover.png`), fakeImageOfSize(1024)));
+
+    const owner = testEnv.authenticatedContext(OWNER_UID).storage();
+    await assertFails(uploadBytes(ref(owner, `barbershopDrafts/${OWNER_UID}_6/profile/cover.png`), fakeImageOfSize(1024)));
+
+    const anon = testEnv.unauthenticatedContext().storage();
+    await assertFails(uploadBytes(ref(anon, `barbershopDrafts/${OWNER_UID}_1/profile/cover.png`), fakeImageOfSize(1024)));
+  });
+
+  it('rechaza archivos que no son imagen o superan 5MB', async () => {
+    const storage = testEnv.authenticatedContext(OWNER_UID).storage();
+    await assertFails(uploadBytes(ref(storage, `barbershopDrafts/${OWNER_UID}_1/profile/big.png`), fakeImageOfSize(6 * 1024 * 1024)));
+    await assertFails(
+      uploadBytes(ref(storage, `barbershopDrafts/${OWNER_UID}_1/profile/x.txt`), new Blob([image], { type: 'text/plain' })),
+    );
+  });
+});

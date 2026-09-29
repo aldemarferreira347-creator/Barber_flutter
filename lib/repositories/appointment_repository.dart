@@ -23,6 +23,11 @@ abstract class AppointmentRepository {
 
   Stream<List<Appointment>> watchByBarbershop(String barbershopId);
 
+  /// Citas de varias barberías a la vez (vista del Dueño con más de una),
+  /// ordenadas por fecha. Cada barbería se consulta por separado para que
+  /// firestore.rules verifique que quien pregunta es su dueño.
+  Stream<List<Appointment>> watchByBarbershops(List<String> barbershopIds);
+
   Future<void> setStatus(String id, AppointmentStatus status);
 
   /// Reprograma una cita SIN pago (escritura directa, sin bloqueo de

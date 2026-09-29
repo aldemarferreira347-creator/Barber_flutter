@@ -126,7 +126,7 @@ void main() {
 
       expect(tester.takeException(), isNull);
       expect(find.text('Hola, Oli 👋'), findsOneWidget);
-      expect(find.text('Aún no tienes una barbería'), findsOneWidget);
+      expect(find.text('Aún no tienes barberías'), findsOneWidget);
     },
   );
 
@@ -143,6 +143,7 @@ void main() {
         id: 'shop1',
         ownerId: _uid,
         name: 'Barbería Central',
+        active: true,
         approvalStatus: BarbershopApprovalStatus.approved,
         paymentStatus: PaymentStatus.overdue,
         paymentDueDate: DateTime(2026, 5, 16),
@@ -155,7 +156,8 @@ void main() {
 
       expect(tester.takeException(), isNull);
       expect(find.text('Barbería Central'), findsOneWidget);
-      expect(find.text('Estado de pago'), findsOneWidget);
+      expect(find.text('Mis barberías'), findsOneWidget);
+      expect(find.text('Activa'), findsOneWidget);
     },
   );
 

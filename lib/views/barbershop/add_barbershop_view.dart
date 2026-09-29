@@ -1,5 +1,6 @@
 import 'dart:typed_data';
 
+import 'package:cloud_firestore/cloud_firestore.dart';
 import 'package:flutter/material.dart';
 import 'package:flutter_animate/flutter_animate.dart';
 import 'package:geolocator/geolocator.dart';
@@ -22,8 +23,14 @@ Widget _entrance(Widget child, int index) {
       .slideY(begin: 0.08, end: 0, curve: Curves.easeOutCubic);
 }
 
+/// Alta de barbería. Registrar cuesta [kBarbershopMonthlyFee]: el dueño
+/// puede pagar y enviarla a revisión, o dejarla como borrador (máximo
+/// [kMaxBarbershopDrafts]) y pagar después. Con [draft] edita un borrador
+/// existente.
 class AddBarbershopView extends StatefulWidget {
-  const AddBarbershopView({super.key});
+  final Barbershop? draft;
+
+  const AddBarbershopView({super.key, this.draft});
 
   @override
   State<AddBarbershopView> createState() => _AddBarbershopViewState();
@@ -40,9 +47,23 @@ class _AddBarbershopViewState extends State<AddBarbershopView> {
   final _picker = ImagePicker();
   bool _saving = false;
   bool _locating = false;
+  bool _paying = false;
   Position? _position;
   Uint8List? _photoBytes;
   String? _photoName;
+
+  @override
+  void initState() {
+    super.initState();
+    final draft = widget.draft;
+    if (draft != null) {
+      _nameController.text = draft.name;
+      _addressController.text = draft.address ?? '';
+      _phoneController.text = draft.phone ?? '';
+      _emailController.text = draft.email ?? '';
+      _descriptionController.text = draft.description ?? '';
+    }
+  }
 
   @override
   void dispose() {
@@ -112,60 +133,74 @@ class _AddBarbershopViewState extends State<AddBarbershopView> {
     }
   }
 
-  Future<void> _submit() async {
+  Barbershop _buildShop(String ownerId) {
+    return Barbershop(
+      id: widget.draft?.id ?? '',
+      name: _nameController.text.trim(),
+      ownerId: ownerId,
+      address: _addressController.text.trim(),
+      phone: _phoneController.text.trim(),
+      email: _emailController.text.trim(),
+      description: _descriptionController.text.trim(),
+      photoUrl: widget.draft?.photoUrl,
+      location: _position != null
+          ? GeoPoint(_position!.latitude, _position!.longitude)
+          : widget.draft?.location,
+      schedule: widget.draft?.schedule ?? const {},
+      approvalStatus: BarbershopApprovalStatus.draft,
+    );
+  }
+
+  String get _photoFileName =>
+      '${DateTime.now().millisecondsSinceEpoch}_${_photoName ?? 'foto.jpg'}';
+
+  /// Guarda (o actualiza) el borrador, con su foto, y devuelve su id.
+  Future<String> _persistDraft(
+    BarbershopRepository repo,
+    String ownerId,
+  ) async {
+    final shop = _buildShop(ownerId);
+    final existing = widget.draft;
+    final String id;
+    if (existing != null) {
+      id = existing.id;
+      await repo.updateDraft(id, shop);
+    } else {
+      id = await repo.saveDraft(shop);
+    }
+    if (_photoBytes != null) {
+      await repo.uploadDraftPhoto(
+        id,
+        fileName: _photoFileName,
+        bytes: _photoBytes!,
+      );
+    }
+    return id;
+  }
+
+  Future<void> _saveDraft() async {
     if (!_formKey.currentState!.validate()) return;
-    final auth = context.read<AuthController>();
-    final ownerId = auth.profile?.uid;
+    final ownerId = context.read<AuthController>().profile?.uid;
     if (ownerId == null) return;
 
     setState(() => _saving = true);
     final repo = context.read<BarbershopRepository>();
-    final userRepo = context.read<UserRepository>();
     try {
-      final id = await repo.create(
-        Barbershop(
-          id: '',
-          name: _nameController.text.trim(),
-          ownerId: ownerId,
-          address: _addressController.text.trim(),
-          phone: _phoneController.text.trim(),
-          email: _emailController.text.trim(),
-          description: _descriptionController.text.trim(),
-          active: false,
-          approvalStatus: BarbershopApprovalStatus.pending,
-        ),
-      );
-      // Solicitud de rol de Dueño (spec 12.1). Antes pasaba por la función
-      // en la nube requestBarbershopOwnership (Admin SDK, porque el rol
-      // propio está congelado por firestore.rules para el resto de
-      // transiciones) — sin plan Blaze esa función no se puede desplegar,
-      // así que aquí se hace directo contra Firestore; la regla tiene una
-      // rama dedicada y acotada solo a client->owner (ver firestore.rules).
-      if (auth.profile?.role == UserRole.client) {
-        await userRepo.setRole(ownerId, UserRole.owner);
-        await auth.refreshProfile();
-      }
-      if (_position != null) {
-        await repo.updateLocation(
-          id,
-          _position!.latitude,
-          _position!.longitude,
-        );
-      }
-      if (_photoBytes != null) {
-        final fileName =
-            '${DateTime.now().millisecondsSinceEpoch}_${_photoName ?? 'foto.jpg'}';
-        await repo.uploadPhoto(id, fileName: fileName, bytes: _photoBytes!);
-      }
+      await _persistDraft(repo, ownerId);
       if (mounted) {
         Navigator.of(context).pop();
         ScaffoldMessenger.of(context).showSnackBar(
           const SnackBar(
             content: Text(
-              'Barbería registrada. Queda pendiente de revisión por el administrador.',
+              'Borrador guardado. Págalo cuando quieras enviarla a revisión.',
             ),
           ),
         );
+      }
+    } on BarbershopDraftLimitException catch (e) {
+      if (mounted) {
+        ScaffoldMessenger.of(context)
+            .showSnackBar(SnackBar(content: Text(e.toString())));
       }
     } catch (e) {
       if (mounted) {
@@ -177,10 +212,92 @@ class _AddBarbershopViewState extends State<AddBarbershopView> {
     }
   }
 
+  Future<void> _payAndRegister() async {
+    if (!_formKey.currentState!.validate()) return;
+    final auth = context.read<AuthController>();
+    final ownerId = auth.profile?.uid;
+    if (ownerId == null) return;
+
+    final confirmed = await showDialog<bool>(
+      context: context,
+      builder: (context) => AlertDialog(
+        title: const Text('Pagar y registrar'),
+        content: Text(
+          'Se cobrarán ${formatCop(kBarbershopMonthlyFee)} de la primera '
+          'mensualidad. Después el administrador revisará tu barbería antes '
+          'de publicarla en el catálogo.',
+        ),
+        actions: [
+          TextButton(
+            onPressed: () => Navigator.of(context).pop(false),
+            child: const Text('Volver'),
+          ),
+          FilledButton(
+            onPressed: () => Navigator.of(context).pop(true),
+            child: const Text('Pagar'),
+          ),
+        ],
+      ),
+    );
+    if (confirmed != true || !mounted) return;
+
+    setState(() => _paying = true);
+    final repo = context.read<BarbershopRepository>();
+    final userRepo = context.read<UserRepository>();
+    try {
+      if (widget.draft != null) {
+        // Se guardan primero las ediciones del formulario: publishDraft
+        // convierte lo que hay guardado en el borrador.
+        final id = await _persistDraft(repo, ownerId);
+        await repo.publishDraft(id);
+      } else {
+        final shopId = await repo.createPaid(_buildShop(ownerId));
+        if (_photoBytes != null) {
+          await repo.uploadPhoto(
+            shopId,
+            fileName: _photoFileName,
+            bytes: _photoBytes!,
+          );
+        }
+      }
+      // Solicitud de rol de Dueño (spec 12.1). Antes pasaba por la función
+      // en la nube requestBarbershopOwnership (Admin SDK, porque el rol
+      // propio está congelado por firestore.rules para el resto de
+      // transiciones) — sin plan Blaze esa función no se puede desplegar,
+      // así que aquí se hace directo contra Firestore; la regla tiene una
+      // rama dedicada y acotada solo a client->owner (ver firestore.rules).
+      if (auth.profile?.role == UserRole.client) {
+        await userRepo.setRole(ownerId, UserRole.owner);
+        await auth.refreshProfile();
+      }
+      if (mounted) {
+        Navigator.of(context).pop();
+        ScaffoldMessenger.of(context).showSnackBar(
+          const SnackBar(
+            content: Text(
+              'Pago recibido. Tu barbería quedó pendiente de revisión por el administrador.',
+            ),
+          ),
+        );
+      }
+    } catch (e) {
+      if (mounted) {
+        ScaffoldMessenger.of(context)
+            .showSnackBar(SnackBar(content: Text('No se pudo registrar: $e')));
+      }
+    } finally {
+      if (mounted) setState(() => _paying = false);
+    }
+  }
+
   @override
   Widget build(BuildContext context) {
     return Scaffold(
-      appBar: AppBar(title: const Text('Nueva barbería')),
+      appBar: AppBar(
+        title: Text(
+          widget.draft == null ? 'Nueva barbería' : 'Editar borrador',
+        ),
+      ),
       body: Padding(
         padding: const EdgeInsets.all(16),
         child: Form(
@@ -203,6 +320,11 @@ class _AddBarbershopViewState extends State<AddBarbershopView> {
                                 image: MemoryImage(_photoBytes!),
                                 fit: BoxFit.cover,
                               )
+                            : widget.draft?.photoUrl != null
+                            ? DecorationImage(
+                                image: NetworkImage(widget.draft!.photoUrl!),
+                                fit: BoxFit.cover,
+                              )
                             : null,
                         boxShadow: [
                           BoxShadow(
@@ -214,7 +336,9 @@ class _AddBarbershopViewState extends State<AddBarbershopView> {
                           ),
                         ],
                       ),
-                      child: _photoBytes == null
+                      child:
+                          (_photoBytes == null &&
+                              widget.draft?.photoUrl == null)
                           ? Column(
                               mainAxisAlignment: MainAxisAlignment.center,
                               children: [
@@ -259,7 +383,7 @@ class _AddBarbershopViewState extends State<AddBarbershopView> {
                       const SizedBox(width: 8),
                       Expanded(
                         child: Text(
-                          'Tu barbería quedará pendiente de revisión. El administrador la aprobará antes de que aparezca en el catálogo.',
+                          'Para registrarla debes pagar la primera mensualidad (\${formatCop(kBarbershopMonthlyFee)}); luego el administrador la revisa antes de mostrarla en el catálogo. Si prefieres, guárdala como borrador (máximo \$kMaxBarbershopDrafts) y págala después.',
                           style: TextStyle(
                             fontSize: 12,
                             color: AppColors.textSecondary,
@@ -361,9 +485,9 @@ class _AddBarbershopViewState extends State<AddBarbershopView> {
               ),
               const SizedBox(height: 24),
               GradientButton(
-                onPressed: _saving ? null : _submit,
-                icon: _saving ? null : Icons.storefront_outlined,
-                child: _saving
+                onPressed: (_saving || _paying) ? null : _payAndRegister,
+                icon: _paying ? null : Icons.payments_outlined,
+                child: _paying
                     ? const SizedBox(
                         height: 18,
                         width: 18,
@@ -372,7 +496,21 @@ class _AddBarbershopViewState extends State<AddBarbershopView> {
                           color: Colors.white,
                         ),
                       )
-                    : const Text('Guardar barbería'),
+                    : Text(
+                        'Pagar y registrar (${formatCop(kBarbershopMonthlyFee)})',
+                      ),
+              ),
+              const SizedBox(height: 10),
+              OutlinedButton.icon(
+                onPressed: (_saving || _paying) ? null : _saveDraft,
+                icon: _saving
+                    ? const SizedBox(
+                        height: 16,
+                        width: 16,
+                        child: CircularProgressIndicator(strokeWidth: 2),
+                      )
+                    : const Icon(Icons.edit_note_outlined),
+                label: const Text('Guardar como borrador'),
               ),
             ],
           ),

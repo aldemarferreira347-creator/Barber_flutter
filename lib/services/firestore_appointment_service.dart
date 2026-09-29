@@ -1,3 +1,5 @@
+import 'dart:async';
+
 import 'package:cloud_firestore/cloud_firestore.dart';
 import 'package:firebase_auth/firebase_auth.dart';
 
@@ -65,7 +67,9 @@ class FirestoreAppointmentService implements AppointmentRepository {
         .doc(serviceId)
         .get();
     final serviceData = serviceSnap.data();
-    if (!serviceSnap.exists || serviceData == null || serviceData['active'] != true) {
+    if (!serviceSnap.exists ||
+        serviceData == null ||
+        serviceData['active'] != true) {
       throw Exception('Ese servicio ya no está disponible.');
     }
     final servicePrice = serviceData['price'];
@@ -178,6 +182,41 @@ class FirestoreAppointmentService implements AppointmentRepository {
   }
 
   @override
+  Stream<List<Appointment>> watchByBarbershops(List<String> barbershopIds) {
+    if (barbershopIds.isEmpty) return Stream.value(const <Appointment>[]);
+    late StreamController<List<Appointment>> controller;
+    final subscriptions = <StreamSubscription<List<Appointment>>>[];
+    final latest = <String, List<Appointment>>{};
+
+    void emit() {
+      if (latest.length < barbershopIds.length) return;
+      controller.add(
+        [for (final list in latest.values) ...list]
+          ..sort((a, b) => a.date.compareTo(b.date)),
+      );
+    }
+
+    controller = StreamController<List<Appointment>>(
+      onListen: () {
+        for (final id in barbershopIds) {
+          subscriptions.add(
+            watchByBarbershop(id).listen((list) {
+              latest[id] = list;
+              emit();
+            }, onError: controller.addError),
+          );
+        }
+      },
+      onCancel: () async {
+        for (final sub in subscriptions) {
+          await sub.cancel();
+        }
+      },
+    );
+    return controller.stream;
+  }
+
+  @override
   Future<void> setStatus(String id, AppointmentStatus status) {
     return _appointments.doc(id).update({'status': status.value});
   }
@@ -206,7 +245,9 @@ class FirestoreAppointmentService implements AppointmentRepository {
     final oldSlotRef = _slots.doc(
       appointmentSlotId(appointment.barberId, appointment.date),
     );
-    final newSlotRef = _slots.doc(appointmentSlotId(appointment.barberId, newDate));
+    final newSlotRef = _slots.doc(
+      appointmentSlotId(appointment.barberId, newDate),
+    );
 
     await _firestore.runTransaction((tx) async {
       final newSlotSnap = await tx.get(newSlotRef);

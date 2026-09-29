@@ -84,6 +84,133 @@ class FirestoreBarbershopService implements BarbershopRepository {
     return doc.id;
   }
 
+  CollectionReference<Map<String, dynamic>> get _drafts =>
+      _firestore.collection('barbershopDrafts');
+
+  @override
+  Stream<List<Barbershop>> watchDraftsByOwner(String ownerId) {
+    return _drafts
+        .where('ownerId', isEqualTo: ownerId)
+        .snapshots()
+        .map(
+          (snapshot) => snapshot.docs
+              .map((doc) => Barbershop.fromDraftMap(doc.id, doc.data()))
+              .toList(),
+        );
+  }
+
+  @override
+  Future<String> saveDraft(Barbershop draft) async {
+    // Los ids son `{uid}_{1..5}` y firestore.rules solo deja crear esos
+    // cinco: el tope de borradores no depende de este cliente. Cada cupo se
+    // reclama en una transacción para que dos guardados simultáneos no
+    // pisen el mismo borrador.
+    for (var slot = 1; slot <= kMaxBarbershopDrafts; slot++) {
+      final ref = _drafts.doc('${draft.ownerId}_$slot');
+      final claimed = await _firestore.runTransaction<bool>((tx) async {
+        if ((await tx.get(ref)).exists) return false;
+        tx.set(ref, {
+          ...draft.toDraftMap(),
+          'createdAt': FieldValue.serverTimestamp(),
+        });
+        return true;
+      });
+      if (claimed) return ref.id;
+    }
+    throw const BarbershopDraftLimitException();
+  }
+
+  @override
+  Future<void> updateDraft(String draftId, Barbershop draft) {
+    return _drafts.doc(draftId).update(draft.toDraftMap());
+  }
+
+  @override
+  Future<void> deleteDraft(String draftId) {
+    return _drafts.doc(draftId).delete();
+  }
+
+  @override
+  Future<void> uploadDraftPhoto(
+    String draftId, {
+    required String fileName,
+    required Uint8List bytes,
+  }) async {
+    final url = await _storage.uploadBytes(
+      path: 'barbershopDrafts/$draftId/profile/$fileName',
+      bytes: bytes,
+    );
+    await _drafts.doc(draftId).update({'photoUrl': url});
+  }
+
+  @override
+  Future<String> publishDraft(String draftId) async {
+    final snap = await _drafts.doc(draftId).get();
+    final data = snap.data();
+    if (data == null) throw Exception('El borrador ya no existe.');
+    return _registerPaid(Barbershop.fromDraftMap(snap.id, data), draftId);
+  }
+
+  @override
+  Future<String> createPaid(Barbershop barbershop) {
+    return _registerPaid(barbershop, null);
+  }
+
+  /// Cobra el registro y crea la barbería 'pending'. La pasarela sigue
+  /// simulada (ver [paySubscription]); firestore.rules exige que el pago
+  /// exista, sea del dueño, de categoría 'subscription', esté aprobado y
+  /// apunte al id de esta barbería — sin eso no se puede crear.
+  Future<String> _registerPaid(Barbershop shop, String? draftId) async {
+    final shopRef = _barbershops.doc();
+    final paymentRef = await _firestore.collection('payments').add({
+      'payerId': shop.ownerId,
+      'amount': kBarbershopMonthlyFee,
+      'category': 'subscription',
+      'relatedId': shopRef.id,
+      'description': 'Registro de barbershops/${shopRef.id}',
+      'status': 'pending',
+      'createdAt': FieldValue.serverTimestamp(),
+      'resolvedAt': null,
+      'refundedAmount': null,
+    });
+    await Future<void>.delayed(_simulatedApprovalDelay);
+    await paymentRef.update({
+      'status': 'approved',
+      'resolvedAt': FieldValue.serverTimestamp(),
+    });
+
+    final batch = _firestore.batch();
+    batch.set(shopRef, {
+      ...shop.toMap(),
+      'active': false,
+      'approvalStatus': BarbershopApprovalStatus.pending.value,
+      'paymentStatus': PaymentStatus.ok.value,
+      'paymentDueDate': null,
+      'paymentId': paymentRef.id,
+    });
+    if (draftId != null) batch.delete(_drafts.doc(draftId));
+    await batch.commit();
+    return shopRef.id;
+  }
+
+  @override
+  Future<void> updateInfo(
+    String id, {
+    required String name,
+    required String address,
+    String? phone,
+    String? email,
+    String? description,
+  }) {
+    return _barbershops.doc(id).update({
+      'name': name,
+      'address': address,
+      'phone': phone,
+      'email': email,
+      'description': description,
+    });
+  }
+
   @override
   Future<void> setActive(String id, bool active) {
     return _barbershops.doc(id).update({'active': active});
@@ -169,9 +296,6 @@ class FirestoreBarbershopService implements BarbershopRepository {
     });
   }
 
-  // Placeholder hasta que el negocio defina el precio real de la mensualidad
-  // — mismo valor que MONTHLY_FEE en functions/src/barbershops/subscriptionService.ts.
-  static const _monthlyFee = 50000.0;
   static const _subscriptionPeriod = Duration(days: 30);
 
   @override
@@ -188,7 +312,7 @@ class FirestoreBarbershopService implements BarbershopRepository {
 
     final paymentRef = await _firestore.collection('payments').add({
       'payerId': shop.ownerId,
-      'amount': _monthlyFee,
+      'amount': kBarbershopMonthlyFee,
       'category': 'subscription',
       'relatedId': id,
       'description': 'Mensualidad de barbershops/$id',

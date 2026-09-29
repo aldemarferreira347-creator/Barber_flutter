@@ -47,6 +47,14 @@ service firebase.storage {
       allow write: if (isOwnerOfShop(shopId) || isAdmin()) && isImageUnder5MB();
     }
 
+    // Foto de portada de un BORRADOR de barbería (aún no existe en
+    // barbershops): solo su dueño, y solo en su propio cupo `{uid}_{1..5}`.
+    match /barbershopDrafts/{draftId}/profile/{fileName} {
+      allow read: if isSignedIn();
+      allow write: if isSignedIn() &&
+        draftId.matches(request.auth.uid + '_[1-5]') && isImageUnder5MB();
+    }
+
     match /{allPaths=**} {
       allow read, write: if false;
     }
