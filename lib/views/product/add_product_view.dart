@@ -1,7 +1,6 @@
 import 'dart:typed_data';
 
 import 'package:flutter/material.dart';
-import 'package:flutter_animate/flutter_animate.dart';
 import 'package:image_picker/image_picker.dart';
 import 'package:provider/provider.dart';
 
@@ -11,10 +10,7 @@ import '../../theme/app_colors.dart';
 import '../widgets/app_button.dart';
 
 Widget _entrance(Widget child, int index) {
-  return child
-      .animate(delay: (index * 60).ms)
-      .fadeIn(duration: 300.ms)
-      .slideY(begin: 0.08, end: 0, curve: Curves.easeOutCubic);
+  return child;
 }
 
 class AddProductView extends StatefulWidget {

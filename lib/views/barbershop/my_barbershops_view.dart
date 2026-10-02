@@ -1,5 +1,4 @@
 import 'package:flutter/material.dart';
-import 'package:flutter_animate/flutter_animate.dart';
 import 'package:provider/provider.dart';
 
 import '../../controllers/auth_controller.dart';
@@ -119,17 +118,15 @@ class MyBarbershopsView extends StatelessWidget {
                         OwnerAlertsSection(shops: shops),
                         for (var i = 0; i < shops.length; i++) ...[
                           _ShopTile(
-                                shop: shops[i],
-                                onTap: () => Navigator.of(context).push(
-                                  MaterialPageRoute(
-                                    builder: (_) => OwnerBarbershopManageView(
-                                      barbershopId: shops[i].id,
-                                    ),
-                                  ),
+                            shop: shops[i],
+                            onTap: () => Navigator.of(context).push(
+                              MaterialPageRoute(
+                                builder: (_) => OwnerBarbershopManageView(
+                                  barbershopId: shops[i].id,
                                 ),
-                              )
-                              .animate(delay: (i * 60).ms)
-                              .fadeIn(duration: 300.ms),
+                              ),
+                            ),
+                          ),
                           const SizedBox(height: 10),
                         ],
                         if (drafts.isNotEmpty) ...[

@@ -22,7 +22,6 @@ import 'repositories/shop_closure_repository.dart';
 import 'repositories/storage_repository.dart';
 import 'repositories/user_repository.dart';
 import 'routes/app_router.dart';
-import 'theme/app_motion.dart';
 import 'services/cloud_barber_availability_service.dart';
 import 'services/cloud_comment_service.dart';
 import 'services/cloud_purchase_service.dart';
@@ -118,10 +117,6 @@ class BarberApp extends StatelessWidget {
           theme: AppTheme.current,
           initialRoute: AppRoutes.root,
           onGenerateRoute: AppRouter.onGenerateRoute,
-          builder: (context, child) {
-            AppMotion.syncAccessibility(context);
-            return child!;
-          },
         ),
       ),
     );

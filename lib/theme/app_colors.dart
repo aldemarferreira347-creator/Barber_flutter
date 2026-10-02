@@ -61,6 +61,10 @@ class AppColors {
   /// estado cuando se usan como fondo de un botón o un aviso.
   static Color solid(Color color) => ensureContrast(color, onColor);
 
+  /// Negro fijo para superficies que NO siguen el tema (p. ej. el fondo de
+  /// la pantalla de arranque, que es una foto oscura en ambos modos).
+  static const alwaysDark = Color(0xFF000000);
+
   /// Velo detrás de diálogos y hojas modales.
   static const scrim = Color(0x99000000);
 

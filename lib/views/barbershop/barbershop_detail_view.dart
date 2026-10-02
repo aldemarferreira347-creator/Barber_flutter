@@ -1,5 +1,4 @@
 import 'package:flutter/material.dart';
-import 'package:flutter_animate/flutter_animate.dart';
 import 'package:provider/provider.dart';
 import 'package:url_launcher/url_launcher.dart';
 
@@ -116,60 +115,54 @@ class BarbershopDetailView extends StatelessWidget {
               padding: const EdgeInsets.all(16),
               children: [
                 Semantics(
-                      image: true,
-                      label: shop.photoUrl != null
-                          ? 'Foto de portada de ${shop.name}'
-                          : 'Sin foto de portada',
-                      child: Container(
-                        height: 160,
-                        decoration: BoxDecoration(
-                          color: AppColors.primary,
-                          borderRadius: BorderRadius.circular(16),
-                          image: shop.photoUrl != null
-                              ? DecorationImage(
-                                  image: NetworkImage(shop.photoUrl!),
-                                  fit: BoxFit.cover,
-                                )
-                              : null,
-                          boxShadow: [
-                            BoxShadow(
-                              color: AppColors.primary.withValues(alpha: 0.2),
-                              blurRadius: 18,
-                              offset: const Offset(0, 8),
-                            ),
-                          ],
+                  image: true,
+                  label: shop.photoUrl != null
+                      ? 'Foto de portada de ${shop.name}'
+                      : 'Sin foto de portada',
+                  child: Container(
+                    height: 160,
+                    decoration: BoxDecoration(
+                      color: AppColors.primary,
+                      borderRadius: BorderRadius.circular(16),
+                      image: shop.photoUrl != null
+                          ? DecorationImage(
+                              image: NetworkImage(shop.photoUrl!),
+                              fit: BoxFit.cover,
+                            )
+                          : null,
+                      boxShadow: [
+                        BoxShadow(
+                          color: AppColors.primary.withValues(alpha: 0.2),
+                          blurRadius: 18,
+                          offset: const Offset(0, 8),
                         ),
-                        alignment: Alignment.center,
-                        child: shop.photoUrl == null
-                            ? const Icon(
-                                Icons.storefront,
-                                color: Colors.white,
-                                size: 48,
-                              )
-                            : null,
-                      ),
-                    )
-                    .animate()
-                    .fadeIn(duration: 380.ms)
-                    .scaleXY(begin: 0.96, end: 1, curve: Curves.easeOutCubic),
+                      ],
+                    ),
+                    alignment: Alignment.center,
+                    child: shop.photoUrl == null
+                        ? const Icon(
+                            Icons.storefront,
+                            color: Colors.white,
+                            size: 48,
+                          )
+                        : null,
+                  ),
+                ),
                 const SizedBox(height: 16),
                 Row(
-                      children: [
-                        Expanded(
-                          child: Text(
-                            shop.name,
-                            style: const TextStyle(
-                              fontSize: 20,
-                              fontWeight: FontWeight.w800,
-                            ),
-                          ),
+                  children: [
+                    Expanded(
+                      child: Text(
+                        shop.name,
+                        style: const TextStyle(
+                          fontSize: 20,
+                          fontWeight: FontWeight.w800,
                         ),
-                        StatusBadge.active(shop.active),
-                      ],
-                    )
-                    .animate(delay: 80.ms)
-                    .fadeIn(duration: 300.ms)
-                    .slideX(begin: -0.05, end: 0, curve: Curves.easeOutCubic),
+                      ),
+                    ),
+                    StatusBadge.active(shop.active),
+                  ],
+                ),
                 if (shop.ratingCount > 0) ...[
                   const SizedBox(height: 6),
                   Row(
@@ -245,70 +238,67 @@ class BarbershopDetailView extends StatelessWidget {
                 ),
                 const SizedBox(height: 16),
                 Container(
-                      padding: const EdgeInsets.all(16),
-                      decoration: BoxDecoration(
-                        color: AppColors.surface,
-                        borderRadius: BorderRadius.circular(16),
-                        border: Border.all(color: AppColors.border),
-                        boxShadow: [
-                          BoxShadow(
-                            color: _paymentColor(shop.paymentStatus)
-                                .withValues(alpha: 0.1),
-                            blurRadius: 14,
-                            offset: const Offset(0, 5),
-                          ),
-                        ],
+                  padding: const EdgeInsets.all(16),
+                  decoration: BoxDecoration(
+                    color: AppColors.surface,
+                    borderRadius: BorderRadius.circular(16),
+                    border: Border.all(color: AppColors.border),
+                    boxShadow: [
+                      BoxShadow(
+                        color: _paymentColor(shop.paymentStatus)
+                            .withValues(alpha: 0.1),
+                        blurRadius: 14,
+                        offset: const Offset(0, 5),
                       ),
-                      child: Row(
-                        children: [
-                          Expanded(
-                            child: Column(
-                              crossAxisAlignment: CrossAxisAlignment.start,
-                              children: [
-                                Text(
-                                  'Estado de pago',
-                                  style: TextStyle(
-                                    color: AppColors.textSecondary,
-                                    fontSize: 12,
-                                  ),
-                                ),
-                                const SizedBox(height: 4),
-                                Text(
-                                  _paymentLabel(shop.paymentStatus),
-                                  style: TextStyle(
-                                    color: _paymentColor(shop.paymentStatus),
-                                    fontWeight: FontWeight.w700,
-                                  ),
-                                ),
-                              ],
+                    ],
+                  ),
+                  child: Row(
+                    children: [
+                      Expanded(
+                        child: Column(
+                          crossAxisAlignment: CrossAxisAlignment.start,
+                          children: [
+                            Text(
+                              'Estado de pago',
+                              style: TextStyle(
+                                color: AppColors.textSecondary,
+                                fontSize: 12,
+                              ),
                             ),
-                          ),
-                          if (shop.paymentDueDate != null)
-                            Column(
-                              crossAxisAlignment: CrossAxisAlignment.end,
-                              children: [
-                                Text(
-                                  'Fecha de vencimiento',
-                                  style: TextStyle(
-                                    color: AppColors.textSecondary,
-                                    fontSize: 12,
-                                  ),
-                                ),
-                                const SizedBox(height: 4),
-                                Text(
-                                  '${shop.paymentDueDate!.year}-${shop.paymentDueDate!.month.toString().padLeft(2, '0')}-${shop.paymentDueDate!.day.toString().padLeft(2, '0')}',
-                                  style: const TextStyle(
-                                    fontWeight: FontWeight.w600,
-                                  ),
-                                ),
-                              ],
+                            const SizedBox(height: 4),
+                            Text(
+                              _paymentLabel(shop.paymentStatus),
+                              style: TextStyle(
+                                color: _paymentColor(shop.paymentStatus),
+                                fontWeight: FontWeight.w700,
+                              ),
                             ),
-                        ],
+                          ],
+                        ),
                       ),
-                    )
-                    .animate()
-                    .fadeIn(duration: 320.ms)
-                    .slideY(begin: 0.08, end: 0, curve: Curves.easeOutCubic),
+                      if (shop.paymentDueDate != null)
+                        Column(
+                          crossAxisAlignment: CrossAxisAlignment.end,
+                          children: [
+                            Text(
+                              'Fecha de vencimiento',
+                              style: TextStyle(
+                                color: AppColors.textSecondary,
+                                fontSize: 12,
+                              ),
+                            ),
+                            const SizedBox(height: 4),
+                            Text(
+                              '${shop.paymentDueDate!.year}-${shop.paymentDueDate!.month.toString().padLeft(2, '0')}-${shop.paymentDueDate!.day.toString().padLeft(2, '0')}',
+                              style: const TextStyle(
+                                fontWeight: FontWeight.w600,
+                              ),
+                            ),
+                          ],
+                        ),
+                    ],
+                  ),
+                ),
                 if ((shop.description ?? '').isNotEmpty) ...[
                   const SizedBox(height: 16),
                   const Text(

@@ -1,5 +1,4 @@
 import 'package:flutter/material.dart';
-import 'package:flutter_animate/flutter_animate.dart';
 import 'package:provider/provider.dart';
 
 import '../../controllers/auth_controller.dart';
@@ -344,32 +343,29 @@ class _SectionHeader extends StatelessWidget {
   @override
   Widget build(BuildContext context) {
     return Row(
-          children: [
-            Text(
-              label,
-              style: const TextStyle(fontWeight: FontWeight.w800, fontSize: 16),
+      children: [
+        Text(
+          label,
+          style: const TextStyle(fontWeight: FontWeight.w800, fontSize: 16),
+        ),
+        const SizedBox(width: 8),
+        Container(
+          padding: const EdgeInsets.symmetric(horizontal: 8, vertical: 2),
+          decoration: BoxDecoration(
+            color: AppColors.border,
+            borderRadius: BorderRadius.circular(10),
+          ),
+          child: Text(
+            '$count',
+            style: TextStyle(
+              fontSize: 12,
+              fontWeight: FontWeight.w600,
+              color: AppColors.textSecondary,
             ),
-            const SizedBox(width: 8),
-            Container(
-              padding: const EdgeInsets.symmetric(horizontal: 8, vertical: 2),
-              decoration: BoxDecoration(
-                color: AppColors.border,
-                borderRadius: BorderRadius.circular(10),
-              ),
-              child: Text(
-                '$count',
-                style: TextStyle(
-                  fontSize: 12,
-                  fontWeight: FontWeight.w600,
-                  color: AppColors.textSecondary,
-                ),
-              ),
-            ),
-          ],
-        )
-        .animate()
-        .fadeIn(duration: 300.ms)
-        .slideX(begin: -0.05, end: 0, curve: Curves.easeOutCubic);
+          ),
+        ),
+      ],
+    );
   }
 }
 
@@ -392,6 +388,6 @@ class _InlineEmptyNote extends StatelessWidget {
         text,
         style: TextStyle(color: AppColors.textSecondary, fontSize: 13),
       ),
-    ).animate().fadeIn(duration: 300.ms);
+    );
   }
 }

@@ -1,5 +1,4 @@
 import 'package:flutter/material.dart';
-import 'package:flutter_animate/flutter_animate.dart';
 import 'package:provider/provider.dart';
 
 import '../../controllers/auth_controller.dart';
@@ -52,17 +51,14 @@ class _ChooseNotificationToneViewState
             children: [
               const SizedBox(height: 12),
               const Text(
-                    '¿Cómo prefieres que te hablemos?',
-                    style: TextStyle(fontSize: 22, fontWeight: FontWeight.w800),
-                  )
-                  .animate()
-                  .fadeIn(duration: 320.ms)
-                  .slideY(begin: -0.08, end: 0, curve: Curves.easeOutCubic),
+                '¿Cómo prefieres que te hablemos?',
+                style: TextStyle(fontSize: 22, fontWeight: FontWeight.w800),
+              ),
               const SizedBox(height: 8),
               Text(
                 'Elige el tono de tus notificaciones. Puedes cambiarlo cuando quieras desde tu perfil.',
                 style: TextStyle(color: AppColors.textSecondary),
-              ).animate(delay: 80.ms).fadeIn(duration: 300.ms),
+              ),
               const SizedBox(height: 24),
               Expanded(
                 child: ListView.separated(
@@ -72,64 +68,57 @@ class _ChooseNotificationToneViewState
                     final tone = NotificationTone.values[index];
                     final selected = tone == _selected;
                     return InkWell(
+                      borderRadius: BorderRadius.circular(14),
+                      onTap: () => setState(() => _selected = tone),
+                      child: AnimatedContainer(
+                        duration: const Duration(milliseconds: 200),
+                        curve: Curves.easeOutCubic,
+                        padding: const EdgeInsets.all(16),
+                        decoration: BoxDecoration(
+                          color: selected
+                              ? AppColors.accent.withValues(alpha: 0.08)
+                              : AppColors.surface,
                           borderRadius: BorderRadius.circular(14),
-                          onTap: () => setState(() => _selected = tone),
-                          child: AnimatedContainer(
-                            duration: const Duration(milliseconds: 200),
-                            curve: Curves.easeOutCubic,
-                            padding: const EdgeInsets.all(16),
-                            decoration: BoxDecoration(
-                              color: selected
-                                  ? AppColors.accent.withValues(alpha: 0.08)
-                                  : AppColors.surface,
-                              borderRadius: BorderRadius.circular(14),
-                              border: Border.all(
-                                color: selected
-                                    ? AppColors.accent
-                                    : AppColors.border,
-                                width: selected ? 2 : 1,
-                              ),
-                              boxShadow: selected
-                                  ? [
-                                      BoxShadow(
-                                        color: AppColors.accent.withValues(
-                                          alpha: 0.15,
-                                        ),
-                                        blurRadius: 12,
-                                        offset: const Offset(0, 4),
-                                      ),
-                                    ]
-                                  : [],
-                            ),
-                            child: Row(
-                              children: [
-                                Icon(
-                                  selected
-                                      ? Icons.radio_button_checked
-                                      : Icons.radio_button_off,
-                                  color: selected
-                                      ? AppColors.accent
-                                      : AppColors.textSecondary,
-                                ),
-                                const SizedBox(width: 12),
-                                Text(
-                                  tone.label,
-                                  style: const TextStyle(
-                                    fontWeight: FontWeight.w600,
-                                    fontSize: 15,
-                                  ),
-                                ),
-                              ],
-                            ),
+                          border: Border.all(
+                            color: selected
+                                ? AppColors.accent
+                                : AppColors.border,
+                            width: selected ? 2 : 1,
                           ),
-                        )
-                        .animate(delay: (index * 60).ms)
-                        .fadeIn(duration: 300.ms)
-                        .slideX(
-                          begin: 0.08,
-                          end: 0,
-                          curve: Curves.easeOutCubic,
-                        );
+                          boxShadow: selected
+                              ? [
+                                  BoxShadow(
+                                    color: AppColors.accent.withValues(
+                                      alpha: 0.15,
+                                    ),
+                                    blurRadius: 12,
+                                    offset: const Offset(0, 4),
+                                  ),
+                                ]
+                              : [],
+                        ),
+                        child: Row(
+                          children: [
+                            Icon(
+                              selected
+                                  ? Icons.radio_button_checked
+                                  : Icons.radio_button_off,
+                              color: selected
+                                  ? AppColors.accent
+                                  : AppColors.textSecondary,
+                            ),
+                            const SizedBox(width: 12),
+                            Text(
+                              tone.label,
+                              style: const TextStyle(
+                                fontWeight: FontWeight.w600,
+                                fontSize: 15,
+                              ),
+                            ),
+                          ],
+                        ),
+                      ),
+                    );
                   },
                 ),
               ),

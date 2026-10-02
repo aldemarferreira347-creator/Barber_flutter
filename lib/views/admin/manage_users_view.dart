@@ -1,5 +1,4 @@
 import 'package:flutter/material.dart';
-import 'package:flutter_animate/flutter_animate.dart';
 import 'package:provider/provider.dart';
 
 import '../../controllers/auth_controller.dart';
@@ -722,21 +721,14 @@ class _ManageUsersViewState extends State<ManageUsersView> {
                       final user = users[index];
                       final isSelf = user.uid == currentUid;
                       return _UserCard(
-                            user: user,
-                            isSelf: isSelf,
-                            roleLabel: _roleLabel(user.role),
-                            roleColor: _roleColor(user.role),
-                            onActionsTap: isSelf
-                                ? null
-                                : () => _showActions(context, user),
-                          )
-                          .animate(delay: (index * 50).ms)
-                          .fadeIn(duration: 280.ms)
-                          .slideX(
-                            begin: 0.06,
-                            end: 0,
-                            curve: Curves.easeOutCubic,
-                          );
+                        user: user,
+                        isSelf: isSelf,
+                        roleLabel: _roleLabel(user.role),
+                        roleColor: _roleColor(user.role),
+                        onActionsTap: isSelf
+                            ? null
+                            : () => _showActions(context, user),
+                      );
                     },
                   );
                 },
@@ -1076,7 +1068,7 @@ class _UserActionsSheet extends StatelessWidget {
               color: AppColors.border,
               borderRadius: BorderRadius.circular(2),
             ),
-          ).animate().fadeIn(duration: 200.ms),
+          ),
           const SizedBox(height: 20),
 
           // Perfil del usuario
@@ -1093,90 +1085,83 @@ class _UserActionsSheet extends StatelessWidget {
                     fontWeight: FontWeight.w700,
                   ),
                 ),
-              ).animate().scale(
-                begin: const Offset(0.6, 0.6),
-                duration: 300.ms,
-                curve: Curves.easeOutBack,
               ),
               const SizedBox(width: 14),
               Expanded(
-                    child: Column(
-                      crossAxisAlignment: CrossAxisAlignment.start,
+                child: Column(
+                  crossAxisAlignment: CrossAxisAlignment.start,
+                  children: [
+                    Text(
+                      user.name.isNotEmpty ? user.name : '(sin nombre)',
+                      style: TextStyle(
+                        fontWeight: FontWeight.w700,
+                        fontSize: 16,
+                        color: AppColors.textPrimary,
+                      ),
+                      maxLines: 1,
+                      overflow: TextOverflow.ellipsis,
+                    ),
+                    const SizedBox(height: 2),
+                    Text(
+                      user.email,
+                      style: TextStyle(
+                        color: AppColors.textSecondary,
+                        fontSize: 12,
+                      ),
+                      maxLines: 1,
+                      overflow: TextOverflow.ellipsis,
+                    ),
+                    const SizedBox(height: 4),
+                    Row(
                       children: [
-                        Text(
-                          user.name.isNotEmpty ? user.name : '(sin nombre)',
-                          style: TextStyle(
-                            fontWeight: FontWeight.w700,
-                            fontSize: 16,
-                            color: AppColors.textPrimary,
+                        Container(
+                          padding: const EdgeInsets.symmetric(
+                            horizontal: 8,
+                            vertical: 3,
                           ),
-                          maxLines: 1,
-                          overflow: TextOverflow.ellipsis,
-                        ),
-                        const SizedBox(height: 2),
-                        Text(
-                          user.email,
-                          style: TextStyle(
-                            color: AppColors.textSecondary,
-                            fontSize: 12,
+                          decoration: BoxDecoration(
+                            color: rColor.withValues(alpha: 0.1),
+                            borderRadius: BorderRadius.circular(8),
                           ),
-                          maxLines: 1,
-                          overflow: TextOverflow.ellipsis,
+                          child: Text(
+                            roleLabel(user.role),
+                            style: TextStyle(
+                              color: rColor,
+                              fontSize: 11,
+                              fontWeight: FontWeight.w700,
+                            ),
+                          ),
                         ),
-                        const SizedBox(height: 4),
-                        Row(
-                          children: [
-                            Container(
-                              padding: const EdgeInsets.symmetric(
-                                horizontal: 8,
-                                vertical: 3,
-                              ),
-                              decoration: BoxDecoration(
-                                color: rColor.withValues(alpha: 0.1),
-                                borderRadius: BorderRadius.circular(8),
-                              ),
-                              child: Text(
-                                roleLabel(user.role),
-                                style: TextStyle(
-                                  color: rColor,
-                                  fontSize: 11,
-                                  fontWeight: FontWeight.w700,
-                                ),
-                              ),
+                        const SizedBox(width: 8),
+                        Container(
+                          padding: const EdgeInsets.symmetric(
+                            horizontal: 8,
+                            vertical: 3,
+                          ),
+                          decoration: BoxDecoration(
+                            color:
+                                (user.active
+                                        ? AppColors.success
+                                        : AppColors.error)
+                                    .withValues(alpha: 0.1),
+                            borderRadius: BorderRadius.circular(8),
+                          ),
+                          child: Text(
+                            user.active ? 'Activo' : 'Inactivo',
+                            style: TextStyle(
+                              color: user.active
+                                  ? AppColors.success
+                                  : AppColors.error,
+                              fontSize: 11,
+                              fontWeight: FontWeight.w700,
                             ),
-                            const SizedBox(width: 8),
-                            Container(
-                              padding: const EdgeInsets.symmetric(
-                                horizontal: 8,
-                                vertical: 3,
-                              ),
-                              decoration: BoxDecoration(
-                                color:
-                                    (user.active
-                                            ? AppColors.success
-                                            : AppColors.error)
-                                        .withValues(alpha: 0.1),
-                                borderRadius: BorderRadius.circular(8),
-                              ),
-                              child: Text(
-                                user.active ? 'Activo' : 'Inactivo',
-                                style: TextStyle(
-                                  color: user.active
-                                      ? AppColors.success
-                                      : AppColors.error,
-                                  fontSize: 11,
-                                  fontWeight: FontWeight.w700,
-                                ),
-                              ),
-                            ),
-                          ],
+                          ),
                         ),
                       ],
                     ),
-                  )
-                  .animate()
-                  .fadeIn(delay: 80.ms, duration: 250.ms)
-                  .slideX(begin: 0.08, end: 0, curve: Curves.easeOutCubic),
+                  ],
+                ),
+              ),
             ],
           ),
 
@@ -1184,15 +1169,7 @@ class _UserActionsSheet extends StatelessWidget {
           Divider(color: AppColors.border, height: 1),
           const SizedBox(height: 8),
 
-          // Lista de acciones con animación escalonada
-          ...actions.asMap().entries.map((entry) {
-            final i = entry.key;
-            final action = entry.value;
-            return _SheetActionTile(action: action)
-                .animate(delay: (100 + i * 60).ms)
-                .fadeIn(duration: 220.ms)
-                .slideY(begin: 0.12, end: 0, curve: Curves.easeOutCubic);
-          }),
+          for (final action in actions) _SheetActionTile(action: action),
         ],
       ),
     );

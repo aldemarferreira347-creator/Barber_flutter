@@ -1,10 +1,11 @@
 import 'package:flutter/material.dart';
-import 'package:flutter_animate/flutter_animate.dart';
 import 'package:provider/provider.dart';
 
 import '../../controllers/auth_controller.dart';
 import '../../theme/app_colors.dart';
+import '../../theme/app_tokens.dart';
 import '../widgets/app_button.dart';
+import '../widgets/responsive_body.dart';
 
 class PhoneLoginView extends StatefulWidget {
   const PhoneLoginView({super.key});
@@ -25,22 +26,21 @@ class _PhoneLoginViewState extends State<PhoneLoginView> {
     super.dispose();
   }
 
+  void _showMessage(String message) {
+    ScaffoldMessenger.of(context)
+        .showSnackBar(SnackBar(content: Text(message)));
+  }
+
   Future<void> _sendCode(AuthController auth) async {
     final phone = _phoneController.text.trim();
     if (!phone.startsWith('+') || phone.length < 8) {
-      ScaffoldMessenger.of(context).showSnackBar(
-        const SnackBar(
-          content: Text('Usa formato internacional, ej. +573001234567'),
-        ),
-      );
+      _showMessage('Usa formato internacional, ej. +573001234567');
       return;
     }
     final handle = await auth.startPhoneVerification(phone);
+    if (!mounted) return;
     if (handle == null) {
-      if (mounted && auth.errorMessage != null) {
-        ScaffoldMessenger.of(context)
-            .showSnackBar(SnackBar(content: Text(auth.errorMessage!)));
-      }
+      if (auth.errorMessage != null) _showMessage(auth.errorMessage!);
       return;
     }
     setState(() => _codeHandle = handle);
@@ -52,10 +52,7 @@ class _PhoneLoginViewState extends State<PhoneLoginView> {
     final ok = await auth.confirmPhoneCode(handle, _codeController.text.trim());
     if (!mounted) return;
     if (!ok) {
-      if (auth.errorMessage != null) {
-        ScaffoldMessenger.of(context)
-            .showSnackBar(SnackBar(content: Text(auth.errorMessage!)));
-      }
+      if (auth.errorMessage != null) _showMessage(auth.errorMessage!);
       return;
     }
     // Esta vista quedó pushed encima del AuthGate: hay que salir para que
@@ -67,99 +64,79 @@ class _PhoneLoginViewState extends State<PhoneLoginView> {
   Widget build(BuildContext context) {
     final auth = context.watch<AuthController>();
     final codeStep = _codeHandle != null;
+    final text = Theme.of(context).textTheme;
 
     return Scaffold(
       appBar: AppBar(title: const Text('Ingresar con teléfono')),
       body: SafeArea(
         child: Center(
           child: SingleChildScrollView(
-            padding: const EdgeInsets.symmetric(horizontal: 24),
-            child: ConstrainedBox(
-              constraints: const BoxConstraints(maxWidth: 400),
+            child: ResponsiveBody(
+              maxWidth: AppLayout.formWidth,
               child: Column(
                 crossAxisAlignment: CrossAxisAlignment.stretch,
                 children: [
                   Icon(
-                        codeStep ? Icons.sms_outlined : Icons.phone_iphone,
-                        size: 48,
-                        color: AppColors.accent,
-                      )
-                      .animate()
-                      .fadeIn(duration: 320.ms)
-                      .scaleXY(begin: 0.7, end: 1, curve: Curves.easeOutBack),
-                  const SizedBox(height: 16),
-                  Text(
-                    codeStep
-                        ? 'Ingresa el código que te enviamos'
-                        : 'Te vamos a enviar un código por SMS',
-                    style: const TextStyle(
-                      fontSize: 18,
-                      fontWeight: FontWeight.w700,
+                    codeStep ? Icons.sms_outlined : Icons.phone_iphone,
+                    size: 48,
+                    color: AppColors.accent,
+                  ),
+                  const SizedBox(height: AppSpace.lg),
+                  Semantics(
+                    header: true,
+                    child: Text(
+                      codeStep
+                          ? 'Ingresa el código que te enviamos'
+                          : 'Te vamos a enviar un código por SMS',
+                      textAlign: TextAlign.center,
+                      style: text.titleLarge,
                     ),
-                  ).animate(delay: 80.ms).fadeIn(duration: 300.ms),
-                  const SizedBox(height: 4),
+                  ),
+                  const SizedBox(height: AppSpace.xs),
                   Text(
                     codeStep
                         ? 'Enviado a ${_phoneController.text}'
                         : 'Escribe tu número con indicativo de país',
-                    style: TextStyle(color: AppColors.textSecondary),
-                  ).animate(delay: 120.ms).fadeIn(duration: 300.ms),
-                  const SizedBox(height: 20),
+                    textAlign: TextAlign.center,
+                    style: text.bodyMedium,
+                  ),
+                  const SizedBox(height: AppSpace.xl),
                   if (!codeStep) ...[
                     TextField(
-                          controller: _phoneController,
-                          keyboardType: TextInputType.phone,
-                          decoration: const InputDecoration(
-                            labelText: 'Teléfono',
-                            prefixIcon: Icon(Icons.phone_outlined),
-                          ),
-                        )
-                        .animate(delay: 160.ms)
-                        .fadeIn(duration: 300.ms)
-                        .slideY(begin: 0.1, end: 0, curve: Curves.easeOutCubic),
-                    const SizedBox(height: 20),
+                      controller: _phoneController,
+                      keyboardType: TextInputType.phone,
+                      autofillHints: const [AutofillHints.telephoneNumber],
+                      decoration: const InputDecoration(
+                        labelText: 'Teléfono',
+                        prefixIcon: Icon(Icons.phone_outlined),
+                      ),
+                    ),
+                    const SizedBox(height: AppSpace.xl),
                     AppButton(
-                      onPressed: auth.isBusy ? null : () => _sendCode(auth),
-                      icon: auth.isBusy ? null : Icons.send_outlined,
-                      child: auth.isBusy
-                          ? const SizedBox(
-                              height: 18,
-                              width: 18,
-                              child: CircularProgressIndicator(
-                                strokeWidth: 2,
-                                color: Colors.white,
-                              ),
-                            )
-                          : const Text('Enviar código'),
+                      loading: auth.isBusy,
+                      onPressed: () => _sendCode(auth),
+                      icon: Icons.send_outlined,
+                      child: const Text('Enviar código'),
                     ),
                   ] else ...[
                     TextField(
-                          controller: _codeController,
-                          keyboardType: TextInputType.number,
-                          decoration: const InputDecoration(
-                            labelText: 'Código de 6 dígitos',
-                            prefixIcon: Icon(Icons.sms_outlined),
-                          ),
-                        )
-                        .animate(delay: 160.ms)
-                        .fadeIn(duration: 300.ms)
-                        .slideY(begin: 0.1, end: 0, curve: Curves.easeOutCubic),
-                    const SizedBox(height: 20),
-                    AppButton(
-                      onPressed: auth.isBusy ? null : () => _confirmCode(auth),
-                      icon: auth.isBusy ? null : Icons.check_circle_outline,
-                      child: auth.isBusy
-                          ? const SizedBox(
-                              height: 18,
-                              width: 18,
-                              child: CircularProgressIndicator(
-                                strokeWidth: 2,
-                                color: Colors.white,
-                              ),
-                            )
-                          : const Text('Confirmar código'),
+                      controller: _codeController,
+                      keyboardType: TextInputType.number,
+                      autofillHints: const [AutofillHints.oneTimeCode],
+                      decoration: const InputDecoration(
+                        labelText: 'Código de 6 dígitos',
+                        prefixIcon: Icon(Icons.sms_outlined),
+                      ),
                     ),
-                    TextButton(
+                    const SizedBox(height: AppSpace.xl),
+                    AppButton(
+                      loading: auth.isBusy,
+                      onPressed: () => _confirmCode(auth),
+                      icon: Icons.check_circle_outline,
+                      child: const Text('Confirmar código'),
+                    ),
+                    AppButton(
+                      variant: AppButtonVariant.text,
                       onPressed: () => setState(() => _codeHandle = null),
                       child: const Text('Cambiar número'),
                     ),

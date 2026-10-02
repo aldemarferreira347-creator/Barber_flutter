@@ -1,5 +1,4 @@
 import 'package:flutter/material.dart';
-import 'package:flutter_animate/flutter_animate.dart';
 import 'package:provider/provider.dart';
 
 import '../../controllers/auth_controller.dart';
@@ -112,51 +111,48 @@ class _AverageRatingHeader extends StatelessWidget {
   @override
   Widget build(BuildContext context) {
     return Container(
-          padding: const EdgeInsets.all(16),
-          decoration: BoxDecoration(
-            color: AppColors.surface,
-            borderRadius: BorderRadius.circular(16),
-            border: Border.all(color: AppColors.border),
-            boxShadow: [
-              BoxShadow(
-                color: AppColors.gold.withValues(alpha: 0.1),
-                blurRadius: 16,
-                offset: const Offset(0, 6),
-              ),
-            ],
+      padding: const EdgeInsets.all(16),
+      decoration: BoxDecoration(
+        color: AppColors.surface,
+        borderRadius: BorderRadius.circular(16),
+        border: Border.all(color: AppColors.border),
+        boxShadow: [
+          BoxShadow(
+            color: AppColors.gold.withValues(alpha: 0.1),
+            blurRadius: 16,
+            offset: const Offset(0, 6),
           ),
-          child: Row(
+        ],
+      ),
+      child: Row(
+        children: [
+          const Icon(Icons.star, color: AppColors.gold, size: 32),
+          const SizedBox(width: 12),
+          Column(
+            crossAxisAlignment: CrossAxisAlignment.start,
             children: [
-              const Icon(Icons.star, color: AppColors.gold, size: 32),
-              const SizedBox(width: 12),
-              Column(
-                crossAxisAlignment: CrossAxisAlignment.start,
-                children: [
-                  Text(
-                    shop.ratingCount == 0
-                        ? 'Sin calificaciones aún'
-                        : shop.averageRating.toStringAsFixed(1),
-                    style: const TextStyle(
-                      fontSize: 20,
-                      fontWeight: FontWeight.w800,
-                    ),
-                  ),
-                  if (shop.ratingCount > 0)
-                    Text(
-                      '${shop.ratingCount} calificación(es)',
-                      style: TextStyle(
-                        color: AppColors.textSecondary,
-                        fontSize: 12,
-                      ),
-                    ),
-                ],
+              Text(
+                shop.ratingCount == 0
+                    ? 'Sin calificaciones aún'
+                    : shop.averageRating.toStringAsFixed(1),
+                style: const TextStyle(
+                  fontSize: 20,
+                  fontWeight: FontWeight.w800,
+                ),
               ),
+              if (shop.ratingCount > 0)
+                Text(
+                  '${shop.ratingCount} calificación(es)',
+                  style: TextStyle(
+                    color: AppColors.textSecondary,
+                    fontSize: 12,
+                  ),
+                ),
             ],
           ),
-        )
-        .animate()
-        .fadeIn(duration: 320.ms)
-        .slideY(begin: -0.06, end: 0, curve: Curves.easeOutCubic);
+        ],
+      ),
+    );
   }
 }
 
@@ -211,102 +207,96 @@ class _CommentCardState extends State<_CommentCard> {
   Widget build(BuildContext context) {
     final comment = widget.comment;
     return Container(
-          padding: const EdgeInsets.all(14),
-          decoration: BoxDecoration(
-            color: AppColors.surface,
-            borderRadius: BorderRadius.circular(14),
-            border: Border.all(color: AppColors.border),
+      padding: const EdgeInsets.all(14),
+      decoration: BoxDecoration(
+        color: AppColors.surface,
+        borderRadius: BorderRadius.circular(14),
+        border: Border.all(color: AppColors.border),
+      ),
+      child: Column(
+        crossAxisAlignment: CrossAxisAlignment.start,
+        children: [
+          Text(
+            comment.clientName,
+            style: const TextStyle(fontWeight: FontWeight.w700),
           ),
-          child: Column(
-            crossAxisAlignment: CrossAxisAlignment.start,
-            children: [
-              Text(
-                comment.clientName,
-                style: const TextStyle(fontWeight: FontWeight.w700),
+          const SizedBox(height: 6),
+          Text(comment.text),
+          if (comment.photoUrl != null) ...[
+            const SizedBox(height: 10),
+            ClipRRect(
+              borderRadius: BorderRadius.circular(10),
+              child: Image.network(
+                comment.photoUrl!,
+                height: 140,
+                width: double.infinity,
+                fit: BoxFit.cover,
               ),
-              const SizedBox(height: 6),
-              Text(comment.text),
-              if (comment.photoUrl != null) ...[
-                const SizedBox(height: 10),
-                ClipRRect(
-                  borderRadius: BorderRadius.circular(10),
-                  child: Image.network(
-                    comment.photoUrl!,
-                    height: 140,
-                    width: double.infinity,
-                    fit: BoxFit.cover,
+            ),
+          ],
+          if (comment.hasReply) ...[
+            const SizedBox(height: 10),
+            Container(
+              padding: const EdgeInsets.all(10),
+              decoration: BoxDecoration(
+                color: AppColors.background,
+                borderRadius: BorderRadius.circular(10),
+              ),
+              child: Column(
+                crossAxisAlignment: CrossAxisAlignment.start,
+                children: [
+                  const Text(
+                    'Respuesta de la barbería',
+                    style: TextStyle(fontWeight: FontWeight.w700, fontSize: 12),
                   ),
-                ),
-              ],
-              if (comment.hasReply) ...[
-                const SizedBox(height: 10),
-                Container(
-                  padding: const EdgeInsets.all(10),
-                  decoration: BoxDecoration(
-                    color: AppColors.background,
-                    borderRadius: BorderRadius.circular(10),
-                  ),
-                  child: Column(
-                    crossAxisAlignment: CrossAxisAlignment.start,
-                    children: [
-                      const Text(
-                        'Respuesta de la barbería',
-                        style: TextStyle(
-                          fontWeight: FontWeight.w700,
-                          fontSize: 12,
-                        ),
-                      ),
-                      const SizedBox(height: 4),
-                      Text(comment.replyText!),
-                    ],
-                  ),
-                ),
-              ] else if (widget.canReply) ...[
-                const SizedBox(height: 10),
-                if (_replying)
-                  Column(
-                    crossAxisAlignment: CrossAxisAlignment.start,
-                    children: [
-                      TextField(
-                        controller: _replyController,
-                        maxLines: 2,
-                        decoration: const InputDecoration(
-                          hintText: 'Responder a este comentario...',
-                        ),
-                      ),
-                      const SizedBox(height: 8),
-                      Align(
-                        alignment: Alignment.centerRight,
-                        child: FilledButton(
-                          onPressed: _sending ? null : _sendReply,
-                          child: _sending
-                              ? const SizedBox(
-                                  height: 16,
-                                  width: 16,
-                                  child: CircularProgressIndicator(
-                                    strokeWidth: 2,
-                                    color: Colors.white,
-                                  ),
-                                )
-                              : const Text('Enviar'),
-                        ),
-                      ),
-                    ],
-                  )
-                else
-                  Align(
-                    alignment: Alignment.centerRight,
-                    child: TextButton(
-                      onPressed: () => setState(() => _replying = true),
-                      child: const Text('Responder'),
+                  const SizedBox(height: 4),
+                  Text(comment.replyText!),
+                ],
+              ),
+            ),
+          ] else if (widget.canReply) ...[
+            const SizedBox(height: 10),
+            if (_replying)
+              Column(
+                crossAxisAlignment: CrossAxisAlignment.start,
+                children: [
+                  TextField(
+                    controller: _replyController,
+                    maxLines: 2,
+                    decoration: const InputDecoration(
+                      hintText: 'Responder a este comentario...',
                     ),
                   ),
-              ],
-            ],
-          ),
-        )
-        .animate(delay: (widget.animationIndex * 70).ms)
-        .fadeIn(duration: 320.ms)
-        .slideY(begin: 0.1, end: 0, curve: Curves.easeOutCubic);
+                  const SizedBox(height: 8),
+                  Align(
+                    alignment: Alignment.centerRight,
+                    child: FilledButton(
+                      onPressed: _sending ? null : _sendReply,
+                      child: _sending
+                          ? const SizedBox(
+                              height: 16,
+                              width: 16,
+                              child: CircularProgressIndicator(
+                                strokeWidth: 2,
+                                color: Colors.white,
+                              ),
+                            )
+                          : const Text('Enviar'),
+                    ),
+                  ),
+                ],
+              )
+            else
+              Align(
+                alignment: Alignment.centerRight,
+                child: TextButton(
+                  onPressed: () => setState(() => _replying = true),
+                  child: const Text('Responder'),
+                ),
+              ),
+          ],
+        ],
+      ),
+    );
   }
 }

@@ -1,5 +1,4 @@
 import 'package:flutter/material.dart';
-import 'package:flutter_animate/flutter_animate.dart';
 import 'package:provider/provider.dart';
 
 import '../../models/barbershop.dart';
@@ -338,131 +337,118 @@ class _ManageBarbershopsViewState extends State<ManageBarbershopsView> {
                     itemBuilder: (context, index) {
                       final shop = shops[index];
                       return PressableScale(
+                        onTap: () => Navigator.of(context).push(
+                          MaterialPageRoute(
+                            builder: (_) =>
+                                BarbershopDetailView(barbershopId: shop.id),
+                          ),
+                        ),
+                        child: Material(
+                          color: AppColors.surface,
+                          borderRadius: BorderRadius.circular(14),
+                          elevation: 1,
+                          shadowColor: AppColors.textPrimary.withValues(
+                            alpha: 0.08,
+                          ),
+                          child: InkWell(
+                            borderRadius: BorderRadius.circular(14),
                             onTap: () => Navigator.of(context).push(
                               MaterialPageRoute(
                                 builder: (_) =>
                                     BarbershopDetailView(barbershopId: shop.id),
                               ),
                             ),
-                            child: Material(
-                              color: AppColors.surface,
-                              borderRadius: BorderRadius.circular(14),
-                              elevation: 1,
-                              shadowColor: AppColors.textPrimary.withValues(
-                                alpha: 0.08,
-                              ),
-                              child: InkWell(
+                            child: Container(
+                              padding: const EdgeInsets.all(12),
+                              decoration: BoxDecoration(
                                 borderRadius: BorderRadius.circular(14),
-                                onTap: () => Navigator.of(context).push(
-                                  MaterialPageRoute(
-                                    builder: (_) => BarbershopDetailView(
-                                      barbershopId: shop.id,
+                                border: Border.all(color: AppColors.border),
+                              ),
+                              child: Row(
+                                crossAxisAlignment: CrossAxisAlignment.start,
+                                children: [
+                                  Container(
+                                    width: 48,
+                                    height: 48,
+                                    decoration: BoxDecoration(
+                                      color: AppColors.primary,
+                                      borderRadius: BorderRadius.circular(10),
+                                      image: shop.photoUrl != null
+                                          ? DecorationImage(
+                                              image: NetworkImage(
+                                                shop.photoUrl!,
+                                              ),
+                                              fit: BoxFit.cover,
+                                            )
+                                          : null,
+                                    ),
+                                    child: shop.photoUrl == null
+                                        ? const Icon(
+                                            Icons.storefront,
+                                            color: Colors.white,
+                                            size: 22,
+                                          )
+                                        : null,
+                                  ),
+                                  const SizedBox(width: 12),
+                                  Expanded(
+                                    child: Column(
+                                      crossAxisAlignment:
+                                          CrossAxisAlignment.start,
+                                      children: [
+                                        Text(
+                                          shop.name,
+                                          style: const TextStyle(
+                                            fontWeight: FontWeight.w700,
+                                          ),
+                                        ),
+                                        Text(
+                                          shop.address ?? '',
+                                          style: TextStyle(
+                                            color: AppColors.textSecondary,
+                                            fontSize: 12,
+                                          ),
+                                        ),
+                                        if (widget.adminControls) ...[
+                                          const SizedBox(height: 6),
+                                          Wrap(
+                                            spacing: 6,
+                                            runSpacing: 6,
+                                            children: [
+                                              ApprovalStatusBadge(
+                                                status: shop.approvalStatus,
+                                              ),
+                                              if (shop.approvalStatus ==
+                                                  BarbershopApprovalStatus
+                                                      .approved)
+                                                StatusBadge(
+                                                  label: paymentInsight(shop)
+                                                      .label,
+                                                  color: paymentInsight(shop)
+                                                      .color,
+                                                ),
+                                            ],
+                                          ),
+                                        ],
+                                      ],
                                     ),
                                   ),
-                                ),
-                                child: Container(
-                                  padding: const EdgeInsets.all(12),
-                                  decoration: BoxDecoration(
-                                    borderRadius: BorderRadius.circular(14),
-                                    border: Border.all(color: AppColors.border),
-                                  ),
-                                  child: Row(
-                                    crossAxisAlignment:
-                                        CrossAxisAlignment.start,
-                                    children: [
-                                      Container(
-                                        width: 48,
-                                        height: 48,
-                                        decoration: BoxDecoration(
-                                          color: AppColors.primary,
-                                          borderRadius: BorderRadius.circular(
-                                            10,
-                                          ),
-                                          image: shop.photoUrl != null
-                                              ? DecorationImage(
-                                                  image: NetworkImage(
-                                                    shop.photoUrl!,
-                                                  ),
-                                                  fit: BoxFit.cover,
-                                                )
-                                              : null,
-                                        ),
-                                        child: shop.photoUrl == null
-                                            ? const Icon(
-                                                Icons.storefront,
-                                                color: Colors.white,
-                                                size: 22,
-                                              )
-                                            : null,
+                                  if (widget.adminControls)
+                                    _ActionMenuButton(
+                                      onTap: () => _showShopActions(
+                                        context,
+                                        shop,
+                                        service,
                                       ),
-                                      const SizedBox(width: 12),
-                                      Expanded(
-                                        child: Column(
-                                          crossAxisAlignment:
-                                              CrossAxisAlignment.start,
-                                          children: [
-                                            Text(
-                                              shop.name,
-                                              style: const TextStyle(
-                                                fontWeight: FontWeight.w700,
-                                              ),
-                                            ),
-                                            Text(
-                                              shop.address ?? '',
-                                              style: TextStyle(
-                                                color: AppColors.textSecondary,
-                                                fontSize: 12,
-                                              ),
-                                            ),
-                                            if (widget.adminControls) ...[
-                                              const SizedBox(height: 6),
-                                              Wrap(
-                                                spacing: 6,
-                                                runSpacing: 6,
-                                                children: [
-                                                  ApprovalStatusBadge(
-                                                    status: shop.approvalStatus,
-                                                  ),
-                                                  if (shop.approvalStatus ==
-                                                      BarbershopApprovalStatus
-                                                          .approved)
-                                                    StatusBadge(
-                                                      label: paymentInsight(
-                                                        shop,
-                                                      ).label,
-                                                      color: paymentInsight(
-                                                        shop,
-                                                      ).color,
-                                                    ),
-                                                ],
-                                              ),
-                                            ],
-                                          ],
-                                        ),
-                                      ),
-                                      if (widget.adminControls)
-                                        _ActionMenuButton(
-                                          onTap: () => _showShopActions(
-                                            context,
-                                            shop,
-                                            service,
-                                          ),
-                                        )
-                                      else
-                                        StatusBadge.active(shop.active),
-                                    ],
-                                  ),
-                                ),
+                                    )
+                                  else
+                                    StatusBadge.active(shop.active),
+                                ],
                               ),
                             ),
-                          )
-                          .animate(delay: (index * 60).ms)
-                          .fadeIn(duration: 300.ms)
-                          .slideY(
-                            begin: 0.1,
-                            end: 0,
-                            curve: Curves.easeOutCubic,
-                          );
+                          ),
+                        ),
+                      );
                     },
                   );
                 },
@@ -702,7 +688,7 @@ class _ShopActionsSheet extends StatelessWidget {
               color: AppColors.border,
               borderRadius: BorderRadius.circular(2),
             ),
-          ).animate().fadeIn(duration: 200.ms),
+          ),
           const SizedBox(height: 20),
 
           // Perfil de la barbería
@@ -724,57 +710,50 @@ class _ShopActionsSheet extends StatelessWidget {
                 child: shop.photoUrl == null
                     ? const Icon(Icons.storefront, color: Colors.white)
                     : null,
-              ).animate().scale(
-                begin: const Offset(0.6, 0.6),
-                duration: 300.ms,
-                curve: Curves.easeOutBack,
               ),
               const SizedBox(width: 14),
               Expanded(
-                    child: Column(
-                      crossAxisAlignment: CrossAxisAlignment.start,
+                child: Column(
+                  crossAxisAlignment: CrossAxisAlignment.start,
+                  children: [
+                    Text(
+                      shop.name,
+                      style: TextStyle(
+                        fontWeight: FontWeight.w700,
+                        fontSize: 16,
+                        color: AppColors.textPrimary,
+                      ),
+                      maxLines: 1,
+                      overflow: TextOverflow.ellipsis,
+                    ),
+                    if ((shop.address ?? '').isNotEmpty) ...[
+                      const SizedBox(height: 2),
+                      Text(
+                        shop.address!,
+                        style: TextStyle(
+                          color: AppColors.textSecondary,
+                          fontSize: 12,
+                        ),
+                        maxLines: 1,
+                        overflow: TextOverflow.ellipsis,
+                      ),
+                    ],
+                    const SizedBox(height: 6),
+                    Wrap(
+                      spacing: 6,
+                      runSpacing: 6,
                       children: [
-                        Text(
-                          shop.name,
-                          style: TextStyle(
-                            fontWeight: FontWeight.w700,
-                            fontSize: 16,
-                            color: AppColors.textPrimary,
+                        ApprovalStatusBadge(status: shop.approvalStatus),
+                        if (isApproved)
+                          StatusBadge(
+                            label: insight.label,
+                            color: insight.color,
                           ),
-                          maxLines: 1,
-                          overflow: TextOverflow.ellipsis,
-                        ),
-                        if ((shop.address ?? '').isNotEmpty) ...[
-                          const SizedBox(height: 2),
-                          Text(
-                            shop.address!,
-                            style: TextStyle(
-                              color: AppColors.textSecondary,
-                              fontSize: 12,
-                            ),
-                            maxLines: 1,
-                            overflow: TextOverflow.ellipsis,
-                          ),
-                        ],
-                        const SizedBox(height: 6),
-                        Wrap(
-                          spacing: 6,
-                          runSpacing: 6,
-                          children: [
-                            ApprovalStatusBadge(status: shop.approvalStatus),
-                            if (isApproved)
-                              StatusBadge(
-                                label: insight.label,
-                                color: insight.color,
-                              ),
-                          ],
-                        ),
                       ],
                     ),
-                  )
-                  .animate()
-                  .fadeIn(delay: 80.ms, duration: 250.ms)
-                  .slideX(begin: 0.08, end: 0, curve: Curves.easeOutCubic),
+                  ],
+                ),
+              ),
             ],
           ),
 
@@ -817,15 +796,7 @@ class _ShopActionsSheet extends StatelessWidget {
           Divider(color: AppColors.border, height: 1),
           const SizedBox(height: 8),
 
-          // Lista de acciones con animación escalonada
-          ...actions.asMap().entries.map((entry) {
-            final i = entry.key;
-            final action = entry.value;
-            return _SheetActionTile(action: action)
-                .animate(delay: (100 + i * 60).ms)
-                .fadeIn(duration: 220.ms)
-                .slideY(begin: 0.12, end: 0, curve: Curves.easeOutCubic);
-          }),
+          for (final action in actions) _SheetActionTile(action: action),
         ],
       ),
     );

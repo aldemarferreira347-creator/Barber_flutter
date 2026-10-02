@@ -1,5 +1,4 @@
 import 'package:flutter/material.dart';
-import 'package:flutter_animate/flutter_animate.dart';
 import 'package:provider/provider.dart';
 
 import '../../repositories/shop_closure_repository.dart';
@@ -112,20 +111,17 @@ class _CloseShopViewState extends State<CloseShopView> {
         mainAxisAlignment: MainAxisAlignment.center,
         children: [
           const Icon(
-                Icons.check_circle_outline,
-                color: AppColors.success,
-                size: 56,
-              )
-              .animate()
-              .fadeIn(duration: 320.ms)
-              .scaleXY(begin: 0.6, end: 1, curve: Curves.easeOutBack),
+            Icons.check_circle_outline,
+            color: AppColors.success,
+            size: 56,
+          ),
           const SizedBox(height: 16),
           Text(
             affected == 0
                 ? 'No había reservas pagadas afectadas en ese rango.'
                 : 'Se aplazaron $affected reserva(s) pagada(s) y se notificó a cada cliente.',
             textAlign: TextAlign.center,
-          ).animate(delay: 120.ms).fadeIn(duration: 300.ms),
+          ),
           const SizedBox(height: 20),
           SizedBox(
             width: 200,
@@ -147,7 +143,7 @@ class _CloseShopViewState extends State<CloseShopView> {
           'Su calificación final tendrá un descuento obligatorio de 1 estrella, ya que el cierre afecta su experiencia '
           'aunque no dependa de la barbería.',
           style: TextStyle(color: AppColors.textSecondary, fontSize: 13),
-        ).animate().fadeIn(duration: 300.ms),
+        ),
         const SizedBox(height: 20),
         OutlinedButton.icon(
           onPressed: _pickFrom,

@@ -1,7 +1,6 @@
 import 'dart:typed_data';
 
 import 'package:flutter/material.dart';
-import 'package:flutter_animate/flutter_animate.dart';
 import 'package:image_picker/image_picker.dart';
 import 'package:provider/provider.dart';
 
@@ -147,12 +146,9 @@ class _RateAppointmentViewState extends State<RateAppointmentView> {
           const _ConductGuidelines(),
           const SizedBox(height: 20),
           Text(
-                '¿Cómo estuvo ${appointment.barberName}?',
-                style: const TextStyle(fontWeight: FontWeight.w700),
-              )
-              .animate()
-              .fadeIn(duration: 300.ms)
-              .slideX(begin: -0.05, end: 0, curve: Curves.easeOutCubic),
+            '¿Cómo estuvo ${appointment.barberName}?',
+            style: const TextStyle(fontWeight: FontWeight.w700),
+          ),
           const SizedBox(height: 8),
           _StarPicker(
             value: _barberStars,
@@ -160,12 +156,9 @@ class _RateAppointmentViewState extends State<RateAppointmentView> {
           ),
           const SizedBox(height: 20),
           const Text(
-                '¿Cómo estuvo la barbería en general?',
-                style: TextStyle(fontWeight: FontWeight.w700),
-              )
-              .animate()
-              .fadeIn(duration: 300.ms)
-              .slideX(begin: -0.05, end: 0, curve: Curves.easeOutCubic),
+            '¿Cómo estuvo la barbería en general?',
+            style: TextStyle(fontWeight: FontWeight.w700),
+          ),
           const SizedBox(height: 8),
           _StarPicker(
             value: _shopStars,
@@ -194,7 +187,7 @@ class _RateAppointmentViewState extends State<RateAppointmentView> {
                 width: double.infinity,
                 fit: BoxFit.cover,
               ),
-            ).animate().fadeIn(duration: 280.ms).scaleXY(begin: 0.96, end: 1),
+            ),
           const SizedBox(height: 8),
           OutlinedButton.icon(
             onPressed: _showPhotoOptions,
@@ -244,19 +237,11 @@ class _StarPicker extends StatelessWidget {
             pressedScale: 0.8,
             child: IconButton(
               onPressed: () => onChanged(i),
-              icon:
-                  Icon(
-                        i <= value ? Icons.star : Icons.star_border,
-                        color: AppColors.gold,
-                        size: 32,
-                      )
-                      .animate(target: i <= value ? 1 : 0)
-                      .scaleXY(
-                        begin: 1,
-                        end: 1.15,
-                        curve: Curves.easeOutBack,
-                        duration: 200.ms,
-                      ),
+              icon: Icon(
+                i <= value ? Icons.star : Icons.star_border,
+                color: AppColors.gold,
+                size: 32,
+              ),
             ),
           ),
       ],
@@ -270,31 +255,28 @@ class _ConductGuidelines extends StatelessWidget {
   @override
   Widget build(BuildContext context) {
     return Container(
-          padding: const EdgeInsets.all(14),
-          decoration: BoxDecoration(
-            color: AppColors.surface,
-            borderRadius: BorderRadius.circular(12),
-            border: Border.all(color: AppColors.border),
+      padding: const EdgeInsets.all(14),
+      decoration: BoxDecoration(
+        color: AppColors.surface,
+        borderRadius: BorderRadius.circular(12),
+        border: Border.all(color: AppColors.border),
+      ),
+      child: Column(
+        crossAxisAlignment: CrossAxisAlignment.start,
+        children: [
+          const Text(
+            'Antes de calificar',
+            style: TextStyle(fontWeight: FontWeight.w700),
           ),
-          child: Column(
-            crossAxisAlignment: CrossAxisAlignment.start,
-            children: [
-              const Text(
-                'Antes de calificar',
-                style: TextStyle(fontWeight: FontWeight.w700),
-              ),
-              const SizedBox(height: 8),
-              Text(
-                'La barbería debe garantizar puntualidad, higiene y buen trato. '
-                'Te pedimos que tu comentario sea constructivo: describe tu experiencia '
-                'con respeto, sin insultos ni lenguaje ofensivo.',
-                style: TextStyle(color: AppColors.textSecondary, fontSize: 13),
-              ),
-            ],
+          const SizedBox(height: 8),
+          Text(
+            'La barbería debe garantizar puntualidad, higiene y buen trato. '
+            'Te pedimos que tu comentario sea constructivo: describe tu experiencia '
+            'con respeto, sin insultos ni lenguaje ofensivo.',
+            style: TextStyle(color: AppColors.textSecondary, fontSize: 13),
           ),
-        )
-        .animate()
-        .fadeIn(duration: 320.ms)
-        .slideY(begin: -0.06, end: 0, curve: Curves.easeOutCubic);
+        ],
+      ),
+    );
   }
 }

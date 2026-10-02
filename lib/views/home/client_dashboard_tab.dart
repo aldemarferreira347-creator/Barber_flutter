@@ -1,5 +1,4 @@
 import 'package:flutter/material.dart';
-import 'package:flutter_animate/flutter_animate.dart';
 import 'package:provider/provider.dart';
 
 import '../../controllers/auth_controller.dart';
@@ -47,76 +46,71 @@ class ClientDashboardTab extends StatelessWidget {
       ),
       children: [
         PressableScale(
-              onTap: () => Navigator.of(context).push(
-                MaterialPageRoute(
-                  builder: (_) => const ManageBarbershopsView(),
+          onTap: () => Navigator.of(context).push(
+            MaterialPageRoute(builder: (_) => const ManageBarbershopsView()),
+          ),
+          child: ClipRRect(
+            borderRadius: BorderRadius.circular(18),
+            child: Container(
+              height: 140,
+              decoration: BoxDecoration(
+                image: DecorationImage(
+                  image: const AssetImage('lib/views/img/fondo.png'),
+                  fit: BoxFit.cover,
+                  colorFilter: ColorFilter.mode(
+                    Colors.black.withValues(alpha: 0.5),
+                    BlendMode.darken,
+                  ),
                 ),
               ),
-              child: ClipRRect(
-                borderRadius: BorderRadius.circular(18),
-                child: Container(
-                  height: 140,
-                  decoration: BoxDecoration(
-                    image: DecorationImage(
-                      image: const AssetImage('lib/views/img/fondo.png'),
-                      fit: BoxFit.cover,
-                      colorFilter: ColorFilter.mode(
-                        Colors.black.withValues(alpha: 0.5),
-                        BlendMode.darken,
-                      ),
+              padding: const EdgeInsets.all(18),
+              child: Column(
+                crossAxisAlignment: CrossAxisAlignment.start,
+                mainAxisAlignment: MainAxisAlignment.end,
+                children: [
+                  const Text(
+                    'Tu próxima cita está a un clic',
+                    style: TextStyle(
+                      color: Colors.white,
+                      fontSize: 17,
+                      fontWeight: FontWeight.w800,
                     ),
                   ),
-                  padding: const EdgeInsets.all(18),
-                  child: Column(
-                    crossAxisAlignment: CrossAxisAlignment.start,
-                    mainAxisAlignment: MainAxisAlignment.end,
-                    children: [
-                      const Text(
-                        'Tu próxima cita está a un clic',
-                        style: TextStyle(
-                          color: Colors.white,
-                          fontSize: 17,
-                          fontWeight: FontWeight.w800,
+                  const SizedBox(height: 10),
+                  Container(
+                    padding: const EdgeInsets.symmetric(
+                      horizontal: 14,
+                      vertical: 9,
+                    ),
+                    decoration: BoxDecoration(
+                      color: Colors.white,
+                      borderRadius: BorderRadius.circular(30),
+                    ),
+                    child: Row(
+                      mainAxisSize: MainAxisSize.min,
+                      children: [
+                        Text(
+                          'Reservar cita',
+                          style: TextStyle(
+                            color: AppColors.primary,
+                            fontWeight: FontWeight.w700,
+                            fontSize: 13,
+                          ),
                         ),
-                      ),
-                      const SizedBox(height: 10),
-                      Container(
-                        padding: const EdgeInsets.symmetric(
-                          horizontal: 14,
-                          vertical: 9,
+                        const SizedBox(width: 4),
+                        Icon(
+                          Icons.arrow_forward,
+                          size: 15,
+                          color: AppColors.primary,
                         ),
-                        decoration: BoxDecoration(
-                          color: Colors.white,
-                          borderRadius: BorderRadius.circular(30),
-                        ),
-                        child: Row(
-                          mainAxisSize: MainAxisSize.min,
-                          children: [
-                            Text(
-                              'Reservar cita',
-                              style: TextStyle(
-                                color: AppColors.primary,
-                                fontWeight: FontWeight.w700,
-                                fontSize: 13,
-                              ),
-                            ),
-                            const SizedBox(width: 4),
-                            Icon(
-                              Icons.arrow_forward,
-                              size: 15,
-                              color: AppColors.primary,
-                            ),
-                          ],
-                        ),
-                      ),
-                    ],
+                      ],
+                    ),
                   ),
-                ),
+                ],
               ),
-            )
-            .animate()
-            .fadeIn(duration: 380.ms)
-            .slideY(begin: 0.1, end: 0, curve: Curves.easeOutCubic),
+            ),
+          ),
+        ),
         const SizedBox(height: 22),
         Row(
           children: [
@@ -175,88 +169,85 @@ class ClientDashboardTab extends StatelessWidget {
                 itemBuilder: (context, index) {
                   final shop = shops[index];
                   return PressableScale(
-                        onTap: () => Navigator.of(context).push(
-                          MaterialPageRoute(
-                            builder: (_) =>
-                                BarbershopDetailView(barbershopId: shop.id),
+                    onTap: () => Navigator.of(context).push(
+                      MaterialPageRoute(
+                        builder: (_) =>
+                            BarbershopDetailView(barbershopId: shop.id),
+                      ),
+                    ),
+                    child: Container(
+                      width: 112,
+                      padding: const EdgeInsets.all(10),
+                      decoration: BoxDecoration(
+                        color: AppColors.surface,
+                        borderRadius: BorderRadius.circular(14),
+                        border: Border.all(color: AppColors.border),
+                        boxShadow: [
+                          BoxShadow(
+                            color: AppColors.textPrimary.withValues(
+                              alpha: 0.05,
+                            ),
+                            blurRadius: 10,
+                            offset: const Offset(0, 4),
                           ),
-                        ),
-                        child: Container(
-                          width: 112,
-                          padding: const EdgeInsets.all(10),
-                          decoration: BoxDecoration(
-                            color: AppColors.surface,
-                            borderRadius: BorderRadius.circular(14),
-                            border: Border.all(color: AppColors.border),
-                            boxShadow: [
-                              BoxShadow(
-                                color: AppColors.textPrimary.withValues(
-                                  alpha: 0.05,
-                                ),
-                                blurRadius: 10,
-                                offset: const Offset(0, 4),
-                              ),
-                            ],
+                        ],
+                      ),
+                      child: Column(
+                        crossAxisAlignment: CrossAxisAlignment.start,
+                        children: [
+                          Container(
+                            height: 56,
+                            width: double.infinity,
+                            decoration: BoxDecoration(
+                              color: AppColors.primary,
+                              borderRadius: BorderRadius.circular(10),
+                              image: shop.photoUrl != null
+                                  ? DecorationImage(
+                                      image: NetworkImage(shop.photoUrl!),
+                                      fit: BoxFit.cover,
+                                    )
+                                  : null,
+                            ),
+                            child: shop.photoUrl == null
+                                ? const Icon(
+                                    Icons.storefront,
+                                    color: Colors.white,
+                                    size: 22,
+                                  )
+                                : null,
                           ),
-                          child: Column(
-                            crossAxisAlignment: CrossAxisAlignment.start,
-                            children: [
-                              Container(
-                                height: 56,
-                                width: double.infinity,
-                                decoration: BoxDecoration(
-                                  color: AppColors.primary,
-                                  borderRadius: BorderRadius.circular(10),
-                                  image: shop.photoUrl != null
-                                      ? DecorationImage(
-                                          image: NetworkImage(shop.photoUrl!),
-                                          fit: BoxFit.cover,
-                                        )
-                                      : null,
-                                ),
-                                child: shop.photoUrl == null
-                                    ? const Icon(
-                                        Icons.storefront,
-                                        color: Colors.white,
-                                        size: 22,
-                                      )
-                                    : null,
-                              ),
-                              const SizedBox(height: 6),
-                              Text(
-                                shop.name,
-                                maxLines: 1,
-                                overflow: TextOverflow.ellipsis,
-                                style: const TextStyle(
-                                  fontWeight: FontWeight.w700,
-                                  fontSize: 12,
-                                ),
-                              ),
-                              if (shop.averageRating > 0)
-                                Row(
-                                  children: [
-                                    const Icon(
-                                      Icons.star,
-                                      size: 12,
-                                      color: AppColors.warning,
-                                    ),
-                                    const SizedBox(width: 2),
-                                    Text(
-                                      shop.averageRating.toStringAsFixed(1),
-                                      style: TextStyle(
-                                        fontSize: 11,
-                                        color: AppColors.textSecondary,
-                                      ),
-                                    ),
-                                  ],
-                                ),
-                            ],
+                          const SizedBox(height: 6),
+                          Text(
+                            shop.name,
+                            maxLines: 1,
+                            overflow: TextOverflow.ellipsis,
+                            style: const TextStyle(
+                              fontWeight: FontWeight.w700,
+                              fontSize: 12,
+                            ),
                           ),
-                        ),
-                      )
-                      .animate(delay: (index * 60).ms)
-                      .fadeIn(duration: 300.ms)
-                      .slideX(begin: 0.1, end: 0, curve: Curves.easeOutCubic);
+                          if (shop.averageRating > 0)
+                            Row(
+                              children: [
+                                const Icon(
+                                  Icons.star,
+                                  size: 12,
+                                  color: AppColors.warning,
+                                ),
+                                const SizedBox(width: 2),
+                                Text(
+                                  shop.averageRating.toStringAsFixed(1),
+                                  style: TextStyle(
+                                    fontSize: 11,
+                                    color: AppColors.textSecondary,
+                                  ),
+                                ),
+                              ],
+                            ),
+                        ],
+                      ),
+                    ),
+                  );
                 },
               );
             },

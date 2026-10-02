@@ -1,5 +1,4 @@
 import 'package:flutter/material.dart';
-import 'package:flutter_animate/flutter_animate.dart';
 import 'package:provider/provider.dart';
 
 import '../../models/app_notification.dart';
@@ -83,76 +82,66 @@ class _NotificationsViewState extends State<NotificationsView> {
                 onTap: () {
                   if (!n.read) repo.markRead(n.id);
                 },
-                child:
-                    Container(
-                          padding: const EdgeInsets.all(14),
-                          decoration: BoxDecoration(
-                            color: n.read
-                                ? AppColors.surface
-                                : AppColors.accent.withValues(alpha: 0.06),
-                            borderRadius: BorderRadius.circular(14),
-                            border: Border.all(
-                              color: n.read
-                                  ? AppColors.border
-                                  : AppColors.accent.withValues(alpha: 0.3),
+                child: Container(
+                  padding: const EdgeInsets.all(14),
+                  decoration: BoxDecoration(
+                    color: n.read
+                        ? AppColors.surface
+                        : AppColors.accent.withValues(alpha: 0.06),
+                    borderRadius: BorderRadius.circular(14),
+                    border: Border.all(
+                      color: n.read
+                          ? AppColors.border
+                          : AppColors.accent.withValues(alpha: 0.3),
+                    ),
+                    boxShadow: n.read
+                        ? []
+                        : [
+                            BoxShadow(
+                              color: AppColors.accent.withValues(alpha: 0.12),
+                              blurRadius: 12,
+                              offset: const Offset(0, 5),
                             ),
-                            boxShadow: n.read
-                                ? []
-                                : [
-                                    BoxShadow(
-                                      color: AppColors.accent.withValues(
-                                        alpha: 0.12,
-                                      ),
-                                      blurRadius: 12,
-                                      offset: const Offset(0, 5),
-                                    ),
-                                  ],
-                          ),
-                          child: Row(
-                            crossAxisAlignment: CrossAxisAlignment.start,
-                            children: [
-                              Icon(_iconFor(n.type), color: _colorFor(n.type)),
-                              const SizedBox(width: 12),
-                              Expanded(
-                                child: Column(
-                                  crossAxisAlignment: CrossAxisAlignment.start,
-                                  children: [
-                                    Text(
-                                      n.title,
-                                      style: const TextStyle(
-                                        fontWeight: FontWeight.w700,
-                                      ),
-                                    ),
-                                    const SizedBox(height: 2),
-                                    Text(
-                                      n.body,
-                                      style: TextStyle(
-                                        color: AppColors.textSecondary,
-                                        fontSize: 13,
-                                      ),
-                                    ),
-                                  ],
-                                ),
+                          ],
+                  ),
+                  child: Row(
+                    crossAxisAlignment: CrossAxisAlignment.start,
+                    children: [
+                      Icon(_iconFor(n.type), color: _colorFor(n.type)),
+                      const SizedBox(width: 12),
+                      Expanded(
+                        child: Column(
+                          crossAxisAlignment: CrossAxisAlignment.start,
+                          children: [
+                            Text(
+                              n.title,
+                              style: const TextStyle(
+                                fontWeight: FontWeight.w700,
                               ),
-                              if (!n.read)
-                                Container(
-                                  width: 8,
-                                  height: 8,
-                                  decoration: BoxDecoration(
-                                    color: AppColors.accent,
-                                    shape: BoxShape.circle,
-                                  ),
-                                ),
-                            ],
-                          ),
-                        )
-                        .animate(delay: (index * 60).ms)
-                        .fadeIn(duration: 300.ms)
-                        .slideX(
-                          begin: 0.08,
-                          end: 0,
-                          curve: Curves.easeOutCubic,
+                            ),
+                            const SizedBox(height: 2),
+                            Text(
+                              n.body,
+                              style: TextStyle(
+                                color: AppColors.textSecondary,
+                                fontSize: 13,
+                              ),
+                            ),
+                          ],
                         ),
+                      ),
+                      if (!n.read)
+                        Container(
+                          width: 8,
+                          height: 8,
+                          decoration: BoxDecoration(
+                            color: AppColors.accent,
+                            shape: BoxShape.circle,
+                          ),
+                        ),
+                    ],
+                  ),
+                ),
               );
             },
           );

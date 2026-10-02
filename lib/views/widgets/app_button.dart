@@ -30,6 +30,9 @@ class AppButton extends StatefulWidget {
   final FutureOr<void> Function()? onPressed;
   final Widget child;
   final IconData? icon;
+
+  /// Widget al inicio (p. ej. el logo de Google); se usa en lugar de [icon].
+  final Widget? leading;
   final AppButtonVariant variant;
   final bool loading;
 
@@ -42,6 +45,7 @@ class AppButton extends StatefulWidget {
     required this.onPressed,
     required this.child,
     this.icon,
+    this.leading,
     this.variant = AppButtonVariant.primary,
     this.loading = false,
     this.expand = true,
@@ -84,7 +88,10 @@ class _AppButtonState extends State<AppButton> {
       mainAxisSize: MainAxisSize.min,
       mainAxisAlignment: MainAxisAlignment.center,
       children: [
-        if (widget.icon != null) ...[
+        if (widget.leading != null) ...[
+          widget.leading!,
+          const SizedBox(width: 10),
+        ] else if (widget.icon != null) ...[
           Icon(widget.icon, size: 20),
           const SizedBox(width: 8),
         ],

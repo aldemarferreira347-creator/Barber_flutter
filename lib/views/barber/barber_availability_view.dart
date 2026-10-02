@@ -1,5 +1,4 @@
 import 'package:flutter/material.dart';
-import 'package:flutter_animate/flutter_animate.dart';
 import 'package:provider/provider.dart';
 
 import '../../controllers/user_controller.dart';
@@ -26,80 +25,77 @@ class BarberAvailabilityView extends StatelessWidget {
         padding: const EdgeInsets.all(16),
         children: [
           Container(
-                padding: const EdgeInsets.all(16),
-                decoration: BoxDecoration(
-                  color: AppColors.surface,
-                  borderRadius: BorderRadius.circular(16),
-                  border: Border.all(color: AppColors.border),
-                  boxShadow: [
-                    BoxShadow(
-                      color: (available ? AppColors.success : AppColors.error)
-                          .withValues(alpha: 0.1),
-                      blurRadius: 16,
-                      offset: const Offset(0, 6),
-                    ),
-                  ],
+            padding: const EdgeInsets.all(16),
+            decoration: BoxDecoration(
+              color: AppColors.surface,
+              borderRadius: BorderRadius.circular(16),
+              border: Border.all(color: AppColors.border),
+              boxShadow: [
+                BoxShadow(
+                  color: (available ? AppColors.success : AppColors.error)
+                      .withValues(alpha: 0.1),
+                  blurRadius: 16,
+                  offset: const Offset(0, 6),
                 ),
-                child: Row(
-                  children: [
-                    Container(
-                      padding: const EdgeInsets.all(10),
-                      decoration: BoxDecoration(
-                        color: (available ? AppColors.success : AppColors.error)
-                            .withValues(alpha: 0.12),
-                        shape: BoxShape.circle,
-                      ),
-                      child: Icon(
+              ],
+            ),
+            child: Row(
+              children: [
+                Container(
+                  padding: const EdgeInsets.all(10),
+                  decoration: BoxDecoration(
+                    color: (available ? AppColors.success : AppColors.error)
+                        .withValues(alpha: 0.12),
+                    shape: BoxShape.circle,
+                  ),
+                  child: Icon(
+                    available
+                        ? Icons.check_circle_outline
+                        : Icons.pause_circle_outline,
+                    color: available ? AppColors.success : AppColors.error,
+                  ),
+                ),
+                const SizedBox(width: 14),
+                Expanded(
+                  child: Column(
+                    crossAxisAlignment: CrossAxisAlignment.start,
+                    children: [
+                      Text(
                         available
-                            ? Icons.check_circle_outline
-                            : Icons.pause_circle_outline,
-                        color: available ? AppColors.success : AppColors.error,
+                            ? 'Disponible para citas nuevas'
+                            : 'Dado de baja temporalmente',
+                        style: const TextStyle(fontWeight: FontWeight.w700),
                       ),
-                    ),
-                    const SizedBox(width: 14),
-                    Expanded(
-                      child: Column(
-                        crossAxisAlignment: CrossAxisAlignment.start,
-                        children: [
-                          Text(
-                            available
-                                ? 'Disponible para citas nuevas'
-                                : 'Dado de baja temporalmente',
-                            style: const TextStyle(fontWeight: FontWeight.w700),
-                          ),
-                          Text(
-                            available ? 'Los clientes pueden agendar contigo.' : 'No aparecerás para que te agenden citas nuevas.',
-                            style: TextStyle(
-                              color: AppColors.textSecondary,
-                              fontSize: 12,
-                            ),
-                          ),
-                        ],
+                      Text(
+                        available
+                            ? 'Los clientes pueden agendar contigo.'
+                            : 'No aparecerás para que te agenden citas nuevas.',
+                        style: TextStyle(
+                          color: AppColors.textSecondary,
+                          fontSize: 12,
+                        ),
                       ),
-                    ),
-                    Switch(
-                      value: available,
-                      onChanged: profile == null
-                          ? null
-                          : (value) => context
-                                .read<UserRepository>()
-                                .setAvailable(profile.uid, value),
-                    ),
-                  ],
+                    ],
+                  ),
                 ),
-              )
-              .animate()
-              .fadeIn(duration: 320.ms)
-              .slideY(begin: -0.06, end: 0, curve: Curves.easeOutCubic),
+                Switch(
+                  value: available,
+                  onChanged: profile == null
+                      ? null
+                      : (value) => context.read<UserRepository>().setAvailable(
+                          profile.uid,
+                          value,
+                        ),
+                ),
+              ],
+            ),
+          ),
           const SizedBox(height: 16),
           if (profile != null)
             _AwayControl(
-                  isAway: profile.isAway,
-                  awayUntilEstimate: profile.awayUntilEstimate,
-                )
-                .animate(delay: 100.ms)
-                .fadeIn(duration: 320.ms)
-                .slideY(begin: 0.08, end: 0, curve: Curves.easeOutCubic),
+              isAway: profile.isAway,
+              awayUntilEstimate: profile.awayUntilEstimate,
+            ),
         ],
       ),
     );

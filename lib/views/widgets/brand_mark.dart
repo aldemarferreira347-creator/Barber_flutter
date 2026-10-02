@@ -9,12 +9,9 @@ import 'package:flutter/material.dart';
 class BrandMark extends StatefulWidget {
   final double size;
 
-  /// Ignorado: se conserva por compatibilidad con los call-sites existentes,
-  /// pero ya no se usa un ColorFilter porque el logo es JPEG (sin alpha).
-  final Color? color;
   final bool spin;
 
-  const BrandMark({super.key, this.size = 32, this.color, this.spin = true});
+  const BrandMark({super.key, this.size = 32, this.spin = true});
 
   @override
   State<BrandMark> createState() => _BrandMarkState();
@@ -54,13 +51,18 @@ class _BrandMarkState extends State<BrandMark>
       animation: _controller,
       builder: (context, child) =>
           Transform.scale(scale: 1 + (_controller.value * 0.04), child: child),
-      child: ClipRRect(
-        borderRadius: BorderRadius.circular(widget.size * 0.22),
-        child: Image.asset(
-          'lib/views/img/logo.png',
-          width: widget.size,
-          height: widget.size,
-          fit: BoxFit.cover,
+      child: Semantics(
+        image: true,
+        label: 'Logo de BarberFlow',
+        child: ClipRRect(
+          borderRadius: BorderRadius.circular(widget.size * 0.22),
+          child: Image.asset(
+            'lib/views/img/logo.png',
+            width: widget.size,
+            height: widget.size,
+            fit: BoxFit.cover,
+            excludeFromSemantics: true,
+          ),
         ),
       ),
     );

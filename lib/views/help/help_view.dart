@@ -1,5 +1,4 @@
 import 'package:flutter/material.dart';
-import 'package:flutter_animate/flutter_animate.dart';
 import 'package:url_launcher/url_launcher.dart';
 
 import '../../support_info.dart';
@@ -62,12 +61,9 @@ class HelpView extends StatelessWidget {
         padding: const EdgeInsets.all(16),
         children: [
           const Text(
-                'Preguntas frecuentes',
-                style: TextStyle(fontWeight: FontWeight.w700, fontSize: 15),
-              )
-              .animate()
-              .fadeIn(duration: 300.ms)
-              .slideX(begin: -0.05, end: 0, curve: Curves.easeOutCubic),
+            'Preguntas frecuentes',
+            style: TextStyle(fontWeight: FontWeight.w700, fontSize: 15),
+          ),
           const SizedBox(height: 8),
           Container(
             decoration: BoxDecoration(
@@ -115,12 +111,9 @@ class HelpView extends StatelessWidget {
           ),
           const SizedBox(height: 24),
           const Text(
-                'Contáctanos',
-                style: TextStyle(fontWeight: FontWeight.w700, fontSize: 15),
-              )
-              .animate(delay: 100.ms)
-              .fadeIn(duration: 300.ms)
-              .slideX(begin: -0.05, end: 0, curve: Curves.easeOutCubic),
+            'Contáctanos',
+            style: TextStyle(fontWeight: FontWeight.w700, fontSize: 15),
+          ),
           const SizedBox(height: 8),
           ActionListTile(
             icon: Icons.mail_outline,
@@ -152,11 +145,7 @@ class HelpView extends StatelessWidget {
             child: Column(
               mainAxisSize: MainAxisSize.min,
               children: [
-                BrandMark(
-                  size: 32,
-                  color: AppColors.textSecondary.withValues(alpha: 0.5),
-                  spin: false,
-                ),
+                const BrandMark(size: 32, spin: false),
                 const SizedBox(height: 6),
                 Text(
                   'BarberFlow • Tu barbería, siempre conectada',
@@ -168,7 +157,7 @@ class HelpView extends StatelessWidget {
                 ),
               ],
             ),
-          ).animate(delay: 200.ms).fadeIn(duration: 300.ms),
+          ),
         ],
       ),
     );

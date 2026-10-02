@@ -1,5 +1,4 @@
 import 'package:flutter/material.dart';
-import 'package:flutter_animate/flutter_animate.dart';
 
 import '../../support_info.dart';
 import '../../theme/app_colors.dart';
@@ -51,34 +50,31 @@ class PrivacyPolicyView extends StatelessWidget {
           ),
           const SizedBox(height: 8),
           Container(
-                padding: const EdgeInsets.all(14),
-                decoration: BoxDecoration(
-                  color: AppColors.surface,
-                  borderRadius: BorderRadius.circular(14),
-                  border: Border.all(color: AppColors.border),
-                  boxShadow: [
-                    BoxShadow(
-                      color: AppColors.accent.withValues(alpha: 0.08),
-                      blurRadius: 12,
-                      offset: const Offset(0, 5),
-                    ),
-                  ],
+            padding: const EdgeInsets.all(14),
+            decoration: BoxDecoration(
+              color: AppColors.surface,
+              borderRadius: BorderRadius.circular(14),
+              border: Border.all(color: AppColors.border),
+              boxShadow: [
+                BoxShadow(
+                  color: AppColors.accent.withValues(alpha: 0.08),
+                  blurRadius: 12,
+                  offset: const Offset(0, 5),
                 ),
-                child: Row(
-                  children: [
-                    Icon(Icons.mail_outline, color: AppColors.accent, size: 18),
-                    const SizedBox(width: 10),
-                    const Expanded(
-                      child: Text(
-                        'Dudas sobre tus datos: ${SupportInfo.supportEmail}',
-                      ),
-                    ),
-                  ],
+              ],
+            ),
+            child: Row(
+              children: [
+                Icon(Icons.mail_outline, color: AppColors.accent, size: 18),
+                const SizedBox(width: 10),
+                const Expanded(
+                  child: Text(
+                    'Dudas sobre tus datos: ${SupportInfo.supportEmail}',
+                  ),
                 ),
-              )
-              .animate(delay: 240.ms)
-              .fadeIn(duration: 300.ms)
-              .slideY(begin: 0.08, end: 0, curve: Curves.easeOutCubic),
+              ],
+            ),
+          ),
         ],
       ),
     );
@@ -95,27 +91,21 @@ class _Section extends StatelessWidget {
   @override
   Widget build(BuildContext context) {
     return Padding(
-          padding: const EdgeInsets.only(bottom: 18),
-          child: Column(
-            crossAxisAlignment: CrossAxisAlignment.start,
-            children: [
-              Text(
-                title,
-                style: const TextStyle(
-                  fontWeight: FontWeight.w700,
-                  fontSize: 15,
-                ),
-              ),
-              const SizedBox(height: 6),
-              Text(
-                body,
-                style: TextStyle(color: AppColors.textSecondary, height: 1.4),
-              ),
-            ],
+      padding: const EdgeInsets.only(bottom: 18),
+      child: Column(
+        crossAxisAlignment: CrossAxisAlignment.start,
+        children: [
+          Text(
+            title,
+            style: const TextStyle(fontWeight: FontWeight.w700, fontSize: 15),
           ),
-        )
-        .animate(delay: (index * 70).ms)
-        .fadeIn(duration: 300.ms)
-        .slideY(begin: 0.08, end: 0, curve: Curves.easeOutCubic);
+          const SizedBox(height: 6),
+          Text(
+            body,
+            style: TextStyle(color: AppColors.textSecondary, height: 1.4),
+          ),
+        ],
+      ),
+    );
   }
 }

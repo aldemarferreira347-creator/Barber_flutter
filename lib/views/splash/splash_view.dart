@@ -1,11 +1,15 @@
 import 'dart:async';
 
 import 'package:flutter/material.dart';
-import 'package:flutter_animate/flutter_animate.dart';
 
+import '../../theme/app_colors.dart';
 import '../widgets/auth_gate.dart';
 import '../widgets/brand_mark.dart';
 
+/// Pantalla de arranque: marca sobre la foto de la barbería, siempre
+/// oscura (no depende del tema) como en el mockup. Pasa sola al
+/// [AuthGate], que ya muestra su propio estado de carga mientras resuelve
+/// la sesión.
 class SplashView extends StatefulWidget {
   const SplashView({super.key});
 
@@ -19,7 +23,7 @@ class _SplashViewState extends State<SplashView> {
   @override
   void initState() {
     super.initState();
-    _timer = Timer(const Duration(milliseconds: 1600), () {
+    _timer = Timer(const Duration(milliseconds: 1200), () {
       if (!mounted) return;
       Navigator.of(context)
           .pushReplacement(MaterialPageRoute(builder: (_) => const AuthGate()));
@@ -34,116 +38,54 @@ class _SplashViewState extends State<SplashView> {
 
   @override
   Widget build(BuildContext context) {
+    const onPhoto = AppColors.onColor;
     return Scaffold(
-      backgroundColor: Colors.black,
+      backgroundColor: AppColors.alwaysDark,
       body: Stack(
         fit: StackFit.expand,
         children: [
-          // Fondo fotográfico de la barbería
-          Image.asset('lib/views/img/fondo.png', fit: BoxFit.cover),
-          // Capa oscura degradada para alto contraste y elegancia
-          DecoratedBox(
-            decoration: BoxDecoration(
-              gradient: LinearGradient(
-                begin: Alignment.topCenter,
-                end: Alignment.bottomCenter,
-                colors: [
-                  Colors.black.withValues(alpha: 0.35),
-                  Colors.black.withValues(alpha: 0.45),
-                  Colors.black.withValues(alpha: 0.85),
-                ],
-                stops: const [0.0, 0.45, 1.0],
-              ),
-            ),
+          // Fondo fotográfico de la barbería, oscurecido para el contraste.
+          ExcludeSemantics(
+            child: Image.asset('lib/views/img/fondo.png', fit: BoxFit.cover),
           ),
-          Builder(
-            builder: (context) {
-              final reduceMotion = MediaQuery.of(context).disableAnimations;
-              final brand = BrandMark(
-                size: 86,
-                color: Colors.white,
-                spin: !reduceMotion,
-              );
-              const title = Text(
-                'BarberFlow',
-                style: TextStyle(
-                  color: Colors.white,
-                  fontSize: 32,
-                  fontWeight: FontWeight.w800,
-                  letterSpacing: -0.5,
-                ),
-              );
-              final subtitle = Text(
-                'Tu barbería, siempre conectada',
-                style: TextStyle(
-                  color: Colors.white.withValues(alpha: 0.80),
-                  fontSize: 15,
-                  fontWeight: FontWeight.w400,
-                ),
-              );
-              final tagline = Text(
-                'Gestiona   •   Organiza   •   Crece',
-                style: TextStyle(
-                  color: Colors.white.withValues(alpha: 0.60),
-                  fontSize: 13,
-                  fontWeight: FontWeight.w500,
-                  letterSpacing: 0.8,
-                ),
-              );
-
-              return SafeArea(
-                child: Column(
-                  children: [
-                    Expanded(
-                      child: Center(
-                        child: Column(
-                          mainAxisSize: MainAxisSize.min,
-                          children: reduceMotion
-                              ? [
-                                  brand,
-                                  const SizedBox(height: 18),
-                                  title,
-                                  const SizedBox(height: 8),
-                                  subtitle,
-                                ]
-                              : [
-                                  brand
-                                      .animate()
-                                      .scale(
-                                        begin: const Offset(0.5, 0.5),
-                                        curve: Curves.easeOutBack,
-                                        duration: 800.ms,
-                                      )
-                                      .fadeIn(duration: 400.ms),
-                                  const SizedBox(height: 18),
-                                  title
-                                      .animate(delay: 250.ms)
-                                      .fadeIn(duration: 400.ms)
-                                      .slideY(
-                                        begin: 0.25,
-                                        end: 0,
-                                        curve: Curves.easeOutCubic,
-                                      ),
-                                  const SizedBox(height: 8),
-                                  subtitle
-                                      .animate(delay: 450.ms)
-                                      .fadeIn(duration: 400.ms),
-                                ],
+          const DecoratedBox(decoration: BoxDecoration(color: AppColors.scrim)),
+          SafeArea(
+            child: Column(
+              children: [
+                Expanded(
+                  child: Center(
+                    child: Column(
+                      mainAxisSize: MainAxisSize.min,
+                      children: [
+                        const BrandMark(size: 86, spin: false),
+                        const SizedBox(height: 18),
+                        Text(
+                          'BarberFlow',
+                          style: Theme.of(context).textTheme.headlineMedium
+                              ?.copyWith(color: onPhoto, fontSize: 32),
                         ),
-                      ),
+                        const SizedBox(height: 8),
+                        Text(
+                          'Tu barbería, siempre conectada',
+                          style: Theme.of(context).textTheme.bodyLarge
+                              ?.copyWith(color: onPhoto.withValues(alpha: 0.8)),
+                        ),
+                      ],
                     ),
-                    Padding(
-                      padding: const EdgeInsets.only(bottom: 28),
-                      child: reduceMotion
-                          ? tagline
-                          : tagline
-                                .animate(delay: 600.ms)
-                                .fadeIn(duration: 500.ms),
-                    ),
-                  ],
+                  ),
                 ),
-              );
-            },
+                Padding(
+                  padding: const EdgeInsets.only(bottom: 28),
+                  child: Text(
+                    'Gestiona   •   Organiza   •   Crece',
+                    style: Theme.of(context).textTheme.labelMedium?.copyWith(
+                      color: onPhoto.withValues(alpha: 0.7),
+                      letterSpacing: 0.8,
+                    ),
+                  ),
+                ),
+              ],
+            ),
           ),
         ],
       ),

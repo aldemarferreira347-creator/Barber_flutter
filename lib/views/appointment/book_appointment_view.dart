@@ -1,5 +1,4 @@
 import 'package:flutter/material.dart';
-import 'package:flutter_animate/flutter_animate.dart';
 import 'package:provider/provider.dart';
 
 import '../../controllers/auth_controller.dart';
@@ -274,10 +273,7 @@ class _StepHeader extends StatelessWidget {
 
   @override
   Widget build(BuildContext context) {
-    return Text(label, style: const TextStyle(fontWeight: FontWeight.w700))
-        .animate()
-        .fadeIn(duration: 300.ms)
-        .slideX(begin: -0.05, end: 0, curve: Curves.easeOutCubic);
+    return Text(label, style: const TextStyle(fontWeight: FontWeight.w700));
   }
 }
 
@@ -299,68 +295,63 @@ class _SelectableTile extends StatelessWidget {
   @override
   Widget build(BuildContext context) {
     return Padding(
-          padding: const EdgeInsets.only(bottom: 8),
-          child: PressableScale(
-            onTap: onTap,
-            child: AnimatedContainer(
-              duration: const Duration(milliseconds: 220),
-              curve: Curves.easeOutCubic,
-              padding: const EdgeInsets.symmetric(horizontal: 14, vertical: 12),
-              decoration: BoxDecoration(
-                color: selected
-                    ? AppColors.accent.withValues(alpha: 0.08)
-                    : AppColors.surface,
-                borderRadius: BorderRadius.circular(14),
-                border: Border.all(
-                  color: selected ? AppColors.accent : AppColors.border,
-                  width: selected ? 1.5 : 1,
-                ),
-                boxShadow: selected
-                    ? [
-                        BoxShadow(
-                          color: AppColors.accent.withValues(alpha: 0.15),
-                          blurRadius: 12,
-                          offset: const Offset(0, 4),
-                        ),
-                      ]
-                    : [],
-              ),
-              child: Row(
-                children: [
-                  Icon(
-                    selected ? Icons.check_circle : Icons.circle_outlined,
-                    color: selected
-                        ? AppColors.accent
-                        : AppColors.textSecondary,
-                    size: 20,
-                  ),
-                  const SizedBox(width: 12),
-                  Expanded(
-                    child: Column(
-                      crossAxisAlignment: CrossAxisAlignment.start,
-                      children: [
-                        Text(
-                          title,
-                          style: const TextStyle(fontWeight: FontWeight.w600),
-                        ),
-                        if (subtitle != null)
-                          Text(
-                            subtitle!,
-                            style: TextStyle(
-                              color: AppColors.textSecondary,
-                              fontSize: 12,
-                            ),
-                          ),
-                      ],
-                    ),
-                  ),
-                ],
-              ),
+      padding: const EdgeInsets.only(bottom: 8),
+      child: PressableScale(
+        onTap: onTap,
+        child: AnimatedContainer(
+          duration: const Duration(milliseconds: 220),
+          curve: Curves.easeOutCubic,
+          padding: const EdgeInsets.symmetric(horizontal: 14, vertical: 12),
+          decoration: BoxDecoration(
+            color: selected
+                ? AppColors.accent.withValues(alpha: 0.08)
+                : AppColors.surface,
+            borderRadius: BorderRadius.circular(14),
+            border: Border.all(
+              color: selected ? AppColors.accent : AppColors.border,
+              width: selected ? 1.5 : 1,
             ),
+            boxShadow: selected
+                ? [
+                    BoxShadow(
+                      color: AppColors.accent.withValues(alpha: 0.15),
+                      blurRadius: 12,
+                      offset: const Offset(0, 4),
+                    ),
+                  ]
+                : [],
           ),
-        )
-        .animate(delay: (animationIndex * 60).ms)
-        .fadeIn(duration: 280.ms)
-        .slideX(begin: 0.06, end: 0, curve: Curves.easeOutCubic);
+          child: Row(
+            children: [
+              Icon(
+                selected ? Icons.check_circle : Icons.circle_outlined,
+                color: selected ? AppColors.accent : AppColors.textSecondary,
+                size: 20,
+              ),
+              const SizedBox(width: 12),
+              Expanded(
+                child: Column(
+                  crossAxisAlignment: CrossAxisAlignment.start,
+                  children: [
+                    Text(
+                      title,
+                      style: const TextStyle(fontWeight: FontWeight.w600),
+                    ),
+                    if (subtitle != null)
+                      Text(
+                        subtitle!,
+                        style: TextStyle(
+                          color: AppColors.textSecondary,
+                          fontSize: 12,
+                        ),
+                      ),
+                  ],
+                ),
+              ),
+            ],
+          ),
+        ),
+      ),
+    );
   }
 }

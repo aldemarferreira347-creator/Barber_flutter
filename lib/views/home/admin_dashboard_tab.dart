@@ -79,7 +79,7 @@ class _AdminDashboardTabState extends State<AdminDashboardTab> {
         backgroundColor: Colors.white,
         child: Padding(
           padding: EdgeInsets.all(4),
-          child: BrandMark(size: 26, color: Color(0xFF0F172A), spin: false),
+          child: BrandMark(size: 26, spin: false),
         ),
       ),
       onNotifications: profile == null

@@ -1,5 +1,4 @@
 import 'package:flutter/material.dart';
-import 'package:flutter_animate/flutter_animate.dart';
 import 'package:provider/provider.dart';
 
 import '../../models/refund_request.dart';
@@ -88,90 +87,85 @@ class RefundRequestsView extends StatelessWidget {
             itemBuilder: (context, index) {
               final request = requests[index];
               return Container(
-                    padding: const EdgeInsets.all(14),
-                    decoration: BoxDecoration(
-                      color: AppColors.surface,
-                      borderRadius: BorderRadius.circular(14),
-                      border: Border.all(color: AppColors.border),
-                      boxShadow: [
-                        BoxShadow(
-                          color: _statusColor(request.status)
-                              .withValues(alpha: 0.08),
-                          blurRadius: 14,
-                          offset: const Offset(0, 5),
-                        ),
-                      ],
+                padding: const EdgeInsets.all(14),
+                decoration: BoxDecoration(
+                  color: AppColors.surface,
+                  borderRadius: BorderRadius.circular(14),
+                  border: Border.all(color: AppColors.border),
+                  boxShadow: [
+                    BoxShadow(
+                      color: _statusColor(request.status)
+                          .withValues(alpha: 0.08),
+                      blurRadius: 14,
+                      offset: const Offset(0, 5),
                     ),
-                    child: Column(
-                      crossAxisAlignment: CrossAxisAlignment.start,
+                  ],
+                ),
+                child: Column(
+                  crossAxisAlignment: CrossAxisAlignment.start,
+                  children: [
+                    Row(
+                      mainAxisAlignment: MainAxisAlignment.spaceBetween,
                       children: [
-                        Row(
-                          mainAxisAlignment: MainAxisAlignment.spaceBetween,
-                          children: [
-                            Container(
-                              padding: const EdgeInsets.symmetric(
-                                horizontal: 10,
-                                vertical: 4,
-                              ),
-                              decoration: BoxDecoration(
-                                color: _statusColor(request.status)
-                                    .withValues(alpha: 0.12),
-                                borderRadius: BorderRadius.circular(20),
-                              ),
-                              child: Text(
-                                request.status.label,
-                                style: TextStyle(
-                                  color: _statusColor(request.status),
-                                  fontSize: 12,
-                                  fontWeight: FontWeight.w600,
-                                ),
-                              ),
-                            ),
-                          ],
-                        ),
-                        const SizedBox(height: 8),
-                        Text(
-                          request.reason,
-                          style: const TextStyle(fontWeight: FontWeight.w600),
-                        ),
-                        if (request.purchaseId != null) ...[
-                          const SizedBox(height: 4),
-                          Text(
-                            'Incluye productos por reembolsar',
+                        Container(
+                          padding: const EdgeInsets.symmetric(
+                            horizontal: 10,
+                            vertical: 4,
+                          ),
+                          decoration: BoxDecoration(
+                            color: _statusColor(request.status)
+                                .withValues(alpha: 0.12),
+                            borderRadius: BorderRadius.circular(20),
+                          ),
+                          child: Text(
+                            request.status.label,
                             style: TextStyle(
-                              color: AppColors.textSecondary,
+                              color: _statusColor(request.status),
                               fontSize: 12,
+                              fontWeight: FontWeight.w600,
                             ),
                           ),
-                        ],
-                        if (request.status == RefundRequestStatus.pending) ...[
-                          const SizedBox(height: 12),
-                          Row(
-                            mainAxisAlignment: MainAxisAlignment.end,
-                            children: [
-                              TextButton(
-                                onPressed: () =>
-                                    _resolve(context, request, false),
-                                child: const Text(
-                                  'Rechazar',
-                                  style: TextStyle(color: AppColors.error),
-                                ),
-                              ),
-                              const SizedBox(width: 8),
-                              FilledButton(
-                                onPressed: () =>
-                                    _resolve(context, request, true),
-                                child: const Text('Aprobar reembolso'),
-                              ),
-                            ],
-                          ),
-                        ],
+                        ),
                       ],
                     ),
-                  )
-                  .animate(delay: (index * 70).ms)
-                  .fadeIn(duration: 320.ms)
-                  .slideY(begin: 0.12, end: 0, curve: Curves.easeOutCubic);
+                    const SizedBox(height: 8),
+                    Text(
+                      request.reason,
+                      style: const TextStyle(fontWeight: FontWeight.w600),
+                    ),
+                    if (request.purchaseId != null) ...[
+                      const SizedBox(height: 4),
+                      Text(
+                        'Incluye productos por reembolsar',
+                        style: TextStyle(
+                          color: AppColors.textSecondary,
+                          fontSize: 12,
+                        ),
+                      ),
+                    ],
+                    if (request.status == RefundRequestStatus.pending) ...[
+                      const SizedBox(height: 12),
+                      Row(
+                        mainAxisAlignment: MainAxisAlignment.end,
+                        children: [
+                          TextButton(
+                            onPressed: () => _resolve(context, request, false),
+                            child: const Text(
+                              'Rechazar',
+                              style: TextStyle(color: AppColors.error),
+                            ),
+                          ),
+                          const SizedBox(width: 8),
+                          FilledButton(
+                            onPressed: () => _resolve(context, request, true),
+                            child: const Text('Aprobar reembolso'),
+                          ),
+                        ],
+                      ),
+                    ],
+                  ],
+                ),
+              );
             },
           );
         },

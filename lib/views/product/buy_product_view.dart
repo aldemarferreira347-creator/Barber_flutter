@@ -1,6 +1,5 @@
 import 'package:flutter/material.dart';
 import 'package:flutter/services.dart';
-import 'package:flutter_animate/flutter_animate.dart';
 import 'package:provider/provider.dart';
 
 import '../../models/product.dart';
@@ -181,17 +180,10 @@ class _BuyProductViewState extends State<BuyProductView> {
             mainAxisAlignment: MainAxisAlignment.center,
             children: [
               const Icon(
-                    Icons.check_circle_outline,
-                    color: AppColors.success,
-                    size: 56,
-                  )
-                  .animate()
-                  .scale(
-                    begin: const Offset(0.4, 0.4),
-                    curve: Curves.elasticOut,
-                    duration: 700.ms,
-                  )
-                  .fadeIn(duration: 250.ms),
+                Icons.check_circle_outline,
+                color: AppColors.success,
+                size: 56,
+              ),
               const SizedBox(height: 16),
               const Text(
                 '¡Compra confirmada!',
@@ -204,55 +196,52 @@ class _BuyProductViewState extends State<BuyProductView> {
               ),
               const SizedBox(height: 12),
               Container(
-                    decoration: BoxDecoration(
-                      color: AppColors.surface,
-                      borderRadius: BorderRadius.circular(12),
-                      border: Border.all(color: AppColors.border),
-                      boxShadow: [
-                        BoxShadow(
-                          color: AppColors.success.withValues(alpha: 0.15),
-                          blurRadius: 16,
-                          offset: const Offset(0, 6),
+                decoration: BoxDecoration(
+                  color: AppColors.surface,
+                  borderRadius: BorderRadius.circular(12),
+                  border: Border.all(color: AppColors.border),
+                  boxShadow: [
+                    BoxShadow(
+                      color: AppColors.success.withValues(alpha: 0.15),
+                      blurRadius: 16,
+                      offset: const Offset(0, 6),
+                    ),
+                  ],
+                ),
+                padding: const EdgeInsets.symmetric(
+                  horizontal: 12,
+                  vertical: 6,
+                ),
+                child: Row(
+                  mainAxisSize: MainAxisSize.min,
+                  children: [
+                    Padding(
+                      padding: const EdgeInsets.symmetric(horizontal: 8),
+                      child: Text(
+                        purchase.claimCode ?? '—',
+                        style: const TextStyle(
+                          fontSize: 24,
+                          fontWeight: FontWeight.w800,
+                          letterSpacing: 2,
                         ),
-                      ],
+                      ),
                     ),
-                    padding: const EdgeInsets.symmetric(
-                      horizontal: 12,
-                      vertical: 6,
-                    ),
-                    child: Row(
-                      mainAxisSize: MainAxisSize.min,
-                      children: [
-                        Padding(
-                          padding: const EdgeInsets.symmetric(horizontal: 8),
-                          child: Text(
-                            purchase.claimCode ?? '—',
-                            style: const TextStyle(
-                              fontSize: 24,
-                              fontWeight: FontWeight.w800,
-                              letterSpacing: 2,
-                            ),
-                          ),
-                        ),
-                        if (purchase.claimCode != null)
-                          IconButton(
-                            icon: const Icon(Icons.copy_outlined),
-                            tooltip: 'Copiar código',
-                            onPressed: () {
-                              Clipboard.setData(
-                                ClipboardData(text: purchase.claimCode!),
-                              );
-                              ScaffoldMessenger.of(context).showSnackBar(
-                                const SnackBar(content: Text('Código copiado')),
-                              );
-                            },
-                          ),
-                      ],
-                    ),
-                  )
-                  .animate(delay: 200.ms)
-                  .fadeIn(duration: 320.ms)
-                  .scaleXY(begin: 0.9, end: 1, curve: Curves.easeOutBack),
+                    if (purchase.claimCode != null)
+                      IconButton(
+                        icon: const Icon(Icons.copy_outlined),
+                        tooltip: 'Copiar código',
+                        onPressed: () {
+                          Clipboard.setData(
+                            ClipboardData(text: purchase.claimCode!),
+                          );
+                          ScaffoldMessenger.of(context).showSnackBar(
+                            const SnackBar(content: Text('Código copiado')),
+                          );
+                        },
+                      ),
+                  ],
+                ),
+              ),
               const SizedBox(height: 8),
               Text(
                 'Tienes 24 horas para reclamarlo.',

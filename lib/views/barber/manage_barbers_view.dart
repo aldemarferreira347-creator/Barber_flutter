@@ -1,5 +1,4 @@
 import 'package:flutter/material.dart';
-import 'package:flutter_animate/flutter_animate.dart';
 import 'package:provider/provider.dart';
 
 import '../../models/app_user.dart';
@@ -165,63 +164,58 @@ class ManageBarbersView extends StatelessWidget {
             itemBuilder: (context, index) {
               final barber = barbers[index];
               return Container(
-                    padding: const EdgeInsets.all(12),
-                    decoration: BoxDecoration(
-                      color: AppColors.surface,
-                      borderRadius: BorderRadius.circular(14),
-                      border: Border.all(color: AppColors.border),
-                      boxShadow: [
-                        BoxShadow(
-                          color: AppColors.textPrimary.withValues(alpha: 0.05),
-                          blurRadius: 12,
-                          offset: const Offset(0, 5),
-                        ),
-                      ],
+                padding: const EdgeInsets.all(12),
+                decoration: BoxDecoration(
+                  color: AppColors.surface,
+                  borderRadius: BorderRadius.circular(14),
+                  border: Border.all(color: AppColors.border),
+                  boxShadow: [
+                    BoxShadow(
+                      color: AppColors.textPrimary.withValues(alpha: 0.05),
+                      blurRadius: 12,
+                      offset: const Offset(0, 5),
                     ),
-                    child: Row(
-                      children: [
-                        CircleAvatar(
-                          backgroundColor: AppColors.primary,
-                          child: Text(
-                            barber.initials,
-                            style: const TextStyle(
-                              color: Colors.white,
+                  ],
+                ),
+                child: Row(
+                  children: [
+                    CircleAvatar(
+                      backgroundColor: AppColors.primary,
+                      child: Text(
+                        barber.initials,
+                        style: const TextStyle(
+                          color: Colors.white,
+                          fontSize: 12,
+                          fontWeight: FontWeight.w700,
+                        ),
+                      ),
+                    ),
+                    const SizedBox(width: 12),
+                    Expanded(
+                      child: Column(
+                        crossAxisAlignment: CrossAxisAlignment.start,
+                        children: [
+                          Text(
+                            barber.name,
+                            style: const TextStyle(fontWeight: FontWeight.w700),
+                          ),
+                          Text(
+                            barber.email,
+                            style: TextStyle(
+                              color: AppColors.textSecondary,
                               fontSize: 12,
-                              fontWeight: FontWeight.w700,
                             ),
                           ),
-                        ),
-                        const SizedBox(width: 12),
-                        Expanded(
-                          child: Column(
-                            crossAxisAlignment: CrossAxisAlignment.start,
-                            children: [
-                              Text(
-                                barber.name,
-                                style: const TextStyle(
-                                  fontWeight: FontWeight.w700,
-                                ),
-                              ),
-                              Text(
-                                barber.email,
-                                style: TextStyle(
-                                  color: AppColors.textSecondary,
-                                  fontSize: 12,
-                                ),
-                              ),
-                            ],
-                          ),
-                        ),
-                        TextButton(
-                          onPressed: () => _release(context, barber),
-                          child: const Text('Dar de baja'),
-                        ),
-                      ],
+                        ],
+                      ),
                     ),
-                  )
-                  .animate(delay: (index * 60).ms)
-                  .fadeIn(duration: 300.ms)
-                  .slideX(begin: 0.08, end: 0, curve: Curves.easeOutCubic);
+                    TextButton(
+                      onPressed: () => _release(context, barber),
+                      child: const Text('Dar de baja'),
+                    ),
+                  ],
+                ),
+              );
             },
           );
         },
