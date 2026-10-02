@@ -18,7 +18,8 @@ class MockAuthRepository extends Mock implements AuthRepository {}
 
 class MockUserRepository extends Mock implements UserRepository {}
 
-class MockPushNotificationService extends Mock implements PushNotificationService {}
+class MockPushNotificationService extends Mock
+    implements PushNotificationService {}
 
 class MockAppointmentRepository extends Mock implements AppointmentRepository {}
 
@@ -26,7 +27,12 @@ class MockRatingRepository extends Mock implements RatingRepository {}
 
 const _kUid = 'client1';
 
-Appointment _appointment(String id, AppointmentStatus status, DateTime date, {bool paid = false}) {
+Appointment _appointment(
+  String id,
+  AppointmentStatus status,
+  DateTime date, {
+  bool paid = false,
+}) {
   return Appointment(
     id: id,
     barbershopId: 'shop1',
@@ -54,15 +60,27 @@ void main() {
     final authRepository = MockAuthRepository();
     final userRepository = MockUserRepository();
     final pushService = MockPushNotificationService();
-    when(() => authRepository.authStateChanges).thenAnswer((_) => const Stream<User?>.empty());
-    when(() => pushService.onTokenRefresh).thenAnswer((_) => const Stream<String>.empty());
+    when(() => authRepository.authStateChanges)
+        .thenAnswer((_) => const Stream<User?>.empty());
+    when(() => pushService.onTokenRefresh)
+        .thenAnswer((_) => const Stream<String>.empty());
 
-    authController = AuthController(authService: authRepository, userService: userRepository, pushService: pushService);
-    authController.profile = AppUser(uid: _kUid, email: 'a@b.com', name: 'Ana', role: UserRole.client);
+    authController = AuthController(
+      authService: authRepository,
+      userService: userRepository,
+      pushService: pushService,
+    );
+    authController.profile = const AppUser(
+      uid: _kUid,
+      email: 'a@b.com',
+      name: 'Ana',
+      role: UserRole.client,
+    );
 
     appointmentRepository = MockAppointmentRepository();
     ratingRepository = MockRatingRepository();
-    when(() => ratingRepository.watchRatedAppointmentIds(_kUid)).thenAnswer((_) => Stream.value(const {}));
+    when(() => ratingRepository.watchRatedAppointmentIds(_kUid))
+        .thenAnswer((_) => Stream.value(const {}));
   });
 
   Widget wrap() {
@@ -76,8 +94,11 @@ void main() {
     );
   }
 
-  testWidgets('muestra el estado vacío cuando no hay ninguna cita', (tester) async {
-    when(() => appointmentRepository.watchByClient(_kUid)).thenAnswer((_) => Stream.value(const []));
+  testWidgets('muestra el estado vacío cuando no hay ninguna cita', (
+    tester,
+  ) async {
+    when(() => appointmentRepository.watchByClient(_kUid))
+        .thenAnswer((_) => Stream.value(const []));
 
     await tester.pumpWidget(wrap());
     await tester.pumpAndSettle();
@@ -85,65 +106,97 @@ void main() {
     expect(find.text('No tienes citas programadas'), findsOneWidget);
   });
 
-  testWidgets('agrupa próximas (pending/accepted) e historial (el resto) por separado', (tester) async {
-    final now = DateTime(2026, 1, 1);
-    when(() => appointmentRepository.watchByClient(_kUid)).thenAnswer(
-      (_) => Stream.value([
-        _appointment('a1', AppointmentStatus.pending, now),
-        _appointment('a2', AppointmentStatus.completed, now.subtract(const Duration(days: 1))),
-        _appointment('a3', AppointmentStatus.cancelled, now.subtract(const Duration(days: 2))),
-      ]),
-    );
+  testWidgets(
+    'agrupa próximas (pending/accepted) e historial (el resto) por separado',
+    (tester) async {
+      final now = DateTime(2026);
+      when(() => appointmentRepository.watchByClient(_kUid)).thenAnswer(
+        (_) => Stream.value([
+          _appointment('a1', AppointmentStatus.pending, now),
+          _appointment(
+            'a2',
+            AppointmentStatus.completed,
+            now.subtract(const Duration(days: 1)),
+          ),
+          _appointment(
+            'a3',
+            AppointmentStatus.cancelled,
+            now.subtract(const Duration(days: 2)),
+          ),
+        ]),
+      );
 
-    await tester.pumpWidget(wrap());
-    await tester.pumpAndSettle();
+      await tester.pumpWidget(wrap());
+      await tester.pumpAndSettle();
 
-    expect(find.text('Próximas'), findsOneWidget);
-    expect(find.text('Historial'), findsOneWidget);
-    expect(find.text('1'), findsOneWidget); // contador de "Próximas"
-    expect(find.text('2'), findsOneWidget); // contador de "Historial"
-    // Solo la cita próxima (pending) ofrece cancelar.
-    expect(find.text('Cancelar'), findsOneWidget);
-  });
+      expect(find.text('Próximas'), findsOneWidget);
+      expect(find.text('Historial'), findsOneWidget);
+      expect(find.text('1'), findsOneWidget); // contador de "Próximas"
+      expect(find.text('2'), findsOneWidget); // contador de "Historial"
+      // Solo la cita próxima (pending) ofrece cancelar.
+      expect(find.text('Cancelar'), findsOneWidget);
+    },
+  );
 
-  testWidgets('cancelar una cita pagada ofrece posponer en vez de cancelar directo (spec 6.3)', (tester) async {
-    final now = DateTime(2026, 1, 1);
-    when(() => appointmentRepository.watchByClient(_kUid))
-        .thenAnswer((_) => Stream.value([_appointment('a1', AppointmentStatus.pending, now, paid: true)]));
+  testWidgets(
+    'cancelar una cita pagada ofrece posponer en vez de cancelar directo (spec 6.3)',
+    (tester) async {
+      final now = DateTime(2026);
+      when(() => appointmentRepository.watchByClient(_kUid)).thenAnswer(
+        (_) => Stream.value([
+          _appointment('a1', AppointmentStatus.pending, now, paid: true),
+        ]),
+      );
 
-    await tester.pumpWidget(wrap());
-    await tester.pump();
+      await tester.pumpWidget(wrap());
+      await tester.pump();
 
-    await tester.tap(find.text('Cancelar'));
-    await tester.pumpAndSettle();
+      await tester.tap(find.text('Cancelar'));
+      await tester.pumpAndSettle();
 
-    expect(find.text('Esta cita ya está pagada'), findsOneWidget);
-    expect(find.text('Posponer'), findsOneWidget);
-    expect(find.text('Cancelar de todas formas'), findsOneWidget);
-    // No debe mostrarse el diálogo simple de cancelación directa.
-    expect(find.text('¿Cancelar tu cita de Corte?'), findsNothing);
-  });
+      expect(find.text('Esta cita ya está pagada'), findsOneWidget);
+      expect(find.text('Posponer'), findsOneWidget);
+      expect(find.text('Cancelar de todas formas'), findsOneWidget);
+      // No debe mostrarse el diálogo simple de cancelación directa.
+      expect(find.text('¿Cancelar tu cita de Corte?'), findsNothing);
+    },
+  );
 
-  testWidgets('insistir en cancelar una cita pagada pide una justificación y llama a requestRefund', (tester) async {
-    final now = DateTime(2026, 1, 1);
-    when(() => appointmentRepository.watchByClient(_kUid))
-        .thenAnswer((_) => Stream.value([_appointment('a1', AppointmentStatus.pending, now, paid: true)]));
-    when(() => appointmentRepository.requestRefund(appointmentId: 'a1', reason: 'Emergencia médica'))
-        .thenAnswer((_) async => 'req1');
+  testWidgets(
+    'insistir en cancelar una cita pagada pide una justificación y llama a requestRefund',
+    (tester) async {
+      final now = DateTime(2026);
+      when(() => appointmentRepository.watchByClient(_kUid)).thenAnswer(
+        (_) => Stream.value([
+          _appointment('a1', AppointmentStatus.pending, now, paid: true),
+        ]),
+      );
+      when(
+        () => appointmentRepository.requestRefund(
+          appointmentId: 'a1',
+          reason: 'Emergencia médica',
+        ),
+      ).thenAnswer((_) async => 'req1');
 
-    await tester.pumpWidget(wrap());
-    await tester.pump();
+      await tester.pumpWidget(wrap());
+      await tester.pump();
 
-    await tester.tap(find.text('Cancelar'));
-    await tester.pumpAndSettle();
-    await tester.tap(find.text('Cancelar de todas formas'));
-    await tester.pumpAndSettle();
+      await tester.tap(find.text('Cancelar'));
+      await tester.pumpAndSettle();
+      await tester.tap(find.text('Cancelar de todas formas'));
+      await tester.pumpAndSettle();
 
-    expect(find.text('Justifica la cancelación'), findsOneWidget);
-    await tester.enterText(find.byType(TextField), 'Emergencia médica');
-    await tester.tap(find.text('Enviar solicitud'));
-    await tester.pumpAndSettle();
+      expect(find.text('Justifica la cancelación'), findsOneWidget);
+      await tester.enterText(find.byType(TextField), 'Emergencia médica');
+      await tester.tap(find.text('Enviar solicitud'));
+      await tester.pumpAndSettle();
 
-    verify(() => appointmentRepository.requestRefund(appointmentId: 'a1', reason: 'Emergencia médica')).called(1);
-  });
+      verify(
+        () => appointmentRepository.requestRefund(
+          appointmentId: 'a1',
+          reason: 'Emergencia médica',
+        ),
+      ).called(1);
+    },
+  );
 }

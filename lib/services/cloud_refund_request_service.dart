@@ -14,11 +14,9 @@ class CloudRefundRequestService implements RefundRequestRepository {
   final FirebaseFirestore _firestore;
   final FirebaseAuth _auth;
 
-  CloudRefundRequestService({
-    FirebaseFirestore? firestore,
-    FirebaseAuth? auth,
-  }) : _firestore = firestore ?? FirebaseFirestore.instance,
-       _auth = auth ?? FirebaseAuth.instance;
+  CloudRefundRequestService({FirebaseFirestore? firestore, FirebaseAuth? auth})
+    : _firestore = firestore ?? FirebaseFirestore.instance,
+      _auth = auth ?? FirebaseAuth.instance;
 
   CollectionReference<Map<String, dynamic>> get _requests =>
       _firestore.collection('refundRequests');
@@ -88,7 +86,10 @@ class CloudRefundRequestService implements RefundRequestRepository {
     if (!appointmentSnap.exists || appointmentData == null) {
       throw Exception('La cita ya no existe.');
     }
-    final appointment = Appointment.fromMap(appointmentSnap.id, appointmentData);
+    final appointment = Appointment.fromMap(
+      appointmentSnap.id,
+      appointmentData,
+    );
 
     final writes = <Future<void>>[
       appointmentRef.update({'status': 'cancelled'}),

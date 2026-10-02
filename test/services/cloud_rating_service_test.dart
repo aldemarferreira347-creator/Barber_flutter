@@ -42,7 +42,12 @@ void main() {
     });
   }
 
-  Future<void> seedAggregates({int shopSum = 10, int shopCount = 2, int barberSum = 8, int barberCount = 2}) async {
+  Future<void> seedAggregates({
+    int shopSum = 10,
+    int shopCount = 2,
+    int barberSum = 8,
+    int barberCount = 2,
+  }) async {
     await firestore.collection('barbershops').doc('shop1').set({
       'ratingSum': shopSum,
       'ratingCount': shopCount,
@@ -58,9 +63,14 @@ void main() {
     await seedAppointment();
     await seedAggregates();
 
-    await service.submitRating(appointmentId: 'appt1', barberStars: 5, shopStars: 4);
+    await service.submitRating(
+      appointmentId: 'appt1',
+      barberStars: 5,
+      shopStars: 4,
+    );
 
-    final rating = (await firestore.collection('ratings').doc('appt1').get()).data()!;
+    final rating = (await firestore.collection('ratings').doc('appt1').get())
+        .data()!;
     expect(rating['appointmentId'], 'appt1');
     expect(rating['barbershopId'], 'shop1');
     expect(rating['barberId'], 'barber1');
@@ -70,11 +80,13 @@ void main() {
     expect(rating['effectiveShopStars'], 4);
     expect(rating['forcedRatingPenaltyApplied'], false);
 
-    final shop = (await firestore.collection('barbershops').doc('shop1').get()).data()!;
+    final shop = (await firestore.collection('barbershops').doc('shop1').get())
+        .data()!;
     expect(shop['ratingSum'], 14);
     expect(shop['ratingCount'], 3);
 
-    final barber = (await firestore.collection('users').doc('barber1').get()).data()!;
+    final barber = (await firestore.collection('users').doc('barber1').get())
+        .data()!;
     expect(barber['ratingSum'], 13);
     expect(barber['ratingCount'], 3);
   });
@@ -83,13 +95,19 @@ void main() {
     await seedAppointment(forcedRatingPenalty: true);
     await seedAggregates();
 
-    await service.submitRating(appointmentId: 'appt1', barberStars: 5, shopStars: 3);
+    await service.submitRating(
+      appointmentId: 'appt1',
+      barberStars: 5,
+      shopStars: 3,
+    );
 
-    final rating = (await firestore.collection('ratings').doc('appt1').get()).data()!;
+    final rating = (await firestore.collection('ratings').doc('appt1').get())
+        .data()!;
     expect(rating['effectiveShopStars'], 2);
     expect(rating['forcedRatingPenaltyApplied'], true);
 
-    final shop = (await firestore.collection('barbershops').doc('shop1').get()).data()!;
+    final shop = (await firestore.collection('barbershops').doc('shop1').get())
+        .data()!;
     expect(shop['ratingSum'], 12); // 10 + 2, no 10 + 3
   });
 
@@ -97,9 +115,14 @@ void main() {
     await seedAppointment(forcedRatingPenalty: true);
     await seedAggregates();
 
-    await service.submitRating(appointmentId: 'appt1', barberStars: 5, shopStars: 1);
+    await service.submitRating(
+      appointmentId: 'appt1',
+      barberStars: 5,
+      shopStars: 1,
+    );
 
-    final rating = (await firestore.collection('ratings').doc('appt1').get()).data()!;
+    final rating = (await firestore.collection('ratings').doc('appt1').get())
+        .data()!;
     expect(rating['effectiveShopStars'], 1);
   });
 
@@ -108,7 +131,11 @@ void main() {
     await seedAggregates();
 
     await expectLater(
-      () => service.submitRating(appointmentId: 'appt1', barberStars: 5, shopStars: 5),
+      () => service.submitRating(
+        appointmentId: 'appt1',
+        barberStars: 5,
+        shopStars: 5,
+      ),
       throwsA(anything),
     );
   });
@@ -118,7 +145,11 @@ void main() {
     await seedAggregates();
 
     await expectLater(
-      () => service.submitRating(appointmentId: 'appt1', barberStars: 5, shopStars: 5),
+      () => service.submitRating(
+        appointmentId: 'appt1',
+        barberStars: 5,
+        shopStars: 5,
+      ),
       throwsA(anything),
     );
   });
@@ -128,15 +159,25 @@ void main() {
     await seedAggregates();
 
     await expectLater(
-      () => service.submitRating(appointmentId: 'appt1', barberStars: 6, shopStars: 5),
+      () => service.submitRating(
+        appointmentId: 'appt1',
+        barberStars: 6,
+        shopStars: 5,
+      ),
       throwsA(anything),
     );
   });
 
   test('watchRatedAppointmentIds devuelve los ids de los documentos calificados por ese cliente', () async {
-    await firestore.collection('ratings').doc('appt1').set({'clientId': 'client1'});
-    await firestore.collection('ratings').doc('appt2').set({'clientId': 'client1'});
-    await firestore.collection('ratings').doc('appt3').set({'clientId': 'other'});
+    await firestore.collection('ratings').doc('appt1').set({
+      'clientId': 'client1',
+    });
+    await firestore.collection('ratings').doc('appt2').set({
+      'clientId': 'client1',
+    });
+    await firestore.collection('ratings').doc('appt3').set({
+      'clientId': 'other',
+    });
 
     final ids = await service.watchRatedAppointmentIds('client1').first;
 

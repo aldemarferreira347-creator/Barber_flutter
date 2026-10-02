@@ -42,7 +42,9 @@ class CloudRatingService implements RatingRepository {
       throw Exception('Solo el cliente de esa cita puede calificarla.');
     }
     if (appointment['paid'] != true || appointment['status'] != 'completed') {
-      throw Exception('Solo se puede calificar una reserva pagada y completada.');
+      throw Exception(
+        'Solo se puede calificar una reserva pagada y completada.',
+      );
     }
 
     final barbershopId = appointment['barbershopId'] as String;

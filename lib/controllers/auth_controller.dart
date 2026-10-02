@@ -31,6 +31,7 @@ class AuthController extends ChangeNotifier {
   final AuthRepository _authService;
   final UserRepository _userService;
   final PushNotificationService _pushService;
+  String? _fcmToken;
 
   AuthController({
     AuthRepository? authService,
@@ -65,7 +66,7 @@ class AuthController extends ChangeNotifier {
 
   Future<void> _onAuthChanged(User? user) async {
     if (user == null) {
-      _tokenRefreshSubscription?.cancel();
+      unawaited(_tokenRefreshSubscription?.cancel());
       _tokenRefreshSubscription = null;
       status = AuthStatus.unauthenticated;
       profile = null;
@@ -86,15 +87,17 @@ class AuthController extends ChangeNotifier {
     _pushService
         .requestPermissionAndGetToken()
         .then((token) {
-          if (token != null) _userService.addFcmToken(uid, token);
+          if (token == null) return;
+          _fcmToken = token;
+          _userService.addFcmToken(uid, token);
         })
         .catchError((_) {});
 
     _tokenRefreshSubscription?.cancel();
-    _tokenRefreshSubscription = _pushService.onTokenRefresh.listen(
-      (token) => _userService.addFcmToken(uid, token),
-      onError: (_) {},
-    );
+    _tokenRefreshSubscription = _pushService.onTokenRefresh.listen((token) {
+      _fcmToken = token;
+      _userService.addFcmToken(uid, token);
+    }, onError: (_) {});
   }
 
   Future<bool> signIn({required String email, required String password}) {
@@ -315,7 +318,25 @@ class AuthController extends ChangeNotifier {
     });
   }
 
-  Future<void> signOut() => _authService.signOut();
+  /// Cierra la sesión. Antes retira el token FCM de este dispositivo del
+  /// perfil que se va, para que un teléfono compartido o vendido no siga
+  /// asociado a la cuenta anterior. Es de mejor esfuerzo: sin red o con
+  /// cualquier error igual se cierra la sesión.
+  Future<void> signOut() async {
+    final uid = profile?.uid;
+    final token = _fcmToken;
+    if (uid != null && token != null) {
+      try {
+        await _userService
+            .removeFcmToken(uid, token)
+            .timeout(const Duration(seconds: 3));
+      } catch (_) {
+        // ignorado a propósito: limpiar el token es opcional.
+      }
+    }
+    _fcmToken = null;
+    await _authService.signOut();
+  }
 
   Future<bool> _runGuarded(Future<void> Function() action) async {
     isBusy = true;

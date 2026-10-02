@@ -152,7 +152,9 @@ class AppTheme {
       dividerTheme: DividerThemeData(color: AppColors.border),
       bottomNavigationBarTheme: BottomNavigationBarThemeData(
         backgroundColor: AppColors.surface,
-        selectedItemColor: AppColors.isDark ? AppColors.gold : AppColors.primary,
+        selectedItemColor: AppColors.isDark
+            ? AppColors.gold
+            : AppColors.primary,
         unselectedItemColor: AppColors.textSecondary,
         type: BottomNavigationBarType.fixed,
         elevation: 0,

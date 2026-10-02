@@ -11,7 +11,8 @@ import 'package:provider/provider.dart';
 
 class MockUserRepository extends Mock implements UserRepository {}
 
-class MockBarberAvailabilityRepository extends Mock implements BarberAvailabilityRepository {}
+class MockBarberAvailabilityRepository extends Mock
+    implements BarberAvailabilityRepository {}
 
 const _kUid = 'barber1';
 
@@ -28,53 +29,68 @@ void main() {
     return MultiProvider(
       providers: [
         ChangeNotifierProvider<UserController>.value(value: userController),
-        Provider<BarberAvailabilityRepository>.value(value: availabilityRepository),
+        Provider<BarberAvailabilityRepository>.value(
+          value: availabilityRepository,
+        ),
       ],
       child: const MaterialApp(home: BarberAvailabilityView()),
     );
   }
 
-  testWidgets('cuando no está afuera, ofrece elegir un estimado y marcar salida', (tester) async {
-    userController.profile = const AppUser(uid: _kUid, email: 'b@b.com', name: 'Beto', role: UserRole.barber);
-    when(() => availabilityRepository.markAway(any())).thenAnswer((_) async {});
+  testWidgets(
+    'cuando no está afuera, ofrece elegir un estimado y marcar salida',
+    (tester) async {
+      userController.profile = const AppUser(
+        uid: _kUid,
+        email: 'b@b.com',
+        name: 'Beto',
+        role: UserRole.barber,
+      );
+      when(() => availabilityRepository.markAway(any()))
+          .thenAnswer((_) async {});
 
-    await tester.pumpWidget(wrap());
-    await tester.pump();
+      await tester.pumpWidget(wrap());
+      await tester.pump();
 
-    expect(find.text('¿Vas a salir de la tienda?'), findsOneWidget);
-    expect(find.text('Marcar salida'), findsOneWidget);
-    expect(find.text('Marcar regreso'), findsNothing);
+      expect(find.text('¿Vas a salir de la tienda?'), findsOneWidget);
+      expect(find.text('Marcar salida'), findsOneWidget);
+      expect(find.text('Marcar regreso'), findsNothing);
 
-    await tester.tap(find.text('45 min'));
-    await tester.pump();
-    await tester.tap(find.text('Marcar salida'));
-    await tester.pumpAndSettle();
+      await tester.tap(find.text('45 min'));
+      await tester.pump();
+      await tester.tap(find.text('Marcar salida'));
+      await tester.pumpAndSettle();
 
-    verify(() => availabilityRepository.markAway(45)).called(1);
-  });
+      verify(() => availabilityRepository.markAway(45)).called(1);
+    },
+  );
 
-  testWidgets('cuando está afuera, muestra el estimado y ofrece marcar regreso', (tester) async {
-    final estimate = DateTime(2026, 1, 1, 15, 30);
-    userController.profile = AppUser(
-      uid: _kUid,
-      email: 'b@b.com',
-      name: 'Beto',
-      role: UserRole.barber,
-      awaySince: DateTime(2026, 1, 1, 15, 0),
-      awayUntilEstimate: estimate,
-    );
-    when(() => availabilityRepository.markReturned()).thenAnswer((_) async {});
+  testWidgets(
+    'cuando está afuera, muestra el estimado y ofrece marcar regreso',
+    (tester) async {
+      final estimate = DateTime(2026, 1, 1, 15, 30);
+      userController.profile = AppUser(
+        uid: _kUid,
+        email: 'b@b.com',
+        name: 'Beto',
+        role: UserRole.barber,
+        awaySince: DateTime(2026, 1, 1, 15),
+        awayUntilEstimate: estimate,
+      );
+      when(() => availabilityRepository.markReturned())
+          .thenAnswer((_) async {});
 
-    await tester.pumpWidget(wrap());
-    await tester.pump();
+      await tester.pumpWidget(wrap());
+      await tester.pump();
 
-    expect(find.text('Estás fuera de la tienda'), findsOneWidget);
-    expect(find.textContaining('15:30'), findsOneWidget);
-    expect(find.text('Marcar salida'), findsNothing);
+      expect(find.text('Estás fuera de la tienda'), findsOneWidget);
+      expect(find.textContaining('15:30'), findsOneWidget);
+      expect(find.text('Marcar salida'), findsNothing);
 
-    await tester.tap(find.text('Marcar regreso'));
-    await tester.pumpAndSettle();
+      await tester.tap(find.text('Marcar regreso'));
+      await tester.pumpAndSettle();
 
-    verify(() => availabilityRepository.markReturned()).called(1);
-  });
+      verify(() => availabilityRepository.markReturned()).called(1);
+    },
+  );
 }

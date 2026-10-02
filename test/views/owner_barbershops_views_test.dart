@@ -189,11 +189,10 @@ void main() {
       'bloqueada (cancelada o en mora): alerta, ofrece pagar y se puede eliminar',
       (tester) async {
         authController.profile = _user(UserRole.owner);
-        final blocked = Barbershop(
+        const blocked = Barbershop(
           id: 's1',
           ownerId: _uid,
           name: 'Barbería Central',
-          active: false,
           approvalStatus: BarbershopApprovalStatus.approved,
           paymentStatus: PaymentStatus.blocked,
         );
@@ -217,18 +216,17 @@ void main() {
     testWidgets(
       'pendiente de aprobación: no deja eliminar una barbería aprobada y viva',
       (tester) async {
-        final live = Barbershop(
+        const live = Barbershop(
           id: 's1',
           ownerId: _uid,
           name: 'Viva',
           active: true,
           approvalStatus: BarbershopApprovalStatus.approved,
         );
-        final pending = Barbershop(
+        const pending = Barbershop(
           id: 's2',
           ownerId: _uid,
           name: 'Pendiente',
-          approvalStatus: BarbershopApprovalStatus.pending,
         );
         expect(OwnerBarbershopManageView.canDelete(live), isFalse);
         expect(OwnerBarbershopManageView.canDelete(pending), isTrue);

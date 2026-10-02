@@ -22,15 +22,18 @@ class EmptyState extends StatelessWidget {
           child: Column(
             children: [
               Container(
-                    padding: const EdgeInsets.all(14),
-                    decoration: BoxDecoration(
-                      color: AppColors.textSecondary.withValues(alpha: 0.08),
-                      shape: BoxShape.circle,
-                    ),
-                    child: Icon(icon, size: 32, color: AppColors.textSecondary),
-                  )
-                  .animate()
-                  .scaleXY(begin: 0.7, end: 1, duration: 380.ms, curve: Curves.easeOutBack),
+                padding: const EdgeInsets.all(14),
+                decoration: BoxDecoration(
+                  color: AppColors.textSecondary.withValues(alpha: 0.08),
+                  shape: BoxShape.circle,
+                ),
+                child: Icon(icon, size: 32, color: AppColors.textSecondary),
+              ).animate().scaleXY(
+                begin: 0.7,
+                end: 1,
+                duration: 380.ms,
+                curve: Curves.easeOutBack,
+              ),
               const SizedBox(height: 14),
               Text(
                 title,

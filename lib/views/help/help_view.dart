@@ -125,7 +125,6 @@ class HelpView extends StatelessWidget {
           ActionListTile(
             icon: Icons.mail_outline,
             label: SupportInfo.supportEmail,
-            animationIndex: 0,
             onTap: () => _launch(
               context,
               Uri(scheme: 'mailto', path: SupportInfo.supportEmail),

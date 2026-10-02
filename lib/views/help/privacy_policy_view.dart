@@ -15,7 +15,6 @@ class PrivacyPolicyView extends StatelessWidget {
         padding: const EdgeInsets.all(20),
         children: [
           const _Section(
-            index: 0,
             title: 'Qué datos recogemos',
             body:
                 'Nombre, correo electrónico y teléfono al registrarte; la ubicación de tu '
@@ -69,7 +68,7 @@ class PrivacyPolicyView extends StatelessWidget {
                   children: [
                     Icon(Icons.mail_outline, color: AppColors.accent, size: 18),
                     const SizedBox(width: 10),
-                    Expanded(
+                    const Expanded(
                       child: Text(
                         'Dudas sobre tus datos: ${SupportInfo.supportEmail}',
                       ),

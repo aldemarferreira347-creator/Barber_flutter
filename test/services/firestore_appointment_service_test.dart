@@ -51,7 +51,7 @@ void main() {
     () async {
       await seedService();
 
-      final date = DateTime.utc(2026, 6, 1, 15, 0);
+      final date = DateTime.utc(2026, 6, 1, 15);
       final id = await service.createPaid(
         barbershopId: 'shop1',
         barberId: 'barber1',
@@ -61,7 +61,10 @@ void main() {
         date: date,
       );
 
-      final appointmentSnap = await firestore.collection('appointments').doc(id).get();
+      final appointmentSnap = await firestore
+          .collection('appointments')
+          .doc(id)
+          .get();
       final appointment = appointmentSnap.data()!;
       expect(appointment['paid'], true);
       expect(appointment['status'], 'pending');
@@ -77,7 +80,10 @@ void main() {
       expect(slotSnap.data()!['appointmentId'], id);
 
       final paymentId = appointment['paymentId'] as String;
-      final paymentSnap = await firestore.collection('payments').doc(paymentId).get();
+      final paymentSnap = await firestore
+          .collection('payments')
+          .doc(paymentId)
+          .get();
       final payment = paymentSnap.data()!;
       expect(payment['status'], 'approved');
       expect(payment['payerId'], 'client1');
@@ -96,7 +102,7 @@ void main() {
           .doc('barber1_2026-06-01T15:00')
           .set({'appointmentId': 'other', 'barberId': 'barber1'});
 
-      final date = DateTime.utc(2026, 6, 1, 15, 0);
+      final date = DateTime.utc(2026, 6, 1, 15);
       await expectLater(
         () => service.createPaid(
           barbershopId: 'shop1',
@@ -118,27 +124,30 @@ void main() {
     },
   );
 
-  test('createPaid rechaza un servicio inactivo sin tocar el horario', () async {
-    await seedService(active: false);
+  test(
+    'createPaid rechaza un servicio inactivo sin tocar el horario',
+    () async {
+      await seedService(active: false);
 
-    await expectLater(
-      () => service.createPaid(
-        barbershopId: 'shop1',
-        barberId: 'barber1',
-        barberName: 'Beto',
-        serviceId: 'svc1',
-        clientName: 'Ana',
-        date: DateTime.utc(2026, 6, 1, 15, 0),
-      ),
-      throwsA(anything),
-    );
+      await expectLater(
+        () => service.createPaid(
+          barbershopId: 'shop1',
+          barberId: 'barber1',
+          barberName: 'Beto',
+          serviceId: 'svc1',
+          clientName: 'Ana',
+          date: DateTime.utc(2026, 6, 1, 15),
+        ),
+        throwsA(anything),
+      );
 
-    final slots = await firestore.collection('appointmentSlots').get();
-    expect(slots.docs, isEmpty);
-  });
+      final slots = await firestore.collection('appointmentSlots').get();
+      expect(slots.docs, isEmpty);
+    },
+  );
 
   test('postponePaid libera el horario viejo y reclama el nuevo', () async {
-    final oldDate = DateTime.utc(2026, 6, 1, 15, 0);
+    final oldDate = DateTime.utc(2026, 6, 1, 15);
     await firestore.collection('appointments').doc('appt1').set({
       'barbershopId': 'shop1',
       'barberId': 'barber1',
@@ -159,7 +168,7 @@ void main() {
         .doc('barber1_2026-06-01T15:00')
         .set({'appointmentId': 'appt1', 'barberId': 'barber1'});
 
-    final newDate = DateTime.utc(2026, 6, 2, 15, 0);
+    final newDate = DateTime.utc(2026, 6, 2, 15);
     await service.postponePaid('appt1', newDate);
 
     final oldSlot = await firestore
@@ -175,20 +184,26 @@ void main() {
     expect(newSlot.exists, true);
     expect(newSlot.data()!['appointmentId'], 'appt1');
 
-    final updated = await firestore.collection('appointments').doc('appt1').get();
+    final updated = await firestore
+        .collection('appointments')
+        .doc('appt1')
+        .get();
     final data = updated.data()!;
     expect(data['status'], 'postponed');
     // Timestamp.toDate() devuelve hora LOCAL, no UTC — comparar el mismo
     // instante, no la representación (que difiere según la zona horaria
     // de quien corra el test).
-    expect((data['date'] as Timestamp).toDate().isAtSameMomentAs(newDate), isTrue);
+    expect(
+      (data['date'] as Timestamp).toDate().isAtSameMomentAs(newDate),
+      isTrue,
+    );
     expect(data['rescheduleHistory'], hasLength(1));
   });
 
   test(
     'postponePaid falla sin tocar nada si el nuevo horario ya está tomado',
     () async {
-      final oldDate = DateTime.utc(2026, 6, 1, 15, 0);
+      final oldDate = DateTime.utc(2026, 6, 1, 15);
       await firestore.collection('appointments').doc('appt1').set({
         'barbershopId': 'shop1',
         'barberId': 'barber1',
@@ -201,7 +216,7 @@ void main() {
           .collection('appointmentSlots')
           .doc('barber1_2026-06-01T15:00')
           .set({'appointmentId': 'appt1', 'barberId': 'barber1'});
-      final newDate = DateTime.utc(2026, 6, 2, 15, 0);
+      final newDate = DateTime.utc(2026, 6, 2, 15);
       await firestore
           .collection('appointmentSlots')
           .doc('barber1_2026-06-02T15:00')
@@ -217,27 +232,36 @@ void main() {
           .doc('barber1_2026-06-01T15:00')
           .get();
       expect(oldSlot.exists, true);
-      final updated = await firestore.collection('appointments').doc('appt1').get();
+      final updated = await firestore
+          .collection('appointments')
+          .doc('appt1')
+          .get();
       expect(updated.data()!['status'], 'accepted');
     },
   );
 
-  test('requestRefund crea la solicitud con la justificación y devuelve su id', () async {
-    await firestore.collection('appointments').doc('appt1').set({
-      'barbershopId': 'shop1',
-      'clientId': 'client1',
-      'paid': true,
-      'status': 'accepted',
-    });
+  test(
+    'requestRefund crea la solicitud con la justificación y devuelve su id',
+    () async {
+      await firestore.collection('appointments').doc('appt1').set({
+        'barbershopId': 'shop1',
+        'clientId': 'client1',
+        'paid': true,
+        'status': 'accepted',
+      });
 
-    final id = await service.requestRefund(appointmentId: 'appt1', reason: 'Emergencia');
+      final id = await service.requestRefund(
+        appointmentId: 'appt1',
+        reason: 'Emergencia',
+      );
 
-    final doc = await firestore.collection('refundRequests').doc(id).get();
-    final data = doc.data()!;
-    expect(data['appointmentId'], 'appt1');
-    expect(data['barbershopId'], 'shop1');
-    expect(data['clientId'], 'client1');
-    expect(data['reason'], 'Emergencia');
-    expect(data['status'], 'pending');
-  });
+      final doc = await firestore.collection('refundRequests').doc(id).get();
+      final data = doc.data()!;
+      expect(data['appointmentId'], 'appt1');
+      expect(data['barbershopId'], 'shop1');
+      expect(data['clientId'], 'client1');
+      expect(data['reason'], 'Emergencia');
+      expect(data['status'], 'pending');
+    },
+  );
 }

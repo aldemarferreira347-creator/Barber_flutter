@@ -210,7 +210,7 @@ void main() {
         name: 'Cami',
         role: UserRole.client,
       );
-      final shop = Barbershop(
+      const shop = Barbershop(
         id: 'shop1',
         ownerId: 'owner1',
         name: 'Barbería Central',

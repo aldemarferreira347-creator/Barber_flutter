@@ -65,7 +65,11 @@ class RegisterSuccessView extends StatelessWidget {
                   color: AppColors.primary,
                   shape: BoxShape.circle,
                 ),
-                child: const BrandMark(size: 26, color: Colors.white, spin: false),
+                child: const BrandMark(
+                  size: 26,
+                  color: Colors.white,
+                  spin: false,
+                ),
               ).animate(delay: 500.ms).fadeIn(duration: 350.ms),
               const SizedBox(height: 8),
               const Text(

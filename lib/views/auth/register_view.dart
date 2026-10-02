@@ -84,10 +84,10 @@ class _RegisterViewState extends State<RegisterView> {
                           ),
                         ),
                         const BrandMark(
-                          size: 36,
-                          color: Color(0xFF0F172A),
-                          spin: false,
-                        )
+                              size: 36,
+                              color: Color(0xFF0F172A),
+                              spin: false,
+                            )
                             .animate()
                             .fadeIn(duration: 250.ms)
                             .scale(
@@ -99,30 +99,30 @@ class _RegisterViewState extends State<RegisterView> {
                     const SizedBox(height: 8),
 
                     // Título y subtítulo
-                    Center(
-                      child: Column(
-                        children: [
-                          const Text(
-                            'Crear cuenta',
-                            textAlign: TextAlign.center,
-                            style: TextStyle(
-                              fontSize: 24,
-                              fontWeight: FontWeight.w800,
-                              color: Color(0xFF0F172A),
-                            ),
+                    const Center(
+                          child: Column(
+                            children: [
+                              Text(
+                                'Crear cuenta',
+                                textAlign: TextAlign.center,
+                                style: TextStyle(
+                                  fontSize: 24,
+                                  fontWeight: FontWeight.w800,
+                                  color: Color(0xFF0F172A),
+                                ),
+                              ),
+                              SizedBox(height: 4),
+                              Text(
+                                'Completa la información para registrarte',
+                                textAlign: TextAlign.center,
+                                style: TextStyle(
+                                  fontSize: 14,
+                                  color: Color(0xFF64748B),
+                                ),
+                              ),
+                            ],
                           ),
-                          const SizedBox(height: 4),
-                          const Text(
-                            'Completa la información para registrarte',
-                            textAlign: TextAlign.center,
-                            style: TextStyle(
-                              fontSize: 14,
-                              color: Color(0xFF64748B),
-                            ),
-                          ),
-                        ],
-                      ),
-                    )
+                        )
                         .animate()
                         .fadeIn(duration: 250.ms)
                         .slideY(
@@ -185,8 +185,8 @@ class _RegisterViewState extends State<RegisterView> {
                           ),
                           validator: (value) =>
                               (value == null || value.trim().isEmpty)
-                                  ? 'Requerido'
-                                  : null,
+                              ? 'Requerido'
+                              : null,
                         )
                         .animate(delay: 100.ms)
                         .fadeIn(duration: 250.ms)
@@ -251,8 +251,8 @@ class _RegisterViewState extends State<RegisterView> {
                           ),
                           validator: (value) =>
                               (value == null || !value.contains('@'))
-                                  ? 'Correo inválido'
-                                  : null,
+                              ? 'Correo inválido'
+                              : null,
                         )
                         .animate(delay: 150.ms)
                         .fadeIn(duration: 250.ms)
@@ -329,8 +329,8 @@ class _RegisterViewState extends State<RegisterView> {
                           ),
                           validator: (value) =>
                               (value == null || value.length < 6)
-                                  ? 'Mínimo 6 caracteres'
-                                  : null,
+                              ? 'Mínimo 6 caracteres'
+                              : null,
                         )
                         .animate(delay: 200.ms)
                         .fadeIn(duration: 250.ms)
@@ -407,8 +407,8 @@ class _RegisterViewState extends State<RegisterView> {
                           ),
                           validator: (value) =>
                               value != _passwordController.text
-                                  ? 'Las contraseñas no coinciden'
-                                  : null,
+                              ? 'Las contraseñas no coinciden'
+                              : null,
                         )
                         .animate(delay: 250.ms)
                         .fadeIn(duration: 250.ms)
@@ -427,9 +427,8 @@ class _RegisterViewState extends State<RegisterView> {
                             style: ElevatedButton.styleFrom(
                               backgroundColor: const Color(0xFF0F172A),
                               foregroundColor: Colors.white,
-                              disabledBackgroundColor: const Color(
-                                0xFF0F172A,
-                              ).withValues(alpha: 0.6),
+                              disabledBackgroundColor: const Color(0xFF0F172A)
+                                  .withValues(alpha: 0.6),
                               shape: RoundedRectangleBorder(
                                 borderRadius: BorderRadius.circular(14),
                               ),
@@ -466,10 +465,10 @@ class _RegisterViewState extends State<RegisterView> {
                     Center(
                       child: GestureDetector(
                         onTap: () => Navigator.of(context).pop(),
-                        child: Wrap(
+                        child: const Wrap(
                           alignment: WrapAlignment.center,
                           crossAxisAlignment: WrapCrossAlignment.center,
-                          children: const [
+                          children: [
                             Text(
                               '¿Ya tienes una cuenta? ',
                               style: TextStyle(

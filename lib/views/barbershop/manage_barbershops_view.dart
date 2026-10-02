@@ -525,8 +525,6 @@ class _ActionMenuButtonState extends State<_ActionMenuButton>
     _ctrl = AnimationController(
       vsync: this,
       duration: const Duration(milliseconds: 120),
-      lowerBound: 0.0,
-      upperBound: 1.0,
     );
     _scale = Tween<double>(
       begin: 1.0,

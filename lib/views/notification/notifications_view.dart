@@ -52,9 +52,7 @@ class _NotificationsViewState extends State<NotificationsView> {
         builder: (context, snapshot) {
           if (snapshot.hasError) {
             return const Center(
-              child: ErrorState(
-                title: 'No pudimos cargar las notificaciones',
-              ),
+              child: ErrorState(title: 'No pudimos cargar las notificaciones'),
             );
           }
           final notifications = snapshot.data ?? [];

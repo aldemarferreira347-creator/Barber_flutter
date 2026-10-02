@@ -29,12 +29,10 @@ void main() {
     userRepository = MockUserRepository();
     pushService = MockPushNotificationService();
 
-    when(
-      () => authRepository.authStateChanges,
-    ).thenAnswer((_) => const Stream<User?>.empty());
-    when(
-      () => pushService.onTokenRefresh,
-    ).thenAnswer((_) => const Stream<String>.empty());
+    when(() => authRepository.authStateChanges)
+        .thenAnswer((_) => const Stream<User?>.empty());
+    when(() => pushService.onTokenRefresh)
+        .thenAnswer((_) => const Stream<String>.empty());
 
     controller = AuthController(
       authService: authRepository,
@@ -65,23 +63,22 @@ void main() {
     await tester.pump(const Duration(seconds: 2));
   });
 
-  testWidgets(
-    'LoginView muestra marca, formulario, fondo y botón de Google',
-    (tester) async {
-      await tester.pumpWidget(wrapWithAuth(const LoginView()));
-      await tester.pumpAndSettle();
+  testWidgets('LoginView muestra marca, formulario, fondo y botón de Google', (
+    tester,
+  ) async {
+    await tester.pumpWidget(wrapWithAuth(const LoginView()));
+    await tester.pumpAndSettle();
 
-      expect(find.text('BarberFlow'), findsOneWidget);
-      expect(find.text('Tu barbería, siempre conectada'), findsOneWidget);
-      expect(find.text('Iniciar sesión'), findsWidgets);
-      expect(find.text('Accede a tu cuenta para continuar'), findsOneWidget);
-      expect(find.text('Correo electrónico'), findsOneWidget);
-      expect(find.text('Contraseña'), findsOneWidget);
-      expect(find.text('Continuar con Google'), findsOneWidget);
-      expect(find.text('¿No tienes una cuenta? '), findsOneWidget);
-      expect(find.text('Regístrate'), findsOneWidget);
-    },
-  );
+    expect(find.text('BarberFlow'), findsOneWidget);
+    expect(find.text('Tu barbería, siempre conectada'), findsOneWidget);
+    expect(find.text('Iniciar sesión'), findsWidgets);
+    expect(find.text('Accede a tu cuenta para continuar'), findsOneWidget);
+    expect(find.text('Correo electrónico'), findsOneWidget);
+    expect(find.text('Contraseña'), findsOneWidget);
+    expect(find.text('Continuar con Google'), findsOneWidget);
+    expect(find.text('¿No tienes una cuenta? '), findsOneWidget);
+    expect(find.text('Regístrate'), findsOneWidget);
+  });
 
   testWidgets('RegisterView muestra campos de registro y botón crear cuenta', (
     tester,

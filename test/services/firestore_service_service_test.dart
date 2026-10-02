@@ -24,12 +24,24 @@ void main() {
       ),
     ).thenAnswer((_) async => 'https://example.com/photo.png');
 
-    final service = FirestoreServiceService(storage: storage, firestore: MockFirebaseFirestore());
+    final service = FirestoreServiceService(
+      storage: storage,
+      firestore: MockFirebaseFirestore(),
+    );
     final bytes = Uint8List.fromList([1, 2, 3]);
 
-    final url = await service.uploadPhoto(barbershopId: 'shop1', fileName: 'cut.png', bytes: bytes);
+    final url = await service.uploadPhoto(
+      barbershopId: 'shop1',
+      fileName: 'cut.png',
+      bytes: bytes,
+    );
 
     expect(url, 'https://example.com/photo.png');
-    verify(() => storage.uploadBytes(path: 'barbershops/shop1/services/cut.png', bytes: bytes)).called(1);
+    verify(
+      () => storage.uploadBytes(
+        path: 'barbershops/shop1/services/cut.png',
+        bytes: bytes,
+      ),
+    ).called(1);
   });
 }

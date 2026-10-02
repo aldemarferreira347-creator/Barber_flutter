@@ -60,7 +60,8 @@ void main() {
     expect(items.single['refunded'], false);
 
     final paymentId = doc['paymentId'] as String;
-    final payment = (await firestore.collection('payments').doc(paymentId).get()).data()!;
+    final payment =
+        (await firestore.collection('payments').doc(paymentId).get()).data()!;
     expect(payment['status'], 'approved');
     expect(payment['category'], 'product');
     expect(payment['amount'], 30000);
@@ -85,7 +86,10 @@ void main() {
     await expectLater(
       () => service.createPurchase(
         barbershopId: 'shop1',
-        items: List.generate(6, (_) => const PurchaseItemInput(productId: 'p1', quantity: 1)),
+        items: List.generate(
+          6,
+          (_) => const PurchaseItemInput(productId: 'p1', quantity: 1),
+        ),
       ),
       throwsA(anything),
     );
@@ -102,51 +106,82 @@ void main() {
 
     await service.claimPurchase('purchase1');
 
-    final doc = (await firestore.collection('purchases').doc('purchase1').get()).data()!;
+    final doc = (await firestore.collection('purchases').doc('purchase1').get())
+        .data()!;
     expect(doc['status'], 'claimed');
     expect(doc['claimedAt'], isNotNull);
   });
 
-  test('claimPurchase rechaza una compra que no está lista para reclamar', () async {
-    await firestore.collection('purchases').doc('purchase1').set({
-      'status': 'pending_payment',
-    });
+  test(
+    'claimPurchase rechaza una compra que no está lista para reclamar',
+    () async {
+      await firestore.collection('purchases').doc('purchase1').set({
+        'status': 'pending_payment',
+      });
 
-    await expectLater(() => service.claimPurchase('purchase1'), throwsA(anything));
-  });
+      await expectLater(
+        () => service.claimPurchase('purchase1'),
+        throwsA(anything),
+      );
+    },
+  );
 
-  test('refundItems marca los ítems seleccionados y reembolsa el pago', () async {
-    await firestore.collection('payments').doc('pay1').set({
-      'payerId': 'buyer1',
-      'amount': 45000,
-      'category': 'product',
-      'status': 'approved',
-    });
-    await firestore.collection('purchases').doc('purchase1').set({
-      'paymentId': 'pay1',
-      'items': [
-        {'productId': 'p1', 'productName': 'Cera', 'unitPrice': 15000, 'quantity': 1, 'refunded': false},
-        {'productId': 'p2', 'productName': 'Shampoo', 'unitPrice': 30000, 'quantity': 1, 'refunded': false},
-      ],
-    });
+  test(
+    'refundItems marca los ítems seleccionados y reembolsa el pago',
+    () async {
+      await firestore.collection('payments').doc('pay1').set({
+        'payerId': 'buyer1',
+        'amount': 45000,
+        'category': 'product',
+        'status': 'approved',
+      });
+      await firestore.collection('purchases').doc('purchase1').set({
+        'paymentId': 'pay1',
+        'items': [
+          {
+            'productId': 'p1',
+            'productName': 'Cera',
+            'unitPrice': 15000,
+            'quantity': 1,
+            'refunded': false,
+          },
+          {
+            'productId': 'p2',
+            'productName': 'Shampoo',
+            'unitPrice': 30000,
+            'quantity': 1,
+            'refunded': false,
+          },
+        ],
+      });
 
-    await service.refundItems(purchaseId: 'purchase1', itemIndexes: [0]);
+      await service.refundItems(purchaseId: 'purchase1', itemIndexes: [0]);
 
-    final purchase = (await firestore.collection('purchases').doc('purchase1').get()).data()!;
-    final items = List<Map<String, dynamic>>.from(purchase['items'] as List);
-    expect(items[0]['refunded'], true);
-    expect(items[1]['refunded'], false);
+      final purchase =
+          (await firestore.collection('purchases').doc('purchase1').get())
+              .data()!;
+      final items = List<Map<String, dynamic>>.from(purchase['items'] as List);
+      expect(items[0]['refunded'], true);
+      expect(items[1]['refunded'], false);
 
-    final payment = (await firestore.collection('payments').doc('pay1').get()).data()!;
-    expect(payment['status'], 'refunded');
-    expect(payment['refundedAmount'], 15000);
-  });
+      final payment = (await firestore.collection('payments').doc('pay1').get())
+          .data()!;
+      expect(payment['status'], 'refunded');
+      expect(payment['refundedAmount'], 15000);
+    },
+  );
 
   test('refundItems rechaza un ítem ya reembolsado', () async {
     await firestore.collection('purchases').doc('purchase1').set({
       'paymentId': 'pay1',
       'items': [
-        {'productId': 'p1', 'productName': 'Cera', 'unitPrice': 15000, 'quantity': 1, 'refunded': true},
+        {
+          'productId': 'p1',
+          'productName': 'Cera',
+          'unitPrice': 15000,
+          'quantity': 1,
+          'refunded': true,
+        },
       ],
     });
 
@@ -171,24 +206,33 @@ void main() {
     expect(purchase!.status, PurchaseStatus.pendingClaim);
   });
 
-  test('findByClaimCode busca por barbershopId y claimCode dentro de esa barbería', () async {
-    await firestore.collection('purchases').doc('purchase1').set({
-      'barbershopId': 'shop1',
-      'buyerId': 'buyer1',
-      'items': [],
-      'totalAmount': 15000.0,
-      'status': 'pending_claim',
-      'claimCode': 'ABCD1234',
-    });
+  test(
+    'findByClaimCode busca por barbershopId y claimCode dentro de esa barbería',
+    () async {
+      await firestore.collection('purchases').doc('purchase1').set({
+        'barbershopId': 'shop1',
+        'buyerId': 'buyer1',
+        'items': [],
+        'totalAmount': 15000.0,
+        'status': 'pending_claim',
+        'claimCode': 'ABCD1234',
+      });
 
-    final purchase = await service.findByClaimCode(barbershopId: 'shop1', claimCode: 'abcd1234');
+      final purchase = await service.findByClaimCode(
+        barbershopId: 'shop1',
+        claimCode: 'abcd1234',
+      );
 
-    expect(purchase, isNotNull);
-    expect(purchase!.id, 'purchase1');
-  });
+      expect(purchase, isNotNull);
+      expect(purchase!.id, 'purchase1');
+    },
+  );
 
   test('findByClaimCode devuelve null si no hay coincidencias', () async {
-    final purchase = await service.findByClaimCode(barbershopId: 'shop1', claimCode: 'ZZZZ9999');
+    final purchase = await service.findByClaimCode(
+      barbershopId: 'shop1',
+      claimCode: 'ZZZZ9999',
+    );
 
     expect(purchase, isNull);
   });

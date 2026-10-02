@@ -192,7 +192,7 @@ class _ManageUsersViewState extends State<ManageUsersView> {
                       color: AppColors.warning.withValues(alpha: 0.3),
                     ),
                   ),
-                  child: Row(
+                  child: const Row(
                     crossAxisAlignment: CrossAxisAlignment.start,
                     children: [
                       Icon(
@@ -200,7 +200,7 @@ class _ManageUsersViewState extends State<ManageUsersView> {
                         size: 14,
                         color: AppColors.warning,
                       ),
-                      const SizedBox(width: 6),
+                      SizedBox(width: 6),
                       Expanded(
                         child: Text(
                           'Actualiza el correo en el perfil. El correo de inicio de sesión se gestiona desde Firebase Auth.',
@@ -278,9 +278,8 @@ class _ManageUsersViewState extends State<ManageUsersView> {
         await userRepo.setRole(user.uid, selectedRole);
       }
       if (context.mounted) {
-        ScaffoldMessenger.of(context).showSnackBar(
-          const SnackBar(content: Text('Usuario actualizado')),
-        );
+        ScaffoldMessenger.of(context)
+            .showSnackBar(const SnackBar(content: Text('Usuario actualizado')));
       }
     } catch (e) {
       if (context.mounted) {
@@ -289,7 +288,6 @@ class _ManageUsersViewState extends State<ManageUsersView> {
       }
     }
   }
-
 
   // ─── Eliminar usuario ─────────────────────────────────────────────────────
 
@@ -311,10 +309,7 @@ class _ManageUsersViewState extends State<ManageUsersView> {
                 text: user.name,
                 style: const TextStyle(fontWeight: FontWeight.w700),
               ),
-              const TextSpan(
-                text:
-                    '? Esta acción no se puede deshacer.',
-              ),
+              const TextSpan(text: '? Esta acción no se puede deshacer.'),
             ],
           ),
         ),
@@ -439,8 +434,9 @@ class _ManageUsersViewState extends State<ManageUsersView> {
                             borderRadius: BorderRadius.circular(12),
                           ),
                         ),
-                        validator: (v) =>
-                            (v == null || v.trim().isEmpty) ? 'Requerido' : null,
+                        validator: (v) => (v == null || v.trim().isEmpty)
+                            ? 'Requerido'
+                            : null,
                       ),
                       const SizedBox(height: 14),
                       TextFormField(
@@ -453,10 +449,9 @@ class _ManageUsersViewState extends State<ManageUsersView> {
                             borderRadius: BorderRadius.circular(12),
                           ),
                         ),
-                        validator: (v) =>
-                            (v == null || !v.contains('@'))
-                                ? 'Correo inválido'
-                                : null,
+                        validator: (v) => (v == null || !v.contains('@'))
+                            ? 'Correo inválido'
+                            : null,
                       ),
                       const SizedBox(height: 14),
                       TextFormField(
@@ -478,10 +473,9 @@ class _ManageUsersViewState extends State<ManageUsersView> {
                             borderRadius: BorderRadius.circular(12),
                           ),
                         ),
-                        validator: (v) =>
-                            (v == null || v.length < 6)
-                                ? 'Mínimo 6 caracteres'
-                                : null,
+                        validator: (v) => (v == null || v.length < 6)
+                            ? 'Mínimo 6 caracteres'
+                            : null,
                       ),
                       const SizedBox(height: 14),
                       TextFormField(
@@ -504,10 +498,9 @@ class _ManageUsersViewState extends State<ManageUsersView> {
                             borderRadius: BorderRadius.circular(12),
                           ),
                         ),
-                        validator: (v) =>
-                            v != passCtrl.text
-                                ? 'Las contraseñas no coinciden'
-                                : null,
+                        validator: (v) => v != passCtrl.text
+                            ? 'Las contraseñas no coinciden'
+                            : null,
                       ),
                       const SizedBox(height: 14),
                       Column(
@@ -729,14 +722,14 @@ class _ManageUsersViewState extends State<ManageUsersView> {
                       final user = users[index];
                       final isSelf = user.uid == currentUid;
                       return _UserCard(
-                        user: user,
-                        isSelf: isSelf,
-                        roleLabel: _roleLabel(user.role),
-                        roleColor: _roleColor(user.role),
-                        onActionsTap: isSelf
-                            ? null
-                            : () => _showActions(context, user),
-                      )
+                            user: user,
+                            isSelf: isSelf,
+                            roleLabel: _roleLabel(user.role),
+                            roleColor: _roleColor(user.role),
+                            onActionsTap: isSelf
+                                ? null
+                                : () => _showActions(context, user),
+                          )
                           .animate(delay: (index * 50).ms)
                           .fadeIn(duration: 280.ms)
                           .slideX(
@@ -824,14 +817,9 @@ class _UserCard extends StatelessWidget {
                   width: 12,
                   height: 12,
                   decoration: BoxDecoration(
-                    color: user.active
-                        ? AppColors.success
-                        : AppColors.error,
+                    color: user.active ? AppColors.success : AppColors.error,
                     shape: BoxShape.circle,
-                    border: Border.all(
-                      color: AppColors.surface,
-                      width: 2,
-                    ),
+                    border: Border.all(color: AppColors.surface, width: 2),
                   ),
                 ),
               ),
@@ -945,12 +933,11 @@ class _ActionMenuButtonState extends State<_ActionMenuButton>
     _ctrl = AnimationController(
       vsync: this,
       duration: const Duration(milliseconds: 120),
-      lowerBound: 0.0,
-      upperBound: 1.0,
     );
-    _scale = Tween<double>(begin: 1.0, end: 0.88).animate(
-      CurvedAnimation(parent: _ctrl, curve: Curves.easeInOut),
-    );
+    _scale = Tween<double>(
+      begin: 1.0,
+      end: 0.88,
+    ).animate(CurvedAnimation(parent: _ctrl, curve: Curves.easeInOut));
   }
 
   @override
@@ -1089,9 +1076,7 @@ class _UserActionsSheet extends StatelessWidget {
               color: AppColors.border,
               borderRadius: BorderRadius.circular(2),
             ),
-          )
-              .animate()
-              .fadeIn(duration: 200.ms),
+          ).animate().fadeIn(duration: 200.ms),
           const SizedBox(height: 20),
 
           // Perfil del usuario
@@ -1108,88 +1093,87 @@ class _UserActionsSheet extends StatelessWidget {
                     fontWeight: FontWeight.w700,
                   ),
                 ),
-              )
-                  .animate()
-                  .scale(
-                    begin: const Offset(0.6, 0.6),
-                    duration: 300.ms,
-                    curve: Curves.easeOutBack,
-                  ),
+              ).animate().scale(
+                begin: const Offset(0.6, 0.6),
+                duration: 300.ms,
+                curve: Curves.easeOutBack,
+              ),
               const SizedBox(width: 14),
               Expanded(
-                child: Column(
-                  crossAxisAlignment: CrossAxisAlignment.start,
-                  children: [
-                    Text(
-                      user.name.isNotEmpty ? user.name : '(sin nombre)',
-                      style: TextStyle(
-                        fontWeight: FontWeight.w700,
-                        fontSize: 16,
-                        color: AppColors.textPrimary,
-                      ),
-                      maxLines: 1,
-                      overflow: TextOverflow.ellipsis,
-                    ),
-                    const SizedBox(height: 2),
-                    Text(
-                      user.email,
-                      style: TextStyle(
-                        color: AppColors.textSecondary,
-                        fontSize: 12,
-                      ),
-                      maxLines: 1,
-                      overflow: TextOverflow.ellipsis,
-                    ),
-                    const SizedBox(height: 4),
-                    Row(
+                    child: Column(
+                      crossAxisAlignment: CrossAxisAlignment.start,
                       children: [
-                        Container(
-                          padding: const EdgeInsets.symmetric(
-                            horizontal: 8,
-                            vertical: 3,
+                        Text(
+                          user.name.isNotEmpty ? user.name : '(sin nombre)',
+                          style: TextStyle(
+                            fontWeight: FontWeight.w700,
+                            fontSize: 16,
+                            color: AppColors.textPrimary,
                           ),
-                          decoration: BoxDecoration(
-                            color: rColor.withValues(alpha: 0.1),
-                            borderRadius: BorderRadius.circular(8),
-                          ),
-                          child: Text(
-                            roleLabel(user.role),
-                            style: TextStyle(
-                              color: rColor,
-                              fontSize: 11,
-                              fontWeight: FontWeight.w700,
-                            ),
-                          ),
+                          maxLines: 1,
+                          overflow: TextOverflow.ellipsis,
                         ),
-                        const SizedBox(width: 8),
-                        Container(
-                          padding: const EdgeInsets.symmetric(
-                            horizontal: 8,
-                            vertical: 3,
+                        const SizedBox(height: 2),
+                        Text(
+                          user.email,
+                          style: TextStyle(
+                            color: AppColors.textSecondary,
+                            fontSize: 12,
                           ),
-                          decoration: BoxDecoration(
-                            color: (user.active
-                                    ? AppColors.success
-                                    : AppColors.error)
-                                .withValues(alpha: 0.1),
-                            borderRadius: BorderRadius.circular(8),
-                          ),
-                          child: Text(
-                            user.active ? 'Activo' : 'Inactivo',
-                            style: TextStyle(
-                              color: user.active
-                                  ? AppColors.success
-                                  : AppColors.error,
-                              fontSize: 11,
-                              fontWeight: FontWeight.w700,
+                          maxLines: 1,
+                          overflow: TextOverflow.ellipsis,
+                        ),
+                        const SizedBox(height: 4),
+                        Row(
+                          children: [
+                            Container(
+                              padding: const EdgeInsets.symmetric(
+                                horizontal: 8,
+                                vertical: 3,
+                              ),
+                              decoration: BoxDecoration(
+                                color: rColor.withValues(alpha: 0.1),
+                                borderRadius: BorderRadius.circular(8),
+                              ),
+                              child: Text(
+                                roleLabel(user.role),
+                                style: TextStyle(
+                                  color: rColor,
+                                  fontSize: 11,
+                                  fontWeight: FontWeight.w700,
+                                ),
+                              ),
                             ),
-                          ),
+                            const SizedBox(width: 8),
+                            Container(
+                              padding: const EdgeInsets.symmetric(
+                                horizontal: 8,
+                                vertical: 3,
+                              ),
+                              decoration: BoxDecoration(
+                                color:
+                                    (user.active
+                                            ? AppColors.success
+                                            : AppColors.error)
+                                        .withValues(alpha: 0.1),
+                                borderRadius: BorderRadius.circular(8),
+                              ),
+                              child: Text(
+                                user.active ? 'Activo' : 'Inactivo',
+                                style: TextStyle(
+                                  color: user.active
+                                      ? AppColors.success
+                                      : AppColors.error,
+                                  fontSize: 11,
+                                  fontWeight: FontWeight.w700,
+                                ),
+                              ),
+                            ),
+                          ],
                         ),
                       ],
                     ),
-                  ],
-                ),
-              )
+                  )
                   .animate()
                   .fadeIn(delay: 80.ms, duration: 250.ms)
                   .slideX(begin: 0.08, end: 0, curve: Curves.easeOutCubic),
@@ -1207,11 +1191,7 @@ class _UserActionsSheet extends StatelessWidget {
             return _SheetActionTile(action: action)
                 .animate(delay: (100 + i * 60).ms)
                 .fadeIn(duration: 220.ms)
-                .slideY(
-                  begin: 0.12,
-                  end: 0,
-                  curve: Curves.easeOutCubic,
-                );
+                .slideY(begin: 0.12, end: 0, curve: Curves.easeOutCubic);
           }),
         ],
       ),

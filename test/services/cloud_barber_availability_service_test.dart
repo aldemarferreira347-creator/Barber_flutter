@@ -30,10 +30,13 @@ void main() {
 
     await service.markAway(30);
 
-    final data = (await firestore.collection('users').doc('barber1').get()).data()!;
+    final data = (await firestore.collection('users').doc('barber1').get())
+        .data()!;
     expect(data['awaySince'], isA<Timestamp>());
     final estimate = (data['awayUntilEstimate'] as Timestamp).toDate();
-    final expectedMinMs = before.add(const Duration(minutes: 30)).millisecondsSinceEpoch;
+    final expectedMinMs = before
+        .add(const Duration(minutes: 30))
+        .millisecondsSinceEpoch;
     expect(
       (estimate.millisecondsSinceEpoch - expectedMinMs).abs() < 5000,
       isTrue,
@@ -57,7 +60,8 @@ void main() {
 
     await service.markReturned();
 
-    final data = (await firestore.collection('users').doc('barber1').get()).data()!;
+    final data = (await firestore.collection('users').doc('barber1').get())
+        .data()!;
     expect(data['awaySince'], isNull);
     expect(data['awayUntilEstimate'], isNull);
   });

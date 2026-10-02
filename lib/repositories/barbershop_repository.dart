@@ -71,18 +71,6 @@ abstract class BarbershopRepository {
     String? description,
   });
 
-  /// El cliente que acaba de registrar [barbershopId] (pendiente de
-  /// aprobación) pide que se le reconozca como Dueño (spec 12.1) vía la
-  /// función en la nube `requestBarbershopOwnership` (Admin SDK).
-  ///
-  /// SIN USO ACTUALMENTE: esa función (como el resto de Cloud Functions
-  /// del proyecto) requiere el plan Blaze, que este proyecto no tiene
-  /// habilitado. [AddBarbershopView] hace la promoción de rol directo
-  /// contra Firestore en su lugar (ver la rama dedicada en
-  /// `firestore.rules`). Se deja esta ruta implementada para retomarla si
-  /// el proyecto sube a Blaze más adelante.
-  Future<void> requestOwnership(String barbershopId);
-
   /// El admin aprueba o rechaza la solicitud (spec 12.1/12.4): si aprueba,
   /// activa la barbería y arranca el primer ciclo de mensualidad.
   Future<void> resolveApproval(String id, {required bool approve});

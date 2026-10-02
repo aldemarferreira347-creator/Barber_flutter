@@ -80,7 +80,7 @@ class BarbershopDetailView extends StatelessWidget {
                 SizedBox(height: 16),
                 ShimmerBox(height: 24, width: 180),
                 SizedBox(height: 16),
-                ShimmerList(count: 3, itemHeight: 20),
+                ShimmerList(itemHeight: 20),
               ],
             );
           }
@@ -174,7 +174,7 @@ class BarbershopDetailView extends StatelessWidget {
                   const SizedBox(height: 6),
                   Row(
                     children: [
-                      Icon(Icons.star, color: AppColors.gold, size: 16),
+                      const Icon(Icons.star, color: AppColors.gold, size: 16),
                       const SizedBox(width: 4),
                       Text(
                         '${shop.averageRating.toStringAsFixed(1)} (${shop.ratingCount})',

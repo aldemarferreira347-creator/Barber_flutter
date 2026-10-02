@@ -1,7 +1,6 @@
 import 'dart:typed_data';
 
 import 'package:cloud_firestore/cloud_firestore.dart';
-import 'package:cloud_functions/cloud_functions.dart';
 
 import '../models/barbershop.dart';
 import '../models/day_schedule.dart';
@@ -11,18 +10,15 @@ import '../repositories/storage_repository.dart';
 class FirestoreBarbershopService implements BarbershopRepository {
   final FirebaseFirestore _firestore;
   final StorageRepository _storage;
-  final FirebaseFunctions _functions;
   final Duration _simulatedApprovalDelay;
 
   FirestoreBarbershopService({
     required this._storage,
     FirebaseFirestore? firestore,
-    FirebaseFunctions? functions,
     // Configurable solo para que los tests no esperen el delay real — igual
     // que el parámetro `delayMs` de SimulatedNequiGateway en el backend.
     Duration? simulatedApprovalDelay,
   }) : _firestore = firestore ?? FirebaseFirestore.instance,
-       _functions = functions ?? FirebaseFunctions.instance,
        _simulatedApprovalDelay =
            simulatedApprovalDelay ?? const Duration(milliseconds: 1500);
 
@@ -288,13 +284,6 @@ class FirestoreBarbershopService implements BarbershopRepository {
       bytes: bytes,
     );
     await _barbershops.doc(id).update({'photoUrl': url});
-  }
-
-  @override
-  Future<void> requestOwnership(String barbershopId) {
-    return _functions
-        .httpsCallable('requestBarbershopOwnership')
-        .call<Map<String, dynamic>>({'barbershopId': barbershopId});
   }
 
   @override

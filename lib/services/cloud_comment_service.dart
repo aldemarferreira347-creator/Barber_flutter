@@ -46,7 +46,9 @@ class CloudCommentService implements CommentRepository {
     if (clientId == null) throw Exception('Debes iniciar sesión.');
     final trimmed = text.trim();
     if (trimmed.isEmpty || trimmed.length > _maxTextLength) {
-      throw Exception('El comentario debe tener entre 1 y $_maxTextLength caracteres.');
+      throw Exception(
+        'El comentario debe tener entre 1 y $_maxTextLength caracteres.',
+      );
     }
 
     final appointmentSnap = await _appointments.doc(appointmentId).get();
@@ -58,7 +60,9 @@ class CloudCommentService implements CommentRepository {
       throw Exception('Solo el cliente de esa cita puede comentarla.');
     }
     if (appointment['paid'] != true || appointment['status'] != 'completed') {
-      throw Exception('Solo se puede comentar una reserva pagada y completada.');
+      throw Exception(
+        'Solo se puede comentar una reserva pagada y completada.',
+      );
     }
 
     final status = containsOffensiveContent(trimmed)
@@ -92,7 +96,9 @@ class CloudCommentService implements CommentRepository {
     if (barberId == null) throw Exception('Debes iniciar sesión.');
     final trimmed = replyText.trim();
     if (trimmed.isEmpty || trimmed.length > _maxTextLength) {
-      throw Exception('La respuesta debe tener entre 1 y $_maxTextLength caracteres.');
+      throw Exception(
+        'La respuesta debe tener entre 1 y $_maxTextLength caracteres.',
+      );
     }
     if (containsOffensiveContent(trimmed)) {
       throw Exception('La respuesta contiene lenguaje inapropiado.');

@@ -62,9 +62,7 @@ class RefundRequestsView extends StatelessWidget {
         builder: (context, snapshot) {
           if (snapshot.hasError) {
             return const Center(
-              child: ErrorState(
-                title: 'No pudimos cargar las solicitudes',
-              ),
+              child: ErrorState(title: 'No pudimos cargar las solicitudes'),
             );
           }
           if (snapshot.connectionState == ConnectionState.waiting) {

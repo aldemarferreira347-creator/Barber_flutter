@@ -121,7 +121,25 @@ Leyenda: ✅ funciona de verdad con Firebase gratis (Spark) · ⚠️ existe per
 
 ## Fase 3 — Arquitectura y limpieza
 
-_(pendiente)_
+### Ajuste al plan (decisión de eficiencia)
+
+- **T3.1 (unificar el cobro simulado)** se mueve a la **Fase 8**: ahí el cobro simulado desaparece y se reemplaza por Nequi con confirmación manual, así que extraer ahora un helper para borrarlo después sería trabajo doble.
+- **T3.2 (partir las vistas gigantes)** se hace **dentro de la Fase 6**, al rediseñar cada una (`manage_users_view` 1351 líneas, `manage_barbershops_view`, `login_view`, `register_view`, `add_barbershop_view`).
+
+### Hecho
+
+| Hallazgo | Corrección | Test |
+|---|---|---|
+| Al cerrar sesión el token FCM del dispositivo quedaba en el perfil del usuario anterior (`removeFcmToken` existía pero nadie lo llamaba) | `AuthController.signOut` lo retira antes de cerrar la sesión, con límite de 3 s y sin bloquear el cierre si falla | 2 tests nuevos (orden y tolerancia a fallo) |
+| Código muerto | Eliminados `models/rating.dart`, `views/widgets/coming_soon_view.dart` y `requestOwnership` (repositorio, servicio y su test; con ello `FirestoreBarbershopService` deja de depender de `cloud_functions`) | suite completa verde |
+| Lints permisivos | Activados `avoid_print`, `unawaited_futures`, `use_build_context_synchronously`, `prefer_const_*`, `prefer_final_locals`, `avoid_redundant_argument_values`, `sort_child_properties_last`, `prefer_single_quotes`. `dart fix` aplicó 67 correcciones mecánicas en 24 archivos y se arregló a mano 1 `unawaited` | `flutter analyze`: 0 issues |
+| Formato inconsistente (mezcla de 80 y 120 columnas) | `dart format` único sobre `lib/` y `test/` (ancho por defecto) | sin cambios de comportamiento |
+
+### Revisado y sin cambios
+
+- Las únicas referencias de las vistas a `cloud_firestore` son un `GeoPoint` del modelo de dominio: no es acceso a datos.
+- Las 5 vistas más grandes siguen pendientes (ver ajuste).
+- Pendiente de la Fase 8 (marcados como muertos hoy): `PaymentGateway` / `NequiPaymentGateway` (nadie los consume), `purchase_repository.refundItems` (el reembolso de ítems de productos no está conectado a ninguna pantalla).
 
 ## Fase 4 — Rendimiento
 

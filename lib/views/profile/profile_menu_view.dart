@@ -162,7 +162,6 @@ class ProfileMenuView extends StatelessWidget {
           ActionListTile(
             icon: Icons.tune,
             label: 'Tono de notificaciones',
-            animationIndex: 0,
             onTap: () => _showToneDialog(context),
           ),
           const SizedBox(height: 10),

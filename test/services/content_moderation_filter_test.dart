@@ -47,8 +47,14 @@ void main() {
           .toSet();
     }
 
-    final dart = terms('lib/services/content_moderation_filter.dart', '_offensiveTerms = {');
-    final ts = terms('functions/src/shared/contentModerationFilter.ts', 'OFFENSIVE_TERMS = new Set([');
+    final dart = terms(
+      'lib/services/content_moderation_filter.dart',
+      '_offensiveTerms = {',
+    );
+    final ts = terms(
+      'functions/src/shared/contentModerationFilter.ts',
+      'OFFENSIVE_TERMS = new Set([',
+    );
 
     expect(dart, isNotEmpty);
     expect(dart, ts);

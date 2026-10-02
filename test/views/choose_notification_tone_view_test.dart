@@ -17,7 +17,8 @@ class MockAuthRepository extends Mock implements AuthRepository {}
 
 class MockUserRepository extends Mock implements UserRepository {}
 
-class MockPushNotificationService extends Mock implements PushNotificationService {}
+class MockPushNotificationService extends Mock
+    implements PushNotificationService {}
 
 const _kUid = 'user1';
 
@@ -32,11 +33,22 @@ void main() {
     userRepository = MockUserRepository();
     pushService = MockPushNotificationService();
 
-    when(() => authRepository.authStateChanges).thenAnswer((_) => const Stream<User?>.empty());
-    when(() => pushService.onTokenRefresh).thenAnswer((_) => const Stream<String>.empty());
+    when(() => authRepository.authStateChanges)
+        .thenAnswer((_) => const Stream<User?>.empty());
+    when(() => pushService.onTokenRefresh)
+        .thenAnswer((_) => const Stream<String>.empty());
 
-    controller = AuthController(authService: authRepository, userService: userRepository, pushService: pushService);
-    controller.profile = AppUser(uid: _kUid, email: 'a@b.com', name: 'Ana', role: UserRole.client);
+    controller = AuthController(
+      authService: authRepository,
+      userService: userRepository,
+      pushService: pushService,
+    );
+    controller.profile = const AppUser(
+      uid: _kUid,
+      email: 'a@b.com',
+      name: 'Ana',
+      role: UserRole.client,
+    );
   });
 
   Widget wrap() {
@@ -46,7 +58,9 @@ void main() {
     );
   }
 
-  testWidgets('el botón Continuar está deshabilitado hasta elegir un tono', (tester) async {
+  testWidgets('el botón Continuar está deshabilitado hasta elegir un tono', (
+    tester,
+  ) async {
     await tester.pumpWidget(wrap());
     await tester.pumpAndSettle();
 
@@ -54,8 +68,13 @@ void main() {
     expect(button.onPressed, isNull);
   });
 
-  testWidgets('elegir un tono y confirmar lo guarda en el controlador', (tester) async {
-    when(() => userRepository.setNotificationTone(_kUid, NotificationTone.informal)).thenAnswer((_) async {});
+  testWidgets('elegir un tono y confirmar lo guarda en el controlador', (
+    tester,
+  ) async {
+    when(
+      () =>
+          userRepository.setNotificationTone(_kUid, NotificationTone.informal),
+    ).thenAnswer((_) async {});
 
     await tester.pumpWidget(wrap());
     await tester.pumpAndSettle();
@@ -69,7 +88,10 @@ void main() {
     await tester.tap(find.byType(GradientButton));
     await tester.pumpAndSettle();
 
-    verify(() => userRepository.setNotificationTone(_kUid, NotificationTone.informal)).called(1);
+    verify(
+      () =>
+          userRepository.setNotificationTone(_kUid, NotificationTone.informal),
+    ).called(1);
     expect(controller.profile?.notificationTone, NotificationTone.informal);
   });
 }

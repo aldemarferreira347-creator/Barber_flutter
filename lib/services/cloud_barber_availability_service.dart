@@ -33,7 +33,9 @@ class CloudBarberAvailabilityService implements BarberAvailabilityRepository {
     final uid = _auth.currentUser?.uid;
     if (uid == null) throw Exception('Debes iniciar sesión.');
     if (estimatedMinutes < _minMinutes || estimatedMinutes > _maxMinutes) {
-      throw Exception('estimatedMinutes debe ser un entero entre $_minMinutes y $_maxMinutes.');
+      throw Exception(
+        'estimatedMinutes debe ser un entero entre $_minMinutes y $_maxMinutes.',
+      );
     }
 
     await _firestore.collection('users').doc(uid).update({

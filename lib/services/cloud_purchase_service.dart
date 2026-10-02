@@ -64,7 +64,9 @@ class CloudPurchaseService implements PurchaseRepository {
       final productSnap = await productsRef.doc(requested.productId).get();
       final product = productSnap.data();
       if (!productSnap.exists || product == null || product['active'] != true) {
-        throw Exception('El producto ${requested.productId} ya no está disponible.');
+        throw Exception(
+          'El producto ${requested.productId} ya no está disponible.',
+        );
       }
       resolvedItems.add({
         'productId': requested.productId,
@@ -77,7 +79,8 @@ class CloudPurchaseService implements PurchaseRepository {
 
     final totalAmount = resolvedItems.fold<num>(
       0,
-      (total, item) => total + (item['unitPrice'] as num) * (item['quantity'] as int),
+      (total, item) =>
+          total + (item['unitPrice'] as num) * (item['quantity'] as int),
     );
 
     final purchaseRef = _purchases.doc();
@@ -191,7 +194,9 @@ class CloudPurchaseService implements PurchaseRepository {
     final data = snap.data();
     if (!snap.exists || data == null) throw Exception('La compra no existe.');
     if (data['status'] != 'pending_claim') {
-      throw Exception('La compra no está lista para reclamar (status: ${data['status']}).');
+      throw Exception(
+        'La compra no está lista para reclamar (status: ${data['status']}).',
+      );
     }
 
     await ref.update({
@@ -234,7 +239,9 @@ class CloudPurchaseService implements PurchaseRepository {
     final refundAmount = itemIndexes.fold<num>(
       0,
       (total, index) =>
-          total + (items[index]['unitPrice'] as num) * (items[index]['quantity'] as num),
+          total +
+          (items[index]['unitPrice'] as num) *
+              (items[index]['quantity'] as num),
     );
 
     // Igual que el backend: primero se reembolsa el pago, luego se marcan
@@ -249,7 +256,10 @@ class CloudPurchaseService implements PurchaseRepository {
 
     final updatedItems = [
       for (var i = 0; i < items.length; i++)
-        if (itemIndexes.contains(i)) {...items[i], 'refunded': true} else items[i],
+        if (itemIndexes.contains(i))
+          {...items[i], 'refunded': true}
+        else
+          items[i],
     ];
     await ref.update({'items': updatedItems});
   }

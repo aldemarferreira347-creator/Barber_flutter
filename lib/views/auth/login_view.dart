@@ -228,10 +228,10 @@ class _LoginViewState extends State<LoginView> {
                               mainAxisSize: MainAxisSize.min,
                               children: [
                                 const BrandMark(
-                                  size: 58,
-                                  color: Color(0xFF0F172A),
-                                  spin: false,
-                                )
+                                      size: 58,
+                                      color: Color(0xFF0F172A),
+                                      spin: false,
+                                    )
                                     .animate()
                                     .scale(
                                       begin: const Offset(0.7, 0.7),
@@ -263,30 +263,30 @@ class _LoginViewState extends State<LoginView> {
                           const SizedBox(height: 26),
 
                           // Título "Iniciar sesión"
-                          Center(
-                            child: Column(
-                              children: [
-                                const Text(
-                                  'Iniciar sesión',
-                                  textAlign: TextAlign.center,
-                                  style: TextStyle(
-                                    fontSize: 22,
-                                    fontWeight: FontWeight.w800,
-                                    color: Color(0xFF0F172A),
-                                  ),
+                          const Center(
+                                child: Column(
+                                  children: [
+                                    Text(
+                                      'Iniciar sesión',
+                                      textAlign: TextAlign.center,
+                                      style: TextStyle(
+                                        fontSize: 22,
+                                        fontWeight: FontWeight.w800,
+                                        color: Color(0xFF0F172A),
+                                      ),
+                                    ),
+                                    SizedBox(height: 4),
+                                    Text(
+                                      'Accede a tu cuenta para continuar',
+                                      textAlign: TextAlign.center,
+                                      style: TextStyle(
+                                        color: Color(0xFF64748B),
+                                        fontSize: 14,
+                                      ),
+                                    ),
+                                  ],
                                 ),
-                                const SizedBox(height: 4),
-                                const Text(
-                                  'Accede a tu cuenta para continuar',
-                                  textAlign: TextAlign.center,
-                                  style: TextStyle(
-                                    color: Color(0xFF64748B),
-                                    fontSize: 14,
-                                  ),
-                                ),
-                              ],
-                            ),
-                          )
+                              )
                               .animate()
                               .fadeIn(duration: 300.ms)
                               .slideY(
@@ -317,11 +317,10 @@ class _LoginViewState extends State<LoginView> {
                                   ),
                                   filled: true,
                                   fillColor: Colors.white,
-                                  contentPadding:
-                                      const EdgeInsets.symmetric(
-                                        horizontal: 18,
-                                        vertical: 16,
-                                      ),
+                                  contentPadding: const EdgeInsets.symmetric(
+                                    horizontal: 18,
+                                    vertical: 16,
+                                  ),
                                   enabledBorder: OutlineInputBorder(
                                     borderRadius: BorderRadius.circular(14),
                                     borderSide: const BorderSide(
@@ -351,8 +350,8 @@ class _LoginViewState extends State<LoginView> {
                                 ),
                                 validator: (value) =>
                                     (value == null || !value.contains('@'))
-                                        ? 'Correo inválido'
-                                        : null,
+                                    ? 'Correo inválido'
+                                    : null,
                               )
                               .animate(delay: 100.ms)
                               .fadeIn(duration: 300.ms)
@@ -391,17 +390,16 @@ class _LoginViewState extends State<LoginView> {
                                       size: 20,
                                     ),
                                     onPressed: () => setState(
-                                      () => _obscurePassword =
-                                          !_obscurePassword,
+                                      () =>
+                                          _obscurePassword = !_obscurePassword,
                                     ),
                                   ),
                                   filled: true,
                                   fillColor: Colors.white,
-                                  contentPadding:
-                                      const EdgeInsets.symmetric(
-                                        horizontal: 16,
-                                        vertical: 16,
-                                      ),
+                                  contentPadding: const EdgeInsets.symmetric(
+                                    horizontal: 16,
+                                    vertical: 16,
+                                  ),
                                   enabledBorder: OutlineInputBorder(
                                     borderRadius: BorderRadius.circular(14),
                                     borderSide: const BorderSide(
@@ -431,8 +429,8 @@ class _LoginViewState extends State<LoginView> {
                                 ),
                                 validator: (value) =>
                                     (value == null || value.length < 6)
-                                        ? 'Mínimo 6 caracteres'
-                                        : null,
+                                    ? 'Mínimo 6 caracteres'
+                                    : null,
                               )
                               .animate(delay: 150.ms)
                               .fadeIn(duration: 300.ms)
@@ -454,8 +452,7 @@ class _LoginViewState extends State<LoginView> {
                                   vertical: 4,
                                 ),
                                 minimumSize: Size.zero,
-                                tapTargetSize:
-                                    MaterialTapTargetSize.shrinkWrap,
+                                tapTargetSize: MaterialTapTargetSize.shrinkWrap,
                               ),
                               child: const Text(
                                 '¿Olvidaste tu contraseña?',
@@ -521,10 +518,10 @@ class _LoginViewState extends State<LoginView> {
                                   builder: (_) => const RegisterView(),
                                 ),
                               ),
-                              child: Wrap(
+                              child: const Wrap(
                                 alignment: WrapAlignment.center,
                                 crossAxisAlignment: WrapCrossAlignment.center,
-                                children: const [
+                                children: [
                                   Text(
                                     '¿No tienes una cuenta? ',
                                     style: TextStyle(

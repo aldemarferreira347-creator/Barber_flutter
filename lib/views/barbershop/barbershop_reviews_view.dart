@@ -127,7 +127,7 @@ class _AverageRatingHeader extends StatelessWidget {
           ),
           child: Row(
             children: [
-              Icon(Icons.star, color: AppColors.gold, size: 32),
+              const Icon(Icons.star, color: AppColors.gold, size: 32),
               const SizedBox(width: 12),
               Column(
                 crossAxisAlignment: CrossAxisAlignment.start,

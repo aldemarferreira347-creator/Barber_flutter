@@ -10,8 +10,8 @@ class StatusBadge extends StatelessWidget {
 
   factory StatusBadge.active(bool active) {
     return active
-        ? StatusBadge(label: 'Activa', color: AppColors.success)
-        : StatusBadge(label: 'Bloqueada', color: AppColors.error);
+        ? const StatusBadge(label: 'Activa', color: AppColors.success)
+        : const StatusBadge(label: 'Bloqueada', color: AppColors.error);
   }
 
   @override

@@ -53,7 +53,9 @@ class FirestoreNotificationService implements NotificationRepository {
     final trimmedTitle = title.trim();
     final trimmedBody = body.trim();
     if (trimmedTitle.isEmpty || trimmedTitle.length > _maxTitleLength) {
-      throw Exception('title es obligatorio (máx. $_maxTitleLength caracteres).');
+      throw Exception(
+        'title es obligatorio (máx. $_maxTitleLength caracteres).',
+      );
     }
     if (trimmedBody.isEmpty || trimmedBody.length > _maxBodyLength) {
       throw Exception('body es obligatorio (máx. $_maxBodyLength caracteres).');

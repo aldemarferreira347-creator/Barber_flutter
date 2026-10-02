@@ -12,7 +12,8 @@ class MockAuthRepository extends Mock implements AuthRepository {}
 
 class MockUserRepository extends Mock implements UserRepository {}
 
-class MockPushNotificationService extends Mock implements PushNotificationService {}
+class MockPushNotificationService extends Mock
+    implements PushNotificationService {}
 
 class MockUserCredential extends Mock implements UserCredential {}
 
@@ -31,7 +32,14 @@ void main() {
 
   setUpAll(() {
     registerFallbackValue(FakeAuthCredential());
-    registerFallbackValue(const AppUser(uid: 'fallback', email: '', name: '', role: UserRole.client));
+    registerFallbackValue(
+      const AppUser(
+        uid: 'fallback',
+        email: '',
+        name: '',
+        role: UserRole.client,
+      ),
+    );
   });
 
   setUp(() {
@@ -40,10 +48,16 @@ void main() {
     final pushService = MockPushNotificationService();
     pendingCredential = FakeAuthCredential();
 
-    when(() => authRepository.authStateChanges).thenAnswer((_) => const Stream<User?>.empty());
-    when(() => pushService.onTokenRefresh).thenAnswer((_) => const Stream<String>.empty());
+    when(() => authRepository.authStateChanges)
+        .thenAnswer((_) => const Stream<User?>.empty());
+    when(() => pushService.onTokenRefresh)
+        .thenAnswer((_) => const Stream<String>.empty());
 
-    controller = AuthController(authService: authRepository, userService: userRepository, pushService: pushService);
+    controller = AuthController(
+      authService: authRepository,
+      userService: userRepository,
+      pushService: pushService,
+    );
   });
 
   test('login exitoso con Google carga/crea el perfil Cliente', () async {
@@ -55,9 +69,12 @@ void main() {
     final credential = MockUserCredential();
     when(() => credential.user).thenReturn(user);
 
-    when(() => authRepository.signInWithGoogle()).thenAnswer((_) async => GoogleSignInSuccess(credential));
-    when(() => userRepository.fetchUserProfile(_kUid)).thenAnswer((_) async => null);
-    when(() => userRepository.createUserProfile(any())).thenAnswer((_) async {});
+    when(() => authRepository.signInWithGoogle())
+        .thenAnswer((_) async => GoogleSignInSuccess(credential));
+    when(() => userRepository.fetchUserProfile(_kUid))
+        .thenAnswer((_) async => null);
+    when(() => userRepository.createUserProfile(any()))
+        .thenAnswer((_) async {});
 
     final outcome = await controller.signInWithGoogle();
 
@@ -68,7 +85,10 @@ void main() {
 
   test('cuando el correo ya tiene cuenta con contraseña, no toca el perfil y devuelve el pedido de vínculo', () async {
     when(() => authRepository.signInWithGoogle()).thenAnswer(
-      (_) async => GoogleSignInRequiresPasswordLink(email: _kEmail, pendingGoogleCredential: pendingCredential),
+      (_) async => GoogleSignInRequiresPasswordLink(
+        email: _kEmail,
+        pendingGoogleCredential: pendingCredential,
+      ),
     );
 
     final outcome = await controller.signInWithGoogle();
@@ -80,7 +100,8 @@ void main() {
   });
 
   test('cancelar el selector de Google no es un error', () async {
-    when(() => authRepository.signInWithGoogle()).thenAnswer((_) async => const GoogleSignInCancelled());
+    when(() => authRepository.signInWithGoogle())
+        .thenAnswer((_) async => const GoogleSignInCancelled());
 
     final outcome = await controller.signInWithGoogle();
 
@@ -105,8 +126,14 @@ void main() {
           pendingGoogleCredential: pendingCredential,
         ),
       ).thenAnswer((_) async => credential);
-      when(() => userRepository.fetchUserProfile(_kUid))
-          .thenAnswer((_) async => AppUser(uid: _kUid, email: _kEmail, name: 'Ana', role: UserRole.client));
+      when(() => userRepository.fetchUserProfile(_kUid)).thenAnswer(
+        (_) async => const AppUser(
+          uid: _kUid,
+          email: _kEmail,
+          name: 'Ana',
+          role: UserRole.client,
+        ),
+      );
 
       final ok = await controller.confirmGoogleLinkWithPassword(
         email: _kEmail,
@@ -125,7 +152,12 @@ void main() {
           password: 'wrong',
           pendingGoogleCredential: pendingCredential,
         ),
-      ).thenThrow(FirebaseAuthException(code: 'wrong-password', message: 'Contraseña incorrecta'));
+      ).thenThrow(
+        FirebaseAuthException(
+          code: 'wrong-password',
+          message: 'Contraseña incorrecta',
+        ),
+      );
 
       final ok = await controller.confirmGoogleLinkWithPassword(
         email: _kEmail,

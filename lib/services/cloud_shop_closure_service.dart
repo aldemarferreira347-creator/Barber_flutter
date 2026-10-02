@@ -62,7 +62,8 @@ class CloudShopClosureService implements ShopClosureRepository {
     var affected = 0;
     for (final doc in appointmentsSnap.docs) {
       final data = doc.data();
-      if (data['paid'] != true || !_upcomingAppointmentStatuses.contains(data['status'])) {
+      if (data['paid'] != true ||
+          !_upcomingAppointmentStatuses.contains(data['status'])) {
         continue;
       }
 
@@ -71,7 +72,10 @@ class CloudShopClosureService implements ShopClosureRepository {
           .collection('appointmentSlots')
           .doc(appointmentSlotId(data['barberId'] as String, date));
       await Future.wait([
-        doc.reference.update({'status': 'postponed', 'forcedRatingPenalty': true}),
+        doc.reference.update({
+          'status': 'postponed',
+          'forcedRatingPenalty': true,
+        }),
         slotRef.delete(),
       ]);
       affected++;

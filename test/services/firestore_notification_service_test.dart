@@ -13,7 +13,11 @@ void main() {
   });
 
   test('send guarda la notificación sin leer, con el tipo indicado', () async {
-    await service.send(toUserId: 'user1', title: 'Pago vencido', body: 'Regulariza tu mensualidad');
+    await service.send(
+      toUserId: 'user1',
+      title: 'Pago vencido',
+      body: 'Regulariza tu mensualidad',
+    );
 
     final snapshot = await firestore.collection('notifications').get();
     final doc = snapshot.docs.single.data();
@@ -54,7 +58,8 @@ void main() {
 
     await service.markRead('n1');
 
-    final doc = (await firestore.collection('notifications').doc('n1').get()).data()!;
+    final doc = (await firestore.collection('notifications').doc('n1').get())
+        .data()!;
     expect(doc['read'], true);
   });
 

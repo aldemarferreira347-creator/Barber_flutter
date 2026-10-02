@@ -20,7 +20,7 @@ void main() {
   final now = DateTime(2030, 1, 10);
 
   test('mensualidad al día con vencimiento lejano: sin alertas', () {
-    expect(shopAlerts(_shop(due: DateTime(2030, 2, 1)), now: now), isEmpty);
+    expect(shopAlerts(_shop(due: DateTime(2030, 2)), now: now), isEmpty);
   });
 
   test('vence en pocos días: avisa que está por vencer', () {
@@ -38,7 +38,7 @@ void main() {
 
   test('gracia agotada: alerta de bloqueo inminente', () {
     final alerts = shopAlerts(
-      _shop(payment: PaymentStatus.overdue, due: DateTime(2029, 12, 1)),
+      _shop(payment: PaymentStatus.overdue, due: DateTime(2029, 12)),
       now: now,
     );
     expect(alerts.single.title, contains('sin pagar'));

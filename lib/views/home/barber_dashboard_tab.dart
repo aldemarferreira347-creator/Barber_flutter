@@ -102,7 +102,6 @@ class BarberDashboardTab extends StatelessWidget {
           icon: Icons.access_time,
           label: 'Mi horario',
           subtitle: 'Ver y gestionar disponibilidad',
-          animationIndex: 0,
           onTap: () => Navigator.of(context).push(
             MaterialPageRoute(builder: (_) => const BarberAvailabilityView()),
           ),

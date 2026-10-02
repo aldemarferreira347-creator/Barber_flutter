@@ -32,7 +32,11 @@ void main() {
     storage = MockStorageRepository();
     when(() => auth.currentUser).thenReturn(user);
     when(() => user.uid).thenReturn('client1');
-    service = CloudCommentService(storage: storage, firestore: firestore, auth: auth);
+    service = CloudCommentService(
+      storage: storage,
+      firestore: firestore,
+      auth: auth,
+    );
   });
 
   Future<void> seedAppointment({
@@ -60,7 +64,8 @@ void main() {
     );
 
     expect(status, CommentStatus.published);
-    final doc = (await firestore.collection('comments').doc('appt1').get()).data()!;
+    final doc = (await firestore.collection('comments').doc('appt1').get())
+        .data()!;
     expect(doc['status'], 'published');
     expect(doc['barbershopId'], 'shop1');
     expect(doc['barberId'], 'barber1');
@@ -70,29 +75,43 @@ void main() {
     expect(doc['photoUrl'], 'https://x/1.jpg');
   });
 
-  test('submitComment rechaza (pero guarda) un comentario con lenguaje ofensivo', () async {
-    await seedAppointment();
+  test(
+    'submitComment rechaza (pero guarda) un comentario con lenguaje ofensivo',
+    () async {
+      await seedAppointment();
 
-    final status = await service.submitComment(appointmentId: 'appt1', text: 'el barbero es un idiota');
+      final status = await service.submitComment(
+        appointmentId: 'appt1',
+        text: 'el barbero es un idiota',
+      );
 
-    expect(status, CommentStatus.rejected);
-    final doc = (await firestore.collection('comments').doc('appt1').get()).data()!;
-    expect(doc['status'], 'rejected');
-  });
+      expect(status, CommentStatus.rejected);
+      final doc = (await firestore.collection('comments').doc('appt1').get())
+          .data()!;
+      expect(doc['status'], 'rejected');
+    },
+  );
 
-  test('submitComment detecta groserías con leetspeak y letras repetidas', () async {
-    await seedAppointment();
+  test(
+    'submitComment detecta groserías con leetspeak y letras repetidas',
+    () async {
+      await seedAppointment();
 
-    final status = await service.submitComment(appointmentId: 'appt1', text: 'que p3ndejooo');
+      final status = await service.submitComment(
+        appointmentId: 'appt1',
+        text: 'que p3ndejooo',
+      );
 
-    expect(status, CommentStatus.rejected);
-  });
+      expect(status, CommentStatus.rejected);
+    },
+  );
 
   test('submitComment rechaza comentar la cita de otro cliente', () async {
     await seedAppointment(clientId: 'other-client');
 
     await expectLater(
-      () => service.submitComment(appointmentId: 'appt1', text: 'Buen servicio'),
+      () =>
+          service.submitComment(appointmentId: 'appt1', text: 'Buen servicio'),
       throwsA(anything),
     );
   });
@@ -101,7 +120,8 @@ void main() {
     await seedAppointment(status: 'accepted');
 
     await expectLater(
-      () => service.submitComment(appointmentId: 'appt1', text: 'Buen servicio'),
+      () =>
+          service.submitComment(appointmentId: 'appt1', text: 'Buen servicio'),
       throwsA(anything),
     );
   });
@@ -114,9 +134,13 @@ void main() {
     });
     when(() => user.uid).thenReturn('barber1');
 
-    await service.replyToComment(commentId: 'c1', replyText: 'Gracias por tu visita');
+    await service.replyToComment(
+      commentId: 'c1',
+      replyText: 'Gracias por tu visita',
+    );
 
-    final doc = (await firestore.collection('comments').doc('c1').get()).data()!;
+    final doc = (await firestore.collection('comments').doc('c1').get())
+        .data()!;
     expect(doc['replyText'], 'Gracias por tu visita');
     expect(doc['repliedByBarberId'], 'barber1');
   });
@@ -134,20 +158,30 @@ void main() {
     );
   });
 
-  test('uploadPhoto delega en StorageRepository con la ruta esperada', () async {
-    when(
-      () => storage.uploadBytes(
-        path: any(named: 'path'),
-        bytes: any(named: 'bytes'),
-      ),
-    ).thenAnswer((_) async => 'https://example.com/photo.png');
-    final bytes = Uint8List.fromList([1, 2, 3]);
+  test(
+    'uploadPhoto delega en StorageRepository con la ruta esperada',
+    () async {
+      when(
+        () => storage.uploadBytes(
+          path: any(named: 'path'),
+          bytes: any(named: 'bytes'),
+        ),
+      ).thenAnswer((_) async => 'https://example.com/photo.png');
+      final bytes = Uint8List.fromList([1, 2, 3]);
 
-    final url = await service.uploadPhoto(appointmentId: 'appt1', fileName: 'photo.png', bytes: bytes);
+      final url = await service.uploadPhoto(
+        appointmentId: 'appt1',
+        fileName: 'photo.png',
+        bytes: bytes,
+      );
 
-    expect(url, 'https://example.com/photo.png');
-    verify(() => storage.uploadBytes(path: 'comments/appt1/photo.png', bytes: bytes)).called(1);
-  });
+      expect(url, 'https://example.com/photo.png');
+      verify(
+        () =>
+            storage.uploadBytes(path: 'comments/appt1/photo.png', bytes: bytes),
+      ).called(1);
+    },
+  );
 
   test('watchPublishedByBarbershop traduce los documentos publicados, más recientes primero', () async {
     await firestore.collection('comments').doc('appt1').set({
@@ -178,6 +212,9 @@ void main() {
     final comments = await service.watchPublishedByBarbershop('shop1').first;
 
     expect(comments, hasLength(2));
-    expect(comments.map((c) => c.appointmentId), containsAll(['appt1', 'appt2']));
+    expect(
+      comments.map((c) => c.appointmentId),
+      containsAll(['appt1', 'appt2']),
+    );
   });
 }

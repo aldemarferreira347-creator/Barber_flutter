@@ -43,7 +43,6 @@ class _SplashViewState extends State<SplashView> {
           Image.asset(
             'lib/views/img/fondo.png',
             fit: BoxFit.cover,
-            alignment: Alignment.center,
           ),
           // Capa oscura degradada para alto contraste y elegancia
           DecoratedBox(
@@ -68,7 +67,7 @@ class _SplashViewState extends State<SplashView> {
                 color: Colors.white,
                 spin: !reduceMotion,
               );
-              final title = const Text(
+              const title = Text(
                 'BarberFlow',
                 style: TextStyle(
                   color: Colors.white,
