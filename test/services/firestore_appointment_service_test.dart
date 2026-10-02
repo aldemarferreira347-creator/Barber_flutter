@@ -264,4 +264,34 @@ void main() {
       expect(data['status'], 'pending');
     },
   );
+
+  test('watchByClient entrega solo las 200 citas más recientes, en orden ascendente', () async {
+    final base = DateTime.utc(2030);
+    for (var i = 0; i < 205; i++) {
+      await firestore.collection('appointments').doc('a$i').set({
+        'barbershopId': 'shop1',
+        'barberId': 'barber1',
+        'barberName': 'Beto',
+        'clientId': 'client1',
+        'clientName': 'Ana',
+        'serviceId': 'svc1',
+        'serviceName': 'Corte',
+        'servicePrice': 20000,
+        'durationMinutes': 30,
+        'date': Timestamp.fromDate(base.add(Duration(days: i))),
+        'status': 'pending',
+        'paid': false,
+      });
+    }
+
+    final list = await service.watchByClient('client1').first;
+
+    expect(list, hasLength(200));
+    expect(list.first.id, 'a5'); // se descartan las 5 más antiguas
+    expect(list.last.id, 'a204');
+    expect(
+      list.map((a) => a.date).toList(),
+      orderedEquals([...list.map((a) => a.date)]..sort()),
+    );
+  });
 }

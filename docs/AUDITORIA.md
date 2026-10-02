@@ -143,7 +143,20 @@ Leyenda: ✅ funciona de verdad con Firebase gratis (Spark) · ⚠️ existe per
 
 ## Fase 4 — Rendimiento
 
-_(pendiente)_
+| Hallazgo | Corrección | Test |
+|---|---|---|
+| Las listas de citas (cliente, barbero, barbería) descargaban **todo el historial** en cada apertura, sin tope | `orderBy('date', descending)` + `limit(200)` (incluye las futuras) y se devuelven en orden ascendente para la UI; usan los índices compuestos que ya existían | `watchByClient` con 205 citas entrega 200, en orden |
+| Compras, solicitudes de reembolso y notificaciones sin tope | `limit(100)` sobre las más recientes (ya venían ordenadas desc) | suite verde |
+| **Defecto:** las reseñas publicadas se mostraban con `.reversed` sobre documentos sin `orderBy` → orden arbitrario | `orderBy('createdAt', desc)` + `limit(100)`; índice compuesto `comments(barbershopId, status, createdAt desc)` añadido a `firestore.indexes.json` | suite verde |
+
+### Revisado y sin cambios
+
+- **Subida de fotos:** ya se comprimen (`maxWidth: 1280`, `imageQuality: 85`) en los 4 puntos de captura.
+- **Listeners de `watchByBarbershops`:** abre uno por barbería a propósito (las reglas solo pueden demostrar la propiedad con una consulta por barbería) y los cancela en `onCancel`.
+- **Rebuild del tema:** `Consumer<ThemeController>` solo reconstruye al cambiar de tema.
+- **No se acotó** `watchAll()` de usuarios (solo admin) ni el catálogo de barberías: sin paginación en pantalla, un tope las ocultaría en silencio. Queda como mejora si la plataforma crece.
+- **Imágenes de red:** 13 usos de `Image.network` sin caché en disco (se vuelven a descargar en cada arranque). Se resuelve con un componente compartido (`AppNetworkImage`, `cached_network_image`) en las Fases 5–6.
+- **Animaciones:** 94 usos de `flutter_animate` en las vistas; se reducen en la Fase 5.
 
 ## Fase 5 — Sistema de diseño
 

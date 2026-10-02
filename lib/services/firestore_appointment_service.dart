@@ -142,43 +142,46 @@ class FirestoreAppointmentService implements AppointmentRepository {
     return appointmentRef.id;
   }
 
+  /// Citas que se escuchan por consulta: las más recientes (incluye las
+  /// futuras). Evita descargar años de historial en cada apertura.
+  static const _maxAppointments = 200;
+
+  static List<Appointment> _toAscendingList(
+    QuerySnapshot<Map<String, dynamic>> snapshot,
+  ) => snapshot.docs
+      .map((doc) => Appointment.fromMap(doc.id, doc.data()))
+      .toList()
+      .reversed
+      .toList();
+
   @override
   Stream<List<Appointment>> watchByClient(String clientId) {
     return _appointments
         .where('clientId', isEqualTo: clientId)
-        .orderBy('date')
+        .orderBy('date', descending: true)
+        .limit(_maxAppointments)
         .snapshots()
-        .map(
-          (snapshot) => snapshot.docs
-              .map((doc) => Appointment.fromMap(doc.id, doc.data()))
-              .toList(),
-        );
+        .map(_toAscendingList);
   }
 
   @override
   Stream<List<Appointment>> watchByBarber(String barberId) {
     return _appointments
         .where('barberId', isEqualTo: barberId)
-        .orderBy('date')
+        .orderBy('date', descending: true)
+        .limit(_maxAppointments)
         .snapshots()
-        .map(
-          (snapshot) => snapshot.docs
-              .map((doc) => Appointment.fromMap(doc.id, doc.data()))
-              .toList(),
-        );
+        .map(_toAscendingList);
   }
 
   @override
   Stream<List<Appointment>> watchByBarbershop(String barbershopId) {
     return _appointments
         .where('barbershopId', isEqualTo: barbershopId)
-        .orderBy('date')
+        .orderBy('date', descending: true)
+        .limit(_maxAppointments)
         .snapshots()
-        .map(
-          (snapshot) => snapshot.docs
-              .map((doc) => Appointment.fromMap(doc.id, doc.data()))
-              .toList(),
-        );
+        .map(_toAscendingList);
   }
 
   @override

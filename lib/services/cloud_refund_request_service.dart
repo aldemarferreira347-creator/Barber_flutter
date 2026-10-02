@@ -30,11 +30,15 @@ class CloudRefundRequestService implements RefundRequestRepository {
   CollectionReference<Map<String, dynamic>> get _slots =>
       _firestore.collection('appointmentSlots');
 
+  /// Tope de cada lista: lo más reciente (las pantallas no paginan).
+  static const _maxListItems = 100;
+
   @override
   Stream<List<RefundRequest>> watchByBarbershop(String barbershopId) {
     return _requests
         .where('barbershopId', isEqualTo: barbershopId)
         .orderBy('createdAt', descending: true)
+        .limit(_maxListItems)
         .snapshots()
         .map(
           (snapshot) => snapshot.docs
@@ -48,6 +52,7 @@ class CloudRefundRequestService implements RefundRequestRepository {
     return _requests
         .where('clientId', isEqualTo: clientId)
         .orderBy('createdAt', descending: true)
+        .limit(_maxListItems)
         .snapshots()
         .map(
           (snapshot) => snapshot.docs

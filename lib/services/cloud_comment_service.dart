@@ -111,17 +111,20 @@ class CloudCommentService implements CommentRepository {
     });
   }
 
+  /// Reseñas más recientes que se muestran (la pantalla no pagina).
+  static const _maxPublished = 100;
+
   @override
   Stream<List<Comment>> watchPublishedByBarbershop(String barbershopId) {
     return _comments
         .where('barbershopId', isEqualTo: barbershopId)
         .where('status', isEqualTo: 'published')
+        .orderBy('createdAt', descending: true)
+        .limit(_maxPublished)
         .snapshots()
         .map(
           (snapshot) => snapshot.docs
               .map((doc) => Comment.fromMap(doc.id, doc.data()))
-              .toList()
-              .reversed
               .toList(),
         );
   }

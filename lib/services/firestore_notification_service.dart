@@ -19,11 +19,15 @@ class FirestoreNotificationService implements NotificationRepository {
   CollectionReference<Map<String, dynamic>> get _notifications =>
       _firestore.collection('notifications');
 
+  /// Tope de la bandeja: las más recientes (la lista no pagina).
+  static const _maxItems = 100;
+
   @override
   Stream<List<AppNotification>> watchForUser(String uid) {
     return _notifications
         .where('toUserId', isEqualTo: uid)
         .orderBy('createdAt', descending: true)
+        .limit(_maxItems)
         .snapshots()
         .map(
           (snapshot) => snapshot.docs

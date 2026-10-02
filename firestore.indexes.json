@@ -93,7 +93,8 @@
       "queryScope": "COLLECTION",
       "fields": [
         {"fieldPath": "barbershopId", "order": "ASCENDING"},
-        {"fieldPath": "status", "order": "ASCENDING"}
+        {"fieldPath": "status", "order": "ASCENDING"},
+        {"fieldPath": "createdAt", "order": "DESCENDING"}
       ]
     },
     {

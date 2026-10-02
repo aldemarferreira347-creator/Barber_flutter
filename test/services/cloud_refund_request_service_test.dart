@@ -160,6 +160,7 @@ void main() {
     final collection = MockCollectionReference();
     final query1 = MockQuery();
     final query2 = MockQuery();
+    final query3 = MockQuery();
     final querySnapshot = MockQuerySnapshot();
     final docSnapshot = MockQueryDocumentSnapshot();
 
@@ -168,7 +169,8 @@ void main() {
         .thenReturn(query1);
     when(() => query1.orderBy('createdAt', descending: true))
         .thenReturn(query2);
-    when(() => query2.snapshots())
+    when(() => query2.limit(any())).thenReturn(query3);
+    when(() => query3.snapshots())
         .thenAnswer((_) => Stream.value(querySnapshot));
     when(() => querySnapshot.docs).thenReturn([docSnapshot]);
     when(() => docSnapshot.id).thenReturn('req1');

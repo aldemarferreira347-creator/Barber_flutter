@@ -144,11 +144,15 @@ class CloudPurchaseService implements PurchaseRepository {
     });
   }
 
+  /// Tope de cada lista: lo más reciente (las pantallas no paginan).
+  static const _maxListItems = 100;
+
   @override
   Stream<List<Purchase>> watchByBuyer(String buyerId) {
     return _purchases
         .where('buyerId', isEqualTo: buyerId)
         .orderBy('createdAt', descending: true)
+        .limit(_maxListItems)
         .snapshots()
         .map(
           (snapshot) => snapshot.docs
@@ -162,6 +166,7 @@ class CloudPurchaseService implements PurchaseRepository {
     return _purchases
         .where('barbershopId', isEqualTo: barbershopId)
         .orderBy('createdAt', descending: true)
+        .limit(_maxListItems)
         .snapshots()
         .map(
           (snapshot) => snapshot.docs

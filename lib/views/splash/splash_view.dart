@@ -40,10 +40,7 @@ class _SplashViewState extends State<SplashView> {
         fit: StackFit.expand,
         children: [
           // Fondo fotográfico de la barbería
-          Image.asset(
-            'lib/views/img/fondo.png',
-            fit: BoxFit.cover,
-          ),
+          Image.asset('lib/views/img/fondo.png', fit: BoxFit.cover),
           // Capa oscura degradada para alto contraste y elegancia
           DecoratedBox(
             decoration: BoxDecoration(
