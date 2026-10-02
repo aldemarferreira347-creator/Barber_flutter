@@ -426,10 +426,13 @@ class _ManageBarbershopsViewState extends State<ManageBarbershopsView> {
                                                   if (shop.approvalStatus ==
                                                       BarbershopApprovalStatus
                                                           .approved)
-                                                    _PaymentBadge(
-                                                      insight: paymentInsight(
+                                                    StatusBadge(
+                                                      label: paymentInsight(
                                                         shop,
-                                                      ),
+                                                      ).label,
+                                                      color: paymentInsight(
+                                                        shop,
+                                                      ).color,
                                                     ),
                                                 ],
                                               ),
@@ -466,31 +469,6 @@ class _ManageBarbershopsViewState extends State<ManageBarbershopsView> {
               ),
             ),
           ],
-        ),
-      ),
-    );
-  }
-}
-
-class _PaymentBadge extends StatelessWidget {
-  final PaymentInsight insight;
-
-  const _PaymentBadge({required this.insight});
-
-  @override
-  Widget build(BuildContext context) {
-    return Container(
-      padding: const EdgeInsets.symmetric(horizontal: 10, vertical: 4),
-      decoration: BoxDecoration(
-        color: insight.color,
-        borderRadius: BorderRadius.circular(20),
-      ),
-      child: Text(
-        insight.label,
-        style: const TextStyle(
-          color: Colors.white,
-          fontSize: 12,
-          fontWeight: FontWeight.w600,
         ),
       ),
     );
@@ -786,7 +764,11 @@ class _ShopActionsSheet extends StatelessWidget {
                           runSpacing: 6,
                           children: [
                             ApprovalStatusBadge(status: shop.approvalStatus),
-                            if (isApproved) _PaymentBadge(insight: insight),
+                            if (isApproved)
+                              StatusBadge(
+                                label: insight.label,
+                                color: insight.color,
+                              ),
                           ],
                         ),
                       ],

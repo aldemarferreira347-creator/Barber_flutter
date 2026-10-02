@@ -156,18 +156,20 @@ class FirestoreBarbershopService implements BarbershopRepository {
     return _registerPaid(barbershop, null);
   }
 
-  /// Cobra el registro y crea la barbería 'pending'. La pasarela sigue
-  /// simulada (ver [paySubscription]); firestore.rules exige que el pago
-  /// exista, sea del dueño, de categoría 'subscription', esté aprobado y
-  /// apunte al id de esta barbería — sin eso no se puede crear.
-  Future<String> _registerPaid(Barbershop shop, String? draftId) async {
-    final shopRef = _barbershops.doc();
+  /// Cobro simulado de [kBarbershopMonthlyFee]: crea el pago 'pendiente', espera
+  /// y lo marca 'aprobado' (lo que firestore.rules exige para registrar o
+  /// renovar). Devuelve el id del pago.
+  Future<String> _chargeSubscription({
+    required String payerId,
+    required String relatedId,
+    required String description,
+  }) async {
     final paymentRef = await _firestore.collection('payments').add({
-      'payerId': shop.ownerId,
+      'payerId': payerId,
       'amount': kBarbershopMonthlyFee,
       'category': 'subscription',
-      'relatedId': shopRef.id,
-      'description': 'Registro de barbershops/${shopRef.id}',
+      'relatedId': relatedId,
+      'description': description,
       'status': 'pending',
       'createdAt': FieldValue.serverTimestamp(),
       'resolvedAt': null,
@@ -178,6 +180,20 @@ class FirestoreBarbershopService implements BarbershopRepository {
       'status': 'approved',
       'resolvedAt': FieldValue.serverTimestamp(),
     });
+    return paymentRef.id;
+  }
+
+  /// Cobra el registro y crea la barbería 'pending'. La pasarela sigue
+  /// simulada (ver [paySubscription]); firestore.rules exige que el pago
+  /// exista, sea del dueño, de categoría 'subscription', esté aprobado y
+  /// apunte al id de esta barbería — sin eso no se puede crear.
+  Future<String> _registerPaid(Barbershop shop, String? draftId) async {
+    final shopRef = _barbershops.doc();
+    final paymentId = await _chargeSubscription(
+      payerId: shop.ownerId,
+      relatedId: shopRef.id,
+      description: 'Registro de barbershops/${shopRef.id}',
+    );
 
     final batch = _firestore.batch();
     batch.set(shopRef, {
@@ -186,7 +202,7 @@ class FirestoreBarbershopService implements BarbershopRepository {
       'approvalStatus': BarbershopApprovalStatus.pending.value,
       'paymentStatus': PaymentStatus.ok.value,
       'paymentDueDate': null,
-      'paymentId': paymentRef.id,
+      'paymentId': paymentId,
     });
     if (draftId != null) batch.delete(_drafts.doc(draftId));
     await batch.commit();
@@ -313,22 +329,11 @@ class FirestoreBarbershopService implements BarbershopRepository {
     if (shopData == null) throw Exception('La barbería no existe.');
     final shop = Barbershop.fromMap(shopSnap.id, shopData);
 
-    final paymentRef = await _firestore.collection('payments').add({
-      'payerId': shop.ownerId,
-      'amount': kBarbershopMonthlyFee,
-      'category': 'subscription',
-      'relatedId': id,
-      'description': 'Mensualidad de barbershops/$id',
-      'status': 'pending',
-      'createdAt': FieldValue.serverTimestamp(),
-      'resolvedAt': null,
-      'refundedAmount': null,
-    });
-    await Future<void>.delayed(_simulatedApprovalDelay);
-    await paymentRef.update({
-      'status': 'approved',
-      'resolvedAt': FieldValue.serverTimestamp(),
-    });
+    await _chargeSubscription(
+      payerId: shop.ownerId,
+      relatedId: id,
+      description: 'Mensualidad de barbershops/$id',
+    );
 
     await _barbershops.doc(id).update({
       'paymentStatus': PaymentStatus.ok.value,

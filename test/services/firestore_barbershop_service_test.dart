@@ -137,6 +137,8 @@ void main() {
       when(() => paymentsCollection.add(any())).thenAnswer((_) async => paymentDocRef);
       when(() => paymentDocRef.update(any())).thenAnswer((_) async {});
 
+      when(() => paymentDocRef.id).thenReturn('pay1');
+
       await service.paySubscription('shop1');
 
       final paymentCreate =
