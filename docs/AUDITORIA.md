@@ -27,7 +27,7 @@ Cada hallazgo se registra como **Hallazgo · Causa raíz · Corrección · Test*
 ## Fase 0 — Preparación
 
 - Lint de `functions` en 0 errores (variable `_omit` sin usar en `barbershops.rules.test.ts`).
-- **Tests de reglas ejecutables por primera vez.** Se instaló JDK 21 (Temurin). En este Windows el emulador además exige `-Djava.net.preferIPv4Stack=true` y un TEMP corto (`C:	mp`); `functions/scripts/test-rules.cjs` lo aplica solo → `npm run test:rules`. Resultado: 12 suites, 107 tests (80 previos + 27 nuevos). Antes nunca se habían ejecutado.
+- **Tests de reglas ejecutables por primera vez.** Se instaló JDK 21 (Temurin). En este Windows el emulador además exige `-Djava.net.preferIPv4Stack=true` y un TEMP corto (`C:/tmp`); `functions/scripts/test-rules.cjs` lo aplica solo → `npm run test:rules`. Resultado: 12 suites, 107 tests (80 previos + 27 nuevos). Antes nunca se habían ejecutado.
 
 ## Fase 1 — Seguridad
 
