@@ -1,4 +1,7 @@
 import 'package:flutter/material.dart';
+
+import '../../models/barbershop.dart';
+
 import 'package:provider/provider.dart';
 
 import '../../models/product.dart';
@@ -138,7 +141,7 @@ class ManageProductsView extends StatelessWidget {
                             ),
                           ),
                           Text(
-                            '\$${product.price.toStringAsFixed(0)}',
+                            formatCop(product.price),
                             style: TextStyle(
                               fontWeight: FontWeight.w800,
                               color: AppColors.accent,

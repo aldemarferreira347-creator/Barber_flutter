@@ -1,4 +1,7 @@
 import 'package:flutter/material.dart';
+
+import '../../models/barbershop.dart';
+
 import 'package:provider/provider.dart';
 
 import '../../models/purchase.dart';
@@ -135,7 +138,7 @@ class _ClaimPurchaseViewState extends State<ClaimPurchaseView> {
                           style: const TextStyle(fontWeight: FontWeight.w700),
                         ),
                         Text(
-                          '\$${purchase.totalAmount.toStringAsFixed(0)}',
+                          formatCop(purchase.totalAmount),
                           style: TextStyle(
                             fontWeight: FontWeight.w800,
                             color: AppColors.accent,
@@ -164,9 +167,7 @@ class _ClaimPurchaseViewState extends State<ClaimPurchaseView> {
                                 '${item.productName} ×${item.quantity}${item.refunded ? ' (reembolsado)' : ''}',
                               ),
                             ),
-                            Text(
-                              '\$${(item.unitPrice * item.quantity).toStringAsFixed(0)}',
-                            ),
+                            Text(formatCop(item.unitPrice * item.quantity)),
                           ],
                         ),
                       ),

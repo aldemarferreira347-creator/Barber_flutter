@@ -1,4 +1,7 @@
 import 'package:flutter/material.dart';
+
+import '../../models/barbershop.dart';
+
 import 'package:flutter/services.dart';
 import 'package:provider/provider.dart';
 
@@ -107,7 +110,7 @@ class _BuyProductViewState extends State<BuyProductView> {
         ),
         const SizedBox(height: 12),
         Text(
-          'Total: \$${total.toStringAsFixed(0)}',
+          'Total: ${formatCop(total)}',
           textAlign: TextAlign.center,
           style: const TextStyle(fontWeight: FontWeight.w800, fontSize: 16),
         ),

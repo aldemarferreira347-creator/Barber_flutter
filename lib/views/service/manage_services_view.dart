@@ -1,4 +1,7 @@
 import 'package:flutter/material.dart';
+
+import '../../models/barbershop.dart';
+
 import 'package:provider/provider.dart';
 
 import '../../models/service.dart';
@@ -124,7 +127,7 @@ class ManageServicesView extends StatelessWidget {
                       ),
                     ),
                     Text(
-                      '\$${service.price.toStringAsFixed(0)}',
+                      formatCop(service.price),
                       style: TextStyle(
                         fontWeight: FontWeight.w800,
                         color: AppColors.accent,

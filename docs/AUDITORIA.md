@@ -194,10 +194,18 @@ El mockup del repo (`lib/views/img/mockup.png`) es la fuente: negro `#000`, tarj
 
 Eliminar los `Color(0x…)` / `Colors.white|black` restantes de las vistas (login, registro, splash y algunas más) y blindarlo con un test que falle si reaparecen.
 
-## Fase 6 — Rediseño por área
+## Fase 6 — Rediseño por área (EN CURSO)
 
-_(pendiente)_
+**Hecho y verificado en la app real contra emuladores (claro y oscuro):** login, registro, teléfono y éxito (el login era inutilizable en oscuro); los 4 dashboards con contenido operativo (cliente: próxima cita real; barbero: resumen de hoy; dueño: actividad por barbería; admin: "requiere tu atención"); catálogo del cliente nuevo (foto, valoración, abierta ahora, búsqueda y filtros); perfil; navegación `NavigationBar`/`NavigationRail`; cambio de tema que ya no reinicia la app (`ThemeScope`); texto por defecto con color principal; precios unificados con `formatCop`; aviso de pago que mostraba código literal.
+
+**Pendiente de la Fase 6:** `IconButton` sin tooltip (6), `Image.network`/`NetworkImage` sin caché en 10 vistas (usar `AppNetworkImage`), partir `manage_users_view` (1351 líneas) y `manage_barbershops_view`, rediseño de las pantallas de gestión del dueño, agenda del barbero, reserva, detalle y compras; `ResponsiveBody` en las listas restantes.
 
 ## Fase 7 — Verificación final
 
-_(pendiente)_
+_(pendiente: matriz de tamaños × tema × texto grande)_
+
+## Fase 8 — Funcionalidad real sin servidor (PENDIENTE, diseño listo)
+
+1. **Pagos Nequi manuales con confirmación** (reemplazan el cobro simulado, que le dice al usuario "confirma en tu app Nequi" sin enviar nada): el cliente ve el número Nequi de la barbería, paga desde su app y registra la referencia; el dueño/barbero verifica y confirma (o rechaza y se libera el horario). Mensualidad: el dueño paga al número Nequi de la plataforma (configurable por el admin) y el admin confirma. Las reglas dejan de permitir que el pagador apruebe su propio pago (cierra el riesgo aceptado en la Fase 1). Reembolso con medio (Nequi o efectivo).
+2. **Sin servidor:** recordatorios locales 1 h y 15 min antes de la cita; bloqueo por mora con gracia como estado derivado y barrido del admin; compras vencidas (la regla debe impedir reclamar tras 24 h).
+3. **Ausentes:** "Mis compras" del cliente (hoy no puede volver a ver su código de reclamo), reportes del dueño (clientes atendidos, actividad por barbero), vincular compra a una cita, quitar el stub "Métodos de pago".

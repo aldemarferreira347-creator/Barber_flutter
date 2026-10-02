@@ -379,7 +379,7 @@ class _AddBarbershopViewState extends State<AddBarbershopView> {
                       const SizedBox(width: 8),
                       Expanded(
                         child: Text(
-                          'Para registrarla debes pagar la primera mensualidad (\${formatCop(kBarbershopMonthlyFee)}); luego el administrador la revisa antes de mostrarla en el catálogo. Si prefieres, guárdala como borrador (máximo \$kMaxBarbershopDrafts) y págala después.',
+                          'Para registrarla debes pagar la primera mensualidad (${formatCop(kBarbershopMonthlyFee)}); luego el administrador la revisa antes de mostrarla en el catálogo. Si prefieres, guárdala como borrador (máximo $kMaxBarbershopDrafts) y págala después.',
                           style: TextStyle(
                             fontSize: 12,
                             color: AppColors.textSecondary,

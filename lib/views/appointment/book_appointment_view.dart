@@ -1,4 +1,7 @@
 import 'package:flutter/material.dart';
+
+import '../../models/barbershop.dart';
+
 import 'package:provider/provider.dart';
 
 import '../../controllers/auth_controller.dart';
@@ -164,7 +167,7 @@ class _BookAppointmentViewState extends State<BookAppointmentView> {
                       selected: _service?.id == entry.$2.id,
                       title: entry.$2.name,
                       subtitle:
-                          '${entry.$2.durationMinutes} min · \$${entry.$2.price.toStringAsFixed(0)}',
+                          '${entry.$2.durationMinutes} min · ${formatCop(entry.$2.price)}',
                       animationIndex: entry.$1,
                       onTap: () => setState(() => _service = entry.$2),
                     ),
