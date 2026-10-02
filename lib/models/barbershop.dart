@@ -15,10 +15,36 @@ extension PaymentStatusX on PaymentStatus {
   }
 }
 
-/// Revisión del administrador sobre la solicitud de registro (spec 12.1):
-/// toda barbería nace 'pending' y solo el admin la pasa a 'approved' o
-/// 'rejected' — nunca el propio dueño.
-enum BarbershopApprovalStatus { pending, approved, rejected }
+/// Mensualidad que el dueño paga por cada barbería — al registrarla y luego
+/// cada ciclo (spec 12.5). Placeholder hasta que el negocio defina el precio
+/// real; mismo valor que MONTHLY_FEE en
+/// functions/src/barbershops/subscriptionService.ts.
+const kBarbershopMonthlyFee = 50000.0;
+
+/// `50000` → `$50.000` (pesos colombianos, sin decimales).
+String formatCop(double amount) {
+  final digits = amount.round().toString();
+  final grouped = digits.replaceAllMapped(
+    RegExp(r'\B(?=(\d{3})+(?!\d))'),
+    (_) => '.',
+  );
+  return '\$$grouped';
+}
+
+/// Tope de borradores por dueño: evita que se llene la base de datos con
+/// barberías falsas sin pagar. Espejo del rango de slots `_1.._5` que
+/// impone firestore.rules sobre `barbershopDrafts/{uid}_{n}`.
+const kMaxBarbershopDrafts = 5;
+
+/// Ciclo de vida de una barbería:
+/// - `draft`: borrador del dueño, sin pagar ni enviar. Vive en la colección
+///   `barbershopDrafts` (nunca en `barbershops`) y no es visible para nadie
+///   más.
+/// - `pending`: ya pagada y enviada; espera la revisión del administrador
+///   (spec 12.1).
+/// - `approved` / `rejected`: solo el admin las asigna — nunca el propio
+///   dueño.
+enum BarbershopApprovalStatus { draft, pending, approved, rejected }
 
 extension BarbershopApprovalStatusX on BarbershopApprovalStatus {
   String get value => name;
@@ -79,6 +105,8 @@ class Barbershop {
   /// 0 si nadie ha calificado todavía — nunca un promedio inventado.
   double get averageRating => ratingCount == 0 ? 0 : ratingSum / ratingCount;
 
+  bool get isDraft => approvalStatus == BarbershopApprovalStatus.draft;
+
   /// Solo aparece en el catálogo del cliente si el admin ya la aprobó y no
   /// está bloqueada (spec 12.1/12.6).
   bool get isVisibleInCatalog =>
@@ -109,6 +137,35 @@ class Barbershop {
       ratingSum: (map['ratingSum'] as num?)?.toInt() ?? 0,
       ratingCount: (map['ratingCount'] as num?)?.toInt() ?? 0,
     );
+  }
+
+  /// Documento de borrador (`barbershopDrafts`): solo los datos que el
+  /// dueño llena en el formulario — sin estados de aprobación ni de pago,
+  /// que solo existen una vez pagada la barbería. Las claves están
+  /// restringidas por firestore.rules.
+  Map<String, dynamic> toDraftMap() {
+    return {
+      'name': name,
+      'ownerId': ownerId,
+      'address': address,
+      'location': location,
+      'phone': phone,
+      'email': email,
+      'description': description,
+      'photoUrl': photoUrl,
+      'schedule': schedule.isEmpty
+          ? weekScheduleToMap(weekScheduleFromMap(null))
+          : weekScheduleToMap(schedule),
+    };
+  }
+
+  /// Lee un documento de `barbershopDrafts`.
+  factory Barbershop.fromDraftMap(String id, Map<String, dynamic> map) {
+    return Barbershop.fromMap(id, {
+      ...map,
+      'active': false,
+      'approvalStatus': BarbershopApprovalStatus.draft.value,
+    });
   }
 
   Map<String, dynamic> toMap() {

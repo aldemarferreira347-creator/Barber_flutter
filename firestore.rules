@@ -187,6 +187,36 @@ service cloud.firestore {
       allow delete: if isAdmin();
     }
 
+    // barbershopDrafts/{uid}_{n}: borradores de barbería SIN pagar. El id
+    // solo puede ser `{uid}_1` … `{uid}_5`, así que el tope de 5 borradores
+    // por dueño lo impone esta regla (no el cliente) y no se puede saturar
+    // la base con datos falsos. Solo su dueño los ve/edita/borra (el admin
+    // también los lee); las claves permitidas son cerradas.
+    match /barbershopDrafts/{draftId} {
+      function isDraftSlotOfCaller() {
+        return draftId.matches(request.auth.uid + '_[1-5]');
+      }
+
+      function hasDraftShape() {
+        return request.resource.data.keys().hasOnly([
+          'name', 'ownerId', 'address', 'location', 'phone', 'email',
+          'description', 'photoUrl', 'schedule', 'createdAt'
+        ]) &&
+        request.resource.data.ownerId == request.auth.uid;
+      }
+
+      allow read: if isSignedIn() &&
+        (resource.data.ownerId == request.auth.uid || isAdmin());
+
+      allow create: if isSignedIn() && isDraftSlotOfCaller() && hasDraftShape();
+
+      allow update: if isSignedIn() && isDraftSlotOfCaller() &&
+        resource.data.ownerId == request.auth.uid && hasDraftShape();
+
+      allow delete: if isSignedIn() && isDraftSlotOfCaller() &&
+        resource.data.ownerId == request.auth.uid;
+    }
+
     // barbershops/{id}: cualquier usuario autenticado puede leer (para que
     // el cliente navegue barberías; el catálogo visible se filtra en el
     // cliente por approvalStatus=='approved' && active==true). El dueño
@@ -202,10 +232,20 @@ service cloud.firestore {
     match /barbershops/{shopId} {
       allow read: if isSignedIn();
 
+      // Registrar una barbería exige PAGAR primero: el payments/{paymentId}
+      // referenciado debe ser del propio dueño, de categoría 'subscription',
+      // estar aprobado y apuntar a ESTE id (un mismo pago no sirve para dos
+      // barberías). Sin pago se guarda como borrador en barbershopDrafts.
       allow create: if isSignedIn()
         && request.resource.data.ownerId == request.auth.uid
         && request.resource.data.approvalStatus == 'pending'
-        && request.resource.data.active == false;
+        && request.resource.data.active == false
+        && request.resource.data.paymentId is string
+        && exists(/databases/$(database)/documents/payments/$(request.resource.data.paymentId))
+        && get(/databases/$(database)/documents/payments/$(request.resource.data.paymentId)).data.payerId == request.auth.uid
+        && get(/databases/$(database)/documents/payments/$(request.resource.data.paymentId)).data.category == 'subscription'
+        && get(/databases/$(database)/documents/payments/$(request.resource.data.paymentId)).data.status == 'approved'
+        && get(/databases/$(database)/documents/payments/$(request.resource.data.paymentId)).data.relatedId == shopId;
 
       allow update: if isSignedIn() && (
         (resource.data.ownerId == request.auth.uid &&
@@ -251,7 +291,13 @@ service cloud.firestore {
           request.resource.data.ratingSum <= resource.data.get('ratingSum', 0) + 5)
       );
 
-      allow delete: if isAdmin();
+      // El dueño borra su barbería solo si aún no está aprobada, o si ya
+      // canceló la membresía (bloqueada): una barbería viva con citas y pagos
+      // no desaparece de un toque. El admin puede siempre.
+      allow delete: if isAdmin() || (isSignedIn() &&
+        resource.data.ownerId == request.auth.uid &&
+        (resource.data.approvalStatus != 'approved' ||
+          resource.data.paymentStatus == 'blocked'));
 
       // servicios de la barbería: el dueño de ESA barbería (o el admin) los
       // administra; cualquier usuario autenticado puede verlos (catálogo).

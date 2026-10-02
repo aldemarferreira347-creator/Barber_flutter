@@ -4,6 +4,7 @@ import 'package:provider/provider.dart';
 import '../../controllers/auth_controller.dart';
 import '../appointment/client_appointments_view.dart';
 import '../barbershop/manage_barbershops_view.dart';
+import '../barbershop/my_barbershops_view.dart';
 import '../help/help_view.dart';
 import '../notification/notifications_view.dart';
 import '../widgets/role_shell.dart';
@@ -66,8 +67,7 @@ class ClientHomeView extends StatelessWidget {
                       label: 'Registrar mi barbería (ser Dueño)',
                       onTap: () => Navigator.of(context).push(
                         MaterialPageRoute(
-                          builder: (_) =>
-                              ManageBarbershopsView(ownerId: uid, canAdd: true),
+                          builder: (_) => const MyBarbershopsView(),
                         ),
                       ),
                     ),

@@ -3,6 +3,17 @@ import 'dart:typed_data';
 import '../models/barbershop.dart';
 import '../models/day_schedule.dart';
 
+/// El dueño ya tiene [kMaxBarbershopDrafts] borradores: debe pagar o borrar
+/// alguno antes de guardar otro.
+class BarbershopDraftLimitException implements Exception {
+  const BarbershopDraftLimitException();
+
+  @override
+  String toString() =>
+      'Ya tienes $kMaxBarbershopDrafts borradores. Paga o elimina uno para '
+      'poder guardar otro.';
+}
+
 /// Abstracción sobre la persistencia de barberías.
 abstract class BarbershopRepository {
   Stream<List<Barbershop>> watchAll();
@@ -16,6 +27,49 @@ abstract class BarbershopRepository {
   Stream<Barbershop?> watchOne(String id);
 
   Future<String> create(Barbershop barbershop);
+
+  /// Borradores del dueño (máximo [kMaxBarbershopDrafts]). Viven aparte de
+  /// las barberías reales: nadie más los ve y no cuentan como barbería.
+  Stream<List<Barbershop>> watchDraftsByOwner(String ownerId);
+
+  /// Guarda un borrador nuevo en el primer cupo libre; lanza
+  /// [BarbershopDraftLimitException] si ya están los 5 ocupados.
+  Future<String> saveDraft(Barbershop draft);
+
+  Future<void> updateDraft(String draftId, Barbershop draft);
+
+  Future<void> deleteDraft(String draftId);
+
+  Future<void> uploadDraftPhoto(
+    String draftId, {
+    required String fileName,
+    required Uint8List bytes,
+  });
+
+  /// Paga el registro de un borrador y lo convierte en barbería pendiente de
+  /// revisión (el borrador se elimina). Devuelve el id de la barbería.
+  Future<String> publishDraft(String draftId);
+
+  /// Registra una barbería nueva pagando de una vez, sin pasar por borrador.
+  /// Solo así (o con [publishDraft]) puede existir una barbería nueva: sin
+  /// pago aprobado, firestore.rules rechaza la creación.
+  Future<String> createPaid(Barbershop barbershop);
+
+  /// Borra la barbería (Delete del CRUD del dueño). firestore.rules solo lo
+  /// permite si no está aprobada o si ya se canceló su membresía (bloqueada);
+  /// el admin puede siempre.
+  Future<void> delete(String id);
+
+  /// Edita los datos básicos de una barbería propia (nunca sus estados de
+  /// aprobación, bloqueo o pago).
+  Future<void> updateInfo(
+    String id, {
+    required String name,
+    required String address,
+    String? phone,
+    String? email,
+    String? description,
+  });
 
   /// El cliente que acaba de registrar [barbershopId] (pendiente de
   /// aprobación) pide que se le reconozca como Dueño (spec 12.1) vía la

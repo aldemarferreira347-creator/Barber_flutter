@@ -2,17 +2,19 @@ import 'package:flutter/material.dart';
 import 'package:provider/provider.dart';
 
 import '../../controllers/auth_controller.dart';
+import '../appointment/client_appointments_view.dart';
+import '../barbershop/manage_barbershops_view.dart';
+import '../barbershop/my_barbershops_view.dart';
 import '../help/help_view.dart';
 import '../notification/notifications_view.dart';
-import '../widgets/role_shell.dart';
 import '../profile/profile_menu_view.dart';
+import '../widgets/role_shell.dart';
 import 'owner_appointments_tab.dart';
-import 'owner_close_shop_tab.dart';
 import 'owner_dashboard_tab.dart';
-import 'owner_products_tab.dart';
-import 'owner_refund_requests_tab.dart';
-import 'owner_services_tab.dart';
 
+/// Vista del rol Dueño (spec 12): gestión de SUS barberías (Mis barberías,
+/// Mis citas) más las mismas vistas del Cliente (Explorar para reservar en
+/// otras barberías, y sus propias reservas desde Más).
 class OwnerHomeView extends StatelessWidget {
   const OwnerHomeView({super.key});
 
@@ -31,14 +33,19 @@ class OwnerHomeView extends StatelessWidget {
           page: OwnerDashboardTab(),
         ),
         const RoleTab(
-          label: 'Servicios',
-          icon: Icons.content_cut,
-          page: OwnerServicesTab(),
+          label: 'Mis barberías',
+          icon: Icons.storefront_outlined,
+          page: MyBarbershopsView(),
         ),
         const RoleTab(
-          label: 'Citas',
+          label: 'Mis citas',
           icon: Icons.calendar_month_outlined,
           page: OwnerAppointmentsTab(),
+        ),
+        const RoleTab(
+          label: 'Explorar',
+          icon: Icons.search,
+          page: ManageBarbershopsView(),
         ),
         RoleTab(
           label: 'Más',
@@ -59,29 +66,11 @@ class OwnerHomeView extends StatelessWidget {
                       ),
                     ),
                   ProfileMenuItem(
-                    icon: Icons.shopping_bag_outlined,
-                    label: 'Gestionar productos',
+                    icon: Icons.event_note_outlined,
+                    label: 'Mis reservas como cliente',
                     onTap: () => Navigator.of(context).push(
                       MaterialPageRoute(
-                        builder: (_) => const OwnerProductsTab(),
-                      ),
-                    ),
-                  ),
-                  ProfileMenuItem(
-                    icon: Icons.receipt_long_outlined,
-                    label: 'Solicitudes de reembolso',
-                    onTap: () => Navigator.of(context).push(
-                      MaterialPageRoute(
-                        builder: (_) => const OwnerRefundRequestsTab(),
-                      ),
-                    ),
-                  ),
-                  ProfileMenuItem(
-                    icon: Icons.storefront_outlined,
-                    label: 'Cerrar por evento externo',
-                    onTap: () => Navigator.of(context).push(
-                      MaterialPageRoute(
-                        builder: (_) => const OwnerCloseShopTab(),
+                        builder: (_) => const ClientAppointmentsView(),
                       ),
                     ),
                   ),

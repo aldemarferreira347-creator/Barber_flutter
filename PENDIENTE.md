@@ -233,6 +233,44 @@ https://github.com/aldemarferreira347-creator/Barber_flutter :
     en los widgets compartidos ya verificados visualmente antes
     (Splash/Login/Registro/Dashboards) más la cobertura de tests.
 
+## Refactor del rol Dueño (multi-barbería, pago previo, borradores)
+
+- **Vista del Dueño** (`owner_home_view.dart`): Inicio · **Mis barberías** ·
+  **Mis citas** · Explorar · Más. Gestiona SOLO sus barberías y conserva las
+  vistas de Cliente (Explorar para reservar en otras barberías; sus propias
+  reservas en Más → "Mis reservas como cliente").
+- **Mis barberías** (`my_barbershops_view.dart`) toma el dueño siempre de la
+  sesión (nunca de un parámetro) y lista sus barberías + borradores; no es
+  el catálogo. Tocar una abre `OwnerBarbershopManageView` (CRUD: ver, editar
+  datos/foto/ubicación, horario, barberos, servicios, productos, citas,
+  reseñas, reembolsos, cierre por evento y mensualidad). Solo abre para el
+  dueño de esa barbería o el admin; el admin llega desde la hoja de acciones
+  de `ManageBarbershopsView(adminControls: true)` ("Gestionar barbería").
+  Eliminar una barbería viva = "Cancelar membresía" (bloqueo); solo el admin
+  puede borrar el documento (regla existente). Los borradores sí se borran.
+- **Mis citas** (`owner_appointments_tab.dart`): citas agendadas en TODAS
+  sus barberías (`AppointmentRepository.watchByBarbershops`, un listener por
+  barbería para que las reglas validen la propiedad), con filtro por barbería.
+- Se eliminaron `OwnerServicesTab/ProductsTab/RefundRequestsTab/CloseShopTab`
+  (asumían una sola barbería con `shops.first`): ahora todo cuelga de la
+  barbería concreta.
+- **Pagar primero**: una barbería nueva solo se puede crear con un pago
+  `subscription` aprobado del propio dueño que apunte a ese id
+  (`firestore.rules`, `barbershops` create + `paymentId`). Flujos:
+  `createPaid` (pagar y registrar) o `publishDraft` (pagar un borrador).
+  Queda `pending` para revisión del admin; la mensualidad sigue arrancando
+  en la aprobación (`resolveApproval`, sin cambios).
+- **Borradores (máx. 5)**: colección aparte `barbershopDrafts/{uid}_{1..5}`.
+  El tope lo impone la regla (solo existen esos 5 ids por dueño, claves
+  cerradas), no el cliente, y un borrador no cuenta como barbería ni lo ve
+  nadie más. Foto de borrador: `storage.rules` (`barbershopDrafts/...`).
+- Tests: `firestore_barbershop_service_test` (borradores/pago),
+  `owner_barbershops_views_test`, reglas en
+  `functions/test/rules/barbershops.rules.test.ts` y `barbershopDrafts.rules.test.ts`.
+  Los tests de reglas requieren el emulador (ver "Limitación conocida").
+  Pendiente: `firestore_appointment_service_test` (2 tests de transacción)
+  ya fallaba antes de este cambio con el Flutter 3.x actual.
+
 ## Historial — cierre de Fase 11
 
 Backend y wiring de Flutter quedaron commiteados (commit `1895cc7`). Se

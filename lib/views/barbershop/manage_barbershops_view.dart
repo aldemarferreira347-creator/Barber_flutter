@@ -10,120 +10,21 @@ import '../widgets/error_state.dart';
 import '../widgets/pressable_scale.dart';
 import '../widgets/shimmer_box.dart';
 import '../widgets/status_badge.dart';
-import 'add_barbershop_view.dart';
+import 'approval_status_badge.dart';
+import 'owner_barbershop_manage_view.dart';
 import 'barbershop_detail_view.dart';
-
-/// Días de gracia entre el vencimiento y el bloqueo automático (spec 12.5),
-/// espejo exacto de GRACE_PERIOD_MS en
-/// functions/src/barbershops/subscriptionService.ts (3 a 5 días, punto
-/// medio = 4). Se usa también como ventana simétrica de aviso "vence
-/// pronto" antes del vencimiento, para que el admin no se entere del
-/// vencimiento el mismo día que ocurre.
-const _paymentWindowDays = 4;
-
-enum _PaymentInsightLevel { ok, dueSoon, grace, graceExpired, blocked }
-
-class _PaymentInsight {
-  final String label;
-  final String? detail;
-  final Color color;
-  final _PaymentInsightLevel level;
-
-  const _PaymentInsight({
-    required this.label,
-    this.detail,
-    required this.color,
-    required this.level,
-  });
-}
-
-_PaymentInsight _paymentInsight(Barbershop shop, {DateTime? now}) {
-  final today = now ?? DateTime.now();
-
-  if (shop.paymentStatus == PaymentStatus.blocked) {
-    return const _PaymentInsight(
-      label: 'Bloqueada',
-      detail: 'Sin acceso hasta regularizar el pago',
-      color: AppColors.error,
-      level: _PaymentInsightLevel.blocked,
-    );
-  }
-
-  final due = shop.paymentDueDate;
-
-  if (shop.paymentStatus == PaymentStatus.overdue) {
-    if (due == null) {
-      return const _PaymentInsight(
-        label: 'En mora',
-        color: AppColors.warning,
-        level: _PaymentInsightLevel.grace,
-      );
-    }
-    final daysOverdue = today.difference(due).inDays;
-    final daysLeft = _paymentWindowDays - daysOverdue;
-    if (daysLeft > 0) {
-      return _PaymentInsight(
-        label: 'Período de gracia',
-        detail: daysLeft == 1
-            ? 'Queda 1 día antes del bloqueo automático'
-            : 'Quedan $daysLeft días antes del bloqueo automático',
-        color: AppColors.warning,
-        level: _PaymentInsightLevel.grace,
-      );
-    }
-    return const _PaymentInsight(
-      label: 'Gracia vencida',
-      detail: 'Ya debería bloquearse por impago',
-      color: AppColors.error,
-      level: _PaymentInsightLevel.graceExpired,
-    );
-  }
-
-  // paymentStatus == ok
-  if (due == null) {
-    return const _PaymentInsight(
-      label: 'Al día',
-      color: AppColors.success,
-      level: _PaymentInsightLevel.ok,
-    );
-  }
-  final daysUntilDue = due.difference(today).inDays;
-  if (daysUntilDue <= _paymentWindowDays) {
-    final detail = daysUntilDue <= 0
-        ? 'Vence hoy'
-        : daysUntilDue == 1
-        ? 'Vence mañana'
-        : 'Vence en $daysUntilDue días';
-    return _PaymentInsight(
-      label: 'Vence pronto',
-      detail: detail,
-      color: AppColors.warning,
-      level: _PaymentInsightLevel.dueSoon,
-    );
-  }
-  return _PaymentInsight(
-    label: 'Al día',
-    detail: 'Vence el ${due.day}/${due.month}/${due.year}',
-    color: AppColors.success,
-    level: _PaymentInsightLevel.ok,
-  );
-}
+import 'payment_insight.dart';
 
 enum _AdminShopFilter { pending, ok, dueSoon, grace, blocked }
 
-/// Lista de barberías. Con [ownerId] solo muestra las de ese dueño; sin él,
-/// muestra todas (uso de admin/cliente). [canAdd] controla el FAB.
+/// Lista de barberías: con [adminControls] (solo rol admin) muestra todas con
+/// sus controles de revisión; sin él es el catálogo del cliente, con las
+/// aprobadas y activas. Las barberías propias del dueño (y sus borradores)
+/// viven en `MyBarbershopsView`, nunca aquí.
 class ManageBarbershopsView extends StatefulWidget {
-  final String? ownerId;
-  final bool canAdd;
   final bool adminControls;
 
-  const ManageBarbershopsView({
-    super.key,
-    this.ownerId,
-    this.canAdd = false,
-    this.adminControls = false,
-  });
+  const ManageBarbershopsView({super.key, this.adminControls = false});
 
   @override
   State<ManageBarbershopsView> createState() => _ManageBarbershopsViewState();
@@ -150,15 +51,15 @@ class _ManageBarbershopsViewState extends State<ManageBarbershopsView> {
     if (shop.approvalStatus != BarbershopApprovalStatus.approved) {
       return false;
     }
-    final level = _paymentInsight(shop).level;
+    final level = paymentInsight(shop).level;
     return switch (filter) {
       _AdminShopFilter.pending => false, // ya cubierto arriba
-      _AdminShopFilter.ok => level == _PaymentInsightLevel.ok,
-      _AdminShopFilter.dueSoon => level == _PaymentInsightLevel.dueSoon,
+      _AdminShopFilter.ok => level == PaymentInsightLevel.ok,
+      _AdminShopFilter.dueSoon => level == PaymentInsightLevel.dueSoon,
       _AdminShopFilter.grace =>
-        level == _PaymentInsightLevel.grace ||
-            level == _PaymentInsightLevel.graceExpired,
-      _AdminShopFilter.blocked => level == _PaymentInsightLevel.blocked,
+        level == PaymentInsightLevel.grace ||
+            level == PaymentInsightLevel.graceExpired,
+      _AdminShopFilter.blocked => level == PaymentInsightLevel.blocked,
     };
   }
 
@@ -176,12 +77,17 @@ class _ManageBarbershopsViewState extends State<ManageBarbershopsView> {
       backgroundColor: Colors.transparent,
       builder: (sheetCtx) => _ShopActionsSheet(
         shop: shop,
-        insight: _paymentInsight(shop),
+        insight: paymentInsight(shop),
         onApprove: () => _approve(context, service, shop),
         onReject: () => _confirmReject(context, service, shop),
         onViewInfo: () => Navigator.of(context).push(
           MaterialPageRoute(
             builder: (_) => BarbershopDetailView(barbershopId: shop.id),
+          ),
+        ),
+        onManage: () => Navigator.of(context).push(
+          MaterialPageRoute(
+            builder: (_) => OwnerBarbershopManageView(barbershopId: shop.id),
           ),
         ),
         onToggleActive: () => _toggleActive(context, service, shop),
@@ -208,9 +114,8 @@ class _ManageBarbershopsViewState extends State<ManageBarbershopsView> {
       }
     } catch (e) {
       if (context.mounted) {
-        ScaffoldMessenger.of(
-          context,
-        ).showSnackBar(SnackBar(content: Text('No se pudo aprobar: $e')));
+        ScaffoldMessenger.of(context)
+            .showSnackBar(SnackBar(content: Text('No se pudo aprobar: $e')));
       }
     }
   }
@@ -244,15 +149,13 @@ class _ManageBarbershopsViewState extends State<ManageBarbershopsView> {
     try {
       await service.resolveApproval(shop.id, approve: false);
       if (context.mounted) {
-        ScaffoldMessenger.of(context).showSnackBar(
-          SnackBar(content: Text('"${shop.name}" rechazada')),
-        );
+        ScaffoldMessenger.of(context)
+            .showSnackBar(SnackBar(content: Text('"${shop.name}" rechazada')));
       }
     } catch (e) {
       if (context.mounted) {
-        ScaffoldMessenger.of(
-          context,
-        ).showSnackBar(SnackBar(content: Text('No se pudo rechazar: $e')));
+        ScaffoldMessenger.of(context)
+            .showSnackBar(SnackBar(content: Text('No se pudo rechazar: $e')));
       }
     }
   }
@@ -266,9 +169,8 @@ class _ManageBarbershopsViewState extends State<ManageBarbershopsView> {
       await service.setActive(shop.id, !shop.active);
     } catch (e) {
       if (context.mounted) {
-        ScaffoldMessenger.of(
-          context,
-        ).showSnackBar(SnackBar(content: Text('No se pudo actualizar: $e')));
+        ScaffoldMessenger.of(context)
+            .showSnackBar(SnackBar(content: Text('No se pudo actualizar: $e')));
       }
     }
   }
@@ -337,9 +239,8 @@ class _ManageBarbershopsViewState extends State<ManageBarbershopsView> {
       }
     } catch (e) {
       if (context.mounted) {
-        ScaffoldMessenger.of(
-          context,
-        ).showSnackBar(SnackBar(content: Text('No se pudo bloquear: $e')));
+        ScaffoldMessenger.of(context)
+            .showSnackBar(SnackBar(content: Text('No se pudo bloquear: $e')));
       }
     }
   }
@@ -349,27 +250,19 @@ class _ManageBarbershopsViewState extends State<ManageBarbershopsView> {
   @override
   Widget build(BuildContext context) {
     final service = context.read<BarbershopRepository>();
-    // Catálogo del cliente (ni ownerId ni adminControls): solo barberías
-    // aprobadas y activas (spec 12.1/12.6) — el admin sí ve todas, incluidas
-    // las pendientes de revisión.
-    final stream = widget.ownerId != null
-        ? service.watchByOwner(widget.ownerId!)
-        : widget.adminControls
+    // Catálogo del cliente (sin adminControls): solo barberías aprobadas y
+    // activas (spec 12.1/12.6) — el admin sí ve todas, incluidas las
+    // pendientes de revisión.
+    final stream = widget.adminControls
         ? service.watchAll()
         : service.watchApproved();
 
     return Scaffold(
       appBar: AppBar(
-        title: Text(widget.adminControls ? 'Gestión de barberías' : 'Barberías'),
+        title: Text(
+          widget.adminControls ? 'Gestión de barberías' : 'Barberías',
+        ),
       ),
-      floatingActionButton: widget.canAdd
-          ? FloatingActionButton(
-              onPressed: () => Navigator.of(context).push(
-                MaterialPageRoute(builder: (_) => const AddBarbershopView()),
-              ),
-              child: const Icon(Icons.add),
-            )
-          : null,
       body: Padding(
         padding: const EdgeInsets.all(16),
         child: Column(
@@ -474,7 +367,8 @@ class _ManageBarbershopsViewState extends State<ManageBarbershopsView> {
                                     border: Border.all(color: AppColors.border),
                                   ),
                                   child: Row(
-                                    crossAxisAlignment: CrossAxisAlignment.start,
+                                    crossAxisAlignment:
+                                        CrossAxisAlignment.start,
                                     children: [
                                       Container(
                                         width: 48,
@@ -526,14 +420,14 @@ class _ManageBarbershopsViewState extends State<ManageBarbershopsView> {
                                                 spacing: 6,
                                                 runSpacing: 6,
                                                 children: [
-                                                  _ApprovalStatusBadge(
+                                                  ApprovalStatusBadge(
                                                     status: shop.approvalStatus,
                                                   ),
                                                   if (shop.approvalStatus ==
                                                       BarbershopApprovalStatus
                                                           .approved)
                                                     _PaymentBadge(
-                                                      insight: _paymentInsight(
+                                                      insight: paymentInsight(
                                                         shop,
                                                       ),
                                                     ),
@@ -550,10 +444,6 @@ class _ManageBarbershopsViewState extends State<ManageBarbershopsView> {
                                             shop,
                                             service,
                                           ),
-                                        )
-                                      else if (widget.ownerId != null)
-                                        _ApprovalStatusBadge(
-                                          status: shop.approvalStatus,
                                         )
                                       else
                                         StatusBadge.active(shop.active),
@@ -582,38 +472,8 @@ class _ManageBarbershopsViewState extends State<ManageBarbershopsView> {
   }
 }
 
-class _ApprovalStatusBadge extends StatelessWidget {
-  final BarbershopApprovalStatus status;
-
-  const _ApprovalStatusBadge({required this.status});
-
-  @override
-  Widget build(BuildContext context) {
-    final (label, color) = switch (status) {
-      BarbershopApprovalStatus.pending => ('Pendiente', AppColors.warning),
-      BarbershopApprovalStatus.approved => ('Aprobada', AppColors.success),
-      BarbershopApprovalStatus.rejected => ('Rechazada', AppColors.error),
-    };
-    return Container(
-      padding: const EdgeInsets.symmetric(horizontal: 10, vertical: 4),
-      decoration: BoxDecoration(
-        color: color,
-        borderRadius: BorderRadius.circular(20),
-      ),
-      child: Text(
-        label,
-        style: const TextStyle(
-          color: Colors.white,
-          fontSize: 12,
-          fontWeight: FontWeight.w600,
-        ),
-      ),
-    );
-  }
-}
-
 class _PaymentBadge extends StatelessWidget {
-  final _PaymentInsight insight;
+  final PaymentInsight insight;
 
   const _PaymentBadge({required this.insight});
 
@@ -735,10 +595,11 @@ class _ActionMenuButtonState extends State<_ActionMenuButton>
 
 class _ShopActionsSheet extends StatelessWidget {
   final Barbershop shop;
-  final _PaymentInsight insight;
+  final PaymentInsight insight;
   final VoidCallback onApprove;
   final VoidCallback onReject;
   final VoidCallback onViewInfo;
+  final VoidCallback onManage;
   final VoidCallback onToggleActive;
   final VoidCallback onConfirmPayment;
   final VoidCallback onBlockForNonPayment;
@@ -749,6 +610,7 @@ class _ShopActionsSheet extends StatelessWidget {
     required this.onApprove,
     required this.onReject,
     required this.onViewInfo,
+    required this.onManage,
     required this.onToggleActive,
     required this.onConfirmPayment,
     required this.onBlockForNonPayment,
@@ -757,8 +619,7 @@ class _ShopActionsSheet extends StatelessWidget {
   @override
   Widget build(BuildContext context) {
     final isPending = shop.approvalStatus == BarbershopApprovalStatus.pending;
-    final isApproved =
-        shop.approvalStatus == BarbershopApprovalStatus.approved;
+    final isApproved = shop.approvalStatus == BarbershopApprovalStatus.approved;
     final canReconsider =
         isPending || shop.approvalStatus == BarbershopApprovalStatus.rejected;
 
@@ -796,6 +657,16 @@ class _ShopActionsSheet extends StatelessWidget {
           onViewInfo();
         },
       ),
+      _SheetAction(
+        icon: Icons.tune_rounded,
+        label: 'Gestionar barbería',
+        subtitle: 'Datos, barberos, servicios, productos y citas',
+        color: AppColors.primary,
+        onTap: () {
+          Navigator.of(context).pop();
+          onManage();
+        },
+      ),
       if (isApproved) ...[
         _SheetAction(
           icon: shop.active
@@ -826,7 +697,8 @@ class _ShopActionsSheet extends StatelessWidget {
           _SheetAction(
             icon: Icons.lock_outline_rounded,
             label: 'Bloquear por impago',
-            subtitle: 'Bloquea la barbería de inmediato y la oculta del catálogo',
+            subtitle:
+                'Bloquea la barbería de inmediato y la oculta del catálogo',
             color: AppColors.error,
             onTap: () {
               Navigator.of(context).pop();
@@ -861,71 +733,68 @@ class _ShopActionsSheet extends StatelessWidget {
           Row(
             children: [
               Container(
-                    width: 52,
-                    height: 52,
-                    decoration: BoxDecoration(
-                      color: AppColors.primary,
-                      borderRadius: BorderRadius.circular(12),
-                      image: shop.photoUrl != null
-                          ? DecorationImage(
-                              image: NetworkImage(shop.photoUrl!),
-                              fit: BoxFit.cover,
-                            )
-                          : null,
-                    ),
-                    child: shop.photoUrl == null
-                        ? const Icon(Icons.storefront, color: Colors.white)
-                        : null,
-                  )
-                  .animate()
-                  .scale(
-                    begin: const Offset(0.6, 0.6),
-                    duration: 300.ms,
-                    curve: Curves.easeOutBack,
-                  ),
+                width: 52,
+                height: 52,
+                decoration: BoxDecoration(
+                  color: AppColors.primary,
+                  borderRadius: BorderRadius.circular(12),
+                  image: shop.photoUrl != null
+                      ? DecorationImage(
+                          image: NetworkImage(shop.photoUrl!),
+                          fit: BoxFit.cover,
+                        )
+                      : null,
+                ),
+                child: shop.photoUrl == null
+                    ? const Icon(Icons.storefront, color: Colors.white)
+                    : null,
+              ).animate().scale(
+                begin: const Offset(0.6, 0.6),
+                duration: 300.ms,
+                curve: Curves.easeOutBack,
+              ),
               const SizedBox(width: 14),
               Expanded(
-                child: Column(
-                  crossAxisAlignment: CrossAxisAlignment.start,
-                  children: [
-                    Text(
-                      shop.name,
-                      style: TextStyle(
-                        fontWeight: FontWeight.w700,
-                        fontSize: 16,
-                        color: AppColors.textPrimary,
-                      ),
-                      maxLines: 1,
-                      overflow: TextOverflow.ellipsis,
-                    ),
-                    if ((shop.address ?? '').isNotEmpty) ...[
-                      const SizedBox(height: 2),
-                      Text(
-                        shop.address!,
-                        style: TextStyle(
-                          color: AppColors.textSecondary,
-                          fontSize: 12,
-                        ),
-                        maxLines: 1,
-                        overflow: TextOverflow.ellipsis,
-                      ),
-                    ],
-                    const SizedBox(height: 6),
-                    Wrap(
-                      spacing: 6,
-                      runSpacing: 6,
+                    child: Column(
+                      crossAxisAlignment: CrossAxisAlignment.start,
                       children: [
-                        _ApprovalStatusBadge(status: shop.approvalStatus),
-                        if (isApproved) _PaymentBadge(insight: insight),
+                        Text(
+                          shop.name,
+                          style: TextStyle(
+                            fontWeight: FontWeight.w700,
+                            fontSize: 16,
+                            color: AppColors.textPrimary,
+                          ),
+                          maxLines: 1,
+                          overflow: TextOverflow.ellipsis,
+                        ),
+                        if ((shop.address ?? '').isNotEmpty) ...[
+                          const SizedBox(height: 2),
+                          Text(
+                            shop.address!,
+                            style: TextStyle(
+                              color: AppColors.textSecondary,
+                              fontSize: 12,
+                            ),
+                            maxLines: 1,
+                            overflow: TextOverflow.ellipsis,
+                          ),
+                        ],
+                        const SizedBox(height: 6),
+                        Wrap(
+                          spacing: 6,
+                          runSpacing: 6,
+                          children: [
+                            ApprovalStatusBadge(status: shop.approvalStatus),
+                            if (isApproved) _PaymentBadge(insight: insight),
+                          ],
+                        ),
                       ],
                     ),
-                  ],
-                ),
-              ).animate().fadeIn(delay: 80.ms, duration: 250.ms).slideX(
-                begin: 0.08,
-                end: 0,
-                curve: Curves.easeOutCubic,
-              ),
+                  )
+                  .animate()
+                  .fadeIn(delay: 80.ms, duration: 250.ms)
+                  .slideX(begin: 0.08, end: 0, curve: Curves.easeOutCubic),
             ],
           ),
 
@@ -933,18 +802,21 @@ class _ShopActionsSheet extends StatelessWidget {
             const SizedBox(height: 12),
             Container(
               width: double.infinity,
-              padding: const EdgeInsets.symmetric(
-                horizontal: 12,
-                vertical: 10,
-              ),
+              padding: const EdgeInsets.symmetric(horizontal: 12, vertical: 10),
               decoration: BoxDecoration(
                 color: insight.color.withValues(alpha: 0.08),
                 borderRadius: BorderRadius.circular(10),
-                border: Border.all(color: insight.color.withValues(alpha: 0.25)),
+                border: Border.all(
+                  color: insight.color.withValues(alpha: 0.25),
+                ),
               ),
               child: Row(
                 children: [
-                  Icon(Icons.info_outline_rounded, size: 14, color: insight.color),
+                  Icon(
+                    Icons.info_outline_rounded,
+                    size: 14,
+                    color: insight.color,
+                  ),
                   const SizedBox(width: 6),
                   Expanded(
                     child: Text(
@@ -1031,7 +903,9 @@ class _SheetActionTileState extends State<_SheetActionTile> {
               : a.color.withValues(alpha: 0.05),
           borderRadius: BorderRadius.circular(14),
           border: Border.all(
-            color: _pressed ? a.color.withValues(alpha: 0.3) : Colors.transparent,
+            color: _pressed
+                ? a.color.withValues(alpha: 0.3)
+                : Colors.transparent,
           ),
         ),
         child: Row(
