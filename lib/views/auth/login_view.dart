@@ -2,6 +2,8 @@ import 'package:firebase_auth/firebase_auth.dart';
 import 'package:flutter/material.dart';
 import 'package:provider/provider.dart';
 
+import '../../theme/app_text.dart';
+
 import '../../controllers/auth_controller.dart';
 import '../../theme/app_tokens.dart';
 import '../widgets/app_button.dart';
@@ -136,7 +138,7 @@ class _LoginViewState extends State<LoginView> {
                       Text(
                         'Tu barbería, siempre conectada',
                         textAlign: TextAlign.center,
-                        style: text.bodyMedium,
+                        style: text.secondary,
                       ),
                       const SizedBox(height: AppSpace.xxl),
                       Semantics(
@@ -146,7 +148,7 @@ class _LoginViewState extends State<LoginView> {
                       const SizedBox(height: AppSpace.xs),
                       Text(
                         'Accede a tu cuenta para continuar',
-                        style: text.bodyMedium,
+                        style: text.secondary,
                       ),
                       const SizedBox(height: AppSpace.xl),
                       TextFormField(
@@ -211,7 +213,7 @@ class _LoginViewState extends State<LoginView> {
                         children: [
                           Text(
                             '¿No tienes una cuenta? ',
-                            style: text.bodyMedium,
+                            style: text.secondary,
                           ),
                           TextButton(
                             onPressed: () => Navigator.of(context).push(

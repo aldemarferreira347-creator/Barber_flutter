@@ -27,7 +27,7 @@ class AdminHomeView extends StatelessWidget {
         const RoleTab(
           label: 'Barberías',
           icon: Icons.storefront_outlined,
-          page: ManageBarbershopsView(adminControls: true),
+          page: ManageBarbershopsView(),
         ),
         RoleTab(
           label: 'Ajustes',
@@ -47,8 +47,7 @@ class AdminHomeView extends StatelessWidget {
                   label: 'Barberías',
                   onTap: () => Navigator.of(context).push(
                     MaterialPageRoute(
-                      builder: (_) =>
-                          const ManageBarbershopsView(adminControls: true),
+                      builder: (_) => const ManageBarbershopsView(),
                     ),
                   ),
                 ),

@@ -2,6 +2,7 @@ import 'package:flutter/material.dart';
 import 'package:provider/provider.dart';
 
 import '../../controllers/auth_controller.dart';
+import '../../controllers/shell_controller.dart';
 import '../../controllers/user_controller.dart';
 import '../../models/barbershop.dart';
 import '../../models/user_role.dart';
@@ -36,6 +37,7 @@ class _AuthGateState extends State<AuthGate> {
         return const Scaffold(body: Center(child: CircularProgressIndicator()));
       case AuthStatus.unauthenticated:
         _watchedUid = null;
+        context.read<ShellController>().reset();
         return const LoginView();
       case AuthStatus.authenticated:
         final profile = auth.profile;

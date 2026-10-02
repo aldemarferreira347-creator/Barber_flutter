@@ -28,8 +28,9 @@ void main() {
       for (var i = 0; i < lines.length; i++) {
         final line = lines[i];
         if (line.trimLeft().startsWith('//')) continue;
-        if (forbidden.hasMatch(line))
+        if (forbidden.hasMatch(line)) {
           offenders.add('$path:${i + 1}  ${line.trim()}');
+        }
       }
     }
     expect(

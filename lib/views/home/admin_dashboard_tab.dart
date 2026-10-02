@@ -68,8 +68,7 @@ class _AdminDashboardTabState extends State<AdminDashboardTab> {
   void _openShops(AdminShopFilter? filter) {
     Navigator.of(context).push(
       MaterialPageRoute(
-        builder: (_) =>
-            ManageBarbershopsView(adminControls: true, initialFilter: filter),
+        builder: (_) => ManageBarbershopsView(initialFilter: filter),
       ),
     );
   }

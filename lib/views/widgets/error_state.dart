@@ -1,6 +1,7 @@
 import 'package:flutter/material.dart';
 
 import '../../theme/app_colors.dart';
+import '../../theme/app_text.dart';
 import '../../theme/app_tokens.dart';
 import 'app_button.dart';
 
@@ -47,7 +48,7 @@ class ErrorState extends StatelessWidget {
           const SizedBox(height: AppSpace.lg),
           Text(title, textAlign: TextAlign.center, style: text.titleMedium),
           const SizedBox(height: AppSpace.xs),
-          Text(subtitle, textAlign: TextAlign.center, style: text.bodyMedium),
+          Text(subtitle, textAlign: TextAlign.center, style: text.secondary),
           if (onRetry != null) ...[
             const SizedBox(height: AppSpace.lg),
             AppButton(

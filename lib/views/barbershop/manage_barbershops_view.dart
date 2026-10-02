@@ -21,17 +21,15 @@ enum AdminShopFilter { pending, ok, dueSoon, grace, blocked }
 /// aprobadas y activas. Las barberías propias del dueño (y sus borradores)
 /// viven en `MyBarbershopsView`, nunca aquí.
 class ManageBarbershopsView extends StatefulWidget {
-  final bool adminControls;
+  /// Siempre con controles de admin: el catálogo del cliente es
+  /// `BarbershopCatalogView`.
+  bool get adminControls => true;
 
   /// Filtro con el que abre la lista (solo admin): p. ej. las pendientes de
   /// aprobación, desde el aviso del dashboard.
   final AdminShopFilter? initialFilter;
 
-  const ManageBarbershopsView({
-    super.key,
-    this.adminControls = false,
-    this.initialFilter,
-  });
+  const ManageBarbershopsView({super.key, this.initialFilter});
 
   @override
   State<ManageBarbershopsView> createState() => _ManageBarbershopsViewState();

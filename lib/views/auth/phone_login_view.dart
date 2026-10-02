@@ -3,6 +3,7 @@ import 'package:provider/provider.dart';
 
 import '../../controllers/auth_controller.dart';
 import '../../theme/app_colors.dart';
+import '../../theme/app_text.dart';
 import '../../theme/app_tokens.dart';
 import '../widgets/app_button.dart';
 import '../widgets/responsive_body.dart';
@@ -98,7 +99,7 @@ class _PhoneLoginViewState extends State<PhoneLoginView> {
                         ? 'Enviado a ${_phoneController.text}'
                         : 'Escribe tu número con indicativo de país',
                     textAlign: TextAlign.center,
-                    style: text.bodyMedium,
+                    style: text.secondary,
                   ),
                   const SizedBox(height: AppSpace.xl),
                   if (!codeStep) ...[

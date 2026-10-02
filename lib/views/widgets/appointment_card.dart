@@ -2,6 +2,7 @@ import 'package:flutter/material.dart';
 
 import '../../models/appointment.dart';
 import '../../theme/app_colors.dart';
+import '../../theme/app_text.dart';
 import '../../theme/app_tokens.dart';
 import 'app_card.dart';
 import 'status_badge.dart';
@@ -51,7 +52,7 @@ class AppointmentCard extends StatelessWidget {
             ],
           ),
           const SizedBox(height: AppSpace.xs),
-          Text(subtitle, style: text.bodyMedium),
+          Text(subtitle, style: text.secondary),
           const SizedBox(height: AppSpace.xs),
           Row(
             children: [

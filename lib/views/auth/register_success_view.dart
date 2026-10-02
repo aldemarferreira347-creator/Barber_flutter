@@ -1,6 +1,7 @@
 import 'package:flutter/material.dart';
 
 import '../../theme/app_colors.dart';
+import '../../theme/app_text.dart';
 import '../../theme/app_tokens.dart';
 import '../widgets/app_button.dart';
 import '../widgets/responsive_body.dart';
@@ -47,7 +48,7 @@ class RegisterSuccessView extends StatelessWidget {
                 Text(
                   'Tu cuenta ha sido creada correctamente.\nAhora puedes iniciar sesión.',
                   textAlign: TextAlign.center,
-                  style: text.bodyMedium,
+                  style: text.secondary,
                 ),
                 const SizedBox(height: AppSpace.xxl),
                 AppButton(

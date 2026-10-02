@@ -36,21 +36,35 @@ class ShimmerBox extends StatelessWidget {
 }
 
 /// Lista de esqueletos, para simular varias tarjetas cargando a la vez.
+/// Si el espacio vertical es acotado muestra solo los que caben (nunca
+/// desborda en pantallas bajas); si no, muestra [count].
 class ShimmerList extends StatelessWidget {
   final int count;
   final double itemHeight;
 
   const ShimmerList({super.key, this.count = 3, this.itemHeight = 78});
 
+  static const _gap = 10.0;
+
   @override
   Widget build(BuildContext context) {
-    return Column(
-      children: [
-        for (var i = 0; i < count; i++) ...[
-          ShimmerBox(height: itemHeight),
-          if (i != count - 1) const SizedBox(height: 10),
-        ],
-      ],
+    return LayoutBuilder(
+      builder: (context, constraints) {
+        var visible = count;
+        if (constraints.hasBoundedHeight) {
+          final fit = ((constraints.maxHeight + _gap) / (itemHeight + _gap))
+              .floor();
+          visible = fit.clamp(1, count);
+        }
+        return Column(
+          children: [
+            for (var i = 0; i < visible; i++) ...[
+              ShimmerBox(height: itemHeight),
+              if (i != visible - 1) const SizedBox(height: _gap),
+            ],
+          ],
+        );
+      },
     );
   }
 }

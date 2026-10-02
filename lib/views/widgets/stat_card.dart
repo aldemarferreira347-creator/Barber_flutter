@@ -1,6 +1,7 @@
 import 'package:flutter/material.dart';
 
 import '../../theme/app_colors.dart';
+import '../../theme/app_text.dart';
 import '../../theme/app_tokens.dart';
 import 'app_card.dart';
 
@@ -33,7 +34,7 @@ class StatCard extends StatelessWidget {
                 children: [
                   Text(value, style: text.headlineSmall),
                   const SizedBox(height: 2),
-                  Text(label, style: text.bodyMedium),
+                  Text(label, style: text.secondary),
                 ],
               ),
             ),

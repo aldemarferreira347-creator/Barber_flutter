@@ -7,6 +7,7 @@ import '../../models/barbershop.dart';
 import '../../repositories/appointment_repository.dart';
 import '../../repositories/barbershop_repository.dart';
 import '../../theme/app_colors.dart';
+import '../../theme/app_text.dart';
 import '../../theme/app_tokens.dart';
 import '../../utils/date_labels.dart';
 import '../appointment/barber_appointments_view.dart';
@@ -190,7 +191,7 @@ class _TodayCard extends StatelessWidget {
                           ? 'Aprovecha para revisar tu agenda de los próximos días.'
                           : 'No quedan más citas por atender hoy.')
                     : 'Siguiente: ${timeLabel(next.date)} · ${next.clientName} · ${next.serviceName}',
-                style: text.bodyMedium,
+                style: text.secondary,
               ),
             ],
           ),

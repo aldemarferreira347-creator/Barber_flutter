@@ -3,6 +3,7 @@ import 'package:flutter/material.dart';
 import 'package:provider/provider.dart';
 
 import 'controllers/auth_controller.dart';
+import 'controllers/shell_controller.dart';
 import 'controllers/user_controller.dart';
 import 'dev_emulators.dart';
 import 'firebase_options.dart';
@@ -59,6 +60,7 @@ class BarberApp extends StatelessWidget {
     return MultiProvider(
       providers: [
         ChangeNotifierProvider<ThemeController>.value(value: themeController),
+        Provider<ShellController>(create: (_) => ShellController()),
         // Repositorios (infraestructura Firebase) expuestos por su
         // abstracción: el resto de la app depende de la interfaz, no de
         // Firebase directamente (Dependency Inversion).

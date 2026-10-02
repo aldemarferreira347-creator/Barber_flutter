@@ -5,9 +5,15 @@ import '../../controllers/auth_controller.dart';
 import '../../models/notification_tone.dart';
 import '../../models/user_role.dart';
 import '../../theme/app_colors.dart';
+import '../../theme/app_text.dart';
 import '../../theme/theme_controller.dart';
+import '../../theme/app_tokens.dart';
 import '../widgets/action_list_tile.dart';
+import '../widgets/app_button.dart';
+import '../widgets/app_card.dart';
+import '../widgets/app_dialog.dart';
 import '../widgets/brand_mark.dart';
+import '../widgets/responsive_body.dart';
 
 class ProfileMenuItem {
   final IconData icon;
@@ -52,7 +58,7 @@ class ProfileMenuView extends StatelessWidget {
                         : AppColors.textSecondary,
                     size: 20,
                   ),
-                  const SizedBox(width: 10),
+                  const SizedBox(width: AppSpace.md),
                   Text(option.label),
                 ],
               ),
@@ -74,9 +80,21 @@ class ProfileMenuView extends StatelessWidget {
     }
   }
 
+  Future<void> _confirmSignOut(BuildContext context) async {
+    final auth = context.read<AuthController>();
+    final confirmed = await AppDialog.confirm(
+      context,
+      title: 'Cerrar sesión',
+      message: '¿Quieres salir de tu cuenta en este dispositivo?',
+      confirmLabel: 'Cerrar sesión',
+    );
+    if (confirmed) await auth.signOut();
+  }
+
   @override
   Widget build(BuildContext context) {
     final profile = context.watch<AuthController>().profile;
+    final text = Theme.of(context).textTheme;
     final initials = (profile?.name.isNotEmpty ?? false)
         ? profile!.name
               .trim()
@@ -89,158 +107,101 @@ class ProfileMenuView extends StatelessWidget {
 
     return Scaffold(
       appBar: AppBar(title: const Text('Perfil')),
-      body: ListView(
-        padding: const EdgeInsets.all(16),
-        children: [
-          Container(
-            padding: const EdgeInsets.all(16),
-            decoration: BoxDecoration(
-              color: AppColors.surface,
-              borderRadius: BorderRadius.circular(16),
-              border: Border.all(color: AppColors.border),
-              boxShadow: [
-                BoxShadow(
-                  color: AppColors.primary.withValues(alpha: 0.1),
-                  blurRadius: 16,
-                  offset: const Offset(0, 6),
-                ),
-              ],
-            ),
-            child: Row(
-              children: [
-                CircleAvatar(
-                  radius: 26,
-                  backgroundColor: AppColors.primary,
-                  child: Text(
-                    initials,
-                    style: const TextStyle(
-                      color: AppColors.onColor,
-                      fontWeight: FontWeight.w700,
+      body: ResponsiveBody(
+        maxWidth: AppLayout.formWidth,
+        child: ListView(
+          padding: const EdgeInsets.only(bottom: AppSpace.xxl),
+          children: [
+            AppCard(
+              child: Row(
+                children: [
+                  CircleAvatar(
+                    radius: 26,
+                    backgroundColor: AppColors.primary,
+                    child: Text(
+                      initials,
+                      style: const TextStyle(
+                        color: AppColors.onColor,
+                        fontWeight: FontWeight.w700,
+                      ),
                     ),
                   ),
-                ),
-                const SizedBox(width: 14),
-                Expanded(
-                  child: Column(
-                    crossAxisAlignment: CrossAxisAlignment.start,
-                    children: [
-                      Text(
-                        profile?.name ?? '',
-                        style: const TextStyle(
-                          fontWeight: FontWeight.w700,
-                          fontSize: 16,
+                  const SizedBox(width: AppSpace.lg),
+                  Expanded(
+                    child: Column(
+                      crossAxisAlignment: CrossAxisAlignment.start,
+                      children: [
+                        Text(profile?.name ?? '', style: text.titleMedium),
+                        const SizedBox(height: 2),
+                        Text(profile?.email ?? '', style: text.secondary),
+                        const SizedBox(height: AppSpace.xs),
+                        Text(
+                          _roleLabel(profile?.role ?? UserRole.client),
+                          style: text.labelMedium?.copyWith(
+                            color: AppColors.readable(AppColors.accent),
+                          ),
                         ),
-                      ),
-                      const SizedBox(height: 2),
-                      Text(
-                        profile?.email ?? '',
-                        style: TextStyle(
-                          color: AppColors.textSecondary,
-                          fontSize: 13,
-                        ),
-                      ),
-                      const SizedBox(height: 4),
-                      Text(
-                        'Rol: ${_roleLabel(profile?.role ?? UserRole.client)}',
-                        style: TextStyle(
-                          color: AppColors.accent,
-                          fontSize: 12,
-                          fontWeight: FontWeight.w600,
-                        ),
-                      ),
-                    ],
+                      ],
+                    ),
                   ),
-                ),
-              ],
+                ],
+              ),
             ),
-          ),
-          const SizedBox(height: 18),
-          ActionListTile(
-            icon: Icons.tune,
-            label: 'Tono de notificaciones',
-            onTap: () => _showToneDialog(context),
-          ),
-          const SizedBox(height: 10),
-          Consumer<ThemeController>(
-            builder: (context, themeController, _) => Material(
-              color: AppColors.surface,
-              borderRadius: BorderRadius.circular(14),
-              child: Container(
+            const SizedBox(height: AppSpace.lg),
+            ActionListTile(
+              icon: Icons.tune,
+              label: 'Tono de notificaciones',
+              subtitle: profile?.notificationTone?.label,
+              onTap: () => _showToneDialog(context),
+            ),
+            const SizedBox(height: AppSpace.sm),
+            Consumer<ThemeController>(
+              builder: (context, themeController, _) => AppCard(
                 padding: const EdgeInsets.symmetric(
-                  horizontal: 14,
-                  vertical: 6,
+                  horizontal: AppSpace.lg,
+                  vertical: AppSpace.xs,
                 ),
-                decoration: BoxDecoration(
-                  borderRadius: BorderRadius.circular(14),
-                  border: Border.all(color: AppColors.border),
-                ),
-                child: Row(
-                  children: [
-                    Container(
-                      padding: const EdgeInsets.all(8),
-                      decoration: BoxDecoration(
-                        color: AppColors.accent.withValues(alpha: 0.12),
-                        shape: BoxShape.circle,
-                      ),
-                      child: Icon(
-                        Icons.dark_mode_outlined,
-                        color: AppColors.accent,
-                        size: 18,
-                      ),
-                    ),
-                    const SizedBox(width: 12),
-                    const Expanded(
-                      child: Text(
-                        'Modo oscuro',
-                        style: TextStyle(fontWeight: FontWeight.w600),
-                      ),
-                    ),
-                    Switch(
-                      value: themeController.isDark,
-                      onChanged: (value) => themeController.setDark(value),
-                    ),
-                  ],
+                child: SwitchListTile(
+                  contentPadding: EdgeInsets.zero,
+                  secondary: Icon(
+                    Icons.dark_mode_outlined,
+                    color: AppColors.accent,
+                  ),
+                  title: Text('Modo oscuro', style: text.titleSmall),
+                  value: themeController.isDark,
+                  onChanged: themeController.setDark,
                 ),
               ),
             ),
-          ),
-          const SizedBox(height: 10),
-          for (final entry in items.indexed) ...[
-            ActionListTile(
-              icon: entry.$2.icon,
-              label: entry.$2.label,
-              onTap: entry.$2.onTap,
+            const SizedBox(height: AppSpace.sm),
+            for (final item in items) ...[
+              ActionListTile(
+                icon: item.icon,
+                label: item.label,
+                onTap: item.onTap,
+              ),
+              const SizedBox(height: AppSpace.sm),
+            ],
+            const SizedBox(height: AppSpace.md),
+            AppButton(
+              variant: AppButtonVariant.secondary,
+              icon: Icons.logout,
+              onPressed: () => _confirmSignOut(context),
+              child: const Text('Cerrar sesión'),
             ),
-            const SizedBox(height: 10),
+            const SizedBox(height: AppSpace.xxl),
+            Center(
+              child: Column(
+                mainAxisSize: MainAxisSize.min,
+                children: [
+                  const BrandMark(size: 32, spin: false),
+                  const SizedBox(height: AppSpace.sm),
+                  Text('BarberFlow v1.0.0', style: text.bodySmall),
+                ],
+              ),
+            ),
           ],
-          const SizedBox(height: 12),
-          SizedBox(
-            width: double.infinity,
-            child: FilledButton.icon(
-              onPressed: () => context.read<AuthController>().signOut(),
-              icon: const Icon(Icons.logout),
-              label: const Text('Cerrar sesión'),
-            ),
-          ),
-          const SizedBox(height: 28),
-          Center(
-            child: Column(
-              mainAxisSize: MainAxisSize.min,
-              children: [
-                const BrandMark(size: 32, spin: false),
-                const SizedBox(height: 6),
-                Text(
-                  'BarberFlow v1.0.0',
-                  style: TextStyle(
-                    color: AppColors.textSecondary.withValues(alpha: 0.6),
-                    fontSize: 12,
-                    fontWeight: FontWeight.w500,
-                  ),
-                ),
-              ],
-            ),
-          ),
-        ],
+        ),
       ),
     );
   }

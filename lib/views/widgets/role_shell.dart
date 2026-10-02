@@ -1,5 +1,7 @@
 import 'package:flutter/material.dart';
+import 'package:provider/provider.dart';
 
+import '../../controllers/shell_controller.dart';
 import '../../theme/app_tokens.dart';
 
 class RoleTab {
@@ -28,13 +30,24 @@ class RoleShell extends StatefulWidget {
 }
 
 class _RoleShellState extends State<RoleShell> {
-  int _index = 0;
-  late final Set<int> _visited = {0};
+  late int _index = _initialIndex();
+  late final Set<int> _visited = {0, _index};
 
-  void _select(int i) => setState(() {
-    _index = i;
-    _visited.add(i);
-  });
+  // La pestaña abierta se recuerda fuera del widget (ver [ShellController])
+  // para sobrevivir al cambio de tema, que reconstruye toda la app.
+  int _initialIndex() {
+    final shell = context.read<ShellController>();
+    if (shell.index >= widget.tabs.length) shell.reset();
+    return shell.index;
+  }
+
+  void _select(int i) {
+    context.read<ShellController>().index = i;
+    setState(() {
+      _index = i;
+      _visited.add(i);
+    });
+  }
 
   @override
   Widget build(BuildContext context) {

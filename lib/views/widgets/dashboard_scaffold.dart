@@ -4,6 +4,7 @@ import 'package:provider/provider.dart';
 import '../../models/app_notification.dart';
 import '../../repositories/notification_repository.dart';
 import '../../theme/app_colors.dart';
+import '../../theme/app_text.dart';
 import '../../theme/app_tokens.dart';
 import '../notification/notifications_view.dart';
 import 'responsive_body.dart';
@@ -60,7 +61,7 @@ class DashboardScaffold extends StatelessWidget {
                           child: Text(greeting, style: text.headlineSmall),
                         ),
                         const SizedBox(height: 2),
-                        Text(subtitle, style: text.bodyMedium),
+                        Text(subtitle, style: text.secondary),
                       ],
                     ),
                   ),

@@ -31,9 +31,9 @@ const atHour = (dayOffset, hour, minute = 0) => {
 };
 
 const schedule = Object.fromEntries(
-  ['lunes', 'martes', 'miercoles', 'jueves', 'viernes', 'sabado', 'domingo'].map((day) => [
+  ['lunes', 'martes', 'miércoles', 'jueves', 'viernes', 'sábado', 'domingo'].map((day) => [
     day,
-    { isOpen: day !== 'domingo', openTime: '09:00', closeTime: day === 'sabado' ? '15:00' : '19:00' },
+    { isOpen: day !== 'domingo', openTime: '09:00', closeTime: day === 'sábado' ? '15:00' : '19:00' },
   ]),
 );
 

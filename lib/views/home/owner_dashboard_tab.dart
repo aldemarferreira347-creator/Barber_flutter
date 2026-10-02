@@ -7,6 +7,7 @@ import '../../models/barbershop.dart';
 import '../../repositories/appointment_repository.dart';
 import '../../repositories/barbershop_repository.dart';
 import '../../theme/app_colors.dart';
+import '../../theme/app_text.dart';
 import '../../theme/app_tokens.dart';
 import '../barbershop/add_barbershop_view.dart';
 import '../barbershop/approval_status_badge.dart';
@@ -204,7 +205,7 @@ class _ShopSummaryTile extends StatelessWidget {
                 const SizedBox(width: AppSpace.xs),
                 Text(
                   todayCount == 0 ? 'Sin citas hoy' : '$todayCount cita(s) hoy',
-                  style: text.bodyMedium,
+                  style: text.secondary,
                 ),
                 if (toConfirm > 0) ...[
                   const Spacer(),

@@ -3,7 +3,7 @@ import 'package:provider/provider.dart';
 
 import '../../controllers/auth_controller.dart';
 import '../appointment/client_appointments_view.dart';
-import '../barbershop/manage_barbershops_view.dart';
+import '../barbershop/barbershop_catalog_view.dart';
 import '../barbershop/my_barbershops_view.dart';
 import '../help/help_view.dart';
 import '../notification/notifications_view.dart';
@@ -31,7 +31,7 @@ class ClientHomeView extends StatelessWidget {
         const RoleTab(
           label: 'Barberías',
           icon: Icons.storefront_outlined,
-          page: ManageBarbershopsView(),
+          page: BarbershopCatalogView(),
         ),
         const RoleTab(
           label: 'Citas',

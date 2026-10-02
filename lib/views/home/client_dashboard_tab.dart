@@ -7,11 +7,12 @@ import '../../models/barbershop.dart';
 import '../../repositories/appointment_repository.dart';
 import '../../repositories/barbershop_repository.dart';
 import '../../theme/app_colors.dart';
+import '../../theme/app_text.dart';
 import '../../theme/app_tokens.dart';
 import '../../utils/date_labels.dart';
 import '../appointment/client_appointments_view.dart';
 import '../barbershop/barbershop_detail_view.dart';
-import '../barbershop/manage_barbershops_view.dart';
+import '../barbershop/barbershop_catalog_view.dart';
 import '../help/help_view.dart';
 import '../widgets/action_list_tile.dart';
 import '../widgets/app_button.dart';
@@ -25,7 +26,7 @@ class ClientDashboardTab extends StatelessWidget {
   const ClientDashboardTab({super.key});
 
   void _openCatalog(BuildContext context) => Navigator.of(context)
-      .push(MaterialPageRoute(builder: (_) => const ManageBarbershopsView()));
+      .push(MaterialPageRoute(builder: (_) => const BarbershopCatalogView()));
 
   @override
   Widget build(BuildContext context) {
@@ -138,7 +139,7 @@ class _NextAppointmentCard extends StatelessWidget {
               const SizedBox(height: AppSpace.xs),
               Text(
                 '${next.serviceName} · con ${next.barberName}',
-                style: text.bodyMedium,
+                style: text.secondary,
               ),
               if (upcoming.length > 1) ...[
                 const SizedBox(height: AppSpace.sm),
@@ -171,7 +172,7 @@ class _BookCard extends StatelessWidget {
           const SizedBox(height: AppSpace.xs),
           Text(
             'Elige una barbería, un barbero y la hora que mejor te quede.',
-            style: text.bodyMedium,
+            style: text.secondary,
           ),
           const SizedBox(height: AppSpace.lg),
           AppButton(
@@ -202,7 +203,7 @@ class _FeaturedShops extends StatelessWidget {
               child: Text(
                 'No se pudieron cargar las barberías',
                 textAlign: TextAlign.center,
-                style: text.bodyMedium,
+                style: text.secondary,
               ),
             );
           }
@@ -215,7 +216,7 @@ class _FeaturedShops extends StatelessWidget {
             return Center(
               child: Text(
                 'Aún no hay barberías activas',
-                style: text.bodyMedium,
+                style: text.secondary,
               ),
             );
           }

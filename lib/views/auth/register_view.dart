@@ -1,6 +1,8 @@
 import 'package:flutter/material.dart';
 import 'package:provider/provider.dart';
 
+import '../../theme/app_text.dart';
+
 import '../../controllers/auth_controller.dart';
 import '../../theme/app_tokens.dart';
 import '../widgets/app_button.dart';
@@ -135,7 +137,7 @@ class _RegisterViewState extends State<RegisterView> {
                       const SizedBox(height: AppSpace.xs),
                       Text(
                         'Completa la información para registrarte',
-                        style: text.bodyMedium,
+                        style: text.secondary,
                       ),
                       const SizedBox(height: AppSpace.xl),
                       TextFormField(
@@ -222,7 +224,7 @@ class _RegisterViewState extends State<RegisterView> {
                         children: [
                           Text(
                             '¿Ya tienes una cuenta? ',
-                            style: text.bodyMedium,
+                            style: text.secondary,
                           ),
                           TextButton(
                             onPressed: () => Navigator.of(context).pop(),

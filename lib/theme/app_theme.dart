@@ -67,7 +67,7 @@ class AppTheme {
       ),
       bodyMedium: base.bodyMedium?.copyWith(
         fontSize: 14,
-        color: AppColors.textSecondary,
+        color: AppColors.textPrimary,
       ),
       bodySmall: base.bodySmall?.copyWith(
         fontSize: 12,
