@@ -3,7 +3,6 @@ import 'package:flutter/material.dart';
 import 'package:provider/provider.dart';
 
 import 'controllers/auth_controller.dart';
-import 'controllers/shell_controller.dart';
 import 'controllers/user_controller.dart';
 import 'dev_emulators.dart';
 import 'firebase_options.dart';
@@ -40,6 +39,7 @@ import 'services/firestore_user_service.dart';
 import 'services/nequi_payment_gateway.dart';
 import 'theme/app_theme.dart';
 import 'theme/theme_controller.dart';
+import 'theme/theme_scope.dart';
 
 Future<void> main() async {
   WidgetsFlutterBinding.ensureInitialized();
@@ -60,7 +60,6 @@ class BarberApp extends StatelessWidget {
     return MultiProvider(
       providers: [
         ChangeNotifierProvider<ThemeController>.value(value: themeController),
-        Provider<ShellController>(create: (_) => ShellController()),
         // Repositorios (infraestructura Firebase) expuestos por su
         // abstracción: el resto de la app depende de la interfaz, no de
         // Firebase directamente (Dependency Inversion).
@@ -109,12 +108,12 @@ class BarberApp extends StatelessWidget {
               UserController(userService: context.read<UserRepository>()),
         ),
       ],
-      // Consumer, no solo Provider: al cambiar el modo oscuro necesitamos
-      // reconstruir todo el árbol de la app, porque la mayoría de las
-      // pantallas lee `AppColors.x` directamente (no vía Theme.of(context)).
-      child: Consumer<ThemeController>(
-        builder: (context, _, _) => MaterialApp(
-          key: ValueKey(themeController.isDark),
+      // Los widgets leen `AppColors.x` (valores estáticos), así que un cambio
+      // de modo claro/oscuro necesita repintar todo el árbol: ThemeScope lo
+      // hace sin recrear la app ni perder la navegación.
+      child: ThemeScope(
+        controller: themeController,
+        builder: (context) => MaterialApp(
           title: 'BarberFlow',
           theme: AppTheme.current,
           initialRoute: AppRoutes.root,
