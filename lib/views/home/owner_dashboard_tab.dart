@@ -14,7 +14,6 @@ import '../notification/notifications_view.dart';
 import '../widgets/dashboard_scaffold.dart';
 import '../widgets/empty_state.dart';
 import '../widgets/error_state.dart';
-import '../widgets/promo_banner_card.dart';
 import '../widgets/status_badge.dart';
 
 /// Inicio del Dueño: resumen de SUS barberías (spec 12.2: cada una con su
@@ -108,13 +107,6 @@ class OwnerDashboardTab extends StatelessWidget {
                   _ShopSummaryTile(shop: shop),
                   const SizedBox(height: 10),
                 ],
-                const SizedBox(height: 10),
-                const PromoBannerCard(
-                  light: true,
-                  icon: Icons.trending_up,
-                  title: 'Haz crecer tus barberías',
-                  subtitle: 'Mantén tus servicios y horarios al día para recibir más citas.',
-                ),
               ],
             );
           },

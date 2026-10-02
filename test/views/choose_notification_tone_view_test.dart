@@ -6,7 +6,7 @@ import 'package:barber/repositories/auth_repository.dart';
 import 'package:barber/repositories/user_repository.dart';
 import 'package:barber/services/push_notification_service.dart';
 import 'package:barber/views/notification/choose_notification_tone_view.dart';
-import 'package:barber/views/widgets/gradient_button.dart';
+import 'package:barber/views/widgets/app_button.dart';
 import 'package:firebase_auth/firebase_auth.dart';
 import 'package:flutter/material.dart';
 import 'package:flutter_test/flutter_test.dart';
@@ -64,7 +64,7 @@ void main() {
     await tester.pumpWidget(wrap());
     await tester.pumpAndSettle();
 
-    final button = tester.widget<GradientButton>(find.byType(GradientButton));
+    final button = tester.widget<AppButton>(find.byType(AppButton));
     expect(button.onPressed, isNull);
   });
 
@@ -82,10 +82,10 @@ void main() {
     await tester.tap(find.text(NotificationTone.informal.label));
     await tester.pumpAndSettle();
 
-    final button = tester.widget<GradientButton>(find.byType(GradientButton));
+    final button = tester.widget<AppButton>(find.byType(AppButton));
     expect(button.onPressed, isNotNull);
 
-    await tester.tap(find.byType(GradientButton));
+    await tester.tap(find.byType(AppButton));
     await tester.pumpAndSettle();
 
     verify(

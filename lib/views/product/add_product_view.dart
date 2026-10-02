@@ -8,7 +8,7 @@ import 'package:provider/provider.dart';
 import '../../models/product.dart';
 import '../../repositories/product_repository.dart';
 import '../../theme/app_colors.dart';
-import '../widgets/gradient_button.dart';
+import '../widgets/app_button.dart';
 
 Widget _entrance(Widget child, int index) {
   return child
@@ -200,7 +200,7 @@ class _AddProductViewState extends State<AddProductView> {
                 3,
               ),
               const SizedBox(height: 24),
-              GradientButton(
+              AppButton(
                 onPressed: _saving ? null : _submit,
                 icon: _saving ? null : Icons.shopping_bag_outlined,
                 child: _saving

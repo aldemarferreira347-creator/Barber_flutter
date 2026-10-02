@@ -277,7 +277,6 @@ class ClientAppointmentsView extends StatelessWidget {
                             AppointmentCard(
                               appointment: entry.$2,
                               subtitle: 'Con ${entry.$2.barberName}',
-                              animationIndex: entry.$1,
                               actions: [
                                 TextButton(
                                   onPressed: () => _cancel(context, entry.$2),
@@ -305,7 +304,6 @@ class ClientAppointmentsView extends StatelessWidget {
                             AppointmentCard(
                               appointment: entry.$2,
                               subtitle: 'Con ${entry.$2.barberName}',
-                              animationIndex: entry.$1,
                               actions:
                                   _canRate(entry.$2) &&
                                       !ratedIds.contains(entry.$2.id)

@@ -103,12 +103,13 @@ void main() {
     expect(tester.takeException(), isNull);
     expect(find.text('Hola, Ada 👋'), findsOneWidget);
     await tester.scrollUntilVisible(
-      find.text('Control total'),
+      find.text('Gestionar usuarios'),
       300,
       scrollable: find.byType(Scrollable).first,
     );
     await tester.pumpAndSettle();
-    expect(find.text('Control total'), findsOneWidget);
+    expect(find.text('Acciones rápidas'), findsOneWidget);
+    expect(find.text('Gestionar usuarios'), findsOneWidget);
   });
 
   testWidgets(
@@ -174,13 +175,7 @@ void main() {
 
     expect(tester.takeException(), isNull);
     expect(find.text('Mi horario'), findsOneWidget);
-    await tester.scrollUntilVisible(
-      find.text('La constancia también es talento'),
-      300,
-      scrollable: find.byType(Scrollable).first,
-    );
-    await tester.pumpAndSettle();
-    expect(find.text('La constancia también es talento'), findsOneWidget);
+    expect(find.text('Hola, Beto 👋'), findsOneWidget);
   });
 
   testWidgets('ClientDashboardTab construye sin errores y sin citas próximas', (

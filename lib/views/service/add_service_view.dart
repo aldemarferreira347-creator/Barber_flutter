@@ -8,7 +8,7 @@ import 'package:provider/provider.dart';
 import '../../models/service.dart';
 import '../../repositories/service_repository.dart';
 import '../../theme/app_colors.dart';
-import '../widgets/gradient_button.dart';
+import '../widgets/app_button.dart';
 
 Widget _entrance(Widget child, int index) {
   return child
@@ -225,7 +225,7 @@ class _AddServiceViewState extends State<AddServiceView> {
                 3,
               ),
               const SizedBox(height: 24),
-              GradientButton(
+              AppButton(
                 onPressed: _saving ? null : _submit,
                 icon: _saving ? null : Icons.content_cut,
                 child: _saving

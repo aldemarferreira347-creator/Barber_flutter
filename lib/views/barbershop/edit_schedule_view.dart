@@ -5,7 +5,7 @@ import 'package:provider/provider.dart';
 import '../../models/day_schedule.dart';
 import '../../repositories/barbershop_repository.dart';
 import '../../theme/app_colors.dart';
-import '../widgets/gradient_button.dart';
+import '../widgets/app_button.dart';
 
 class EditScheduleView extends StatefulWidget {
   final String barbershopId;
@@ -136,7 +136,7 @@ class _EditScheduleViewState extends State<EditScheduleView> {
             const SizedBox(height: 10),
           ],
           const SizedBox(height: 14),
-          GradientButton(
+          AppButton(
             onPressed: _saving ? null : _save,
             icon: _saving ? null : Icons.check_circle_outline,
             child: _saving

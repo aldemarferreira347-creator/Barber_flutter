@@ -16,7 +16,6 @@ import '../notification/notifications_view.dart';
 import '../widgets/action_list_tile.dart';
 import '../widgets/dashboard_scaffold.dart';
 import '../widgets/pressable_scale.dart';
-import '../widgets/promo_banner_card.dart';
 
 class ClientDashboardTab extends StatelessWidget {
   const ClientDashboardTab({super.key});
@@ -294,12 +293,6 @@ class ClientDashboardTab extends StatelessWidget {
               ),
             );
           },
-        ),
-        const SizedBox(height: 20),
-        const PromoBannerCard(
-          icon: Icons.workspace_premium_outlined,
-          title: 'Tu estilo, nuestra pasión',
-          subtitle: 'Encuentra el look perfecto para ti.',
         ),
       ],
     );

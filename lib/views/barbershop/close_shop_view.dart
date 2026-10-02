@@ -4,7 +4,7 @@ import 'package:provider/provider.dart';
 
 import '../../repositories/shop_closure_repository.dart';
 import '../../theme/app_colors.dart';
-import '../widgets/gradient_button.dart';
+import '../widgets/app_button.dart';
 
 /// Cierre de tienda por evento externo (spec 3.4): el dueño elige el rango
 /// de fechas/horas afectado y el motivo. Cada reserva pagada dentro de ese
@@ -129,7 +129,7 @@ class _CloseShopViewState extends State<CloseShopView> {
           const SizedBox(height: 20),
           SizedBox(
             width: 200,
-            child: GradientButton(
+            child: AppButton(
               onPressed: () => Navigator.of(context).pop(),
               child: const Text('Listo'),
             ),
@@ -169,7 +169,7 @@ class _CloseShopViewState extends State<CloseShopView> {
           ),
         ),
         const SizedBox(height: 24),
-        GradientButton(
+        AppButton(
           onPressed: (_from != null && _until != null && !_saving)
               ? _confirm
               : null,

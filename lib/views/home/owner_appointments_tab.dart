@@ -172,7 +172,6 @@ class _AppointmentsListState extends State<_AppointmentsList> {
               subtitle:
                   '${appointment.clientName} con ${appointment.barberName}'
                   '${showShopName && shopName != null ? ' · $shopName' : ''}',
-              animationIndex: index,
             );
           },
         );

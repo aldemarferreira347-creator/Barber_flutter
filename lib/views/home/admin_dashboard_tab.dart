@@ -16,7 +16,6 @@ import '../widgets/action_list_tile.dart';
 import '../widgets/brand_mark.dart';
 import '../widgets/dashboard_scaffold.dart';
 import '../widgets/error_state.dart';
-import '../widgets/promo_banner_card.dart';
 import '../widgets/stat_card.dart';
 
 class AdminDashboardTab extends StatefulWidget {
@@ -133,21 +132,18 @@ class _AdminDashboardTabState extends State<AdminDashboardTab> {
                       value: '${users.length}',
                       label: 'Usuarios activos',
                       iconColor: AppColors.success,
-                      animationIndex: 1,
                     ),
                     StatCard(
                       icon: Icons.storefront,
                       value: '${shops.where((s) => s.active).length}',
                       label: 'Barberías activas',
                       iconColor: AppColors.accent,
-                      animationIndex: 2,
                     ),
                     StatCard(
                       icon: Icons.warning_amber_outlined,
                       value: '$overdueShops',
                       label: 'Barberías en alerta',
                       iconColor: AppColors.warning,
-                      animationIndex: 3,
                     ),
                   ],
                 );
@@ -172,18 +168,11 @@ class _AdminDashboardTabState extends State<AdminDashboardTab> {
           icon: Icons.storefront_outlined,
           label: 'Gestión de barberías',
           subtitle: 'Aprobaciones, estado y mensualidad',
-          animationIndex: 1,
           onTap: () => Navigator.of(context).push(
             MaterialPageRoute(
               builder: (_) => const ManageBarbershopsView(adminControls: true),
             ),
           ),
-        ),
-        const SizedBox(height: 24),
-        const PromoBannerCard(
-          icon: Icons.admin_panel_settings_outlined,
-          title: 'Control total',
-          subtitle: 'Gestiona todo el sistema desde un solo lugar.',
         ),
       ],
     );

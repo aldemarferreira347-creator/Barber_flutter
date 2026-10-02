@@ -8,7 +8,7 @@ import '../../models/purchase.dart';
 import '../../repositories/purchase_repository.dart';
 import '../../theme/app_colors.dart';
 import '../widgets/error_state.dart';
-import '../widgets/gradient_button.dart';
+import '../widgets/app_button.dart';
 
 /// Compra directa de un producto (spec 10.3), sin necesidad de una cita.
 /// Pide la cantidad, dispara el pago (Nequi, simulado por ahora) y sigue el
@@ -121,7 +121,7 @@ class _BuyProductViewState extends State<BuyProductView> {
               style: const TextStyle(color: AppColors.error),
             ),
           ),
-        GradientButton(
+        AppButton(
           onPressed: _buying ? null : _buy,
           icon: _buying ? null : Icons.lock_outline,
           child: _buying

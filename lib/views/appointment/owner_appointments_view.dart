@@ -53,7 +53,6 @@ class OwnerAppointmentsView extends StatelessWidget {
                 appointment: appointment,
                 subtitle:
                     '${appointment.clientName} con ${appointment.barberName}',
-                animationIndex: index,
               );
             },
           );

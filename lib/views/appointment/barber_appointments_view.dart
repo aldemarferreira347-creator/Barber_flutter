@@ -98,7 +98,6 @@ class BarberAppointmentsView extends StatelessWidget {
                     return AppointmentCard(
                       appointment: appointment,
                       subtitle: 'Cliente: ${appointment.clientName}',
-                      animationIndex: index,
                       actions: [
                         if (isPending) ...[
                           TextButton(

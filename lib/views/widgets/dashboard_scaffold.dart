@@ -1,19 +1,23 @@
 import 'package:flutter/material.dart';
-import 'package:flutter_animate/flutter_animate.dart';
 
 import '../../theme/app_colors.dart';
-import 'pressable_scale.dart';
+import '../../theme/app_tokens.dart';
+import 'responsive_body.dart';
 
 /// Estructura compartida por los 4 dashboards de rol (Admin/Dueño/Barbero/
-/// Cliente), siguiendo el mockup de referencia: banda oscura con saludo +
-/// campana de notificaciones, y una "hoja" clara con esquinas redondeadas
-/// que se monta encima, conteniendo el resto del contenido en un
-/// `ListView`.
+/// Cliente): encabezado con saludo, avatar y campana de notificaciones, y
+/// debajo el contenido en una sola columna que no se estira en pantallas
+/// anchas. Sin degradados ni capas decorativas: el contenido es el
+/// protagonista.
 class DashboardScaffold extends StatelessWidget {
   final String greeting;
   final String subtitle;
   final Widget? avatar;
   final VoidCallback? onNotifications;
+
+  /// Notificaciones sin leer; si es mayor que 0 se muestra un punto de
+  /// aviso sobre la campana.
+  final int unreadNotifications;
   final List<Widget> children;
   final Widget? floatingActionButton;
 
@@ -23,99 +27,81 @@ class DashboardScaffold extends StatelessWidget {
     required this.subtitle,
     this.avatar,
     this.onNotifications,
+    this.unreadNotifications = 0,
     required this.children,
     this.floatingActionButton,
   });
 
   @override
   Widget build(BuildContext context) {
+    final text = Theme.of(context).textTheme;
     return Scaffold(
       floatingActionButton: floatingActionButton,
-      body: DecoratedBox(
-        decoration: BoxDecoration(
-          gradient: LinearGradient(
-            begin: Alignment.topLeft,
-            end: Alignment.bottomRight,
-            colors: AppColors.isDark
-                ? [AppColors.surface, AppColors.background]
-                : [AppColors.primary, const Color(0xFF1E293B)],
-          ),
-        ),
-        child: SafeArea(
-          bottom: false,
-          child: Column(
+      body: SafeArea(
+        bottom: false,
+        child: ResponsiveBody(
+          child: ListView(
+            padding: const EdgeInsets.fromLTRB(0, AppSpace.lg, 0, AppSpace.xxl),
             children: [
-              Padding(
-                    padding: const EdgeInsets.fromLTRB(20, 12, 20, 32),
-                    child: Row(
+              Row(
+                children: [
+                  if (avatar != null) ...[
+                    avatar!,
+                    const SizedBox(width: AppSpace.md),
+                  ],
+                  Expanded(
+                    child: Column(
+                      crossAxisAlignment: CrossAxisAlignment.start,
                       children: [
-                        if (avatar != null) ...[
-                          avatar!,
-                          const SizedBox(width: 12),
-                        ],
-                        Expanded(
-                          child: Column(
-                            crossAxisAlignment: CrossAxisAlignment.start,
-                            children: [
-                              Text(
-                                greeting,
-                                style: const TextStyle(
-                                  color: Colors.white,
-                                  fontSize: 20,
-                                  fontWeight: FontWeight.w800,
-                                ),
-                              ),
-                              const SizedBox(height: 2),
-                              Text(
-                                subtitle,
-                                style: TextStyle(
-                                  color: Colors.white.withValues(alpha: 0.7),
-                                  fontSize: 13,
-                                ),
-                              ),
-                            ],
-                          ),
+                        Semantics(
+                          header: true,
+                          child: Text(greeting, style: text.headlineSmall),
                         ),
-                        if (onNotifications != null)
-                          PressableScale(
-                            onTap: onNotifications,
-                            child: Container(
-                              padding: const EdgeInsets.all(10),
-                              decoration: BoxDecoration(
-                                color: Colors.white.withValues(alpha: 0.12),
-                                shape: BoxShape.circle,
-                              ),
-                              child: const Icon(
-                                Icons.notifications_none,
-                                color: Colors.white,
-                                size: 20,
-                              ),
-                            ),
-                          ),
+                        const SizedBox(height: 2),
+                        Text(subtitle, style: text.bodyMedium),
                       ],
                     ),
-                  )
-                  .animate()
-                  .fadeIn(duration: 320.ms)
-                  .slideY(begin: -0.15, end: 0, curve: Curves.easeOutCubic),
-              Expanded(
-                child: Container(
-                  width: double.infinity,
-                  decoration: BoxDecoration(
-                    color: AppColors.background,
-                    borderRadius: const BorderRadius.vertical(
-                      top: Radius.circular(28),
+                  ),
+                  if (onNotifications != null)
+                    _NotificationsButton(
+                      onPressed: onNotifications!,
+                      unread: unreadNotifications,
                     ),
-                  ),
-                  child: ListView(
-                    padding: const EdgeInsets.fromLTRB(20, 24, 20, 28),
-                    children: children,
-                  ),
-                ),
+                ],
               ),
+              const SizedBox(height: AppSpace.xl),
+              ...children,
             ],
           ),
         ),
+      ),
+    );
+  }
+}
+
+class _NotificationsButton extends StatelessWidget {
+  final VoidCallback onPressed;
+  final int unread;
+
+  const _NotificationsButton({required this.onPressed, required this.unread});
+
+  @override
+  Widget build(BuildContext context) {
+    final tooltip = unread > 0
+        ? 'Notificaciones ($unread sin leer)'
+        : 'Notificaciones';
+    return IconButton(
+      tooltip: tooltip,
+      onPressed: onPressed,
+      style: IconButton.styleFrom(
+        backgroundColor: AppColors.surface,
+        side: BorderSide(color: AppColors.border),
+      ),
+      icon: Badge(
+        isLabelVisible: unread > 0,
+        backgroundColor: AppColors.error,
+        smallSize: 8,
+        child: const Icon(Icons.notifications_none, size: 22),
       ),
     );
   }

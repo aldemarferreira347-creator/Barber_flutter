@@ -6,6 +6,12 @@
       "runtimeExecutable": "flutter",
       "runtimeArgs": ["run", "-d", "web-server", "--web-port=5959"],
       "port": 5959
+    },
+    {
+      "name": "barber-web-emulator",
+      "runtimeExecutable": "flutter",
+      "runtimeArgs": ["run", "-d", "web-server", "--web-port=5960", "--dart-define=USE_EMULATOR=true"],
+      "port": 5960
     }
   ]
 }

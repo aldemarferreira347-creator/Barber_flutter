@@ -9,7 +9,7 @@ import '../../models/barbershop.dart';
 import '../../repositories/barbershop_repository.dart';
 import '../../services/location_service.dart';
 import '../../theme/app_colors.dart';
-import '../widgets/gradient_button.dart';
+import '../widgets/app_button.dart';
 
 /// Edición de los datos básicos de una barbería que ya existe (Update del
 /// CRUD del dueño). No toca aprobación, bloqueo ni pago: esos campos los
@@ -255,7 +255,7 @@ class _EditBarbershopViewState extends State<EditBarbershopView> {
                 ),
               ),
               const SizedBox(height: 24),
-              GradientButton(
+              AppButton(
                 onPressed: _saving ? null : _save,
                 icon: _saving ? null : Icons.save_outlined,
                 child: _saving

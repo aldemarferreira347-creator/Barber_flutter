@@ -4,7 +4,7 @@ import 'package:provider/provider.dart';
 
 import '../../controllers/auth_controller.dart';
 import '../../theme/app_colors.dart';
-import '../widgets/gradient_button.dart';
+import '../widgets/app_button.dart';
 
 class PhoneLoginView extends StatefulWidget {
   const PhoneLoginView({super.key});
@@ -118,7 +118,7 @@ class _PhoneLoginViewState extends State<PhoneLoginView> {
                         .fadeIn(duration: 300.ms)
                         .slideY(begin: 0.1, end: 0, curve: Curves.easeOutCubic),
                     const SizedBox(height: 20),
-                    GradientButton(
+                    AppButton(
                       onPressed: auth.isBusy ? null : () => _sendCode(auth),
                       icon: auth.isBusy ? null : Icons.send_outlined,
                       child: auth.isBusy
@@ -145,7 +145,7 @@ class _PhoneLoginViewState extends State<PhoneLoginView> {
                         .fadeIn(duration: 300.ms)
                         .slideY(begin: 0.1, end: 0, curve: Curves.easeOutCubic),
                     const SizedBox(height: 20),
-                    GradientButton(
+                    AppButton(
                       onPressed: auth.isBusy ? null : () => _confirmCode(auth),
                       icon: auth.isBusy ? null : Icons.check_circle_outline,
                       child: auth.isBusy

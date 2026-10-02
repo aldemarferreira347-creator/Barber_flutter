@@ -13,7 +13,6 @@ import '../service/manage_services_view.dart';
 import '../widgets/action_list_tile.dart';
 import '../widgets/dashboard_scaffold.dart';
 import '../widgets/error_state.dart';
-import '../widgets/promo_banner_card.dart';
 import '../widgets/status_badge.dart';
 
 class BarberDashboardTab extends StatelessWidget {
@@ -111,7 +110,6 @@ class BarberDashboardTab extends StatelessWidget {
           icon: Icons.content_cut,
           label: 'Mis servicios',
           subtitle: 'Servicios asignados',
-          animationIndex: 1,
           onTap: barbershopId == null
               ? null
               : () => Navigator.of(context).push(
@@ -126,7 +124,6 @@ class BarberDashboardTab extends StatelessWidget {
           icon: Icons.bar_chart_outlined,
           label: 'Mis estadísticas',
           subtitle: 'Rendimiento y citas',
-          animationIndex: 2,
           onTap: () => Navigator.of(context).push(
             MaterialPageRoute(builder: (_) => const BarberAppointmentsView()),
           ),
@@ -215,13 +212,6 @@ class BarberDashboardTab extends StatelessWidget {
             },
           ),
         ],
-        const SizedBox(height: 20),
-        const PromoBannerCard(
-          icon: Icons.content_cut,
-          title: 'La constancia también es talento',
-          subtitle: 'Cada corte cuenta.',
-          backgroundImage: 'lib/views/img/fondo.png',
-        ),
       ],
     );
   }

@@ -13,6 +13,8 @@
     "test": "jest --runInBand",
     "test:watch": "jest --watch",
     "test:rules": "node scripts/test-rules.cjs",
+    "emulators": "node scripts/emulators.cjs",
+    "seed": "node scripts/seed-emulator.cjs",
     "serve": "npm run build && firebase emulators:start --only functions,firestore,storage",
     "shell": "npm run build && firebase functions:shell",
     "deploy": "firebase deploy --only functions"

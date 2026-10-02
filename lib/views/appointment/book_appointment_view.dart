@@ -12,7 +12,7 @@ import '../../repositories/user_repository.dart';
 import '../../theme/app_colors.dart';
 import '../widgets/empty_state.dart';
 import '../widgets/error_state.dart';
-import '../widgets/gradient_button.dart';
+import '../widgets/app_button.dart';
 import '../widgets/pressable_scale.dart';
 import '../widgets/shimmer_box.dart';
 
@@ -239,7 +239,7 @@ class _BookAppointmentViewState extends State<BookAppointmentView> {
             onTap: () => setState(() => _payNow = true),
           ),
           const SizedBox(height: 24),
-          GradientButton(
+          AppButton(
             onPressed:
                 (_service != null &&
                     _barber != null &&

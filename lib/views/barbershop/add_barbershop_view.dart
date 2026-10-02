@@ -14,7 +14,7 @@ import '../../repositories/barbershop_repository.dart';
 import '../../repositories/user_repository.dart';
 import '../../services/location_service.dart';
 import '../../theme/app_colors.dart';
-import '../widgets/gradient_button.dart';
+import '../widgets/app_button.dart';
 
 Widget _entrance(Widget child, int index) {
   return child
@@ -484,7 +484,7 @@ class _AddBarbershopViewState extends State<AddBarbershopView> {
                 7,
               ),
               const SizedBox(height: 24),
-              GradientButton(
+              AppButton(
                 onPressed: (_saving || _paying) ? null : _payAndRegister,
                 icon: _paying ? null : Icons.payments_outlined,
                 child: _paying

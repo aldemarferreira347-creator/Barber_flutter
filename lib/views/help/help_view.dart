@@ -134,7 +134,6 @@ class HelpView extends StatelessWidget {
           ActionListTile(
             icon: Icons.phone_outlined,
             label: SupportInfo.supportPhone,
-            animationIndex: 1,
             onTap: () => _launch(
               context,
               Uri(scheme: 'tel', path: SupportInfo.supportPhone),
@@ -144,7 +143,6 @@ class HelpView extends StatelessWidget {
           ActionListTile(
             icon: Icons.privacy_tip_outlined,
             label: 'Política de privacidad',
-            animationIndex: 2,
             onTap: () => Navigator.of(context).push(
               MaterialPageRoute(builder: (_) => const PrivacyPolicyView()),
             ),

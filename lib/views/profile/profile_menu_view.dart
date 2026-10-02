@@ -218,7 +218,6 @@ class ProfileMenuView extends StatelessWidget {
             ActionListTile(
               icon: entry.$2.icon,
               label: entry.$2.label,
-              animationIndex: entry.$1 + 2,
               onTap: entry.$2.onTap,
             ),
             const SizedBox(height: 10),

@@ -5,7 +5,7 @@ import 'package:provider/provider.dart';
 import '../../models/purchase.dart';
 import '../../repositories/purchase_repository.dart';
 import '../../theme/app_colors.dart';
-import '../widgets/gradient_button.dart';
+import '../widgets/app_button.dart';
 
 /// El barbero introduce el código de reclamo de una compra (spec 10.4),
 /// revisa el checklist de productos y la marca como entregada.
@@ -180,7 +180,7 @@ class _ClaimPurchaseViewState extends State<ClaimPurchaseView> {
                   .fadeIn(duration: 320.ms)
                   .slideY(begin: 0.08, end: 0, curve: Curves.easeOutCubic),
               const SizedBox(height: 16),
-              GradientButton(
+              AppButton(
                 onPressed: canClaim && !_claiming ? _claim : null,
                 icon: _claiming ? null : Icons.check_circle_outline,
                 child: _claiming

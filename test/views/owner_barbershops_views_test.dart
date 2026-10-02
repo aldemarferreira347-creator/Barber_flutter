@@ -223,11 +223,7 @@ void main() {
           active: true,
           approvalStatus: BarbershopApprovalStatus.approved,
         );
-        const pending = Barbershop(
-          id: 's2',
-          ownerId: _uid,
-          name: 'Pendiente',
-        );
+        const pending = Barbershop(id: 's2', ownerId: _uid, name: 'Pendiente');
         expect(OwnerBarbershopManageView.canDelete(live), isFalse);
         expect(OwnerBarbershopManageView.canDelete(pending), isTrue);
       },

@@ -10,7 +10,7 @@ import '../../models/comment.dart';
 import '../../repositories/comment_repository.dart';
 import '../../repositories/rating_repository.dart';
 import '../../theme/app_colors.dart';
-import '../widgets/gradient_button.dart';
+import '../widgets/app_button.dart';
 import '../widgets/pressable_scale.dart';
 
 /// Calificación y comentario opcional de una cita pagada y completada
@@ -206,7 +206,7 @@ class _RateAppointmentViewState extends State<RateAppointmentView> {
             ),
           ),
           const SizedBox(height: 24),
-          GradientButton(
+          AppButton(
             onPressed: (_barberStars > 0 && _shopStars > 0 && !_saving)
                 ? _submit
                 : null,

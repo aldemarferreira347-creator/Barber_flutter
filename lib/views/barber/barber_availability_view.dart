@@ -6,7 +6,7 @@ import '../../controllers/user_controller.dart';
 import '../../repositories/barber_availability_repository.dart';
 import '../../repositories/user_repository.dart';
 import '../../theme/app_colors.dart';
-import '../widgets/gradient_button.dart';
+import '../widgets/app_button.dart';
 
 /// El barbero marca si está disponible para recibir citas nuevas — "darse
 /// de baja" temporalmente sin dejar la barbería (la gestión de horas
@@ -198,7 +198,7 @@ class _AwayControlState extends State<_AwayControl> {
           style: TextStyle(color: AppColors.textSecondary, fontSize: 12),
         ),
         const SizedBox(height: 14),
-        GradientButton(
+        AppButton(
           onPressed: _busy ? null : _markReturned,
           icon: Icons.check,
           child: const Text('Marcar regreso'),

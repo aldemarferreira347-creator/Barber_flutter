@@ -1,10 +1,11 @@
 import 'package:flutter/material.dart';
-import 'package:flutter_animate/flutter_animate.dart';
 
 import '../../theme/app_colors.dart';
-import 'pressable_scale.dart';
+import '../../theme/app_tokens.dart';
+import 'app_card.dart';
 
-/// Item de "Acciones rápidas" / menú: icono a la izquierda, texto y chevron.
+/// Fila de "Acciones rápidas" / menú: ícono en círculo teñido, texto de una
+/// o dos líneas y chevron (o un [trailing] propio, p. ej. un badge).
 class ActionListTile extends StatelessWidget {
   final IconData icon;
   final String label;
@@ -12,7 +13,6 @@ class ActionListTile extends StatelessWidget {
   final VoidCallback? onTap;
   final Color? iconColor;
   final Widget? trailing;
-  final int animationIndex;
 
   const ActionListTile({
     super.key,
@@ -22,87 +22,48 @@ class ActionListTile extends StatelessWidget {
     this.onTap,
     this.iconColor,
     this.trailing,
-    this.animationIndex = 0,
   });
 
   @override
   Widget build(BuildContext context) {
-    final resolvedIconColor = iconColor ?? AppColors.accent;
-    return PressableScale(
-          onTap: onTap,
-          child: Material(
-            color: AppColors.surface,
-            borderRadius: BorderRadius.circular(14),
-            elevation: 1,
-            shadowColor: AppColors.textPrimary.withValues(alpha: 0.08),
-            child: InkWell(
-              borderRadius: BorderRadius.circular(14),
-              onTap: onTap,
-              child: Container(
-                padding: const EdgeInsets.symmetric(
-                  horizontal: 14,
-                  vertical: 14,
-                ),
-                decoration: BoxDecoration(
-                  borderRadius: BorderRadius.circular(14),
-                  border: Border.all(color: AppColors.border),
-                ),
-                child: Row(
-                  children: [
-                    Container(
-                      padding: const EdgeInsets.all(8),
-                      decoration: BoxDecoration(
-                        gradient: LinearGradient(
-                          begin: Alignment.topLeft,
-                          end: Alignment.bottomRight,
-                          colors: [
-                            resolvedIconColor.withValues(alpha: 0.20),
-                            resolvedIconColor.withValues(alpha: 0.08),
-                          ],
-                        ),
-                        shape: BoxShape.circle,
-                      ),
-                      child: Icon(icon, color: resolvedIconColor, size: 18),
-                    ),
-                    const SizedBox(width: 12),
-                    Expanded(
-                      child: Column(
-                        crossAxisAlignment: CrossAxisAlignment.start,
-                        mainAxisSize: MainAxisSize.min,
-                        children: [
-                          Text(
-                            label,
-                            style: TextStyle(
-                              fontWeight: FontWeight.w600,
-                              color: AppColors.textPrimary,
-                            ),
-                          ),
-                          if (subtitle != null) ...[
-                            const SizedBox(height: 2),
-                            Text(
-                              subtitle!,
-                              style: TextStyle(
-                                fontSize: 12,
-                                color: AppColors.textSecondary,
-                              ),
-                            ),
-                          ],
-                        ],
-                      ),
-                    ),
-                    trailing ??
-                        Icon(
-                          Icons.chevron_right,
-                          color: AppColors.textSecondary,
-                        ),
-                  ],
-                ),
-              ),
+    final color = iconColor ?? AppColors.accent;
+    final text = Theme.of(context).textTheme;
+    return AppCard(
+      onTap: onTap,
+      padding: const EdgeInsets.symmetric(
+        horizontal: AppSpace.lg,
+        vertical: AppSpace.md,
+      ),
+      child: Row(
+        children: [
+          Container(
+            padding: const EdgeInsets.all(AppSpace.sm + 2),
+            decoration: BoxDecoration(
+              color: AppColors.tint(color),
+              shape: BoxShape.circle,
+            ),
+            child: Icon(icon, color: AppColors.readable(color), size: 18),
+          ),
+          const SizedBox(width: AppSpace.md),
+          Expanded(
+            child: Column(
+              crossAxisAlignment: CrossAxisAlignment.start,
+              mainAxisSize: MainAxisSize.min,
+              children: [
+                Text(label, style: text.titleSmall),
+                if (subtitle != null) ...[
+                  const SizedBox(height: 2),
+                  Text(subtitle!, style: text.bodySmall),
+                ],
+              ],
             ),
           ),
-        )
-        .animate(delay: (animationIndex * 60).ms)
-        .fadeIn(duration: 300.ms)
-        .slideX(begin: 0.08, end: 0, curve: Curves.easeOutCubic);
+          trailing ??
+              (onTap == null
+                  ? const SizedBox.shrink()
+                  : Icon(Icons.chevron_right, color: AppColors.textSecondary)),
+        ],
+      ),
+    );
   }
 }

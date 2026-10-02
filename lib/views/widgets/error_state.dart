@@ -1,9 +1,10 @@
 import 'package:flutter/material.dart';
-import 'package:flutter_animate/flutter_animate.dart';
 
 import '../../theme/app_colors.dart';
+import '../../theme/app_tokens.dart';
+import 'app_button.dart';
 
-/// Estado de error elegante para listas alimentadas por un `StreamBuilder`
+/// Estado de error para listas alimentadas por un `StreamBuilder`
 /// (`snapshot.hasError`), hermano de [EmptyState] pero con semántica de
 /// error: ícono en círculo rojo y, opcionalmente, un botón para reintentar.
 /// Los `Stream` de Firestore ya se reconectan solos, así que [onRetry] es
@@ -23,55 +24,41 @@ class ErrorState extends StatelessWidget {
 
   @override
   Widget build(BuildContext context) {
+    final text = Theme.of(context).textTheme;
     return Padding(
-          padding: const EdgeInsets.symmetric(vertical: 24),
-          child: Column(
-            children: [
-              Container(
-                padding: const EdgeInsets.all(14),
-                decoration: BoxDecoration(
-                  color: AppColors.error.withValues(alpha: 0.1),
-                  shape: BoxShape.circle,
-                ),
-                child: const Icon(
-                  Icons.error_outline,
-                  size: 32,
-                  color: AppColors.error,
-                ),
-              ).animate().scaleXY(
-                begin: 0.7,
-                end: 1,
-                duration: 380.ms,
-                curve: Curves.easeOutBack,
-              ),
-              const SizedBox(height: 14),
-              Text(
-                title,
-                textAlign: TextAlign.center,
-                style: TextStyle(
-                  fontWeight: FontWeight.w600,
-                  color: AppColors.textPrimary,
-                ),
-              ),
-              const SizedBox(height: 4),
-              Text(
-                subtitle,
-                textAlign: TextAlign.center,
-                style: TextStyle(color: AppColors.textSecondary, fontSize: 13),
-              ),
-              if (onRetry != null) ...[
-                const SizedBox(height: 14),
-                OutlinedButton.icon(
-                  onPressed: onRetry,
-                  icon: const Icon(Icons.refresh, size: 18),
-                  label: const Text('Reintentar'),
-                ),
-              ],
-            ],
+      padding: const EdgeInsets.symmetric(
+        vertical: AppSpace.xl,
+        horizontal: AppSpace.lg,
+      ),
+      child: Column(
+        children: [
+          Container(
+            padding: const EdgeInsets.all(AppSpace.lg),
+            decoration: BoxDecoration(
+              color: AppColors.tint(AppColors.error),
+              shape: BoxShape.circle,
+            ),
+            child: Icon(
+              Icons.error_outline,
+              size: 32,
+              color: AppColors.readable(AppColors.error),
+            ),
           ),
-        )
-        .animate()
-        .fadeIn(duration: 400.ms)
-        .scaleXY(begin: 0.94, end: 1, curve: Curves.easeOutCubic);
+          const SizedBox(height: AppSpace.lg),
+          Text(title, textAlign: TextAlign.center, style: text.titleMedium),
+          const SizedBox(height: AppSpace.xs),
+          Text(subtitle, textAlign: TextAlign.center, style: text.bodyMedium),
+          if (onRetry != null) ...[
+            const SizedBox(height: AppSpace.lg),
+            AppButton(
+              onPressed: onRetry,
+              icon: Icons.refresh,
+              expand: false,
+              child: const Text('Reintentar'),
+            ),
+          ],
+        ],
+      ),
+    );
   }
 }

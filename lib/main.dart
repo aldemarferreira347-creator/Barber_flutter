@@ -4,6 +4,7 @@ import 'package:provider/provider.dart';
 
 import 'controllers/auth_controller.dart';
 import 'controllers/user_controller.dart';
+import 'dev_emulators.dart';
 import 'firebase_options.dart';
 import 'repositories/appointment_repository.dart';
 import 'repositories/auth_repository.dart';
@@ -43,6 +44,7 @@ import 'theme/theme_controller.dart';
 Future<void> main() async {
   WidgetsFlutterBinding.ensureInitialized();
   await Firebase.initializeApp(options: DefaultFirebaseOptions.currentPlatform);
+  connectToEmulatorsIfRequested();
   final themeController = ThemeController();
   await themeController.load();
   runApp(BarberApp(themeController: themeController));

@@ -160,7 +160,39 @@ Leyenda: ✅ funciona de verdad con Firebase gratis (Spark) · ⚠️ existe per
 
 ## Fase 5 — Sistema de diseño
 
-_(pendiente)_
+### Referencia
+
+El mockup del repo (`lib/views/img/mockup.png`) es la fuente: negro `#000`, tarjetas `#1A1A1A`, bordes `#2A2A2A`, **botón primario blanco en oscuro**, azul `#3B82F6`, y **badges con fondo teñido y texto de color** (no sólidos). La paleta no cambia; el modo oscuro se alinea a él.
+
+### Hallazgos y correcciones
+
+| Hallazgo | Corrección |
+|---|---|
+| **El login es inutilizable en modo oscuro** (comprobado en pantalla): usa colores claros fijos (`0xFF0F172A`…) → título casi invisible, campos y botón invisibles | Se corrige al rehacer las pantallas de acceso en la Fase 6; los tokens y el test de abajo impiden que vuelva |
+| Accesibilidad: el gris secundario del modo claro daba **4.34:1** sobre el fondo (AA exige 4.5) | `#64748B → #5E6E85` (4.74:1), mismo matiz |
+| Badges sólidos con texto blanco: éxito (2.5:1), ámbar (2.1:1) y rojo (3.8:1) **no cumplen AA** | `StatusBadge` teñido con texto `AppColors.readable()` (contraste garantizado por construcción); `AppColors.solid()` para rellenos con texto blanco |
+| Navegación inferior propia con `GestureDetector` sin semántica (lectores de pantalla no la ven) y sin versión para pantallas anchas | `RoleShell` sobre `NavigationBar` (teléfono) / `NavigationRail` compacto (tablet) / extendido (escritorio) |
+| Decoración sin función: `AnimatedBackground` (manchas flotantes), `PromoBannerCard` (frases motivacionales ×4), degradados, sombras tintadas, animaciones de entrada en todos los componentes | Eliminados; componentes planos con borde fino. Quedan: transición de página, feedback de pulsación y shimmer de carga |
+| Tres widgets de etiqueta casi iguales (`StatusBadge`, `ApprovalStatusBadge`, `_PaymentBadge`) + uno más dentro de `AppointmentCard` | Un solo `StatusBadge` |
+| Sin forma de evitar doble envío en acciones que escriben datos o cuestan dinero | `AppButton`: si `onPressed` devuelve un `Future`, se deshabilita con indicador hasta terminar |
+| 13 `Image.network` sin caché en disco | `AppNetworkImage` (`cached_network_image`, esqueleto y fallback) — se aplica en la Fase 6 |
+
+### Piezas nuevas
+
+`theme/app_tokens.dart` (espaciado, radios, anchos, `ScreenSize`), `theme/contrast.dart` (WCAG), tokens nuevos en `AppColors` (`action`, `onAction`, `onColor`, `surfaceRaised`, `tint`, `readable`, `solid`, `scrim`), tema completo (tipografía, botones, campos, diálogos, hojas, snackbar, chips, switches, navegación) y los widgets `AppButton`, `AppCard`, `SectionHeader`, `AppDialog.confirm`, `AppBottomSheet`, `ResponsiveBody`, `AppNetworkImage`; `StatCard`, `ActionListTile`, `AppointmentCard`, `EmptyState` (con acción opcional), `ErrorState`, `DashboardScaffold` (campana con indicador de no leídas) reescritos.
+
+### Tests
+
+- `contrast_test`: 11 comprobaciones AA (claro y oscuro): texto, acción, enlaces, badges y rellenos sólidos.
+- `app_components_test`: doble toque ejecuta la acción una sola vez, se rehabilita si falla, diálogo de confirmación, ancho máximo responsive, estados vacío/error.
+
+### Herramientas de verificación añadidas
+
+`npm run emulators` + `npm run seed` (en `functions/`) levantan Auth/Firestore/Storage con un usuario por rol y datos de ejemplo, y `flutter run --dart-define=USE_EMULATOR=true` (configuración `barber-web-emulator`) conecta la app a ellos: permite recorrer **cada rol en pantalla** con las reglas reales.
+
+### Pendiente de esta fase (se cierra con la Fase 6)
+
+Eliminar los `Color(0x…)` / `Colors.white|black` restantes de las vistas (login, registro, splash y algunas más) y blindarlo con un test que falle si reaparecen.
 
 ## Fase 6 — Rediseño por área
 

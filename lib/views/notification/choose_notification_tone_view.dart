@@ -5,7 +5,7 @@ import 'package:provider/provider.dart';
 import '../../controllers/auth_controller.dart';
 import '../../models/notification_tone.dart';
 import '../../theme/app_colors.dart';
-import '../widgets/gradient_button.dart';
+import '../widgets/app_button.dart';
 
 /// Paso obligatorio del primer inicio de sesión (spec 3.5): el usuario debe
 /// elegir un tono antes de entrar a la app. AuthGate es quien decide cuándo
@@ -134,7 +134,7 @@ class _ChooseNotificationToneViewState
                 ),
               ),
               const SizedBox(height: 12),
-              GradientButton(
+              AppButton(
                 onPressed: _selected == null || _saving ? null : _confirm,
                 icon: _saving ? null : Icons.arrow_forward,
                 child: _saving
