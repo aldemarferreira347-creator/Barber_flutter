@@ -185,6 +185,56 @@ void main() {
       );
     });
 
+    testWidgets(
+      'bloqueada (cancelada o en mora): alerta, ofrece pagar y se puede eliminar',
+      (tester) async {
+        authController.profile = _user(UserRole.owner);
+        final blocked = Barbershop(
+          id: 's1',
+          ownerId: _uid,
+          name: 'Barbería Central',
+          active: false,
+          approvalStatus: BarbershopApprovalStatus.approved,
+          paymentStatus: PaymentStatus.blocked,
+        );
+        when(() => barbershops.watchOne('s1'))
+            .thenAnswer((_) => Stream.value(blocked));
+
+        await tester.pumpWidget(
+          wrap(const OwnerBarbershopManageView(barbershopId: 's1')),
+        );
+        await tester.pumpAndSettle();
+
+        expect(find.text('Bloqueada'), findsWidgets);
+        expect(
+          find.text('Pagar ${formatCop(kBarbershopMonthlyFee)}'),
+          findsWidgets,
+        );
+        expect(OwnerBarbershopManageView.canDelete(blocked), isTrue);
+      },
+    );
+
+    testWidgets(
+      'pendiente de aprobación: no deja eliminar una barbería aprobada y viva',
+      (tester) async {
+        final live = Barbershop(
+          id: 's1',
+          ownerId: _uid,
+          name: 'Viva',
+          active: true,
+          approvalStatus: BarbershopApprovalStatus.approved,
+        );
+        final pending = Barbershop(
+          id: 's2',
+          ownerId: _uid,
+          name: 'Pendiente',
+          approvalStatus: BarbershopApprovalStatus.pending,
+        );
+        expect(OwnerBarbershopManageView.canDelete(live), isFalse);
+        expect(OwnerBarbershopManageView.canDelete(pending), isTrue);
+      },
+    );
+
     testWidgets('NO deja gestionar la barbería de otro dueño', (tester) async {
       authController.profile = _user(UserRole.owner);
       when(() => barbershops.watchOne('s9')).thenAnswer(

@@ -67,7 +67,57 @@ Test obsoleto corregido (no era una regla rota): `users.rules.test.ts` afirmaba 
 
 ## Fase 2 — Errores funcionales e integridad
 
-_(pendiente)_
+### Matriz spec → realidad (qué funciona hoy sin servidor)
+
+Leyenda: ✅ funciona de verdad con Firebase gratis (Spark) · ⚠️ existe pero depende de Cloud Functions (plan Blaze), por lo tanto **no corre** hoy · ❌ no existe · 🟡 existe pero engaña o es incompleto.
+
+| Spec | Estado | Observación |
+|---|---|---|
+| 2 Roles y permisos | ✅ | Reforzado en la Fase 1 |
+| 3.1 Centro de notificaciones | 🟡 | La pantalla existe, pero las reglas solo dejan **crear** notificaciones al admin: para cliente/barbero/dueño solo habría avisos manuales |
+| 3.1 Push / SMS / correo de respaldo | ⚠️ | Solo backend; el token FCM se guarda, nada envía |
+| 3.2 Recordatorios 1 h / 15 min | ⚠️ | `sendAppointmentReminders` es un job programado: no corre. **Se resuelve con recordatorios locales en el dispositivo (Fase 8)** |
+| 3.3 Salir/volver del barbero | ✅ | Control funciona y la regla lo permite |
+| 3.3 Aplazar solas las citas si no vuelve | ⚠️ | `processOverdueBarbers` no corre |
+| 3.4 Cierre por evento externo + penalización | ✅ | Cliente hace el aplazamiento; la notificación a clientes ⚠️ |
+| 3.5 Tono de notificaciones | ✅ | |
+| 4.1 / 4.2 Vistas, historial, logo | ✅ | Rediseño en Fases 5–6 |
+| 5.1 Google + vinculación segura | ✅ | Con tests |
+| 6.1 Reserva con y sin pago | ✅ | |
+| 6.2 Un solo ganador del horario | ✅ | Transacción + slot; ahora además protegido por reglas |
+| 6.3 Cancelar → primero posponer → reembolso con justificación | ✅ | |
+| 6.4 Posponer con historial | ✅ | |
+| 6.5 Reembolso con checklist de ítems | ✅ | |
+| 6.5 Devolución digital **o presencial en efectivo** | ❌ | No hay forma de indicar el medio. **Fase 8** |
+| 6.6 Reservar más allá del corte | ✅ | |
+| 7.1–7.3 Calificar, comentar, moderar | ✅ | Moderación cliente = backend (test de paridad) |
+| 7.4 Lineamientos de conducta | ✅ | En `rate_appointment_view` |
+| 8.1 Abrir Google Maps | ✅ | |
+| 9.x Recomendación de peinados con IA | ❌ | No empezada (necesita ML Kit + catálogo de diseños). Evaluar al final |
+| 10.1–10.2 Catálogo y gestión de productos | ✅ | |
+| 10.3 Compra vinculada a cita / directa | 🟡 | Compra directa existe; **vincular a una cita existente no** (`appointmentId` siempre null en la UI) |
+| 10.4 Código de reclamo, 24 h | 🟡 | Código y reclamo ✅; **la regla no impide reclamar una compra ya vencida** y nada la marca vencida (`expirePurchases` es un job) |
+| 10.5 Verificar ítems ya reembolsados con el código | ✅ | |
+| 11.1 Cámara | ✅ | |
+| 12.1 Rol Dueño sin barbería aprobada = Cliente | ✅ | `_OwnerGate` |
+| 12.2 Múltiples barberías | ✅ | |
+| 12.3 Panel del dueño: **reportes, clientes atendidos, actividad por barbero** | ❌ | Hay gestión, no hay reportes. **Fase 8** |
+| 12.4 Panel admin: barberías, usuarios, mensualidad | ✅ | |
+| 12.5 Mensualidad: registro manual del admin | ✅ | `_confirmPaymentReceived` |
+| 12.5 Período de gracia y bloqueo **automáticos** | ⚠️ | `processBarbershopBilling` no corre; existe `paymentInsight` (derivado en pantalla) pero el catálogo no oculta una barbería con gracia agotada. **Fase 8: estado derivado** |
+| 12.6 Cancelar y reembolsar citas atrapadas por el bloqueo | ⚠️ | Solo job. Se resuelve junto con el estado derivado (Fase 8) |
+| 13 Pagos con Nequi | 🟡 | **No hay integración**: la app crea y "aprueba" el pago ella misma y le dice al usuario "Confirma el pago en tu app Nequi". Engaña. **Fase 8: Nequi manual con confirmación** |
+
+### Revisado y sin cambios
+
+- **Errores tragados:** los 3 `catch (_)` son legítimos (uno relanza tras limpiar la cuenta huérfana, uno cierra una app temporal, uno es limpieza opcional de Google). No se tocan.
+- **Estados de error de streams:** los 22 `StreamBuilder/FutureBuilder` ya tienen rama de error con `ErrorState`.
+- **Doble envío:** las vistas con formulario (`book_appointment`, `buy_product`, `add_*`, `edit_*`, `rate_appointment`, `close_shop`…) ya bloquean con un flag. **Sin protección:** `owner_barbershop_manage_view._paySubscription` (dos toques = dos cobros, y sin confirmar el monto), `client_appointments_view` (cancelar/posponer), `refund_requests_view._resolve`, `manage_barbershops_view` (aprobar/bloquear), `manage_users_view`, `manage_barbers_view`, `claim_purchase_view`. Se resuelve con un `AsyncButton` compartido (Fase 5) y se aplica en la Fase 6.
+
+### Tests añadidos
+
+- Dueño con barbería **bloqueada**: alerta, ofrece pagar y permite eliminar.
+- Regla de borrado: solo se elimina una barbería no aprobada o ya bloqueada.
 
 ## Fase 3 — Arquitectura y limpieza
 
