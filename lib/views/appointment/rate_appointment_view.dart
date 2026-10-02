@@ -247,7 +247,7 @@ class _StarPicker extends StatelessWidget {
               icon:
                   Icon(
                         i <= value ? Icons.star : Icons.star_border,
-                        color: AppColors.primary,
+                        color: AppColors.gold,
                         size: 32,
                       )
                       .animate(target: i <= value ? 1 : 0)

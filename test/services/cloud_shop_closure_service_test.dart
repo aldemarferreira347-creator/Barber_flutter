@@ -1,32 +1,63 @@
-import 'package:cloud_functions/cloud_functions.dart';
+import 'package:cloud_firestore/cloud_firestore.dart';
+import 'package:fake_cloud_firestore/fake_cloud_firestore.dart';
+import 'package:firebase_auth/firebase_auth.dart';
 import 'package:barber/services/cloud_shop_closure_service.dart';
 import 'package:flutter_test/flutter_test.dart';
 import 'package:mocktail/mocktail.dart';
 
-class MockFirebaseFunctions extends Mock implements FirebaseFunctions {}
+class MockFirebaseAuth extends Mock implements FirebaseAuth {}
 
-class MockHttpsCallable extends Mock implements HttpsCallable {}
-
-class MockHttpsCallableResult<T> extends Mock implements HttpsCallableResult<T> {}
+class MockUser extends Mock implements User {}
 
 void main() {
-  late MockFirebaseFunctions functions;
+  late FakeFirebaseFirestore firestore;
+  late MockFirebaseAuth auth;
+  late MockUser user;
   late CloudShopClosureService service;
 
   setUp(() {
-    functions = MockFirebaseFunctions();
-    service = CloudShopClosureService(functions: functions);
+    firestore = FakeFirebaseFirestore();
+    auth = MockFirebaseAuth();
+    user = MockUser();
+    when(() => auth.currentUser).thenReturn(user);
+    when(() => user.uid).thenReturn('owner1');
+    service = CloudShopClosureService(firestore: firestore, auth: auth);
   });
 
-  test('closeForExternalEvent envía el payload esperado y devuelve appointmentsAffected', () async {
-    final callable = MockHttpsCallable();
-    final result = MockHttpsCallableResult<Map<String, dynamic>>();
-    final from = DateTime(2026, 1, 10, 8, 0);
-    final until = DateTime(2026, 1, 10, 12, 0);
+  test('closeForExternalEvent aplaza las reservas pagadas del rango, libera el horario y penaliza la calificación', () async {
+    final from = DateTime.utc(2026, 1, 10, 8, 0);
+    final until = DateTime.utc(2026, 1, 10, 12, 0);
 
-    when(() => functions.httpsCallable('closeShopForExternalEvent')).thenReturn(callable);
-    when(() => callable.call<Map<String, dynamic>>(any())).thenAnswer((_) async => result);
-    when(() => result.data).thenReturn({'closureId': 'closure1', 'appointmentsAffected': 3});
+    await firestore.collection('appointments').doc('appt1').set({
+      'barbershopId': 'shop1',
+      'barberId': 'barber1',
+      'date': Timestamp.fromDate(DateTime.utc(2026, 1, 10, 10, 0)),
+      'status': 'accepted',
+      'paid': true,
+      'forcedRatingPenalty': false,
+    });
+    await firestore
+        .collection('appointmentSlots')
+        .doc('barber1_2026-01-10T10:00')
+        .set({'appointmentId': 'appt1', 'barberId': 'barber1'});
+    // Fuera de rango: no debe verse afectada.
+    await firestore.collection('appointments').doc('appt2').set({
+      'barbershopId': 'shop1',
+      'barberId': 'barber1',
+      'date': Timestamp.fromDate(DateTime.utc(2026, 1, 10, 14, 0)),
+      'status': 'accepted',
+      'paid': true,
+      'forcedRatingPenalty': false,
+    });
+    // Sin pagar: no debe verse afectada.
+    await firestore.collection('appointments').doc('appt3').set({
+      'barbershopId': 'shop1',
+      'barberId': 'barber1',
+      'date': Timestamp.fromDate(DateTime.utc(2026, 1, 10, 9, 0)),
+      'status': 'accepted',
+      'paid': false,
+      'forcedRatingPenalty': false,
+    });
 
     final affected = await service.closeForExternalEvent(
       barbershopId: 'shop1',
@@ -35,34 +66,42 @@ void main() {
       reason: 'Corte de energía',
     );
 
-    expect(affected, 3);
-    verify(
-      () => callable.call<Map<String, dynamic>>({
-        'barbershopId': 'shop1',
-        'closedFrom': from.toIso8601String(),
-        'closedUntil': until.toIso8601String(),
-        'reason': 'Corte de energía',
-      }),
-    ).called(1);
+    expect(affected, 1);
+
+    final appt1 = (await firestore.collection('appointments').doc('appt1').get()).data()!;
+    expect(appt1['status'], 'postponed');
+    expect(appt1['forcedRatingPenalty'], true);
+
+    final slot = await firestore.collection('appointmentSlots').doc('barber1_2026-01-10T10:00').get();
+    expect(slot.exists, false);
+
+    final appt2 = (await firestore.collection('appointments').doc('appt2').get()).data()!;
+    expect(appt2['status'], 'accepted');
+
+    final appt3 = (await firestore.collection('appointments').doc('appt3').get()).data()!;
+    expect(appt3['status'], 'accepted');
   });
 
   test('closeForExternalEvent devuelve 0 cuando no hubo reservas afectadas', () async {
-    final callable = MockHttpsCallable();
-    final result = MockHttpsCallableResult<Map<String, dynamic>>();
-    final from = DateTime(2026, 1, 10, 8, 0);
-    final until = DateTime(2026, 1, 10, 12, 0);
-
-    when(() => functions.httpsCallable('closeShopForExternalEvent')).thenReturn(callable);
-    when(() => callable.call<Map<String, dynamic>>(any())).thenAnswer((_) async => result);
-    when(() => result.data).thenReturn({'closureId': 'closure2', 'appointmentsAffected': 0});
-
     final affected = await service.closeForExternalEvent(
       barbershopId: 'shop1',
-      closedFrom: from,
-      closedUntil: until,
+      closedFrom: DateTime.utc(2026, 1, 10, 8, 0),
+      closedUntil: DateTime.utc(2026, 1, 10, 12, 0),
       reason: 'Emergencia',
     );
 
     expect(affected, 0);
+  });
+
+  test('closeForExternalEvent rechaza un rango inválido', () async {
+    await expectLater(
+      () => service.closeForExternalEvent(
+        barbershopId: 'shop1',
+        closedFrom: DateTime.utc(2026, 1, 10, 12, 0),
+        closedUntil: DateTime.utc(2026, 1, 10, 8, 0),
+        reason: 'Emergencia',
+      ),
+      throwsA(anything),
+    );
   });
 }

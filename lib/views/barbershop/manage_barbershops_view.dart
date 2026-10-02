@@ -597,13 +597,13 @@ class _ApprovalStatusBadge extends StatelessWidget {
     return Container(
       padding: const EdgeInsets.symmetric(horizontal: 10, vertical: 4),
       decoration: BoxDecoration(
-        color: color.withValues(alpha: 0.12),
+        color: color,
         borderRadius: BorderRadius.circular(20),
       ),
       child: Text(
         label,
-        style: TextStyle(
-          color: color,
+        style: const TextStyle(
+          color: Colors.white,
           fontSize: 12,
           fontWeight: FontWeight.w600,
         ),
@@ -622,13 +622,13 @@ class _PaymentBadge extends StatelessWidget {
     return Container(
       padding: const EdgeInsets.symmetric(horizontal: 10, vertical: 4),
       decoration: BoxDecoration(
-        color: insight.color.withValues(alpha: 0.12),
+        color: insight.color,
         borderRadius: BorderRadius.circular(20),
       ),
       child: Text(
         insight.label,
-        style: TextStyle(
-          color: insight.color,
+        style: const TextStyle(
+          color: Colors.white,
           fontSize: 12,
           fontWeight: FontWeight.w600,
         ),

@@ -29,6 +29,50 @@ service cloud.firestore {
       return isOwnerOfShop(shopId) || isBarberOfShop(shopId);
     }
 
+    // Validación de un ítem de purchases/{id}.items[i] (spec 10.1) contra
+    // el catálogo real de esa barbería — el precio y el nombre NUNCA se
+    // confían del cliente, igual que el precio de un servicio en
+    // appointments. Ver el comentario en purchases/{id} sobre por qué esto
+    // solo se acota a un número fijo de ítems (createPurchase.itemValid).
+    function purchaseItemValid(barbershopId, item) {
+      let product = get(/databases/$(database)/documents/barbershops/$(barbershopId)/products/$(item.productId)).data;
+      return item.quantity is int && item.quantity > 0 &&
+        product.active == true &&
+        item.unitPrice == product.price &&
+        item.productName == product.name &&
+        item.refunded == false;
+    }
+
+    // Suma de unitPrice*quantity de hasta CloudPurchaseService.maxItems (5)
+    // ítems — sin loops/reduce en el lenguaje de reglas, se desenrolla a
+    // mano para ese tope fijo.
+    function purchaseItemsTotal(items) {
+      return items.size() == 1
+        ? items[0].unitPrice * items[0].quantity
+        : items.size() == 2
+        ? items[0].unitPrice * items[0].quantity + items[1].unitPrice * items[1].quantity
+        : items.size() == 3
+        ? items[0].unitPrice * items[0].quantity + items[1].unitPrice * items[1].quantity +
+          items[2].unitPrice * items[2].quantity
+        : items.size() == 4
+        ? items[0].unitPrice * items[0].quantity + items[1].unitPrice * items[1].quantity +
+          items[2].unitPrice * items[2].quantity + items[3].unitPrice * items[3].quantity
+        : items[0].unitPrice * items[0].quantity + items[1].unitPrice * items[1].quantity +
+          items[2].unitPrice * items[2].quantity + items[3].unitPrice * items[3].quantity +
+          items[4].unitPrice * items[4].quantity;
+    }
+
+    // Un reembolso parcial (spec 10.5) solo puede voltear 'refunded' de
+    // false a true en cada ítem — precio, cantidad y nombre quedan fijos
+    // desde que se creó la compra.
+    function purchaseItemRefundOnlyChanged(before, after) {
+      return before.productId == after.productId &&
+        before.productName == after.productName &&
+        before.unitPrice == after.unitPrice &&
+        before.quantity == after.quantity &&
+        (before.refunded == after.refunded || (before.refunded == false && after.refunded == true));
+    }
+
     // users/{uid}: el autorregistro público solo puede crear rol 'client'
     // (Dueño se obtiene pagando, Barbero lo crea su Dueño, Admin no se
     // autorregistra — todo eso lo asigna el admin cambiando el rol después).
@@ -55,49 +99,92 @@ service cloud.firestore {
         && request.resource.data.role == 'client'
         && request.resource.data.active == true;
 
-      allow update: if isSignedIn()
-        // awayUntilEstimate/awaySince (spec 3.3) solo los toca el backend
-        // (markBarberAway/markBarberReturned/processOverdueBarbers, Admin
-        // SDK) — el límite de tiempo sale del propio estimado del barbero,
-        // y solo tiene sentido si nadie más puede alterarlo por su cuenta.
-        && request.resource.data.awayUntilEstimate == resource.data.awayUntilEstimate
-        && request.resource.data.awaySince == resource.data.awaySince
-        // ratingSum/ratingCount (spec 7.1) del propio barbero: solo los
-        // toca submitAppointmentRating (Admin SDK) — ni el barbero ni el
-        // admin editando a mano pueden inflar su promedio.
-        && request.resource.data.ratingSum == resource.data.ratingSum
-        && request.resource.data.ratingCount == resource.data.ratingCount
-        && (
-          (request.auth.uid == uid &&
-            request.resource.data.role == resource.data.role &&
-            request.resource.data.active == resource.data.active) ||
-          isAdmin() ||
-          // Auto-promoción Cliente -> Dueño al registrar su primera
-          // barbería (spec 12.1). Antes pasaba por requestBarbershopOwnership
-          // (Admin SDK), pero esa vía requiere el plan Blaze; esto la
-          // reemplaza sin abrir hueco de seguridad porque el rol 'owner'
-          // por sí solo no da NINGÚN permiso adicional — cada acción de
-          // dueño (servicios, productos, horario, etc.) revalida por su
-          // cuenta isOwnerOfShop(), que exige un barbershops/{id}.ownerId
-          // == uid real, sin importar el rol declarado en users/{uid}.
-          (request.auth.uid == uid &&
-            resource.data.role == 'client' &&
-            request.resource.data.role == 'owner' &&
-            request.resource.data.active == resource.data.active) ||
-          // Dueño contrata a un Cliente existente como Barbero de su negocio.
-          (resource.data.role == 'client' &&
-            request.resource.data.role == 'barber' &&
-            isOwnerOfShop(request.resource.data.barbershopId) &&
-            request.resource.data.active == resource.data.active) ||
-          // Dueño da de baja a un Barbero de su propio negocio (vuelve a Cliente).
-          (resource.data.role == 'barber' &&
-            request.resource.data.role == 'client' &&
-            request.resource.data.barbershopId == null &&
-            isOwnerOfShop(resource.data.barbershopId) &&
-            request.resource.data.active == resource.data.active)
-        );
+      allow update: if isSignedIn() && (
+        (
+          // awayUntilEstimate/awaySince (spec 3.3) y ratingSum/ratingCount
+          // (spec 7.1) del propio barbero no se tocan en NINGUNA de estas
+          // ramas — solo pueden cambiar por las ramas dedicadas de abajo.
+          // .get(campo, default) en vez de acceso directo: ningún users/{uid}
+          // trae estos 4 campos al crearse (AppUser.toMap() no los incluye),
+          // así que la mayoría de los documentos simplemente no los tienen —
+          // acceder a una clave ausente con resource.data.X hace fallar TODA
+          // la regla, no solo esta comparación (bug real que bloqueaba
+          // cualquier edición de admin sobre esos usuarios).
+          request.resource.data.get('awayUntilEstimate', null) == resource.data.get('awayUntilEstimate', null) &&
+          request.resource.data.get('awaySince', null) == resource.data.get('awaySince', null) &&
+          request.resource.data.get('ratingSum', 0) == resource.data.get('ratingSum', 0) &&
+          request.resource.data.get('ratingCount', 0) == resource.data.get('ratingCount', 0) &&
+          (
+            (request.auth.uid == uid &&
+              request.resource.data.role == resource.data.role &&
+              request.resource.data.active == resource.data.active) ||
+            isAdmin() ||
+            // Auto-promoción Cliente -> Dueño al registrar su primera
+            // barbería (spec 12.1). Antes pasaba por requestBarbershopOwnership
+            // (Admin SDK), pero esa vía requiere el plan Blaze; esto la
+            // reemplaza sin abrir hueco de seguridad porque el rol 'owner'
+            // por sí solo no da NINGÚN permiso adicional — cada acción de
+            // dueño (servicios, productos, horario, etc.) revalida por su
+            // cuenta isOwnerOfShop(), que exige un barbershops/{id}.ownerId
+            // == uid real, sin importar el rol declarado en users/{uid}.
+            (request.auth.uid == uid &&
+              resource.data.role == 'client' &&
+              request.resource.data.role == 'owner' &&
+              request.resource.data.active == resource.data.active) ||
+            // Dueño contrata a un Cliente existente como Barbero de su negocio.
+            (resource.data.role == 'client' &&
+              request.resource.data.role == 'barber' &&
+              isOwnerOfShop(request.resource.data.barbershopId) &&
+              request.resource.data.active == resource.data.active) ||
+            // Dueño da de baja a un Barbero de su propio negocio (vuelve a Cliente).
+            (resource.data.role == 'barber' &&
+              request.resource.data.role == 'client' &&
+              request.resource.data.barbershopId == null &&
+              isOwnerOfShop(resource.data.barbershopId) &&
+              request.resource.data.active == resource.data.active)
+          )
+        ) ||
+        // markBarberAway (spec 3.3): el propio barbero declara su salida y
+        // un estimado propio de 5 a 240 minutos — antes lo hacía
+        // markBarberAway (Admin SDK). El límite de aplazamiento automático
+        // de sus reservas sale siempre de este estimado, nunca de un valor
+        // fijo (por eso se acota aquí, no solo en el cliente).
+        (request.auth.uid == uid &&
+          resource.data.role == 'barber' &&
+          request.resource.data.diff(resource.data).affectedKeys().hasOnly(['awaySince', 'awayUntilEstimate']) &&
+          request.resource.data.awaySince == request.time &&
+          request.resource.data.awayUntilEstimate is timestamp &&
+          request.resource.data.awayUntilEstimate.toMillis() >= request.time.toMillis() + 5 * 60 * 1000 &&
+          request.resource.data.awayUntilEstimate.toMillis() <= request.time.toMillis() + 240 * 60 * 1000) ||
+        // markBarberReturned (spec 3.3): antes markBarberReturned (Admin SDK).
+        (request.auth.uid == uid &&
+          resource.data.role == 'barber' &&
+          request.resource.data.diff(resource.data).affectedKeys().hasOnly(['awaySince', 'awayUntilEstimate']) &&
+          request.resource.data.awaySince == null &&
+          request.resource.data.awayUntilEstimate == null) ||
+        // ratingSum/ratingCount (spec 7.1) del propio barbero: antes los
+        // sumaba submitAppointmentRating (Admin SDK) en la MISMA transacción
+        // que crea ratings/{appointmentId}; sin Cloud Functions no se puede
+        // atar criptográficamente esta suma a esa calificación exacta (una
+        // regla no ve las escrituras pendientes de otro documento en su
+        // misma transacción). Se acota el daño posible en vez de impedirlo
+        // del todo: el conteo solo sube de 1 en 1, y la suma solo sube por
+        // un entero entre 1 y 5 (el rango real de cualquier calificación
+        // honesta) — igual que el resto de compensaciones sin Blaze, no hay
+        // dinero de por medio, solo un promedio visible.
+        (resource.data.role == 'barber' &&
+          request.resource.data.diff(resource.data).affectedKeys().hasOnly(['ratingSum', 'ratingCount']) &&
+          request.resource.data.ratingCount == resource.data.get('ratingCount', 0) + 1 &&
+          request.resource.data.ratingSum >= resource.data.get('ratingSum', 0) + 1 &&
+          request.resource.data.ratingSum <= resource.data.get('ratingSum', 0) + 5)
+      );
 
-      allow delete: if false;
+      // El admin elimina el perfil de Firestore (la cuenta de Firebase Auth
+      // queda huérfana — se limpia manualmente o con una Cloud Function el
+      // día que haya plan Blaze, ver el comentario en UserRepository.deleteUser).
+      // Esto siempre debió ser isAdmin(), no false: bloqueaba por completo el
+      // botón "eliminar" de Gestión de usuarios para cualquier admin.
+      allow delete: if isAdmin();
     }
 
     // barbershops/{id}: cualquier usuario autenticado puede leer (para que
@@ -128,9 +215,12 @@ service cloud.firestore {
           request.resource.data.paymentStatus == resource.data.paymentStatus &&
           // ratingSum/ratingCount (spec 7.1) solo los toca
           // submitAppointmentRating (Admin SDK) — el dueño no puede
-          // inflar su propio promedio editando el documento.
-          request.resource.data.ratingSum == resource.data.ratingSum &&
-          request.resource.data.ratingCount == resource.data.ratingCount) ||
+          // inflar su propio promedio editando el documento. .get() porque
+          // Barbershop.toMap() no incluye estos campos: una barbería recién
+          // creada (o sin calificar todavía) no los tiene, y acceder a una
+          // clave ausente con resource.data.X tumba la regla entera.
+          request.resource.data.get('ratingSum', 0) == resource.data.get('ratingSum', 0) &&
+          request.resource.data.get('ratingCount', 0) == resource.data.get('ratingCount', 0)) ||
         isAdmin() ||
         // El dueño paga/renueva la mensualidad de SU barbería (spec 12.5).
         // Antes pasaba por payBarbershopSubscription (Admin SDK) — sin
@@ -149,7 +239,16 @@ service cloud.firestore {
           request.resource.data.active == false &&
           request.resource.data.paymentStatus == 'blocked' &&
           request.resource.data.diff(resource.data).affectedKeys()
-            .hasOnly(['active', 'paymentStatus']))
+            .hasOnly(['active', 'paymentStatus'])) ||
+        // ratingSum/ratingCount (spec 7.1) de la barbería: ver el comentario
+        // equivalente en users/{uid} sobre por qué solo se puede acotar el
+        // incremento a un rango válido, no atarlo criptográficamente a la
+        // calificación exacta que lo originó.
+        (isSignedIn() &&
+          request.resource.data.diff(resource.data).affectedKeys().hasOnly(['ratingSum', 'ratingCount']) &&
+          request.resource.data.ratingCount == resource.data.get('ratingCount', 0) + 1 &&
+          request.resource.data.ratingSum >= resource.data.get('ratingSum', 0) + 1 &&
+          request.resource.data.ratingSum <= resource.data.get('ratingSum', 0) + 5)
       );
 
       allow delete: if isAdmin();
@@ -203,34 +302,53 @@ service cloud.firestore {
             get(/databases/$(database)/documents/payments/$(request.resource.data.paymentId)).data.payerId == request.auth.uid)
         );
 
-      allow update: if isSignedIn()
-        && request.resource.data.paid == resource.data.paid
-        && request.resource.data.paymentId == resource.data.paymentId
-        // forcedRatingPenalty (spec 3.4) solo lo marca closeShopForExternalEvent
-        // — ni el dueño ni el barbero de esa cita pueden quitárselo o
-        // ponérselo por su cuenta editando el documento.
-        && request.resource.data.forcedRatingPenalty == resource.data.forcedRatingPenalty
-        && (
-          resource.data.barberId == request.auth.uid ||
-          isOwnerOfShop(resource.data.barbershopId) ||
-          isAdmin() ||
-          // El cliente solo puede cancelar directamente una cita SIN pago
-          // (pending → cancelled); una cita pagada pasa por
-          // requestAppointmentRefund (spec 6.3).
-          (resource.data.clientId == request.auth.uid &&
-            resource.data.paid == false &&
-            resource.data.status == 'pending' &&
-            request.resource.data.status == 'cancelled') ||
-          // El cliente pospone su propia cita PAGADA (spec 6.4) — el
-          // barbero y el dueño ya podían por la rama de arriba, sin
-          // restricción de campos. Antes pasaba por postponeAppointment
-          // (Admin SDK) con la misma transacción atómica que ahora corre
-          // en el cliente (ver appointmentSlots).
-          (resource.data.clientId == request.auth.uid &&
-            resource.data.paid == true &&
-            !(resource.data.status in ['cancelled', 'completed']) &&
-            request.resource.data.status == 'postponed')
-        );
+      allow update: if isSignedIn() && (
+        (
+          request.resource.data.paid == resource.data.paid &&
+          // .get(campo, default): Appointment.toMap() nunca escribe
+          // paymentId ni forcedRatingPenalty en una cita SIN pago (solo se
+          // agregan en el flujo de reserva pagada) — acceder a esas claves
+          // ausentes con resource.data.X tumbaba la regla entera, es decir
+          // bloqueaba aceptar/rechazar/completar CUALQUIER cita sin pago.
+          request.resource.data.get('paymentId', null) == resource.data.get('paymentId', null) &&
+          // forcedRatingPenalty (spec 3.4) en estas ramas nunca cambia — solo
+          // la rama dedicada de closeShopForExternalEvent, más abajo, puede
+          // tocarlo.
+          request.resource.data.get('forcedRatingPenalty', false) == resource.data.get('forcedRatingPenalty', false) &&
+          (
+            resource.data.barberId == request.auth.uid ||
+            isOwnerOfShop(resource.data.barbershopId) ||
+            isAdmin() ||
+            // El cliente solo puede cancelar directamente una cita SIN pago
+            // (pending → cancelled); una cita pagada pasa por
+            // requestAppointmentRefund (spec 6.3).
+            (resource.data.clientId == request.auth.uid &&
+              resource.data.paid == false &&
+              resource.data.status == 'pending' &&
+              request.resource.data.status == 'cancelled') ||
+            // El cliente pospone su propia cita PAGADA (spec 6.4) — el
+            // barbero y el dueño ya podían por la rama de arriba, sin
+            // restricción de campos. Antes pasaba por postponeAppointment
+            // (Admin SDK) con la misma transacción atómica que ahora corre
+            // en el cliente (ver appointmentSlots).
+            (resource.data.clientId == request.auth.uid &&
+              resource.data.paid == true &&
+              !(resource.data.status in ['cancelled', 'completed']) &&
+              request.resource.data.status == 'postponed')
+          )
+        ) ||
+        // closeShopForExternalEvent (spec 3.4): el dueño de ESA barbería
+        // aplaza cada reserva PAGADA dentro del rango cerrado y marca el
+        // descuento obligatorio de calificación — antes lo hacía
+        // closeShopForExternalEvent (Admin SDK) en un solo paso por cita;
+        // el resto de campos (cliente, barbero, precio, pago...) no se toca.
+        (isOwnerOfShop(resource.data.barbershopId) &&
+          resource.data.paid == true &&
+          resource.data.status in ['pending', 'accepted', 'postponed'] &&
+          request.resource.data.status == 'postponed' &&
+          request.resource.data.forcedRatingPenalty == true &&
+          request.resource.data.diff(resource.data).affectedKeys().hasOnly(['status', 'forcedRatingPenalty']))
+      );
 
       allow delete: if false;
     }
@@ -257,11 +375,32 @@ service cloud.firestore {
     }
 
     // shopClosures/{id}: registro de auditoría de cierres por evento
-    // externo (spec 3.4) — solo lo crea closeShopForExternalEvent (Admin
-    // SDK). El dueño de esa barbería (o el admin) puede consultarlo.
+    // externo (spec 3.4). Antes solo lo creaba closeShopForExternalEvent
+    // (Admin SDK); sin plan Blaze, el dueño de ESA barbería lo crea directo
+    // y luego solo puede corregir appointmentsAffected (el conteo real se
+    // sabe después de recorrer las citas afectadas, ver
+    // cloud_shop_closure_service.dart). El dueño de esa barbería (o el
+    // admin) puede consultarlo.
     match /shopClosures/{id} {
       allow read: if isSignedIn() && (isOwnerOfShop(resource.data.barbershopId) || isAdmin());
-      allow write: if false;
+
+      allow create: if isSignedIn()
+        && isOwnerOfShop(request.resource.data.barbershopId)
+        && request.resource.data.requestedBy == request.auth.uid
+        && request.resource.data.appointmentsAffected == 0
+        && request.resource.data.reason is string && request.resource.data.reason.size() > 0
+        && request.resource.data.closedFrom is timestamp
+        && request.resource.data.closedUntil is timestamp
+        && request.resource.data.closedUntil > request.resource.data.closedFrom;
+
+      allow update: if isSignedIn()
+        && isOwnerOfShop(resource.data.barbershopId)
+        && resource.data.requestedBy == request.auth.uid
+        && request.resource.data.appointmentsAffected is int
+        && request.resource.data.appointmentsAffected >= 0
+        && request.resource.data.diff(resource.data).affectedKeys().hasOnly(['appointmentsAffected']);
+
+      allow delete: if false;
     }
 
     // refundRequests/{id}: antes la única vía de escritura era el backend
@@ -325,7 +464,7 @@ service cloud.firestore {
         // Reembolso al aprobar una solicitud de cancelación de cita (spec
         // 6.5): lo dispara el dueño de esa barbería (o el admin), no
         // necesariamente el propio pagador. Acotado a categoría
-        // 'appointment' — otras categorías se migran aparte.
+        // 'appointment'.
         (resource.data.category == 'appointment' &&
           resource.data.status == 'approved' &&
           request.resource.data.status == 'refunded' &&
@@ -333,15 +472,29 @@ service cloud.firestore {
           request.resource.data.refundedAmount > 0 &&
           request.resource.data.refundedAmount <= resource.data.amount &&
           request.resource.data.diff(resource.data).affectedKeys().hasOnly(['status', 'refundedAmount', 'resolvedAt']) &&
-          (isAdmin() || isOwnerOfShop(get(/databases/$(database)/documents/appointments/$(resource.data.relatedId)).data.barbershopId)))
+          (isAdmin() || isOwnerOfShop(get(/databases/$(database)/documents/appointments/$(resource.data.relatedId)).data.barbershopId))) ||
+        // refundPurchaseItems (spec 6.5/10.5): reservado al admin, igual
+        // que en el backend original (un comentario propio ahí dice que el
+        // flujo con aprobación del dueño llega en una fase posterior — no
+        // se adelanta aquí). Acotado a categoría 'product'.
+        (resource.data.category == 'product' &&
+          resource.data.status == 'approved' &&
+          request.resource.data.status == 'refunded' &&
+          request.resource.data.refundedAmount is number &&
+          request.resource.data.refundedAmount > 0 &&
+          request.resource.data.refundedAmount <= resource.data.amount &&
+          request.resource.data.diff(resource.data).affectedKeys().hasOnly(['status', 'refundedAmount', 'resolvedAt']) &&
+          isAdmin())
       );
 
       allow delete: if false;
     }
 
-    // purchases/{id}: la ÚNICA vía de escritura es el backend
-    // (createPurchase/claimPurchase/refundPurchaseItems, con Admin SDK) —
-    // el código de reclamo, el total y el estado nunca los decide el
+    // purchases/{id}: antes la ÚNICA vía de escritura era el backend
+    // (createPurchase/claimPurchase/refundPurchaseItems, Admin SDK); sin
+    // plan Blaze, el propio comprador la crea directo (spec 10.1-10.3) con
+    // los precios recalculados y validados contra el catálogo real (ver
+    // purchaseItemValid arriba) — nunca se confía en lo que mande el
     // cliente. El comprador lee las suyas; el personal de la barbería
     // (dueño o barbero de ESA barbería) lee las de su barbería para
     // atender reclamos; el admin lee todas.
@@ -351,27 +504,138 @@ service cloud.firestore {
         isStaffOfShop(resource.data.barbershopId) ||
         isAdmin()
       );
-      allow write: if false;
+
+      allow create: if isSignedIn()
+        && request.resource.data.keys().hasOnly([
+             'barbershopId', 'buyerId', 'appointmentId', 'items', 'totalAmount',
+             'paymentId', 'claimCode', 'status', 'createdAt', 'claimedAt', 'expiresAt'
+           ])
+        && request.resource.data.buyerId == request.auth.uid
+        && request.resource.data.status == 'pending_payment'
+        && request.resource.data.paymentId == null
+        && request.resource.data.claimCode == null
+        && request.resource.data.claimedAt == null
+        && request.resource.data.expiresAt == null
+        && (request.resource.data.appointmentId == null || request.resource.data.appointmentId is string)
+        && request.resource.data.items is list
+        && request.resource.data.items.size() >= 1 && request.resource.data.items.size() <= 5
+        && (request.resource.data.items.size() < 1 || purchaseItemValid(request.resource.data.barbershopId, request.resource.data.items[0]))
+        && (request.resource.data.items.size() < 2 || purchaseItemValid(request.resource.data.barbershopId, request.resource.data.items[1]))
+        && (request.resource.data.items.size() < 3 || purchaseItemValid(request.resource.data.barbershopId, request.resource.data.items[2]))
+        && (request.resource.data.items.size() < 4 || purchaseItemValid(request.resource.data.barbershopId, request.resource.data.items[3]))
+        && (request.resource.data.items.size() < 5 || purchaseItemValid(request.resource.data.barbershopId, request.resource.data.items[4]))
+        && request.resource.data.totalAmount == purchaseItemsTotal(request.resource.data.items);
+
+      allow update: if isSignedIn() && (
+        // El comprador confirma su propio pago simulado ya aprobado y
+        // recibe el código de reclamo (spec 10.3) — antes createPurchase
+        // (Admin SDK) hacía esto en un solo paso; sin Cloud Functions se
+        // separa en dos escrituras secuenciales (crear el pago -> esperar
+        // -> aprobarlo -> ESTA transición), igual que el resto de flujos de
+        // pago simulado de esta migración.
+        (resource.data.buyerId == request.auth.uid &&
+          resource.data.status == 'pending_payment' &&
+          request.resource.data.status == 'pending_claim' &&
+          request.resource.data.paymentId is string &&
+          get(/databases/$(database)/documents/payments/$(request.resource.data.paymentId)).data.payerId == request.auth.uid &&
+          get(/databases/$(database)/documents/payments/$(request.resource.data.paymentId)).data.category == 'product' &&
+          get(/databases/$(database)/documents/payments/$(request.resource.data.paymentId)).data.relatedId == id &&
+          get(/databases/$(database)/documents/payments/$(request.resource.data.paymentId)).data.status == 'approved' &&
+          request.resource.data.claimCode is string &&
+          request.resource.data.claimCode.matches('^[0-9A-Z]{8}$') &&
+          request.resource.data.expiresAt is timestamp &&
+          request.resource.data.expiresAt.toMillis() > request.time.toMillis() &&
+          request.resource.data.expiresAt.toMillis() <= request.time.toMillis() + 25 * 60 * 60 * 1000 &&
+          request.resource.data.diff(resource.data).affectedKeys().hasOnly(['paymentId', 'claimCode', 'status', 'expiresAt'])) ||
+        // El comprador marca su propia compra 'payment_failed' si el pago
+        // simulado no pudo aprobarse (rama defensiva: con
+        // SimulatedNequiGateway esto no ocurre hoy, pero el contrato lo
+        // prevé para un gateway real).
+        (resource.data.buyerId == request.auth.uid &&
+          resource.data.status == 'pending_payment' &&
+          request.resource.data.status == 'payment_failed' &&
+          request.resource.data.diff(resource.data).affectedKeys().hasOnly(['status'])) ||
+        // El personal de ESA barbería (o el admin) marca la compra
+        // reclamada (spec 10.4) — antes claimPurchase (Admin SDK).
+        (resource.data.status == 'pending_claim' &&
+          isStaffOfShop(resource.data.barbershopId) &&
+          request.resource.data.status == 'claimed' &&
+          request.resource.data.claimedAt == request.time &&
+          request.resource.data.diff(resource.data).affectedKeys().hasOnly(['status', 'claimedAt'])) ||
+        // Reembolso parcial por checklist de ítems (spec 6.5/10.5) —
+        // reservado al admin, igual que en el backend. El monto ya lo
+        // validó la actualización correspondiente de payments/{id}; aquí
+        // solo se puede voltear 'refunded' de cada ítem, nunca su precio,
+        // cantidad o nombre (ver purchaseItemRefundOnlyChanged arriba).
+        (isAdmin() &&
+          request.resource.data.diff(resource.data).affectedKeys().hasOnly(['items']) &&
+          request.resource.data.items.size() == resource.data.items.size() &&
+          (resource.data.items.size() < 1 || purchaseItemRefundOnlyChanged(resource.data.items[0], request.resource.data.items[0])) &&
+          (resource.data.items.size() < 2 || purchaseItemRefundOnlyChanged(resource.data.items[1], request.resource.data.items[1])) &&
+          (resource.data.items.size() < 3 || purchaseItemRefundOnlyChanged(resource.data.items[2], request.resource.data.items[2])) &&
+          (resource.data.items.size() < 4 || purchaseItemRefundOnlyChanged(resource.data.items[3], request.resource.data.items[3])) &&
+          (resource.data.items.size() < 5 || purchaseItemRefundOnlyChanged(resource.data.items[4], request.resource.data.items[4])))
+      );
+
+      allow delete: if false;
     }
 
-    // ratings/{appointmentId}: la ÚNICA vía de escritura es el backend
-    // (submitAppointmentRating, Admin SDK) — el id del documento ES el
-    // appointmentId, así un cliente no puede calificar la misma cita dos
-    // veces (el backend falla con already-exists en el segundo intento).
-    // Cualquier usuario autenticado puede leerlas, igual que el catálogo
-    // de servicios/productos.
+    // ratings/{appointmentId}: antes la única vía de escritura era el
+    // backend (submitAppointmentRating, Admin SDK); sin plan Blaze, el
+    // propio cliente de la cita la crea directo (spec 7.1). El id del
+    // documento ES el appointmentId, así un cliente no puede calificar la
+    // misma cita dos veces (un segundo intento es un update() y no hay
+    // regla que lo permita). effectiveShopStars/forcedRatingPenaltyApplied
+    // quedan validados aquí exactamente igual que los calculaba el backend
+    // — no se puede forzar el descuento de spec 3.4 ni evitarlo. El
+    // incremento de ratingSum/ratingCount en barbershops/{id} y users/{id}
+    // (el barbero) va en reglas aparte, ver los comentarios ahí.
+    // Cualquier usuario autenticado puede leerlas, igual que el catálogo de
+    // servicios/productos.
     match /ratings/{id} {
       allow read: if isSignedIn();
-      allow write: if false;
+
+      allow create: if isSignedIn()
+        && id == request.resource.data.appointmentId
+        && request.resource.data.clientId == request.auth.uid
+        && request.resource.data.keys().hasOnly([
+             'appointmentId', 'barbershopId', 'barberId', 'clientId',
+             'barberStars', 'shopStars', 'effectiveShopStars',
+             'forcedRatingPenaltyApplied', 'createdAt'
+           ])
+        && request.resource.data.barberStars is int
+        && request.resource.data.barberStars >= 1 && request.resource.data.barberStars <= 5
+        && request.resource.data.shopStars is int
+        && request.resource.data.shopStars >= 1 && request.resource.data.shopStars <= 5
+        && get(/databases/$(database)/documents/appointments/$(id)).data.clientId == request.auth.uid
+        && get(/databases/$(database)/documents/appointments/$(id)).data.paid == true
+        && get(/databases/$(database)/documents/appointments/$(id)).data.status == 'completed'
+        && request.resource.data.barbershopId == get(/databases/$(database)/documents/appointments/$(id)).data.barbershopId
+        && request.resource.data.barberId == get(/databases/$(database)/documents/appointments/$(id)).data.barberId
+        && request.resource.data.forcedRatingPenaltyApplied ==
+             (get(/databases/$(database)/documents/appointments/$(id)).data.forcedRatingPenalty == true)
+        && request.resource.data.effectiveShopStars == (
+             request.resource.data.forcedRatingPenaltyApplied
+               ? (request.resource.data.shopStars > 1 ? request.resource.data.shopStars - 1 : 1)
+               : request.resource.data.shopStars
+           );
+
+      allow update: if false;
+      allow delete: if false;
     }
 
-    // comments/{appointmentId}: la ÚNICA vía de escritura es el backend
-    // (submitAppointmentComment/replyToComment, Admin SDK) — la moderación
-    // (spec 7.3) corre ANTES de escribir el documento, nunca después, así
-    // que un comentario rechazado nunca queda expuesto con status
-    // 'published'. Un comentario rechazado solo lo ve su propio autor (para
-    // que sepa que no se publicó) o el personal/admin de esa barbería; el
-    // resto de la app solo ve los publicados.
+    // comments/{appointmentId}: antes la única vía de escritura era el
+    // backend (submitAppointmentComment/replyToComment, Admin SDK); sin
+    // plan Blaze, el propio cliente de la cita crea su comentario directo
+    // (spec 7.2) y el personal de ESA barbería (o el admin) responde. La
+    // moderación (spec 7.3) ahora corre en el cliente ANTES de decidir el
+    // status a guardar — la regla valida que sea uno de los dos valores
+    // válidos, pero no puede re-correr el filtro de moderación en sí
+    // (límite aceptado, ver content_moderation_filter.dart). El id del
+    // documento ES el appointmentId, así un cliente no puede comentar la
+    // misma cita dos veces. Un comentario rechazado solo lo ve su propio
+    // autor (para que sepa que no se publicó) o el personal/admin de esa
+    // barbería; el resto de la app solo ve los publicados.
     match /comments/{id} {
       allow read: if isSignedIn() && (
         resource.data.status == 'published' ||
@@ -379,19 +643,69 @@ service cloud.firestore {
         isStaffOfShop(resource.data.barbershopId) ||
         isAdmin()
       );
-      allow write: if false;
+
+      allow create: if isSignedIn()
+        && id == request.resource.data.appointmentId
+        && request.resource.data.keys().hasOnly([
+             'appointmentId', 'barbershopId', 'barberId', 'clientId', 'clientName',
+             'text', 'photoUrl', 'status', 'createdAt', 'replyText', 'replyAt',
+             'repliedByBarberId'
+           ])
+        && request.resource.data.clientId == request.auth.uid
+        && request.resource.data.status in ['published', 'rejected']
+        && request.resource.data.text is string
+        && request.resource.data.text.size() > 0 && request.resource.data.text.size() <= 500
+        && (request.resource.data.photoUrl == null || request.resource.data.photoUrl is string)
+        && request.resource.data.replyText == null
+        && request.resource.data.replyAt == null
+        && request.resource.data.repliedByBarberId == null
+        && get(/databases/$(database)/documents/appointments/$(id)).data.clientId == request.auth.uid
+        && get(/databases/$(database)/documents/appointments/$(id)).data.paid == true
+        && get(/databases/$(database)/documents/appointments/$(id)).data.status == 'completed'
+        && request.resource.data.barbershopId == get(/databases/$(database)/documents/appointments/$(id)).data.barbershopId
+        && request.resource.data.barberId == get(/databases/$(database)/documents/appointments/$(id)).data.barberId;
+
+      // El personal de la barbería responde (spec 7.2: "ya sea dirigido a
+      // él o a la barbería en general" — por eso cualquier miembro del
+      // personal de ESA barbería puede responder, no solo el barbero
+      // atendido), solo a un comentario publicado y sin respuesta previa.
+      allow update: if isSignedIn()
+        && resource.data.status == 'published'
+        && resource.data.replyText == null
+        && isStaffOfShop(resource.data.barbershopId)
+        && request.resource.data.replyText is string
+        && request.resource.data.replyText.size() > 0 && request.resource.data.replyText.size() <= 500
+        && request.resource.data.repliedByBarberId == request.auth.uid
+        && request.resource.data.diff(resource.data).affectedKeys().hasOnly(['replyText', 'replyAt', 'repliedByBarberId']);
+
+      allow delete: if false;
     }
 
-    // notifications/{id}: la ÚNICA vía de escritura es el backend (Cloud
-    // Function sendNotification -> notificationDispatcher, con Admin SDK,
-    // que no pasa por estas reglas) — así toda notificación, manual o
-    // automática, comparte el mismo flujo de entrega (push/SMS/correo) sin
-    // que el cliente pueda falsificar una a nombre del sistema. El
-    // destinatario (o el admin) puede leerlas; el destinatario solo puede
-    // marcarlas como leídas, nunca alterar su contenido.
+    // notifications/{id}: antes la ÚNICA vía de escritura era el backend
+    // (Cloud Function sendNotification -> notificationDispatcher, con
+    // Admin SDK, entrega real por push/SMS/correo); sin plan Blaze, solo el
+    // admin puede crear una directo — con la misma categoría acotada que
+    // exigía el backend ('manual' o 'auto_payment_overdue', nunca las
+    // categorías automáticas internas como recordatorios o cierres, que
+    // nadie dispara desde la app). El destinatario (o el admin) puede
+    // leerlas; el destinatario solo puede marcarlas como leídas, nunca
+    // alterar su contenido.
+    //
+    // Limitación aceptada: sin servidor no hay entrega real por push/SMS/
+    // correo — solo queda el registro en la lista dentro de la app.
     match /notifications/{id} {
       allow read: if isSignedIn() && (resource.data.toUserId == request.auth.uid || isAdmin());
-      allow create: if false;
+
+      allow create: if isSignedIn() && isAdmin()
+        && request.resource.data.toUserId is string
+        && exists(/databases/$(database)/documents/users/$(request.resource.data.toUserId))
+        && request.resource.data.title is string
+        && request.resource.data.title.size() > 0 && request.resource.data.title.size() <= 120
+        && request.resource.data.body is string
+        && request.resource.data.body.size() > 0 && request.resource.data.body.size() <= 1000
+        && request.resource.data.type in ['manual', 'auto_payment_overdue']
+        && request.resource.data.read == false
+        && request.resource.data.createdAt == request.time;
       allow update: if isSignedIn() &&
         resource.data.toUserId == request.auth.uid &&
         request.resource.data.read == true &&

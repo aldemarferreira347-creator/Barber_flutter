@@ -169,7 +169,7 @@ class BarbershopDetailView extends StatelessWidget {
                   const SizedBox(height: 6),
                   Row(
                     children: [
-                      Icon(Icons.star, color: AppColors.primary, size: 16),
+                      Icon(Icons.star, color: AppColors.gold, size: 16),
                       const SizedBox(width: 4),
                       Text(
                         '${shop.averageRating.toStringAsFixed(1)} (${shop.ratingCount})',

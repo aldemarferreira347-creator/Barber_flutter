@@ -37,7 +37,7 @@ class DashboardScaffold extends StatelessWidget {
             begin: Alignment.topLeft,
             end: Alignment.bottomRight,
             colors: AppColors.isDark
-                ? const [Color(0xFF18181B), Color(0xFF09090B)]
+                ? [AppColors.surface, AppColors.background]
                 : [AppColors.primary, const Color(0xFF1E293B)],
           ),
         ),

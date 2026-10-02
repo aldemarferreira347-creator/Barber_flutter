@@ -109,10 +109,15 @@ class _AnimatedBottomNav extends StatelessWidget {
                         height: 44,
                         decoration: BoxDecoration(
                           gradient: LinearGradient(
-                            colors: [
-                              AppColors.accent.withValues(alpha: 0.16),
-                              AppColors.primary.withValues(alpha: 0.12),
-                            ],
+                            colors: AppColors.isDark
+                                ? [
+                                    AppColors.gold.withValues(alpha: 0.20),
+                                    AppColors.gold.withValues(alpha: 0.08),
+                                  ]
+                                : [
+                                    AppColors.accent.withValues(alpha: 0.16),
+                                    AppColors.primary.withValues(alpha: 0.12),
+                                  ],
                           ),
                           borderRadius: BorderRadius.circular(16),
                         ),
@@ -154,7 +159,8 @@ class _NavItem extends StatelessWidget {
 
   @override
   Widget build(BuildContext context) {
-    final color = selected ? AppColors.accent : AppColors.textSecondary;
+    final activeColor = AppColors.isDark ? AppColors.gold : AppColors.accent;
+    final color = selected ? activeColor : AppColors.textSecondary;
     return GestureDetector(
       behavior: HitTestBehavior.opaque,
       onTap: onTap,

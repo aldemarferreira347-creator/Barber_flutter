@@ -1,108 +1,163 @@
-import 'package:cloud_firestore/cloud_firestore.dart';
-import 'package:cloud_functions/cloud_functions.dart';
+import 'package:fake_cloud_firestore/fake_cloud_firestore.dart';
+import 'package:firebase_auth/firebase_auth.dart';
 import 'package:barber/models/purchase.dart';
 import 'package:barber/repositories/purchase_repository.dart';
 import 'package:barber/services/cloud_purchase_service.dart';
 import 'package:flutter_test/flutter_test.dart';
 import 'package:mocktail/mocktail.dart';
 
-class MockFirebaseFunctions extends Mock implements FirebaseFunctions {}
+class MockFirebaseAuth extends Mock implements FirebaseAuth {}
 
-class MockHttpsCallable extends Mock implements HttpsCallable {}
-
-class MockHttpsCallableResult<T> extends Mock implements HttpsCallableResult<T> {}
-
-class MockFirebaseFirestore extends Mock implements FirebaseFirestore {}
-
-// ignore: subtype_of_sealed_class
-class MockCollectionReference extends Mock implements CollectionReference<Map<String, dynamic>> {}
-
-// ignore: subtype_of_sealed_class
-class MockQuery extends Mock implements Query<Map<String, dynamic>> {}
-
-// ignore: subtype_of_sealed_class
-class MockDocumentReference extends Mock implements DocumentReference<Map<String, dynamic>> {}
-
-// ignore: subtype_of_sealed_class
-class MockDocumentSnapshot extends Mock implements DocumentSnapshot<Map<String, dynamic>> {}
-
-// ignore: subtype_of_sealed_class
-class MockQuerySnapshot extends Mock implements QuerySnapshot<Map<String, dynamic>> {}
-
-// ignore: subtype_of_sealed_class
-class MockQueryDocumentSnapshot extends Mock implements QueryDocumentSnapshot<Map<String, dynamic>> {}
+class MockUser extends Mock implements User {}
 
 void main() {
-  late MockFirebaseFunctions functions;
-  late MockFirebaseFirestore firestore;
+  late FakeFirebaseFirestore firestore;
+  late MockFirebaseAuth auth;
+  late MockUser user;
   late CloudPurchaseService service;
 
   setUp(() {
-    functions = MockFirebaseFunctions();
-    firestore = MockFirebaseFirestore();
-    service = CloudPurchaseService(functions: functions, firestore: firestore);
+    firestore = FakeFirebaseFirestore();
+    auth = MockFirebaseAuth();
+    user = MockUser();
+    when(() => auth.currentUser).thenReturn(user);
+    when(() => user.uid).thenReturn('buyer1');
+    service = CloudPurchaseService(
+      firestore: firestore,
+      auth: auth,
+      simulatedApprovalDelay: Duration.zero,
+    );
   });
 
-  test('createPurchase envía barbershopId, items y appointmentId, y devuelve el id', () async {
-    final callable = MockHttpsCallable();
-    final result = MockHttpsCallableResult<Map<String, dynamic>>();
-    when(() => functions.httpsCallable('createPurchase')).thenReturn(callable);
-    when(() => callable.call<Map<String, dynamic>>(any())).thenAnswer((_) async => result);
-    when(() => result.data).thenReturn({'id': 'purchase1'});
+  Future<void> seedProduct({bool active = true, num price = 15000}) {
+    return firestore
+        .collection('barbershops')
+        .doc('shop1')
+        .collection('products')
+        .doc('p1')
+        .set({'name': 'Cera', 'price': price, 'active': active});
+  }
+
+  test('createPurchase recalcula el precio del catálogo, paga y entrega el código de reclamo', () async {
+    await seedProduct();
 
     final id = await service.createPurchase(
       barbershopId: 'shop1',
       items: const [PurchaseItemInput(productId: 'p1', quantity: 2)],
     );
 
-    expect(id, 'purchase1');
-    verify(
-      () => callable.call<Map<String, dynamic>>({
-        'barbershopId': 'shop1',
-        'items': [
-          {'productId': 'p1', 'quantity': 2},
-        ],
-        'appointmentId': null,
-      }),
-    ).called(1);
+    final doc = (await firestore.collection('purchases').doc(id).get()).data()!;
+    expect(doc['buyerId'], 'buyer1');
+    expect(doc['barbershopId'], 'shop1');
+    expect(doc['totalAmount'], 30000);
+    expect(doc['status'], 'pending_claim');
+    expect(doc['claimCode'], isA<String>());
+    expect((doc['claimCode'] as String).length, 8);
+    final items = List<Map<String, dynamic>>.from(doc['items'] as List);
+    expect(items.single['productName'], 'Cera');
+    expect(items.single['unitPrice'], 15000);
+    expect(items.single['quantity'], 2);
+    expect(items.single['refunded'], false);
+
+    final paymentId = doc['paymentId'] as String;
+    final payment = (await firestore.collection('payments').doc(paymentId).get()).data()!;
+    expect(payment['status'], 'approved');
+    expect(payment['category'], 'product');
+    expect(payment['amount'], 30000);
+    expect(payment['relatedId'], id);
   });
 
-  test('claimPurchase llama a la función con el purchaseId', () async {
-    final callable = MockHttpsCallable();
-    when(() => functions.httpsCallable('claimPurchase')).thenReturn(callable);
-    when(() => callable.call<void>(any())).thenAnswer((_) async => MockHttpsCallableResult<void>());
+  test('createPurchase rechaza un producto inactivo', () async {
+    await seedProduct(active: false);
+
+    await expectLater(
+      () => service.createPurchase(
+        barbershopId: 'shop1',
+        items: const [PurchaseItemInput(productId: 'p1', quantity: 1)],
+      ),
+      throwsA(anything),
+    );
+  });
+
+  test('createPurchase rechaza más de 5 ítems', () async {
+    await seedProduct();
+
+    await expectLater(
+      () => service.createPurchase(
+        barbershopId: 'shop1',
+        items: List.generate(6, (_) => const PurchaseItemInput(productId: 'p1', quantity: 1)),
+      ),
+      throwsA(anything),
+    );
+  });
+
+  test('claimPurchase marca la compra como reclamada', () async {
+    await firestore.collection('purchases').doc('purchase1').set({
+      'barbershopId': 'shop1',
+      'buyerId': 'buyer1',
+      'items': [],
+      'totalAmount': 0,
+      'status': 'pending_claim',
+    });
 
     await service.claimPurchase('purchase1');
 
-    verify(() => callable.call<void>({'purchaseId': 'purchase1'})).called(1);
+    final doc = (await firestore.collection('purchases').doc('purchase1').get()).data()!;
+    expect(doc['status'], 'claimed');
+    expect(doc['claimedAt'], isNotNull);
   });
 
-  test('refundItems llama a la función con purchaseId e itemIndexes', () async {
-    final callable = MockHttpsCallable();
-    when(() => functions.httpsCallable('refundPurchaseItems')).thenReturn(callable);
-    when(() => callable.call<void>(any())).thenAnswer((_) async => MockHttpsCallableResult<void>());
+  test('claimPurchase rechaza una compra que no está lista para reclamar', () async {
+    await firestore.collection('purchases').doc('purchase1').set({
+      'status': 'pending_payment',
+    });
 
-    await service.refundItems(purchaseId: 'purchase1', itemIndexes: [0, 2]);
+    await expectLater(() => service.claimPurchase('purchase1'), throwsA(anything));
+  });
 
-    verify(
-      () => callable.call<void>({
-        'purchaseId': 'purchase1',
-        'itemIndexes': [0, 2],
-      }),
-    ).called(1);
+  test('refundItems marca los ítems seleccionados y reembolsa el pago', () async {
+    await firestore.collection('payments').doc('pay1').set({
+      'payerId': 'buyer1',
+      'amount': 45000,
+      'category': 'product',
+      'status': 'approved',
+    });
+    await firestore.collection('purchases').doc('purchase1').set({
+      'paymentId': 'pay1',
+      'items': [
+        {'productId': 'p1', 'productName': 'Cera', 'unitPrice': 15000, 'quantity': 1, 'refunded': false},
+        {'productId': 'p2', 'productName': 'Shampoo', 'unitPrice': 30000, 'quantity': 1, 'refunded': false},
+      ],
+    });
+
+    await service.refundItems(purchaseId: 'purchase1', itemIndexes: [0]);
+
+    final purchase = (await firestore.collection('purchases').doc('purchase1').get()).data()!;
+    final items = List<Map<String, dynamic>>.from(purchase['items'] as List);
+    expect(items[0]['refunded'], true);
+    expect(items[1]['refunded'], false);
+
+    final payment = (await firestore.collection('payments').doc('pay1').get()).data()!;
+    expect(payment['status'], 'refunded');
+    expect(payment['refundedAmount'], 15000);
+  });
+
+  test('refundItems rechaza un ítem ya reembolsado', () async {
+    await firestore.collection('purchases').doc('purchase1').set({
+      'paymentId': 'pay1',
+      'items': [
+        {'productId': 'p1', 'productName': 'Cera', 'unitPrice': 15000, 'quantity': 1, 'refunded': true},
+      ],
+    });
+
+    await expectLater(
+      () => service.refundItems(purchaseId: 'purchase1', itemIndexes: [0]),
+      throwsA(anything),
+    );
   });
 
   test('watchPurchase traduce el snapshot a Purchase', () async {
-    final collection = MockCollectionReference();
-    final docRef = MockDocumentReference();
-    final snapshot = MockDocumentSnapshot();
-
-    when(() => firestore.collection('purchases')).thenReturn(collection);
-    when(() => collection.doc('purchase1')).thenReturn(docRef);
-    when(() => docRef.snapshots()).thenAnswer((_) => Stream.value(snapshot));
-    when(() => snapshot.exists).thenReturn(true);
-    when(() => snapshot.id).thenReturn('purchase1');
-    when(() => snapshot.data()).thenReturn({
+    await firestore.collection('purchases').doc('purchase1').set({
       'barbershopId': 'shop1',
       'buyerId': 'buyer1',
       'items': [],
@@ -117,21 +172,7 @@ void main() {
   });
 
   test('findByClaimCode busca por barbershopId y claimCode dentro de esa barbería', () async {
-    final collection = MockCollectionReference();
-    final query1 = MockQuery();
-    final query2 = MockQuery();
-    final query3 = MockQuery();
-    final querySnapshot = MockQuerySnapshot();
-    final docSnapshot = MockQueryDocumentSnapshot();
-
-    when(() => firestore.collection('purchases')).thenReturn(collection);
-    when(() => collection.where('barbershopId', isEqualTo: 'shop1')).thenReturn(query1);
-    when(() => query1.where('claimCode', isEqualTo: 'ABCD1234')).thenReturn(query2);
-    when(() => query2.limit(1)).thenReturn(query3);
-    when(() => query3.get()).thenAnswer((_) async => querySnapshot);
-    when(() => querySnapshot.docs).thenReturn([docSnapshot]);
-    when(() => docSnapshot.id).thenReturn('purchase1');
-    when(() => docSnapshot.data()).thenReturn({
+    await firestore.collection('purchases').doc('purchase1').set({
       'barbershopId': 'shop1',
       'buyerId': 'buyer1',
       'items': [],
@@ -147,19 +188,6 @@ void main() {
   });
 
   test('findByClaimCode devuelve null si no hay coincidencias', () async {
-    final collection = MockCollectionReference();
-    final query1 = MockQuery();
-    final query2 = MockQuery();
-    final query3 = MockQuery();
-    final querySnapshot = MockQuerySnapshot();
-
-    when(() => firestore.collection('purchases')).thenReturn(collection);
-    when(() => collection.where('barbershopId', isEqualTo: 'shop1')).thenReturn(query1);
-    when(() => query1.where('claimCode', isEqualTo: 'ZZZZ9999')).thenReturn(query2);
-    when(() => query2.limit(1)).thenReturn(query3);
-    when(() => query3.get()).thenAnswer((_) async => querySnapshot);
-    when(() => querySnapshot.docs).thenReturn([]);
-
     final purchase = await service.findByClaimCode(barbershopId: 'shop1', claimCode: 'ZZZZ9999');
 
     expect(purchase, isNull);

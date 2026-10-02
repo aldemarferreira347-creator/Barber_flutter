@@ -49,7 +49,7 @@ class PromoBannerCard extends StatelessWidget {
                             begin: Alignment.topLeft,
                             end: Alignment.bottomRight,
                             colors: AppColors.isDark
-                                ? const [Color(0xFF27272A), Color(0xFF18181B)]
+                                ? [AppColors.border, AppColors.surface]
                                 : [AppColors.primary, const Color(0xFF1E293B)],
                           ),
                     border: light
