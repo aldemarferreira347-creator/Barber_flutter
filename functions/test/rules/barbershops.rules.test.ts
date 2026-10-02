@@ -63,7 +63,8 @@ describe('firestore.rules — barbershops/{id} (spec 12.1: aprobación del admin
 
   it('no puede registrarla sin pago', async () => {
     const db = testEnv.authenticatedContext(OWNER_UID).firestore();
-    const { paymentId: _omit, ...withoutPayment } = newShop();
+    const withoutPayment: Record<string, unknown> = { ...newShop() };
+    delete withoutPayment.paymentId;
     await assertFails(setDoc(doc(db, `barbershops/${SHOP_ID}`), withoutPayment));
   });
 
