@@ -184,7 +184,7 @@ class ManageBarbersView extends StatelessWidget {
                       child: Text(
                         barber.initials,
                         style: const TextStyle(
-                          color: Colors.white,
+                          color: AppColors.onColor,
                           fontSize: 12,
                           fontWeight: FontWeight.w700,
                         ),

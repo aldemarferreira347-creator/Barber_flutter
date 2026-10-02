@@ -9,14 +9,17 @@ import '../../repositories/barbershop_repository.dart';
 import '../../repositories/notification_repository.dart';
 import '../../repositories/user_repository.dart';
 import '../../theme/app_colors.dart';
+import '../../theme/app_tokens.dart';
 import '../admin/manage_users_view.dart';
 import '../barbershop/manage_barbershops_view.dart';
-import '../notification/notifications_view.dart';
+import '../barbershop/payment_insight.dart';
 import '../widgets/action_list_tile.dart';
 import '../widgets/brand_mark.dart';
 import '../widgets/dashboard_scaffold.dart';
 import '../widgets/error_state.dart';
+import '../widgets/section_header.dart';
 import '../widgets/stat_card.dart';
+import '../widgets/status_badge.dart';
 
 class AdminDashboardTab extends StatefulWidget {
   const AdminDashboardTab({super.key});
@@ -62,6 +65,15 @@ class _AdminDashboardTabState extends State<AdminDashboardTab> {
     }
   }
 
+  void _openShops(AdminShopFilter? filter) {
+    Navigator.of(context).push(
+      MaterialPageRoute(
+        builder: (_) =>
+            ManageBarbershopsView(adminControls: true, initialFilter: filter),
+      ),
+    );
+  }
+
   @override
   Widget build(BuildContext context) {
     final profile = context.watch<AuthController>().profile;
@@ -74,21 +86,15 @@ class _AdminDashboardTabState extends State<AdminDashboardTab> {
     return DashboardScaffold(
       greeting: 'Hola, $greetingName 👋',
       subtitle: 'Panel de administración',
-      avatar: const CircleAvatar(
+      avatar: CircleAvatar(
         radius: 22,
-        backgroundColor: Colors.white,
-        child: Padding(
+        backgroundColor: AppColors.surface,
+        child: const Padding(
           padding: EdgeInsets.all(4),
-          child: BrandMark(size: 26, spin: false),
+          child: BrandMark(size: 28, spin: false),
         ),
       ),
-      onNotifications: profile == null
-          ? null
-          : () => Navigator.of(context).push(
-              MaterialPageRoute(
-                builder: (_) => NotificationsView(uid: profile.uid),
-              ),
-            ),
+      notificationsUid: profile?.uid,
       children: [
         StreamBuilder<List<AppUser>>(
           stream: userService.watchAll(),
@@ -110,40 +116,82 @@ class _AdminDashboardTabState extends State<AdminDashboardTab> {
                   );
                 }
                 final shops = shopSnapshot.data ?? [];
-                final overdueShops = shops
-                    .where((s) => s.paymentStatus != PaymentStatus.ok)
+                final pending = shops
+                    .where(
+                      (s) =>
+                          s.approvalStatus == BarbershopApprovalStatus.pending,
+                    )
                     .length;
-                return GridView.count(
-                  crossAxisCount: 2,
-                  shrinkWrap: true,
-                  physics: const NeverScrollableScrollPhysics(),
-                  mainAxisSpacing: 12,
-                  crossAxisSpacing: 12,
-                  childAspectRatio: 1.5,
+                final late = shops.where((s) {
+                  if (s.approvalStatus != BarbershopApprovalStatus.approved) {
+                    return false;
+                  }
+                  final level = paymentInsight(s).level;
+                  return level == PaymentInsightLevel.grace ||
+                      level == PaymentInsightLevel.graceExpired;
+                }).length;
+
+                return Column(
+                  crossAxisAlignment: CrossAxisAlignment.stretch,
                   children: [
-                    StatCard(
-                      icon: Icons.storefront_outlined,
-                      value: '${shops.length}',
-                      label: 'Barberías registradas',
-                      iconColor: AppColors.accent,
-                    ),
-                    StatCard(
-                      icon: Icons.people_outline,
-                      value: '${users.length}',
-                      label: 'Usuarios activos',
-                      iconColor: AppColors.success,
-                    ),
-                    StatCard(
-                      icon: Icons.storefront,
-                      value: '${shops.where((s) => s.active).length}',
-                      label: 'Barberías activas',
-                      iconColor: AppColors.accent,
-                    ),
-                    StatCard(
-                      icon: Icons.warning_amber_outlined,
-                      value: '$overdueShops',
-                      label: 'Barberías en alerta',
-                      iconColor: AppColors.warning,
+                    if (pending > 0 || late > 0) ...[
+                      const SectionHeader(title: 'Requiere tu atención'),
+                      if (pending > 0)
+                        ActionListTile(
+                          icon: Icons.hourglass_top_outlined,
+                          iconColor: AppColors.warning,
+                          label: 'Solicitudes de barbería',
+                          subtitle: 'Esperan tu aprobación o rechazo',
+                          trailing: StatusBadge(
+                            label: '$pending',
+                            color: AppColors.warning,
+                          ),
+                          onTap: () => _openShops(AdminShopFilter.pending),
+                        ),
+                      if (pending > 0 && late > 0)
+                        const SizedBox(height: AppSpace.sm),
+                      if (late > 0)
+                        ActionListTile(
+                          icon: Icons.payments_outlined,
+                          iconColor: AppColors.error,
+                          label: 'Mensualidades por regularizar',
+                          subtitle: 'En mora o en período de gracia',
+                          trailing: StatusBadge(
+                            label: '$late',
+                            color: AppColors.error,
+                          ),
+                          onTap: () => _openShops(AdminShopFilter.grace),
+                        ),
+                      const SizedBox(height: AppSpace.xl),
+                    ],
+                    const SectionHeader(title: 'Resumen'),
+                    StatGrid(
+                      children: [
+                        StatCard(
+                          icon: Icons.storefront_outlined,
+                          value: '${shops.length}',
+                          label: 'Barberías registradas',
+                          iconColor: AppColors.accent,
+                        ),
+                        StatCard(
+                          icon: Icons.people_outline,
+                          value: '${users.where((u) => u.active).length}',
+                          label: 'Usuarios activos',
+                          iconColor: AppColors.success,
+                        ),
+                        StatCard(
+                          icon: Icons.storefront,
+                          value: '${shops.where((s) => s.active).length}',
+                          label: 'Barberías activas',
+                          iconColor: AppColors.accent,
+                        ),
+                        StatCard(
+                          icon: Icons.warning_amber_outlined,
+                          value: '${pending + late}',
+                          label: 'Pendientes de atención',
+                          iconColor: AppColors.warning,
+                        ),
+                      ],
                     ),
                   ],
                 );
@@ -151,28 +199,21 @@ class _AdminDashboardTabState extends State<AdminDashboardTab> {
             );
           },
         ),
-        const SizedBox(height: 24),
-        const Text(
-          'Acciones rápidas',
-          style: TextStyle(fontWeight: FontWeight.w700, fontSize: 15),
-        ),
-        const SizedBox(height: 10),
+        const SizedBox(height: AppSpace.xl),
+        const SectionHeader(title: 'Acciones rápidas'),
         ActionListTile(
           icon: Icons.people_outline,
           label: 'Gestionar usuarios',
+          subtitle: 'Roles, bloqueos y notificaciones',
           onTap: () => Navigator.of(context)
               .push(MaterialPageRoute(builder: (_) => const ManageUsersView())),
         ),
-        const SizedBox(height: 10),
+        const SizedBox(height: AppSpace.sm),
         ActionListTile(
           icon: Icons.storefront_outlined,
           label: 'Gestión de barberías',
           subtitle: 'Aprobaciones, estado y mensualidad',
-          onTap: () => Navigator.of(context).push(
-            MaterialPageRoute(
-              builder: (_) => const ManageBarbershopsView(adminControls: true),
-            ),
-          ),
+          onTap: () => _openShops(null),
         ),
       ],
     );

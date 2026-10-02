@@ -121,18 +121,10 @@ class _BuyProductViewState extends State<BuyProductView> {
             ),
           ),
         AppButton(
-          onPressed: _buying ? null : _buy,
-          icon: _buying ? null : Icons.lock_outline,
-          child: _buying
-              ? const SizedBox(
-                  height: 18,
-                  width: 18,
-                  child: CircularProgressIndicator(
-                    strokeWidth: 2,
-                    color: Colors.white,
-                  ),
-                )
-              : const Text('Pagar con Nequi'),
+          onPressed: _buy,
+          icon: Icons.lock_outline,
+          loading: _buying,
+          child: const Text('Pagar con Nequi'),
         ),
       ],
     );

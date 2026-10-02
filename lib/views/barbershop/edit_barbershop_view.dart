@@ -256,18 +256,10 @@ class _EditBarbershopViewState extends State<EditBarbershopView> {
               ),
               const SizedBox(height: 24),
               AppButton(
-                onPressed: _saving ? null : _save,
-                icon: _saving ? null : Icons.save_outlined,
-                child: _saving
-                    ? const SizedBox(
-                        height: 18,
-                        width: 18,
-                        child: CircularProgressIndicator(
-                          strokeWidth: 2,
-                          color: Colors.white,
-                        ),
-                      )
-                    : const Text('Guardar cambios'),
+                onPressed: _save,
+                icon: Icons.save_outlined,
+                loading: _saving,
+                child: const Text('Guardar cambios'),
               ),
             ],
           ),

@@ -114,7 +114,7 @@ class ProfileMenuView extends StatelessWidget {
                   child: Text(
                     initials,
                     style: const TextStyle(
-                      color: Colors.white,
+                      color: AppColors.onColor,
                       fontWeight: FontWeight.w700,
                     ),
                   ),

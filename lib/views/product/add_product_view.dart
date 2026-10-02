@@ -197,18 +197,10 @@ class _AddProductViewState extends State<AddProductView> {
               ),
               const SizedBox(height: 24),
               AppButton(
-                onPressed: _saving ? null : _submit,
-                icon: _saving ? null : Icons.shopping_bag_outlined,
-                child: _saving
-                    ? const SizedBox(
-                        height: 18,
-                        width: 18,
-                        child: CircularProgressIndicator(
-                          strokeWidth: 2,
-                          color: Colors.white,
-                        ),
-                      )
-                    : const Text('Guardar producto'),
+                onPressed: _submit,
+                icon: Icons.shopping_bag_outlined,
+                loading: _saving,
+                child: const Text('Guardar producto'),
               ),
             ],
           ),

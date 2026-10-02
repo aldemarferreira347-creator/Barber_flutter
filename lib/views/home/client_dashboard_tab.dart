@@ -7,17 +7,25 @@ import '../../models/barbershop.dart';
 import '../../repositories/appointment_repository.dart';
 import '../../repositories/barbershop_repository.dart';
 import '../../theme/app_colors.dart';
+import '../../theme/app_tokens.dart';
+import '../../utils/date_labels.dart';
 import '../appointment/client_appointments_view.dart';
 import '../barbershop/barbershop_detail_view.dart';
 import '../barbershop/manage_barbershops_view.dart';
 import '../help/help_view.dart';
-import '../notification/notifications_view.dart';
 import '../widgets/action_list_tile.dart';
+import '../widgets/app_button.dart';
+import '../widgets/app_card.dart';
 import '../widgets/dashboard_scaffold.dart';
-import '../widgets/pressable_scale.dart';
+import '../widgets/section_header.dart';
+import '../widgets/shop_avatar.dart';
+import '../widgets/status_badge.dart';
 
 class ClientDashboardTab extends StatelessWidget {
   const ClientDashboardTab({super.key});
+
+  void _openCatalog(BuildContext context) => Navigator.of(context)
+      .push(MaterialPageRoute(builder: (_) => const ManageBarbershopsView()));
 
   @override
   Widget build(BuildContext context) {
@@ -25,267 +33,258 @@ class ClientDashboardTab extends StatelessWidget {
     final greetingName = profile?.firstName.isNotEmpty == true
         ? profile!.firstName
         : 'Cliente';
-    final appointmentRepo = context.read<AppointmentRepository>();
 
     return DashboardScaffold(
       greeting: 'Hola, $greetingName 👋',
       subtitle: 'Tu estilo, nuestra prioridad',
-      onNotifications: profile == null
-          ? null
-          : () => Navigator.of(context).push(
-              MaterialPageRoute(
-                builder: (_) => NotificationsView(uid: profile.uid),
-              ),
-            ),
-      floatingActionButton: FloatingActionButton(
-        tooltip: 'Ayuda',
-        onPressed: () =>
-            Navigator.of(context)
-                .push(MaterialPageRoute(builder: (_) => const HelpView())),
-        child: const Icon(Icons.help_outline),
-      ),
+      notificationsUid: profile?.uid,
       children: [
-        PressableScale(
+        _NextAppointmentCard(
+          clientId: profile?.uid,
+          onBook: () => _openCatalog(context),
+        ),
+        const SizedBox(height: AppSpace.xl),
+        SectionHeader(
+          title: 'Barberías destacadas',
+          actionLabel: 'Ver todas',
+          onAction: () => _openCatalog(context),
+        ),
+        const _FeaturedShops(),
+        const SizedBox(height: AppSpace.xl),
+        const SectionHeader(title: 'Accesos rápidos'),
+        ActionListTile(
+          icon: Icons.calendar_month_outlined,
+          label: 'Mis citas',
+          subtitle: 'Próximas, historial y calificaciones',
           onTap: () => Navigator.of(context).push(
-            MaterialPageRoute(builder: (_) => const ManageBarbershopsView()),
-          ),
-          child: ClipRRect(
-            borderRadius: BorderRadius.circular(18),
-            child: Container(
-              height: 140,
-              decoration: BoxDecoration(
-                image: DecorationImage(
-                  image: const AssetImage('lib/views/img/fondo.png'),
-                  fit: BoxFit.cover,
-                  colorFilter: ColorFilter.mode(
-                    Colors.black.withValues(alpha: 0.5),
-                    BlendMode.darken,
-                  ),
-                ),
-              ),
-              padding: const EdgeInsets.all(18),
-              child: Column(
-                crossAxisAlignment: CrossAxisAlignment.start,
-                mainAxisAlignment: MainAxisAlignment.end,
-                children: [
-                  const Text(
-                    'Tu próxima cita está a un clic',
-                    style: TextStyle(
-                      color: Colors.white,
-                      fontSize: 17,
-                      fontWeight: FontWeight.w800,
-                    ),
-                  ),
-                  const SizedBox(height: 10),
-                  Container(
-                    padding: const EdgeInsets.symmetric(
-                      horizontal: 14,
-                      vertical: 9,
-                    ),
-                    decoration: BoxDecoration(
-                      color: Colors.white,
-                      borderRadius: BorderRadius.circular(30),
-                    ),
-                    child: Row(
-                      mainAxisSize: MainAxisSize.min,
-                      children: [
-                        Text(
-                          'Reservar cita',
-                          style: TextStyle(
-                            color: AppColors.primary,
-                            fontWeight: FontWeight.w700,
-                            fontSize: 13,
-                          ),
-                        ),
-                        const SizedBox(width: 4),
-                        Icon(
-                          Icons.arrow_forward,
-                          size: 15,
-                          color: AppColors.primary,
-                        ),
-                      ],
-                    ),
-                  ),
-                ],
-              ),
-            ),
+            MaterialPageRoute(builder: (_) => const ClientAppointmentsView()),
           ),
         ),
-        const SizedBox(height: 22),
-        Row(
-          children: [
-            const Expanded(
-              child: Text(
-                'Barberías destacadas',
-                style: TextStyle(fontWeight: FontWeight.w700, fontSize: 15),
-              ),
-            ),
-            TextButton(
-              onPressed: () => Navigator.of(context).push(
-                MaterialPageRoute(
-                  builder: (_) => const ManageBarbershopsView(),
-                ),
-              ),
-              child: const Text('Ver todas'),
-            ),
-          ],
+        const SizedBox(height: AppSpace.sm),
+        ActionListTile(
+          icon: Icons.help_outline,
+          label: 'Ayuda y soporte',
+          subtitle: 'Preguntas frecuentes y contacto',
+          onTap: () =>
+              Navigator.of(context)
+                  .push(MaterialPageRoute(builder: (_) => const HelpView())),
         ),
-        SizedBox(
-          height: 132,
-          child: StreamBuilder<List<Barbershop>>(
-            stream: context.read<BarbershopRepository>().watchAll(),
-            builder: (context, snapshot) {
-              if (snapshot.hasError) {
-                return Center(
-                  child: Text(
-                    'No se pudieron cargar las barberías',
-                    textAlign: TextAlign.center,
-                    style: TextStyle(
-                      color: AppColors.textSecondary,
-                      fontSize: 13,
-                    ),
-                  ),
-                );
-              }
-              final shops = (snapshot.data ?? [])
-                  .where((s) => s.active)
-                  .take(6)
-                  .toList();
-              if (shops.isEmpty) {
-                return Center(
-                  child: Text(
-                    'Aún no hay barberías activas',
-                    style: TextStyle(
-                      color: AppColors.textSecondary,
-                      fontSize: 13,
-                    ),
-                  ),
-                );
-              }
-              return ListView.separated(
-                scrollDirection: Axis.horizontal,
-                itemCount: shops.length,
-                separatorBuilder: (_, _) => const SizedBox(width: 10),
-                itemBuilder: (context, index) {
-                  final shop = shops[index];
-                  return PressableScale(
-                    onTap: () => Navigator.of(context).push(
-                      MaterialPageRoute(
-                        builder: (_) =>
-                            BarbershopDetailView(barbershopId: shop.id),
-                      ),
-                    ),
-                    child: Container(
-                      width: 112,
-                      padding: const EdgeInsets.all(10),
-                      decoration: BoxDecoration(
-                        color: AppColors.surface,
-                        borderRadius: BorderRadius.circular(14),
-                        border: Border.all(color: AppColors.border),
-                        boxShadow: [
-                          BoxShadow(
-                            color: AppColors.textPrimary.withValues(
-                              alpha: 0.05,
-                            ),
-                            blurRadius: 10,
-                            offset: const Offset(0, 4),
-                          ),
-                        ],
-                      ),
-                      child: Column(
-                        crossAxisAlignment: CrossAxisAlignment.start,
-                        children: [
-                          Container(
-                            height: 56,
-                            width: double.infinity,
-                            decoration: BoxDecoration(
-                              color: AppColors.primary,
-                              borderRadius: BorderRadius.circular(10),
-                              image: shop.photoUrl != null
-                                  ? DecorationImage(
-                                      image: NetworkImage(shop.photoUrl!),
-                                      fit: BoxFit.cover,
-                                    )
-                                  : null,
-                            ),
-                            child: shop.photoUrl == null
-                                ? const Icon(
-                                    Icons.storefront,
-                                    color: Colors.white,
-                                    size: 22,
-                                  )
-                                : null,
-                          ),
-                          const SizedBox(height: 6),
-                          Text(
-                            shop.name,
-                            maxLines: 1,
-                            overflow: TextOverflow.ellipsis,
-                            style: const TextStyle(
-                              fontWeight: FontWeight.w700,
-                              fontSize: 12,
-                            ),
-                          ),
-                          if (shop.averageRating > 0)
-                            Row(
-                              children: [
-                                const Icon(
-                                  Icons.star,
-                                  size: 12,
-                                  color: AppColors.warning,
-                                ),
-                                const SizedBox(width: 2),
-                                Text(
-                                  shop.averageRating.toStringAsFixed(1),
-                                  style: TextStyle(
-                                    fontSize: 11,
-                                    color: AppColors.textSecondary,
-                                  ),
-                                ),
-                              ],
-                            ),
-                        ],
-                      ),
-                    ),
-                  );
-                },
-              );
-            },
-          ),
-        ),
-        const SizedBox(height: 20),
-        StreamBuilder<List<Appointment>>(
-          stream: profile == null
-              ? const Stream<List<Appointment>>.empty()
-              : appointmentRepo.watchByClient(profile.uid),
-          builder: (context, snapshot) {
-            final all = snapshot.data ?? [];
-            final now = DateTime.now();
-            final upcoming = all
+      ],
+    );
+  }
+}
+
+/// Lo más importante para un cliente: su próxima cita. Si no tiene ninguna,
+/// la invitación a reservar.
+class _NextAppointmentCard extends StatelessWidget {
+  final String? clientId;
+  final VoidCallback onBook;
+
+  const _NextAppointmentCard({required this.clientId, required this.onBook});
+
+  static const _upcomingStatuses = {
+    AppointmentStatus.pending,
+    AppointmentStatus.accepted,
+    AppointmentStatus.postponed,
+  };
+
+  @override
+  Widget build(BuildContext context) {
+    return StreamBuilder<List<Appointment>>(
+      stream: clientId == null
+          ? const Stream<List<Appointment>>.empty()
+          : context.read<AppointmentRepository>().watchByClient(clientId!),
+      builder: (context, snapshot) {
+        final now = DateTime.now();
+        final upcoming =
+            (snapshot.data ?? const <Appointment>[])
                 .where(
                   (a) =>
                       a.date.isAfter(now) &&
-                      (a.status == AppointmentStatus.pending ||
-                          a.status == AppointmentStatus.accepted),
+                      _upcomingStatuses.contains(a.status),
                 )
-                .toList();
-            return ActionListTile(
-              icon: Icons.calendar_month_outlined,
-              label: 'Tus próximas citas',
-              subtitle: snapshot.hasError
-                  ? 'No se pudo cargar'
-                  : upcoming.isEmpty
-                  ? 'No tienes citas programadas'
-                  : '${upcoming.length} cita(s) programada(s)',
-              onTap: () => Navigator.of(context).push(
-                MaterialPageRoute(
-                  builder: (_) => const ClientAppointmentsView(),
+                .toList()
+              ..sort((a, b) => a.date.compareTo(b.date));
+
+        if (upcoming.isEmpty) return _BookCard(onBook: onBook);
+
+        final next = upcoming.first;
+        final text = Theme.of(context).textTheme;
+        return AppCard(
+          onTap: () => Navigator.of(context).push(
+            MaterialPageRoute(builder: (_) => const ClientAppointmentsView()),
+          ),
+          semanticLabel: 'Tu próxima cita, ver mis citas',
+          child: Column(
+            crossAxisAlignment: CrossAxisAlignment.start,
+            children: [
+              Row(
+                children: [
+                  Expanded(
+                    child: Text('Tu próxima cita', style: text.labelMedium),
+                  ),
+                  StatusBadge(
+                    label: next.status.label,
+                    color: switch (next.status) {
+                      AppointmentStatus.accepted => AppColors.success,
+                      AppointmentStatus.postponed => AppColors.accent,
+                      _ => AppColors.warning,
+                    },
+                  ),
+                ],
+              ),
+              const SizedBox(height: AppSpace.sm),
+              Text(dateTimeLabel(next.date), style: text.headlineSmall),
+              const SizedBox(height: AppSpace.xs),
+              Text(
+                '${next.serviceName} · con ${next.barberName}',
+                style: text.bodyMedium,
+              ),
+              if (upcoming.length > 1) ...[
+                const SizedBox(height: AppSpace.sm),
+                Text(
+                  '+${upcoming.length - 1} cita(s) más programada(s)',
+                  style: text.bodySmall,
                 ),
+              ],
+            ],
+          ),
+        );
+      },
+    );
+  }
+}
+
+class _BookCard extends StatelessWidget {
+  final VoidCallback onBook;
+
+  const _BookCard({required this.onBook});
+
+  @override
+  Widget build(BuildContext context) {
+    final text = Theme.of(context).textTheme;
+    return AppCard(
+      child: Column(
+        crossAxisAlignment: CrossAxisAlignment.start,
+        children: [
+          Text('Reserva tu próxima cita', style: text.titleLarge),
+          const SizedBox(height: AppSpace.xs),
+          Text(
+            'Elige una barbería, un barbero y la hora que mejor te quede.',
+            style: text.bodyMedium,
+          ),
+          const SizedBox(height: AppSpace.lg),
+          AppButton(
+            expand: false,
+            onPressed: onBook,
+            icon: Icons.event_available_outlined,
+            child: const Text('Reservar cita'),
+          ),
+        ],
+      ),
+    );
+  }
+}
+
+class _FeaturedShops extends StatelessWidget {
+  const _FeaturedShops();
+
+  @override
+  Widget build(BuildContext context) {
+    final text = Theme.of(context).textTheme;
+    return SizedBox(
+      height: 184,
+      child: StreamBuilder<List<Barbershop>>(
+        stream: context.read<BarbershopRepository>().watchApproved(),
+        builder: (context, snapshot) {
+          if (snapshot.hasError) {
+            return Center(
+              child: Text(
+                'No se pudieron cargar las barberías',
+                textAlign: TextAlign.center,
+                style: text.bodyMedium,
               ),
             );
-          },
+          }
+          final shops = [...(snapshot.data ?? const <Barbershop>[])]
+            ..sort((a, b) {
+              final byRating = b.averageRating.compareTo(a.averageRating);
+              return byRating != 0 ? byRating : a.name.compareTo(b.name);
+            });
+          if (shops.isEmpty) {
+            return Center(
+              child: Text(
+                'Aún no hay barberías activas',
+                style: text.bodyMedium,
+              ),
+            );
+          }
+          return ListView.separated(
+            scrollDirection: Axis.horizontal,
+            itemCount: shops.length.clamp(0, 8),
+            separatorBuilder: (_, _) => const SizedBox(width: AppSpace.md),
+            itemBuilder: (context, index) =>
+                _FeaturedShopCard(shop: shops[index]),
+          );
+        },
+      ),
+    );
+  }
+}
+
+class _FeaturedShopCard extends StatelessWidget {
+  final Barbershop shop;
+
+  const _FeaturedShopCard({required this.shop});
+
+  @override
+  Widget build(BuildContext context) {
+    final text = Theme.of(context).textTheme;
+    return SizedBox(
+      width: 168,
+      child: AppCard(
+        padding: const EdgeInsets.all(AppSpace.md),
+        onTap: () => Navigator.of(context).push(
+          MaterialPageRoute(
+            builder: (_) => BarbershopDetailView(barbershopId: shop.id),
+          ),
         ),
-      ],
+        semanticLabel: 'Barbería ${shop.name}',
+        child: Column(
+          crossAxisAlignment: CrossAxisAlignment.start,
+          children: [
+            ShopAvatar(photoUrl: shop.photoUrl, name: shop.name, size: 64),
+            const SizedBox(height: AppSpace.sm),
+            Text(
+              shop.name,
+              maxLines: 1,
+              overflow: TextOverflow.ellipsis,
+              style: text.titleSmall,
+            ),
+            if (shop.address != null && shop.address!.isNotEmpty)
+              Text(
+                shop.address!,
+                maxLines: 1,
+                overflow: TextOverflow.ellipsis,
+                style: text.bodySmall,
+              ),
+            const Spacer(),
+            if (shop.averageRating > 0)
+              Row(
+                children: [
+                  const Icon(Icons.star, size: 14, color: AppColors.gold),
+                  const SizedBox(width: 2),
+                  Text(
+                    shop.averageRating.toStringAsFixed(1),
+                    style: text.labelMedium,
+                  ),
+                ],
+              )
+            else
+              Text('Sin calificaciones', style: text.bodySmall),
+          ],
+        ),
+      ),
     );
   }
 }

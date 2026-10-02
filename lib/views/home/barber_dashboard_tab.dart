@@ -2,17 +2,23 @@ import 'package:flutter/material.dart';
 import 'package:provider/provider.dart';
 
 import '../../controllers/auth_controller.dart';
+import '../../models/appointment.dart';
 import '../../models/barbershop.dart';
+import '../../repositories/appointment_repository.dart';
 import '../../repositories/barbershop_repository.dart';
 import '../../theme/app_colors.dart';
+import '../../theme/app_tokens.dart';
+import '../../utils/date_labels.dart';
 import '../appointment/barber_appointments_view.dart';
 import '../barber/barber_availability_view.dart';
 import '../barbershop/barbershop_detail_view.dart';
-import '../notification/notifications_view.dart';
 import '../service/manage_services_view.dart';
 import '../widgets/action_list_tile.dart';
+import '../widgets/app_card.dart';
 import '../widgets/dashboard_scaffold.dart';
 import '../widgets/error_state.dart';
+import '../widgets/section_header.dart';
+import '../widgets/shop_avatar.dart';
 import '../widgets/status_badge.dart';
 
 class BarberDashboardTab extends StatelessWidget {
@@ -25,91 +31,37 @@ class BarberDashboardTab extends StatelessWidget {
         ? profile!.firstName
         : 'Barbero';
     final barbershopId = profile?.barbershopId;
-    final initials = (profile?.name.isNotEmpty ?? false)
-        ? profile!.name
-              .trim()
-              .split(RegExp(r'\s+'))
-              .map((p) => p[0])
-              .take(2)
-              .join()
-              .toUpperCase()
-        : '?';
 
     return DashboardScaffold(
       greeting: 'Hola, $greetingName 👋',
       subtitle: 'Tu talento, nuestra prioridad',
-      onNotifications: profile == null
-          ? null
-          : () => Navigator.of(context).push(
-              MaterialPageRoute(
-                builder: (_) => NotificationsView(uid: profile.uid),
-              ),
-            ),
+      notificationsUid: profile?.uid,
       children: [
-        Container(
-          padding: const EdgeInsets.all(14),
-          decoration: BoxDecoration(
-            color: AppColors.surface,
-            borderRadius: BorderRadius.circular(16),
-            border: Border.all(color: AppColors.border),
-            boxShadow: [
-              BoxShadow(
-                color: AppColors.textPrimary.withValues(alpha: 0.06),
-                blurRadius: 14,
-                offset: const Offset(0, 6),
-              ),
-            ],
-          ),
-          child: Row(
-            children: [
-              CircleAvatar(
-                radius: 26,
-                backgroundColor: AppColors.primary,
-                child: Text(
-                  initials,
-                  style: const TextStyle(
-                    color: Colors.white,
-                    fontWeight: FontWeight.w700,
-                  ),
-                ),
-              ),
-              const SizedBox(width: 12),
-              Expanded(
-                child: Column(
-                  crossAxisAlignment: CrossAxisAlignment.start,
-                  children: [
-                    Text(
-                      profile?.name ?? '',
-                      style: const TextStyle(fontWeight: FontWeight.w700),
-                    ),
-                    Text(
-                      'Barbero',
-                      style: TextStyle(
-                        color: AppColors.textSecondary,
-                        fontSize: 12,
-                      ),
-                    ),
-                  ],
-                ),
-              ),
-              const StatusBadge(label: 'Activo', color: AppColors.success),
-            ],
+        _TodayCard(barberId: profile?.uid),
+        const SizedBox(height: AppSpace.xl),
+        const SectionHeader(title: 'Mi trabajo'),
+        ActionListTile(
+          icon: Icons.event_note_outlined,
+          label: 'Mi agenda',
+          subtitle: 'Todas tus citas: confirmar, completar o posponer',
+          onTap: () => Navigator.of(context).push(
+            MaterialPageRoute(builder: (_) => const BarberAppointmentsView()),
           ),
         ),
-        const SizedBox(height: 16),
+        const SizedBox(height: AppSpace.sm),
         ActionListTile(
           icon: Icons.access_time,
-          label: 'Mi horario',
-          subtitle: 'Ver y gestionar disponibilidad',
+          label: 'Mi disponibilidad',
+          subtitle: 'Marca tu salida o tu regreso de la tienda',
           onTap: () => Navigator.of(context).push(
             MaterialPageRoute(builder: (_) => const BarberAvailabilityView()),
           ),
         ),
-        const SizedBox(height: 10),
+        const SizedBox(height: AppSpace.sm),
         ActionListTile(
           icon: Icons.content_cut,
-          label: 'Mis servicios',
-          subtitle: 'Servicios asignados',
+          label: 'Servicios de la barbería',
+          subtitle: 'Consulta el catálogo y sus precios',
           onTap: barbershopId == null
               ? null
               : () => Navigator.of(context).push(
@@ -119,22 +71,9 @@ class BarberDashboardTab extends StatelessWidget {
                   ),
                 ),
         ),
-        const SizedBox(height: 10),
-        ActionListTile(
-          icon: Icons.bar_chart_outlined,
-          label: 'Mis estadísticas',
-          subtitle: 'Rendimiento y citas',
-          onTap: () => Navigator.of(context).push(
-            MaterialPageRoute(builder: (_) => const BarberAppointmentsView()),
-          ),
-        ),
         if (barbershopId != null) ...[
-          const SizedBox(height: 20),
-          const Text(
-            'Tu barbería',
-            style: TextStyle(fontWeight: FontWeight.w700, fontSize: 15),
-          ),
-          const SizedBox(height: 10),
+          const SizedBox(height: AppSpace.xl),
+          const SectionHeader(title: 'Tu barbería'),
           StreamBuilder<Barbershop?>(
             stream: context.read<BarbershopRepository>().watchOne(barbershopId),
             builder: (context, shopSnapshot) {
@@ -146,73 +85,117 @@ class BarberDashboardTab extends StatelessWidget {
               }
               final shop = shopSnapshot.data;
               if (shop == null) return const SizedBox.shrink();
-              return InkWell(
-                borderRadius: BorderRadius.circular(14),
+              final text = Theme.of(context).textTheme;
+              return AppCard(
                 onTap: () => Navigator.of(context).push(
                   MaterialPageRoute(
                     builder: (_) => BarbershopDetailView(barbershopId: shop.id),
                   ),
                 ),
-                child: Container(
-                  padding: const EdgeInsets.all(12),
-                  decoration: BoxDecoration(
-                    color: AppColors.surface,
-                    borderRadius: BorderRadius.circular(14),
-                    border: Border.all(color: AppColors.border),
-                  ),
-                  child: Row(
-                    children: [
-                      Container(
-                        width: 44,
-                        height: 44,
-                        decoration: BoxDecoration(
-                          color: AppColors.primary,
-                          borderRadius: BorderRadius.circular(10),
-                          image: shop.photoUrl != null
-                              ? DecorationImage(
-                                  image: NetworkImage(shop.photoUrl!),
-                                  fit: BoxFit.cover,
-                                )
-                              : null,
-                        ),
-                        child: shop.photoUrl == null
-                            ? const Icon(
-                                Icons.storefront,
-                                color: Colors.white,
-                                size: 20,
-                              )
-                            : null,
+                semanticLabel: 'Ver ${shop.name}',
+                child: Row(
+                  children: [
+                    ShopAvatar(photoUrl: shop.photoUrl, name: shop.name),
+                    const SizedBox(width: AppSpace.md),
+                    Expanded(
+                      child: Column(
+                        crossAxisAlignment: CrossAxisAlignment.start,
+                        children: [
+                          Text(shop.name, style: text.titleSmall),
+                          if (shop.address != null)
+                            Text(shop.address!, style: text.bodySmall),
+                        ],
                       ),
-                      const SizedBox(width: 12),
-                      Expanded(
-                        child: Column(
-                          crossAxisAlignment: CrossAxisAlignment.start,
-                          children: [
-                            Text(
-                              shop.name,
-                              style: const TextStyle(
-                                fontWeight: FontWeight.w700,
-                              ),
-                            ),
-                            Text(
-                              shop.address ?? '',
-                              style: TextStyle(
-                                color: AppColors.textSecondary,
-                                fontSize: 12,
-                              ),
-                            ),
-                          ],
-                        ),
-                      ),
-                      Icon(Icons.chevron_right, color: AppColors.textSecondary),
-                    ],
-                  ),
+                    ),
+                    Icon(Icons.chevron_right, color: AppColors.textSecondary),
+                  ],
                 ),
               );
             },
           ),
         ],
       ],
+    );
+  }
+}
+
+/// El resumen del día del barbero: cuántas citas tiene hoy, cuál es la
+/// siguiente y cuántas esperan que las confirme.
+class _TodayCard extends StatelessWidget {
+  final String? barberId;
+
+  const _TodayCard({required this.barberId});
+
+  @override
+  Widget build(BuildContext context) {
+    return StreamBuilder<List<Appointment>>(
+      stream: barberId == null
+          ? const Stream<List<Appointment>>.empty()
+          : context.read<AppointmentRepository>().watchByBarber(barberId!),
+      builder: (context, snapshot) {
+        final now = DateTime.now();
+        bool isToday(DateTime d) =>
+            d.year == now.year && d.month == now.month && d.day == now.day;
+        final all = snapshot.data ?? const <Appointment>[];
+        final today =
+            all
+                .where(
+                  (a) =>
+                      isToday(a.date) &&
+                      a.status != AppointmentStatus.cancelled &&
+                      a.status != AppointmentStatus.rejected,
+                )
+                .toList()
+              ..sort((a, b) => a.date.compareTo(b.date));
+        final next = today
+            .where(
+              (a) =>
+                  a.date.isAfter(now) &&
+                  (a.status == AppointmentStatus.pending ||
+                      a.status == AppointmentStatus.accepted),
+            )
+            .firstOrNull;
+        final toConfirm = all
+            .where((a) => a.status == AppointmentStatus.pending)
+            .length;
+        final text = Theme.of(context).textTheme;
+
+        return AppCard(
+          onTap: () => Navigator.of(context).push(
+            MaterialPageRoute(builder: (_) => const BarberAppointmentsView()),
+          ),
+          semanticLabel: 'Resumen de hoy, abrir mi agenda',
+          child: Column(
+            crossAxisAlignment: CrossAxisAlignment.start,
+            children: [
+              Row(
+                children: [
+                  Expanded(child: Text('Hoy', style: text.labelMedium)),
+                  if (toConfirm > 0)
+                    StatusBadge(
+                      label: '$toConfirm por confirmar',
+                      color: AppColors.warning,
+                    ),
+                ],
+              ),
+              const SizedBox(height: AppSpace.xs),
+              Text(
+                today.isEmpty ? 'Sin citas hoy' : '${today.length} cita(s) hoy',
+                style: text.headlineSmall,
+              ),
+              const SizedBox(height: AppSpace.xs),
+              Text(
+                next == null
+                    ? (today.isEmpty
+                          ? 'Aprovecha para revisar tu agenda de los próximos días.'
+                          : 'No quedan más citas por atender hoy.')
+                    : 'Siguiente: ${timeLabel(next.date)} · ${next.clientName} · ${next.serviceName}',
+                style: text.bodyMedium,
+              ),
+            ],
+          ),
+        );
+      },
     );
   }
 }

@@ -51,3 +51,47 @@ class StatCard extends StatelessWidget {
     );
   }
 }
+
+/// Cuadrícula de [StatCard] con filas de altura natural (2 columnas en
+/// teléfono, 4 en pantallas anchas): cada fila toma la altura de su tarjeta
+/// más alta, así nada se recorta con textos largos o letra grande — algo que
+/// un `GridView` de proporción fija no garantiza.
+class StatGrid extends StatelessWidget {
+  final List<StatCard> children;
+
+  const StatGrid({super.key, required this.children});
+
+  @override
+  Widget build(BuildContext context) {
+    return LayoutBuilder(
+      builder: (context, constraints) {
+        final columns = constraints.maxWidth >= 640 ? 4 : 2;
+        final rows = <Widget>[];
+        for (var i = 0; i < children.length; i += columns) {
+          final chunk = children.skip(i).take(columns).toList();
+          rows.add(
+            IntrinsicHeight(
+              child: Row(
+                crossAxisAlignment: CrossAxisAlignment.stretch,
+                children: [
+                  for (var j = 0; j < columns; j++) ...[
+                    if (j > 0) const SizedBox(width: AppSpace.md),
+                    Expanded(
+                      child: j < chunk.length
+                          ? chunk[j]
+                          : const SizedBox.shrink(),
+                    ),
+                  ],
+                ],
+              ),
+            ),
+          );
+          if (i + columns < children.length) {
+            rows.add(const SizedBox(height: AppSpace.md));
+          }
+        }
+        return Column(children: rows);
+      },
+    );
+  }
+}

@@ -203,17 +203,9 @@ class _RateAppointmentViewState extends State<RateAppointmentView> {
             onPressed: (_barberStars > 0 && _shopStars > 0 && !_saving)
                 ? _submit
                 : null,
-            icon: _saving ? null : Icons.send_outlined,
-            child: _saving
-                ? const SizedBox(
-                    height: 18,
-                    width: 18,
-                    child: CircularProgressIndicator(
-                      strokeWidth: 2,
-                      color: Colors.white,
-                    ),
-                  )
-                : const Text('Enviar calificación'),
+            icon: Icons.send_outlined,
+            loading: _saving,
+            child: const Text('Enviar calificación'),
           ),
         ],
       ),

@@ -41,6 +41,11 @@ class MockAppointmentRepository extends Mock implements AppointmentRepository {}
 
 const _uid = 'user1';
 
+String _nextTime() {
+  final d = DateTime.now().add(const Duration(days: 1));
+  return '${d.hour.toString().padLeft(2, '0')}:${d.minute.toString().padLeft(2, '0')}';
+}
+
 void main() {
   late AuthController authController;
   late MockBarbershopRepository barbershopRepository;
@@ -70,7 +75,15 @@ void main() {
         .thenAnswer((_) => Stream.value(null));
     when(() => userRepository.watchAll())
         .thenAnswer((_) => Stream.value(const []));
+    when(() => barbershopRepository.watchApproved())
+        .thenAnswer((_) => Stream.value(const []));
     when(() => appointmentRepository.watchByClient(any()))
+        .thenAnswer((_) => Stream.value(const []));
+    when(() => appointmentRepository.watchByBarber(any()))
+        .thenAnswer((_) => Stream.value(const []));
+    when(() => appointmentRepository.watchByBarbershops(any()))
+        .thenAnswer((_) => Stream.value(const []));
+    when(() => notificationRepository.watchForUser(any()))
         .thenAnswer((_) => Stream.value(const []));
   });
 
@@ -174,7 +187,7 @@ void main() {
     await tester.pumpAndSettle();
 
     expect(tester.takeException(), isNull);
-    expect(find.text('Mi horario'), findsOneWidget);
+    expect(find.text('Mi agenda'), findsOneWidget);
     expect(find.text('Hola, Beto 👋'), findsOneWidget);
   });
 
@@ -193,7 +206,7 @@ void main() {
 
     expect(tester.takeException(), isNull);
     expect(find.text('Reservar cita'), findsOneWidget);
-    expect(find.text('No tienes citas programadas'), findsOneWidget);
+    expect(find.text('Reserva tu próxima cita'), findsOneWidget);
   });
 
   testWidgets(
@@ -212,7 +225,7 @@ void main() {
         active: true,
         approvalStatus: BarbershopApprovalStatus.approved,
       );
-      when(() => barbershopRepository.watchAll())
+      when(() => barbershopRepository.watchApproved())
           .thenAnswer((_) => Stream.value([shop]));
       when(() => appointmentRepository.watchByClient(_uid)).thenAnswer(
         (_) => Stream.value([
@@ -238,7 +251,9 @@ void main() {
 
       expect(tester.takeException(), isNull);
       expect(find.text('Barbería Central'), findsOneWidget);
-      expect(find.text('1 cita(s) programada(s)'), findsOneWidget);
+      expect(find.text('Tu próxima cita'), findsOneWidget);
+      expect(find.text('Mañana · ${_nextTime()}'), findsOneWidget);
+      expect(find.textContaining('Corte · con Beto'), findsOneWidget);
     },
   );
 }

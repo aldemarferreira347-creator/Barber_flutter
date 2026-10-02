@@ -142,7 +142,7 @@ class BarbershopDetailView extends StatelessWidget {
                     child: shop.photoUrl == null
                         ? const Icon(
                             Icons.storefront,
-                            color: Colors.white,
+                            color: AppColors.onColor,
                             size: 48,
                           )
                         : null,

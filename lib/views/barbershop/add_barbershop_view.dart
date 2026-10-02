@@ -482,19 +482,11 @@ class _AddBarbershopViewState extends State<AddBarbershopView> {
               const SizedBox(height: 24),
               AppButton(
                 onPressed: (_saving || _paying) ? null : _payAndRegister,
-                icon: _paying ? null : Icons.payments_outlined,
-                child: _paying
-                    ? const SizedBox(
-                        height: 18,
-                        width: 18,
-                        child: CircularProgressIndicator(
-                          strokeWidth: 2,
-                          color: Colors.white,
-                        ),
-                      )
-                    : Text(
-                        'Pagar y registrar (${formatCop(kBarbershopMonthlyFee)})',
-                      ),
+                icon: Icons.payments_outlined,
+                loading: _paying,
+                child: Text(
+                  'Pagar y registrar (${formatCop(kBarbershopMonthlyFee)})',
+                ),
               ),
               const SizedBox(height: 10),
               OutlinedButton.icon(

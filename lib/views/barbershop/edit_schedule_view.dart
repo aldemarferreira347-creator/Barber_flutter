@@ -128,18 +128,10 @@ class _EditScheduleViewState extends State<EditScheduleView> {
           ],
           const SizedBox(height: 14),
           AppButton(
-            onPressed: _saving ? null : _save,
-            icon: _saving ? null : Icons.check_circle_outline,
-            child: _saving
-                ? const SizedBox(
-                    height: 18,
-                    width: 18,
-                    child: CircularProgressIndicator(
-                      strokeWidth: 2,
-                      color: Colors.white,
-                    ),
-                  )
-                : const Text('Guardar horarios'),
+            onPressed: _save,
+            icon: Icons.check_circle_outline,
+            loading: _saving,
+            child: const Text('Guardar horarios'),
           ),
         ],
       ),

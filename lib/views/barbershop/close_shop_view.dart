@@ -169,17 +169,9 @@ class _CloseShopViewState extends State<CloseShopView> {
           onPressed: (_from != null && _until != null && !_saving)
               ? _confirm
               : null,
-          icon: _saving ? null : Icons.event_busy_outlined,
-          child: _saving
-              ? const SizedBox(
-                  height: 18,
-                  width: 18,
-                  child: CircularProgressIndicator(
-                    strokeWidth: 2,
-                    color: Colors.white,
-                  ),
-                )
-              : const Text('Confirmar cierre'),
+          icon: Icons.event_busy_outlined,
+          loading: _saving,
+          child: const Text('Confirmar cierre'),
         ),
       ],
     );

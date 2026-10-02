@@ -14,7 +14,7 @@ import 'owner_barbershop_manage_view.dart';
 import 'barbershop_detail_view.dart';
 import 'payment_insight.dart';
 
-enum _AdminShopFilter { pending, ok, dueSoon, grace, blocked }
+enum AdminShopFilter { pending, ok, dueSoon, grace, blocked }
 
 /// Lista de barberías: con [adminControls] (solo rol admin) muestra todas con
 /// sus controles de revisión; sin él es el catálogo del cliente, con las
@@ -23,7 +23,15 @@ enum _AdminShopFilter { pending, ok, dueSoon, grace, blocked }
 class ManageBarbershopsView extends StatefulWidget {
   final bool adminControls;
 
-  const ManageBarbershopsView({super.key, this.adminControls = false});
+  /// Filtro con el que abre la lista (solo admin): p. ej. las pendientes de
+  /// aprobación, desde el aviso del dashboard.
+  final AdminShopFilter? initialFilter;
+
+  const ManageBarbershopsView({
+    super.key,
+    this.adminControls = false,
+    this.initialFilter,
+  });
 
   @override
   State<ManageBarbershopsView> createState() => _ManageBarbershopsViewState();
@@ -31,20 +39,20 @@ class ManageBarbershopsView extends StatefulWidget {
 
 class _ManageBarbershopsViewState extends State<ManageBarbershopsView> {
   String _query = '';
-  _AdminShopFilter? _filter;
+  late AdminShopFilter? _filter = widget.initialFilter;
 
-  String _filterLabel(_AdminShopFilter filter) => switch (filter) {
-    _AdminShopFilter.pending => 'Pendientes',
-    _AdminShopFilter.ok => 'Al día',
-    _AdminShopFilter.dueSoon => 'Vence pronto',
-    _AdminShopFilter.grace => 'En gracia',
-    _AdminShopFilter.blocked => 'Bloqueadas',
+  String _filterLabel(AdminShopFilter filter) => switch (filter) {
+    AdminShopFilter.pending => 'Pendientes',
+    AdminShopFilter.ok => 'Al día',
+    AdminShopFilter.dueSoon => 'Vence pronto',
+    AdminShopFilter.grace => 'En gracia',
+    AdminShopFilter.blocked => 'Bloqueadas',
   };
 
   bool _matchesFilter(Barbershop shop) {
     final filter = _filter;
     if (filter == null) return true;
-    if (filter == _AdminShopFilter.pending) {
+    if (filter == AdminShopFilter.pending) {
       return shop.approvalStatus == BarbershopApprovalStatus.pending;
     }
     if (shop.approvalStatus != BarbershopApprovalStatus.approved) {
@@ -52,13 +60,13 @@ class _ManageBarbershopsViewState extends State<ManageBarbershopsView> {
     }
     final level = paymentInsight(shop).level;
     return switch (filter) {
-      _AdminShopFilter.pending => false, // ya cubierto arriba
-      _AdminShopFilter.ok => level == PaymentInsightLevel.ok,
-      _AdminShopFilter.dueSoon => level == PaymentInsightLevel.dueSoon,
-      _AdminShopFilter.grace =>
+      AdminShopFilter.pending => false, // ya cubierto arriba
+      AdminShopFilter.ok => level == PaymentInsightLevel.ok,
+      AdminShopFilter.dueSoon => level == PaymentInsightLevel.dueSoon,
+      AdminShopFilter.grace =>
         level == PaymentInsightLevel.grace ||
             level == PaymentInsightLevel.graceExpired,
-      _AdminShopFilter.blocked => level == PaymentInsightLevel.blocked,
+      AdminShopFilter.blocked => level == PaymentInsightLevel.blocked,
     };
   }
 
@@ -287,7 +295,7 @@ class _ManageBarbershopsViewState extends State<ManageBarbershopsView> {
                       selected: _filter == null,
                       onTap: () => setState(() => _filter = null),
                     ),
-                    for (final filter in _AdminShopFilter.values)
+                    for (final filter in AdminShopFilter.values)
                       Padding(
                         padding: const EdgeInsets.only(left: 8),
                         child: _FilterChip(
@@ -385,7 +393,7 @@ class _ManageBarbershopsViewState extends State<ManageBarbershopsView> {
                                     child: shop.photoUrl == null
                                         ? const Icon(
                                             Icons.storefront,
-                                            color: Colors.white,
+                                            color: AppColors.onColor,
                                             size: 22,
                                           )
                                         : null,
@@ -480,7 +488,7 @@ class _FilterChip extends StatelessWidget {
       onSelected: (_) => onTap(),
       selectedColor: AppColors.primary,
       labelStyle: TextStyle(
-        color: selected ? Colors.white : AppColors.textPrimary,
+        color: selected ? AppColors.onColor : AppColors.textPrimary,
         fontWeight: FontWeight.w600,
       ),
       backgroundColor: AppColors.surface,
@@ -708,7 +716,7 @@ class _ShopActionsSheet extends StatelessWidget {
                       : null,
                 ),
                 child: shop.photoUrl == null
-                    ? const Icon(Icons.storefront, color: Colors.white)
+                    ? const Icon(Icons.storefront, color: AppColors.onColor)
                     : null,
               ),
               const SizedBox(width: 14),

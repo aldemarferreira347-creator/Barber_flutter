@@ -176,17 +176,9 @@ class _ClaimPurchaseViewState extends State<ClaimPurchaseView> {
               const SizedBox(height: 16),
               AppButton(
                 onPressed: canClaim && !_claiming ? _claim : null,
-                icon: _claiming ? null : Icons.check_circle_outline,
-                child: _claiming
-                    ? const SizedBox(
-                        height: 18,
-                        width: 18,
-                        child: CircularProgressIndicator(
-                          strokeWidth: 2,
-                          color: Colors.white,
-                        ),
-                      )
-                    : const Text('Marcar como entregado'),
+                icon: Icons.check_circle_outline,
+                loading: _claiming,
+                child: const Text('Marcar como entregado'),
               ),
             ],
           ],

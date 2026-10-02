@@ -1,7 +1,11 @@
 import 'package:flutter/material.dart';
+import 'package:provider/provider.dart';
 
+import '../../models/app_notification.dart';
+import '../../repositories/notification_repository.dart';
 import '../../theme/app_colors.dart';
 import '../../theme/app_tokens.dart';
+import '../notification/notifications_view.dart';
 import 'responsive_body.dart';
 
 /// Estructura compartida por los 4 dashboards de rol (Admin/Dueño/Barbero/
@@ -13,11 +17,10 @@ class DashboardScaffold extends StatelessWidget {
   final String greeting;
   final String subtitle;
   final Widget? avatar;
-  final VoidCallback? onNotifications;
 
-  /// Notificaciones sin leer; si es mayor que 0 se muestra un punto de
-  /// aviso sobre la campana.
-  final int unreadNotifications;
+  /// Usuario dueño de la bandeja: con él la campana abre sus notificaciones
+  /// y muestra un punto de aviso si hay sin leer. Sin uid no hay campana.
+  final String? notificationsUid;
   final List<Widget> children;
   final Widget? floatingActionButton;
 
@@ -26,8 +29,7 @@ class DashboardScaffold extends StatelessWidget {
     required this.greeting,
     required this.subtitle,
     this.avatar,
-    this.onNotifications,
-    this.unreadNotifications = 0,
+    this.notificationsUid,
     required this.children,
     this.floatingActionButton,
   });
@@ -62,11 +64,8 @@ class DashboardScaffold extends StatelessWidget {
                       ],
                     ),
                   ),
-                  if (onNotifications != null)
-                    _NotificationsButton(
-                      onPressed: onNotifications!,
-                      unread: unreadNotifications,
-                    ),
+                  if (notificationsUid != null)
+                    _NotificationsButton(uid: notificationsUid!),
                 ],
               ),
               const SizedBox(height: AppSpace.xl),
@@ -80,29 +79,37 @@ class DashboardScaffold extends StatelessWidget {
 }
 
 class _NotificationsButton extends StatelessWidget {
-  final VoidCallback onPressed;
-  final int unread;
+  final String uid;
 
-  const _NotificationsButton({required this.onPressed, required this.unread});
+  const _NotificationsButton({required this.uid});
 
   @override
   Widget build(BuildContext context) {
-    final tooltip = unread > 0
-        ? 'Notificaciones ($unread sin leer)'
-        : 'Notificaciones';
-    return IconButton(
-      tooltip: tooltip,
-      onPressed: onPressed,
-      style: IconButton.styleFrom(
-        backgroundColor: AppColors.surface,
-        side: BorderSide(color: AppColors.border),
-      ),
-      icon: Badge(
-        isLabelVisible: unread > 0,
-        backgroundColor: AppColors.error,
-        smallSize: 8,
-        child: const Icon(Icons.notifications_none, size: 22),
-      ),
+    return StreamBuilder<List<AppNotification>>(
+      stream: context.read<NotificationRepository>().watchForUser(uid),
+      builder: (context, snapshot) {
+        final unread = (snapshot.data ?? const <AppNotification>[])
+            .where((n) => !n.read)
+            .length;
+        return IconButton(
+          tooltip: unread > 0
+              ? 'Notificaciones ($unread sin leer)'
+              : 'Notificaciones',
+          onPressed: () => Navigator.of(context).push(
+            MaterialPageRoute(builder: (_) => NotificationsView(uid: uid)),
+          ),
+          style: IconButton.styleFrom(
+            backgroundColor: AppColors.surface,
+            side: BorderSide(color: AppColors.border),
+          ),
+          icon: Badge(
+            isLabelVisible: unread > 0,
+            label: Text('$unread'),
+            backgroundColor: AppColors.error,
+            child: const Icon(Icons.notifications_none, size: 22),
+          ),
+        );
+      },
     );
   }
 }

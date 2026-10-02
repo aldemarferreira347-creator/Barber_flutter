@@ -37,9 +37,9 @@ class _ManageUsersViewState extends State<ManageUsersView> {
   };
 
   Color _roleColor(UserRole role) => switch (role) {
-    UserRole.admin => const Color(0xFF7C3AED),
-    UserRole.owner => const Color(0xFFD97706),
-    UserRole.barber => const Color(0xFF0891B2),
+    UserRole.admin => AppColors.roleAdmin,
+    UserRole.owner => AppColors.roleOwner,
+    UserRole.barber => AppColors.roleBarber,
     UserRole.client => AppColors.accent,
   };
 
@@ -235,7 +235,9 @@ class _ManageUsersViewState extends State<ManageUsersView> {
                       onSelected: (_) => setState(() => selectedRole = role),
                       selectedColor: AppColors.primary,
                       labelStyle: TextStyle(
-                        color: isSel ? Colors.white : AppColors.textPrimary,
+                        color: isSel
+                            ? AppColors.onColor
+                            : AppColors.textPrimary,
                         fontWeight: FontWeight.w600,
                         fontSize: 13,
                       ),
@@ -527,7 +529,7 @@ class _ManageUsersViewState extends State<ManageUsersView> {
                                 selectedColor: AppColors.primary,
                                 labelStyle: TextStyle(
                                   color: isSelected
-                                      ? Colors.white
+                                      ? AppColors.onColor
                                       : AppColors.textPrimary,
                                   fontWeight: FontWeight.w600,
                                   fontSize: 13,
@@ -564,7 +566,7 @@ class _ManageUsersViewState extends State<ManageUsersView> {
                                   children: [
                                     const Icon(
                                       Icons.check_circle_outline,
-                                      color: Colors.white,
+                                      color: AppColors.onColor,
                                     ),
                                     const SizedBox(width: 8),
                                     Expanded(
@@ -635,7 +637,7 @@ class _ManageUsersViewState extends State<ManageUsersView> {
               style: TextStyle(fontWeight: FontWeight.w600),
             ),
             backgroundColor: AppColors.primary,
-            foregroundColor: Colors.white,
+            foregroundColor: AppColors.onColor,
           ),
           const SizedBox(height: 12),
           ScrollToTopFab(controller: _scrollController),
@@ -1032,7 +1034,7 @@ class _UserActionsSheet extends StatelessWidget {
         icon: Icons.notifications_outlined,
         label: 'Enviar notificación',
         subtitle: 'Mensaje push al dispositivo',
-        color: const Color(0xFF7C3AED),
+        color: AppColors.roleAdmin,
         onTap: () {
           Navigator.of(context).pop();
           onNotify();
@@ -1298,7 +1300,7 @@ class _RoleChip extends StatelessWidget {
       onSelected: (_) => onTap(),
       selectedColor: AppColors.primary,
       labelStyle: TextStyle(
-        color: selected ? Colors.white : AppColors.textPrimary,
+        color: selected ? AppColors.onColor : AppColors.textPrimary,
         fontWeight: FontWeight.w600,
       ),
       backgroundColor: AppColors.surface,

@@ -394,7 +394,7 @@ class _Header extends StatelessWidget {
                   : null,
             ),
             child: shop.photoUrl == null
-                ? const Icon(Icons.storefront, color: Colors.white)
+                ? const Icon(Icons.storefront, color: AppColors.onColor)
                 : null,
           ),
           const SizedBox(width: 12),

@@ -61,6 +61,11 @@ class AppColors {
   /// estado cuando se usan como fondo de un botón o un aviso.
   static Color solid(Color color) => ensureContrast(color, onColor);
 
+  /// Colores de identificación de cada rol en las listas de usuarios.
+  static const roleAdmin = Color(0xFF7C3AED);
+  static const roleOwner = Color(0xFFD97706);
+  static const roleBarber = Color(0xFF0891B2);
+
   /// Negro fijo para superficies que NO siguen el tema (p. ej. el fondo de
   /// la pantalla de arranque, que es una foto oscura en ambos modos).
   static const alwaysDark = Color(0xFF000000);

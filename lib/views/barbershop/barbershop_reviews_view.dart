@@ -9,6 +9,7 @@ import '../../models/user_role.dart';
 import '../../repositories/barbershop_repository.dart';
 import '../../repositories/comment_repository.dart';
 import '../../theme/app_colors.dart';
+import '../widgets/app_button.dart';
 import '../widgets/error_state.dart';
 import '../widgets/shimmer_box.dart';
 
@@ -270,18 +271,11 @@ class _CommentCardState extends State<_CommentCard> {
                   const SizedBox(height: 8),
                   Align(
                     alignment: Alignment.centerRight,
-                    child: FilledButton(
-                      onPressed: _sending ? null : _sendReply,
-                      child: _sending
-                          ? const SizedBox(
-                              height: 16,
-                              width: 16,
-                              child: CircularProgressIndicator(
-                                strokeWidth: 2,
-                                color: Colors.white,
-                              ),
-                            )
-                          : const Text('Enviar'),
+                    child: AppButton(
+                      expand: false,
+                      loading: _sending,
+                      onPressed: _sendReply,
+                      child: const Text('Enviar'),
                     ),
                   ),
                 ],

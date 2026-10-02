@@ -222,18 +222,10 @@ class _AddServiceViewState extends State<AddServiceView> {
               ),
               const SizedBox(height: 24),
               AppButton(
-                onPressed: _saving ? null : _submit,
-                icon: _saving ? null : Icons.content_cut,
-                child: _saving
-                    ? const SizedBox(
-                        height: 18,
-                        width: 18,
-                        child: CircularProgressIndicator(
-                          strokeWidth: 2,
-                          color: Colors.white,
-                        ),
-                      )
-                    : const Text('Guardar servicio'),
+                onPressed: _submit,
+                icon: Icons.content_cut,
+                loading: _saving,
+                child: const Text('Guardar servicio'),
               ),
             ],
           ),

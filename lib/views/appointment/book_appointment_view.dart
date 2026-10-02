@@ -246,19 +246,9 @@ class _BookAppointmentViewState extends State<BookAppointmentView> {
                     !_saving)
                 ? _confirm
                 : null,
-            icon: _saving
-                ? null
-                : (_payNow ? Icons.lock_outline : Icons.event_available),
-            child: _saving
-                ? const SizedBox(
-                    height: 18,
-                    width: 18,
-                    child: CircularProgressIndicator(
-                      strokeWidth: 2,
-                      color: Colors.white,
-                    ),
-                  )
-                : Text(_payNow ? 'Pagar y reservar' : 'Solicitar cita'),
+            icon: (_payNow ? Icons.lock_outline : Icons.event_available),
+            loading: _saving,
+            child: Text(_payNow ? 'Pagar y reservar' : 'Solicitar cita'),
           ),
         ],
       ),

@@ -125,17 +125,9 @@ class _ChooseNotificationToneViewState
               const SizedBox(height: 12),
               AppButton(
                 onPressed: _selected == null || _saving ? null : _confirm,
-                icon: _saving ? null : Icons.arrow_forward,
-                child: _saving
-                    ? const SizedBox(
-                        width: 20,
-                        height: 20,
-                        child: CircularProgressIndicator(
-                          strokeWidth: 2,
-                          color: Colors.white,
-                        ),
-                      )
-                    : const Text('Continuar'),
+                icon: Icons.arrow_forward,
+                loading: _saving,
+                child: const Text('Continuar'),
               ),
             ],
           ),
