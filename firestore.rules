@@ -12,6 +12,12 @@ service cloud.firestore {
         get(/databases/$(database)/documents/users/$(request.auth.uid)).data.role == 'admin';
     }
 
+    function isOwnerRole() {
+      return isSignedIn() &&
+        exists(/databases/$(database)/documents/users/$(request.auth.uid)) &&
+        get(/databases/$(database)/documents/users/$(request.auth.uid)).data.role == 'owner';
+    }
+
     function isOwnerOfShop(shopId) {
       return isSignedIn() && shopId != null &&
         exists(/databases/$(database)/documents/barbershops/$(shopId)) &&
@@ -27,6 +33,18 @@ service cloud.firestore {
 
     function isStaffOfShop(shopId) {
       return isOwnerOfShop(shopId) || isBarberOfShop(shopId);
+    }
+
+    function pad2(n) {
+      return n < 10 ? '0' + string(n) : string(n);
+    }
+
+    // Mismo formato que appointmentSlotId() (Dart) y slotId() (TS):
+    // "{barberId}_yyyy-MM-ddTHH:mm" en UTC. Permite que la regla compruebe
+    // que un slot corresponde EXACTAMENTE al minuto de su cita.
+    function slotIdFor(barberId, ts) {
+      return barberId + '_' + string(ts.year()) + '-' + pad2(ts.month()) + '-' + pad2(ts.day()) +
+        'T' + pad2(ts.hours()) + ':' + pad2(ts.minutes());
     }
 
     // Validación de un ítem de purchases/{id}.items[i] (spec 10.1) contra
@@ -87,17 +105,26 @@ service cloud.firestore {
       allow read: if isSignedIn() && (
         request.auth.uid == uid ||
         isAdmin() ||
-        // Perfiles de Cliente: los necesita el Dueño para buscarlos por
-        // correo y contratarlos como Barbero.
-        resource.data.role == 'client' ||
+        // Perfiles de Cliente (email, teléfono): solo los necesita un Dueño
+        // para buscarlos por correo y contratarlos como Barbero — el resto
+        // de usuarios no ve datos de contacto ajenos. isOwnerRole() solo
+        // depende del documento de quien consulta, así que la consulta
+        // sigue siendo demostrable con el filtro role == 'client'.
+        (resource.data.role == 'client' && isOwnerRole()) ||
         // Perfiles de Barbero: los necesita el Cliente para elegir con
         // quién agendar su cita.
         resource.data.role == 'barber'
       );
 
+      // Un perfil nuevo no puede traer precargados los campos que solo
+      // mueven las ramas dedicadas de abajo (calificación, ausencia) ni una
+      // barbería: de lo contrario, al ser contratado como Barbero llegaría
+      // con un promedio inflado o ya atado a otra barbería.
       allow create: if isSignedIn() && request.auth.uid == uid
         && request.resource.data.role == 'client'
-        && request.resource.data.active == true;
+        && request.resource.data.active == true
+        && !request.resource.data.keys().hasAny(['ratingSum', 'ratingCount', 'awaySince', 'awayUntilEstimate'])
+        && request.resource.data.get('barbershopId', null) == null;
 
       allow update: if isSignedIn() && (
         (
@@ -115,9 +142,13 @@ service cloud.firestore {
           request.resource.data.get('ratingSum', 0) == resource.data.get('ratingSum', 0) &&
           request.resource.data.get('ratingCount', 0) == resource.data.get('ratingCount', 0) &&
           (
+            // barbershopId NO lo cambia el propio usuario: define de qué
+            // barbería es personal (isBarberOfShop), así que solo lo mueven
+            // el admin o el dueño de esa barbería en las ramas de abajo.
             (request.auth.uid == uid &&
               request.resource.data.role == resource.data.role &&
-              request.resource.data.active == resource.data.active) ||
+              request.resource.data.active == resource.data.active &&
+              request.resource.data.get('barbershopId', null) == resource.data.get('barbershopId', null)) ||
             isAdmin() ||
             // Auto-promoción Cliente -> Dueño al registrar su primera
             // barbería (spec 12.1). Antes pasaba por requestBarbershopOwnership
@@ -130,18 +161,21 @@ service cloud.firestore {
             (request.auth.uid == uid &&
               resource.data.role == 'client' &&
               request.resource.data.role == 'owner' &&
-              request.resource.data.active == resource.data.active) ||
+              request.resource.data.active == resource.data.active &&
+              request.resource.data.get('barbershopId', null) == resource.data.get('barbershopId', null)) ||
             // Dueño contrata a un Cliente existente como Barbero de su negocio.
             (resource.data.role == 'client' &&
               request.resource.data.role == 'barber' &&
               isOwnerOfShop(request.resource.data.barbershopId) &&
-              request.resource.data.active == resource.data.active) ||
+              request.resource.data.active == resource.data.active &&
+              request.resource.data.diff(resource.data).affectedKeys().hasOnly(['role', 'barbershopId'])) ||
             // Dueño da de baja a un Barbero de su propio negocio (vuelve a Cliente).
             (resource.data.role == 'barber' &&
               request.resource.data.role == 'client' &&
               request.resource.data.barbershopId == null &&
               isOwnerOfShop(resource.data.barbershopId) &&
-              request.resource.data.active == resource.data.active)
+              request.resource.data.active == resource.data.active &&
+              request.resource.data.diff(resource.data).affectedKeys().hasOnly(['role', 'barbershopId']))
           )
         ) ||
         // markBarberAway (spec 3.3): el propio barbero declara su salida y
@@ -301,15 +335,22 @@ service cloud.firestore {
 
       // servicios de la barbería: el dueño de ESA barbería (o el admin) los
       // administra; cualquier usuario autenticado puede verlos (catálogo).
+      // El precio (y la duración) se validan aquí porque de ellos salen los
+      // montos que las reglas de appointments y purchases comparan.
       match /services/{serviceId} {
         allow read: if isSignedIn();
-        allow write: if isSignedIn() && (isOwnerOfShop(shopId) || isAdmin());
+        allow create, update: if isSignedIn() && (isOwnerOfShop(shopId) || isAdmin())
+          && request.resource.data.price is number && request.resource.data.price >= 0
+          && request.resource.data.durationMinutes is int && request.resource.data.durationMinutes > 0;
+        allow delete: if isSignedIn() && (isOwnerOfShop(shopId) || isAdmin());
       }
 
       // productos del catálogo: mismo criterio que servicios.
       match /products/{productId} {
         allow read: if isSignedIn();
-        allow write: if isSignedIn() && (isOwnerOfShop(shopId) || isAdmin());
+        allow create, update: if isSignedIn() && (isOwnerOfShop(shopId) || isAdmin())
+          && request.resource.data.price is number && request.resource.data.price >= 0;
+        allow delete: if isSignedIn() && (isOwnerOfShop(shopId) || isAdmin());
       }
 
       match /{document=**} {
@@ -345,12 +386,26 @@ service cloud.firestore {
             request.resource.data.servicePrice ==
               get(/databases/$(database)/documents/barbershops/$(request.resource.data.barbershopId)/services/$(request.resource.data.serviceId)).data.price &&
             request.resource.data.paymentId is string &&
-            get(/databases/$(database)/documents/payments/$(request.resource.data.paymentId)).data.payerId == request.auth.uid)
+            get(/databases/$(database)/documents/payments/$(request.resource.data.paymentId)).data.payerId == request.auth.uid &&
+            // El pago debe ser de ESTA cita (relatedId == su id), de
+            // categoría 'appointment' y seguir pendiente: así un mismo pago
+            // no sirve para reservar varias citas ni uno de otra categoría
+            // (p. ej. una suscripción) para reservar sin pagar.
+            get(/databases/$(database)/documents/payments/$(request.resource.data.paymentId)).data.category == 'appointment' &&
+            get(/databases/$(database)/documents/payments/$(request.resource.data.paymentId)).data.relatedId == appointmentId &&
+            get(/databases/$(database)/documents/payments/$(request.resource.data.paymentId)).data.status == 'pending')
         );
 
       allow update: if isSignedIn() && (
         (
           request.resource.data.paid == resource.data.paid &&
+          // Identidad y precio de la cita no cambian en NINGUNA actualización
+          // normal (cliente, barbero, dueño o admin): quién reservó, dónde,
+          // qué servicio y a qué precio quedan fijos desde la creación.
+          request.resource.data.clientId == resource.data.clientId &&
+          request.resource.data.barbershopId == resource.data.barbershopId &&
+          request.resource.data.get('serviceId', null) == resource.data.get('serviceId', null) &&
+          request.resource.data.get('servicePrice', null) == resource.data.get('servicePrice', null) &&
           // .get(campo, default): Appointment.toMap() nunca escribe
           // paymentId ni forcedRatingPenalty en una cita SIN pago (solo se
           // agregan en el flujo de reserva pagada) — acceder a esas claves
@@ -405,19 +460,42 @@ service cloud.firestore {
     // transacción (create() atómico: si el horario ya está tomado, falla
     // entero y no se crea ni la cita ni el pago). Nadie necesita leerlo.
     //
-    // Alcance aceptado: cualquier usuario autenticado puede borrar
-    // cualquier slot (no solo el propio) — el peor caso es liberar por
-    // error o mala fe el horario de una cita ajena, no un problema de
-    // datos ni de dinero real mientras el pago siga simulado; acotarlo más
-    // exigiría cruzar con appointments solo para esto.
+    // Un slot solo puede existir atado a una cita PAGADA real del que lo
+    // escribe (o de su barbero/dueño/admin), con el id exacto de su minuto
+    // (slotIdFor): getAfter() ve la cita que se escribe en la MISMA
+    // transacción. Sin esto cualquiera podía bloquear la agenda entera de un
+    // barbero creando slots sueltos, o liberar el horario de una cita ajena
+    // para reservarlo encima.
     match /appointmentSlots/{id} {
       allow read: if false;
+
       allow create: if isSignedIn()
         && request.resource.data.keys().hasOnly(['appointmentId', 'barberId', 'createdAt'])
         && request.resource.data.barberId is string
-        && request.resource.data.appointmentId is string;
+        && request.resource.data.appointmentId is string
+        && existsAfter(/databases/$(database)/documents/appointments/$(request.resource.data.appointmentId))
+        && getAfter(/databases/$(database)/documents/appointments/$(request.resource.data.appointmentId)).data.paid == true
+        && getAfter(/databases/$(database)/documents/appointments/$(request.resource.data.appointmentId)).data.barberId == request.resource.data.barberId
+        && id == slotIdFor(
+             request.resource.data.barberId,
+             getAfter(/databases/$(database)/documents/appointments/$(request.resource.data.appointmentId)).data.date)
+        && (
+          getAfter(/databases/$(database)/documents/appointments/$(request.resource.data.appointmentId)).data.clientId == request.auth.uid ||
+          request.auth.uid == request.resource.data.barberId ||
+          isOwnerOfShop(getAfter(/databases/$(database)/documents/appointments/$(request.resource.data.appointmentId)).data.barbershopId) ||
+          isAdmin()
+        );
+
       allow update: if false;
-      allow delete: if isSignedIn();
+
+      allow delete: if isSignedIn() && (
+        isAdmin() ||
+        (exists(/databases/$(database)/documents/appointments/$(resource.data.appointmentId)) && (
+          get(/databases/$(database)/documents/appointments/$(resource.data.appointmentId)).data.clientId == request.auth.uid ||
+          get(/databases/$(database)/documents/appointments/$(resource.data.appointmentId)).data.barberId == request.auth.uid ||
+          isOwnerOfShop(get(/databases/$(database)/documents/appointments/$(resource.data.appointmentId)).data.barbershopId)
+        ))
+      );
     }
 
     // shopClosures/{id}: registro de auditoría de cierres por evento
@@ -469,6 +547,7 @@ service cloud.firestore {
         && request.resource.data.reason.size() > 0
         && request.resource.data.resolvedAt == null
         && request.resource.data.resolvedBy == null
+        && request.resource.data.barbershopId == get(/databases/$(database)/documents/appointments/$(request.resource.data.appointmentId)).data.barbershopId
         && get(/databases/$(database)/documents/appointments/$(request.resource.data.appointmentId)).data.clientId == request.auth.uid
         && get(/databases/$(database)/documents/appointments/$(request.resource.data.appointmentId)).data.paid == true
         && get(/databases/$(database)/documents/appointments/$(request.resource.data.appointmentId)).data.status != 'cancelled';

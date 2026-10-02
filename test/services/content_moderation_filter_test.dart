@@ -1,3 +1,5 @@
+import 'dart:io';
+
 import 'package:barber/services/content_moderation_filter.dart';
 import 'package:flutter_test/flutter_test.dart';
 
@@ -32,5 +34,23 @@ void main() {
 
   test('texto vacío no es ofensivo', () {
     expect(containsOffensiveContent('   '), isFalse);
+  });
+
+  test('la lista de términos es idéntica a la del backend (functions/)', () {
+    Set<String> terms(String path, String start) {
+      final source = File(path).readAsStringSync();
+      final from = source.indexOf(start);
+      final to = source.indexOf(RegExp(r'[}\]]\)?;'), from);
+      return RegExp(r"'([a-z]+)'")
+          .allMatches(source.substring(from, to))
+          .map((m) => m.group(1)!)
+          .toSet();
+    }
+
+    final dart = terms('lib/services/content_moderation_filter.dart', '_offensiveTerms = {');
+    final ts = terms('functions/src/shared/contentModerationFilter.ts', 'OFFENSIVE_TERMS = new Set([');
+
+    expect(dart, isNotEmpty);
+    expect(dart, ts);
   });
 }
