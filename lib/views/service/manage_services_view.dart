@@ -11,6 +11,7 @@ import '../widgets/empty_state.dart';
 import '../widgets/error_state.dart';
 import '../widgets/shimmer_box.dart';
 import 'add_service_view.dart';
+import '../widgets/app_network_image.dart';
 
 /// Lista de servicios de una barbería. [canManage] controla si se puede
 /// agregar/activar-desactivar (Dueño) o solo se muestran (Cliente).
@@ -89,11 +90,11 @@ class ManageServicesView extends StatelessWidget {
                     ClipRRect(
                       borderRadius: BorderRadius.circular(10),
                       child: service.photoUrl != null
-                          ? Image.network(
-                              service.photoUrl!,
+                          ? AppNetworkImage(
+                              url: service.photoUrl!,
                               width: 56,
                               height: 56,
-                              fit: BoxFit.cover,
+                              decodeWidth: 56,
                               semanticLabel:
                                   'Foto del servicio ${service.name}',
                             )

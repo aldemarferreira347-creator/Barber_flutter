@@ -84,6 +84,7 @@ class _BuyProductViewState extends State<BuyProductView> {
           mainAxisAlignment: MainAxisAlignment.center,
           children: [
             IconButton(
+              tooltip: 'Quitar una unidad',
               onPressed: _quantity > 1
                   ? () => setState(() => _quantity--)
                   : null,
@@ -103,6 +104,7 @@ class _BuyProductViewState extends State<BuyProductView> {
               ),
             ),
             IconButton(
+              tooltip: 'Agregar una unidad',
               onPressed: () => setState(() => _quantity++),
               icon: const Icon(Icons.add_circle_outline),
             ),

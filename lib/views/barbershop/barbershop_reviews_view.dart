@@ -12,6 +12,7 @@ import '../../theme/app_colors.dart';
 import '../widgets/app_button.dart';
 import '../widgets/error_state.dart';
 import '../widgets/shimmer_box.dart';
+import '../widgets/app_network_image.dart';
 
 bool _isStaffOfShop(AppUser profile, Barbershop shop) {
   if (profile.role == UserRole.admin) return true;
@@ -227,11 +228,11 @@ class _CommentCardState extends State<_CommentCard> {
             const SizedBox(height: 10),
             ClipRRect(
               borderRadius: BorderRadius.circular(10),
-              child: Image.network(
-                comment.photoUrl!,
+              child: AppNetworkImage(
+                url: comment.photoUrl!,
+                semanticLabel: 'Foto adjunta a la reseña',
                 height: 140,
                 width: double.infinity,
-                fit: BoxFit.cover,
               ),
             ),
           ],

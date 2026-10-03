@@ -4,6 +4,7 @@ import 'package:provider/provider.dart';
 import '../../models/barbershop.dart';
 import '../../repositories/barbershop_repository.dart';
 import '../../theme/app_colors.dart';
+import '../widgets/shop_avatar.dart';
 import '../widgets/empty_state.dart';
 import '../widgets/error_state.dart';
 import '../widgets/pressable_scale.dart';
@@ -373,28 +374,10 @@ class _ManageBarbershopsViewState extends State<ManageBarbershopsView> {
                               child: Row(
                                 crossAxisAlignment: CrossAxisAlignment.start,
                                 children: [
-                                  Container(
-                                    width: 48,
-                                    height: 48,
-                                    decoration: BoxDecoration(
-                                      color: AppColors.primary,
-                                      borderRadius: BorderRadius.circular(10),
-                                      image: shop.photoUrl != null
-                                          ? DecorationImage(
-                                              image: NetworkImage(
-                                                shop.photoUrl!,
-                                              ),
-                                              fit: BoxFit.cover,
-                                            )
-                                          : null,
-                                    ),
-                                    child: shop.photoUrl == null
-                                        ? const Icon(
-                                            Icons.storefront,
-                                            color: AppColors.onColor,
-                                            size: 22,
-                                          )
-                                        : null,
+                                  ShopAvatar(
+                                    photoUrl: shop.photoUrl,
+                                    name: shop.name,
+                                    size: 48,
                                   ),
                                   const SizedBox(width: 12),
                                   Expanded(
@@ -700,23 +683,7 @@ class _ShopActionsSheet extends StatelessWidget {
           // Perfil de la barbería
           Row(
             children: [
-              Container(
-                width: 52,
-                height: 52,
-                decoration: BoxDecoration(
-                  color: AppColors.primary,
-                  borderRadius: BorderRadius.circular(12),
-                  image: shop.photoUrl != null
-                      ? DecorationImage(
-                          image: NetworkImage(shop.photoUrl!),
-                          fit: BoxFit.cover,
-                        )
-                      : null,
-                ),
-                child: shop.photoUrl == null
-                    ? const Icon(Icons.storefront, color: AppColors.onColor)
-                    : null,
-              ),
+              ShopAvatar(photoUrl: shop.photoUrl, name: shop.name, size: 52),
               const SizedBox(width: 14),
               Expanded(
                 child: Column(

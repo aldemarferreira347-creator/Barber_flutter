@@ -462,6 +462,9 @@ class _ManageUsersViewState extends State<ManageUsersView> {
                           labelText: 'Contraseña',
                           prefixIcon: const Icon(Icons.lock_outline),
                           suffixIcon: IconButton(
+                            tooltip: obscurePass
+                                ? 'Mostrar contraseña'
+                                : 'Ocultar contraseña',
                             icon: Icon(
                               obscurePass
                                   ? Icons.visibility_off_outlined
@@ -486,6 +489,9 @@ class _ManageUsersViewState extends State<ManageUsersView> {
                           labelText: 'Confirmar contraseña',
                           prefixIcon: const Icon(Icons.lock_outline),
                           suffixIcon: IconButton(
+                            tooltip: obscureConfirm
+                                ? 'Mostrar contraseña'
+                                : 'Ocultar contraseña',
                             icon: Icon(
                               obscureConfirm
                                   ? Icons.visibility_off_outlined

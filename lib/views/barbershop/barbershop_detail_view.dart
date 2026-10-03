@@ -16,6 +16,8 @@ import '../widgets/shimmer_box.dart';
 import '../widgets/status_badge.dart';
 import 'barbershop_reviews_view.dart';
 
+import 'package:cached_network_image/cached_network_image.dart';
+
 Future<void> _openInGoogleMaps(
   BuildContext context,
   double lat,
@@ -126,7 +128,7 @@ class BarbershopDetailView extends StatelessWidget {
                       borderRadius: BorderRadius.circular(16),
                       image: shop.photoUrl != null
                           ? DecorationImage(
-                              image: NetworkImage(shop.photoUrl!),
+                              image: CachedNetworkImageProvider(shop.photoUrl!),
                               fit: BoxFit.cover,
                             )
                           : null,

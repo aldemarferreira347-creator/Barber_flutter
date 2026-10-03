@@ -228,6 +228,7 @@ class _StarPicker extends StatelessWidget {
             onTap: () => onChanged(i),
             pressedScale: 0.8,
             child: IconButton(
+              tooltip: i == 1 ? '1 estrella' : '$i estrellas',
               onPressed: () => onChanged(i),
               icon: Icon(
                 i <= value ? Icons.star : Icons.star_border,

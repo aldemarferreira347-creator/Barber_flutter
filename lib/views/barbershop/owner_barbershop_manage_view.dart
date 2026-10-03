@@ -11,6 +11,7 @@ import '../appointment/refund_requests_view.dart';
 import '../barber/manage_barbers_view.dart';
 import '../product/manage_products_view.dart';
 import '../service/manage_services_view.dart';
+import '../widgets/shop_avatar.dart';
 import '../widgets/action_list_tile.dart';
 import '../widgets/error_state.dart';
 import '../widgets/shimmer_box.dart';
@@ -380,23 +381,7 @@ class _Header extends StatelessWidget {
       ),
       child: Row(
         children: [
-          Container(
-            width: 56,
-            height: 56,
-            decoration: BoxDecoration(
-              color: AppColors.primary,
-              borderRadius: BorderRadius.circular(12),
-              image: shop.photoUrl != null
-                  ? DecorationImage(
-                      image: NetworkImage(shop.photoUrl!),
-                      fit: BoxFit.cover,
-                    )
-                  : null,
-            ),
-            child: shop.photoUrl == null
-                ? const Icon(Icons.storefront, color: AppColors.onColor)
-                : null,
-          ),
+          ShopAvatar(photoUrl: shop.photoUrl, name: shop.name, size: 56),
           const SizedBox(width: 12),
           Expanded(
             child: Column(

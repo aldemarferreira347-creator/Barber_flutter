@@ -5,6 +5,7 @@ import '../../controllers/auth_controller.dart';
 import '../../models/barbershop.dart';
 import '../../repositories/barbershop_repository.dart';
 import '../../theme/app_colors.dart';
+import '../widgets/shop_avatar.dart';
 import '../widgets/empty_state.dart';
 import '../widgets/error_state.dart';
 import '../widgets/pressable_scale.dart';
@@ -189,23 +190,7 @@ class _ShopTile extends StatelessWidget {
             padding: const EdgeInsets.all(12),
             child: Row(
               children: [
-                Container(
-                  width: 52,
-                  height: 52,
-                  decoration: BoxDecoration(
-                    color: AppColors.primary,
-                    borderRadius: BorderRadius.circular(10),
-                    image: shop.photoUrl != null
-                        ? DecorationImage(
-                            image: NetworkImage(shop.photoUrl!),
-                            fit: BoxFit.cover,
-                          )
-                        : null,
-                  ),
-                  child: shop.photoUrl == null
-                      ? const Icon(Icons.storefront, color: AppColors.onColor)
-                      : null,
-                ),
+                ShopAvatar(photoUrl: shop.photoUrl, name: shop.name, size: 52),
                 const SizedBox(width: 12),
                 Expanded(
                   child: Column(

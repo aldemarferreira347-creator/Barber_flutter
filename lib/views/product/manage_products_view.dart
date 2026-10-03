@@ -13,6 +13,7 @@ import '../widgets/pressable_scale.dart';
 import '../widgets/shimmer_box.dart';
 import 'add_product_view.dart';
 import 'buy_product_view.dart';
+import '../widgets/app_network_image.dart';
 
 /// Catálogo de productos de una barbería. [canManage] controla si se puede
 /// agregar/activar-desactivar (Dueño) o solo se muestran (Cliente).
@@ -101,11 +102,11 @@ class ManageProductsView extends StatelessWidget {
                           ClipRRect(
                             borderRadius: BorderRadius.circular(10),
                             child: product.photoUrl != null
-                                ? Image.network(
-                                    product.photoUrl!,
+                                ? AppNetworkImage(
+                                    url: product.photoUrl!,
                                     width: 56,
                                     height: 56,
-                                    fit: BoxFit.cover,
+                                    decodeWidth: 56,
                                     semanticLabel: 'Foto de ${product.name}',
                                   )
                                 : Container(

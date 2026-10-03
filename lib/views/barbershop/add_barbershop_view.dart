@@ -15,6 +15,8 @@ import '../../services/location_service.dart';
 import '../../theme/app_colors.dart';
 import '../widgets/app_button.dart';
 
+import 'package:cached_network_image/cached_network_image.dart';
+
 Widget _entrance(Widget child, int index) {
   return child;
 }
@@ -318,7 +320,9 @@ class _AddBarbershopViewState extends State<AddBarbershopView> {
                               )
                             : widget.draft?.photoUrl != null
                             ? DecorationImage(
-                                image: NetworkImage(widget.draft!.photoUrl!),
+                                image: CachedNetworkImageProvider(
+                                  widget.draft!.photoUrl!,
+                                ),
                                 fit: BoxFit.cover,
                               )
                             : null,

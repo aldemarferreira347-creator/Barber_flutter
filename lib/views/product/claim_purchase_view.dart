@@ -102,6 +102,7 @@ class _ClaimPurchaseViewState extends State<ClaimPurchaseView> {
                 labelText: 'Código de reclamo',
                 prefixIcon: const Icon(Icons.qr_code),
                 suffixIcon: IconButton(
+                  tooltip: 'Buscar compra',
                   icon: const Icon(Icons.search),
                   onPressed: _searching ? null : _search,
                 ),

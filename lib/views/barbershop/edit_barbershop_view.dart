@@ -11,6 +11,8 @@ import '../../services/location_service.dart';
 import '../../theme/app_colors.dart';
 import '../widgets/app_button.dart';
 
+import 'package:cached_network_image/cached_network_image.dart';
+
 /// Edición de los datos básicos de una barbería que ya existe (Update del
 /// CRUD del dueño). No toca aprobación, bloqueo ni pago: esos campos los
 /// protege firestore.rules aunque se intentara.
@@ -158,7 +160,7 @@ class _EditBarbershopViewState extends State<EditBarbershopView> {
                           )
                         : currentPhoto != null
                         ? DecorationImage(
-                            image: NetworkImage(currentPhoto),
+                            image: CachedNetworkImageProvider(currentPhoto),
                             fit: BoxFit.cover,
                           )
                         : null,
