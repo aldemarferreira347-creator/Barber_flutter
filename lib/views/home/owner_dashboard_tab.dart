@@ -176,6 +176,7 @@ class _ShopSummaryTile extends StatelessWidget {
               ShopAvatar(photoUrl: shop.photoUrl, name: shop.name),
               const SizedBox(width: AppSpace.md),
               Expanded(
+                flex: 3,
                 child: Column(
                   crossAxisAlignment: CrossAxisAlignment.start,
                   children: [
@@ -188,9 +189,13 @@ class _ShopSummaryTile extends StatelessWidget {
                   ],
                 ),
               ),
-              approved
-                  ? StatusBadge.active(shop.active)
-                  : ApprovalStatusBadge(status: shop.approvalStatus),
+              const SizedBox(width: AppSpace.sm),
+              Flexible(
+                flex: 2,
+                child: approved
+                    ? StatusBadge.active(shop.active)
+                    : ApprovalStatusBadge(status: shop.approvalStatus),
+              ),
             ],
           ),
           if (approved) ...[
@@ -203,17 +208,21 @@ class _ShopSummaryTile extends StatelessWidget {
                   color: AppColors.textSecondary,
                 ),
                 const SizedBox(width: AppSpace.xs),
-                Text(
-                  todayCount == 0 ? 'Sin citas hoy' : '$todayCount cita(s) hoy',
-                  style: text.secondary,
-                ),
-                if (toConfirm > 0) ...[
-                  const Spacer(),
-                  StatusBadge(
-                    label: '$toConfirm por confirmar',
-                    color: AppColors.warning,
+                Expanded(
+                  child: Text(
+                    todayCount == 0
+                        ? 'Sin citas hoy'
+                        : '$todayCount cita(s) hoy',
+                    style: text.secondary,
                   ),
-                ],
+                ),
+                if (toConfirm > 0)
+                  Flexible(
+                    child: StatusBadge(
+                      label: '$toConfirm por confirmar',
+                      color: AppColors.warning,
+                    ),
+                  ),
               ],
             ),
           ],

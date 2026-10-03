@@ -173,9 +173,11 @@ class _TodayCard extends StatelessWidget {
                 children: [
                   Expanded(child: Text('Hoy', style: text.labelMedium)),
                   if (toConfirm > 0)
-                    StatusBadge(
-                      label: '$toConfirm por confirmar',
-                      color: AppColors.warning,
+                    Flexible(
+                      child: StatusBadge(
+                        label: '$toConfirm por confirmar',
+                        color: AppColors.warning,
+                      ),
                     ),
                 ],
               ),

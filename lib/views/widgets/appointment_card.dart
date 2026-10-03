@@ -68,7 +68,7 @@ class AppointmentCard extends StatelessWidget {
                 color: AppColors.textSecondary,
               ),
               const SizedBox(width: AppSpace.xs),
-              Text(_dateLabel, style: text.bodySmall),
+              Expanded(child: Text(_dateLabel, style: text.bodySmall)),
             ],
           ),
           if (appointment.paid && payment != null) ...[
