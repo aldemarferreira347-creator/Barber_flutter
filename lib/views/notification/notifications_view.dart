@@ -4,8 +4,12 @@ import 'package:provider/provider.dart';
 import '../../models/app_notification.dart';
 import '../../repositories/notification_repository.dart';
 import '../../theme/app_colors.dart';
+import '../../theme/app_tokens.dart';
+import '../../utils/date_labels.dart';
+import '../widgets/app_card.dart';
 import '../widgets/empty_state.dart';
 import '../widgets/error_state.dart';
+import '../widgets/responsive_body.dart';
 import '../widgets/scroll_to_top_fab.dart';
 import '../widgets/shimmer_box.dart';
 
@@ -42,6 +46,7 @@ class _NotificationsViewState extends State<NotificationsView> {
   @override
   Widget build(BuildContext context) {
     final repo = context.read<NotificationRepository>();
+    final text = Theme.of(context).textTheme;
 
     return Scaffold(
       appBar: AppBar(title: const Text('Notificaciones')),
@@ -54,13 +59,13 @@ class _NotificationsViewState extends State<NotificationsView> {
               child: ErrorState(title: 'No pudimos cargar las notificaciones'),
             );
           }
-          final notifications = snapshot.data ?? [];
-          if (snapshot.connectionState == ConnectionState.waiting) {
+          if (!snapshot.hasData) {
             return const Padding(
-              padding: EdgeInsets.all(16),
+              padding: EdgeInsets.all(AppSpace.lg),
               child: ShimmerList(),
             );
           }
+          final notifications = snapshot.data!;
           if (notifications.isEmpty) {
             return const Center(
               child: EmptyState(
@@ -70,80 +75,83 @@ class _NotificationsViewState extends State<NotificationsView> {
               ),
             );
           }
-          return ListView.separated(
+          return ListView(
             controller: _scrollController,
-            padding: const EdgeInsets.all(16),
-            itemCount: notifications.length,
-            separatorBuilder: (_, _) => const SizedBox(height: 10),
-            itemBuilder: (context, index) {
-              final n = notifications[index];
-              return InkWell(
-                borderRadius: BorderRadius.circular(14),
-                onTap: () {
-                  if (!n.read) repo.markRead(n.id);
-                },
-                child: Container(
-                  padding: const EdgeInsets.all(14),
-                  decoration: BoxDecoration(
-                    color: n.read
-                        ? AppColors.surface
-                        : AppColors.accent.withValues(alpha: 0.06),
-                    borderRadius: BorderRadius.circular(14),
-                    border: Border.all(
-                      color: n.read
-                          ? AppColors.border
-                          : AppColors.accent.withValues(alpha: 0.3),
-                    ),
-                    boxShadow: n.read
-                        ? []
-                        : [
-                            BoxShadow(
-                              color: AppColors.accent.withValues(alpha: 0.12),
-                              blurRadius: 12,
-                              offset: const Offset(0, 5),
-                            ),
-                          ],
-                  ),
-                  child: Row(
-                    crossAxisAlignment: CrossAxisAlignment.start,
-                    children: [
-                      Icon(_iconFor(n.type), color: _colorFor(n.type)),
-                      const SizedBox(width: 12),
-                      Expanded(
-                        child: Column(
+            padding: const EdgeInsets.only(top: AppSpace.lg, bottom: 96),
+            children: [
+              ResponsiveBody(
+                maxWidth: AppLayout.formWidth,
+                child: Column(
+                  children: [
+                    for (final n in notifications) ...[
+                      AppCard(
+                        onTap: n.read ? null : () => repo.markRead(n.id),
+                        semanticLabel: n.read
+                            ? null
+                            : 'Marcar como leída: ${n.title}',
+                        color: n.read
+                            ? AppColors.surface
+                            : AppColors.tint(AppColors.accent),
+                        borderColor: n.read
+                            ? AppColors.border
+                            : AppColors.accent.withValues(alpha: 0.4),
+                        child: Row(
                           crossAxisAlignment: CrossAxisAlignment.start,
                           children: [
-                            Text(
-                              n.title,
-                              style: const TextStyle(
-                                fontWeight: FontWeight.w700,
+                            Icon(
+                              _iconFor(n.type),
+                              color: AppColors.readable(_colorFor(n.type)),
+                            ),
+                            const SizedBox(width: AppSpace.md),
+                            Expanded(
+                              child: Column(
+                                crossAxisAlignment: CrossAxisAlignment.start,
+                                children: [
+                                  Text(n.title, style: text.titleSmall),
+                                  const SizedBox(height: AppSpace.xs),
+                                  Text(
+                                    n.body,
+                                    style: text.bodyMedium?.copyWith(
+                                      color: AppColors.textSecondary,
+                                    ),
+                                  ),
+                                  if (n.createdAt != null) ...[
+                                    const SizedBox(height: AppSpace.sm),
+                                    Text(
+                                      dateTimeLabel(n.createdAt!),
+                                      style: text.bodySmall?.copyWith(
+                                        color: AppColors.textSecondary,
+                                      ),
+                                    ),
+                                  ],
+                                ],
                               ),
                             ),
-                            const SizedBox(height: 2),
-                            Text(
-                              n.body,
-                              style: TextStyle(
-                                color: AppColors.textSecondary,
-                                fontSize: 13,
+                            if (!n.read)
+                              Semantics(
+                                label: 'No leída',
+                                child: Container(
+                                  width: 8,
+                                  height: 8,
+                                  margin: const EdgeInsets.only(
+                                    left: AppSpace.sm,
+                                    top: AppSpace.xs,
+                                  ),
+                                  decoration: BoxDecoration(
+                                    color: AppColors.accent,
+                                    shape: BoxShape.circle,
+                                  ),
+                                ),
                               ),
-                            ),
                           ],
                         ),
                       ),
-                      if (!n.read)
-                        Container(
-                          width: 8,
-                          height: 8,
-                          decoration: BoxDecoration(
-                            color: AppColors.accent,
-                            shape: BoxShape.circle,
-                          ),
-                        ),
+                      const SizedBox(height: AppSpace.md),
                     ],
-                  ),
+                  ],
                 ),
-              );
-            },
+              ),
+            ],
           );
         },
       ),

@@ -51,14 +51,16 @@ abstract class UserRepository {
   /// Retira un token FCM (p.ej. quedó inválido o el usuario cerró sesión).
   Future<void> removeFcmToken(String uid, String token);
 
-  /// Actualiza el nombre visible del usuario en Firestore (reservado al admin).
-  Future<void> updateName(String uid, String name);
-
-  /// Actualiza el correo del usuario en Firestore (reservado al admin).
-  /// Nota: solo actualiza el campo en Firestore; el correo de inicio de
-  /// sesión en Firebase Auth no cambia desde el cliente sin las credenciales
-  /// del usuario.
-  Future<void> updateEmail(String uid, String email);
+  /// Actualiza nombre, correo y/o rol de un usuario en UNA sola escritura
+  /// (reservado al admin): o se aplican todos los cambios o ninguno. Solo
+  /// escribe lo que se pasa. El correo es el del perfil en Firestore; el de
+  /// inicio de sesión en Firebase Auth no cambia desde el cliente.
+  Future<void> updateProfile(
+    String uid, {
+    String? name,
+    String? email,
+    UserRole? role,
+  });
 
   /// Elimina el documento de perfil del usuario en Firestore (reservado al
   /// admin; la cuenta de Firebase Auth queda huérfana — se limpia

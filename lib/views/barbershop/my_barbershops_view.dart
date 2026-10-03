@@ -5,11 +5,15 @@ import '../../controllers/auth_controller.dart';
 import '../../models/barbershop.dart';
 import '../../repositories/barbershop_repository.dart';
 import '../../theme/app_colors.dart';
-import '../widgets/shop_avatar.dart';
+import '../../theme/app_tokens.dart';
+import '../widgets/app_card.dart';
+import '../widgets/app_dialog.dart';
 import '../widgets/empty_state.dart';
 import '../widgets/error_state.dart';
-import '../widgets/pressable_scale.dart';
+import '../widgets/responsive_body.dart';
+import '../widgets/section_header.dart';
 import '../widgets/shimmer_box.dart';
+import '../widgets/shop_avatar.dart';
 import 'add_barbershop_view.dart';
 import 'approval_status_badge.dart';
 import 'owner_alerts_section.dart';
@@ -35,24 +39,14 @@ class MyBarbershopsView extends StatelessWidget {
     BarbershopRepository repo,
     Barbershop draft,
   ) async {
-    final confirmed = await showDialog<bool>(
-      context: context,
-      builder: (context) => AlertDialog(
-        title: const Text('Eliminar borrador'),
-        content: Text('¿Eliminar el borrador "${draft.name}"?'),
-        actions: [
-          TextButton(
-            onPressed: () => Navigator.of(context).pop(false),
-            child: const Text('Volver'),
-          ),
-          FilledButton(
-            onPressed: () => Navigator.of(context).pop(true),
-            child: const Text('Eliminar'),
-          ),
-        ],
-      ),
+    final confirmed = await AppDialog.confirm(
+      context,
+      title: 'Eliminar borrador',
+      message: '¿Eliminar el borrador "${draft.name}"? No se puede deshacer.',
+      confirmLabel: 'Eliminar',
+      destructive: true,
     );
-    if (confirmed != true) return;
+    if (!confirmed) return;
     try {
       await repo.deleteDraft(draft.id);
     } catch (e) {
@@ -114,49 +108,73 @@ class MyBarbershopsView extends StatelessWidget {
                       );
                     }
                     return ListView(
-                      padding: const EdgeInsets.fromLTRB(16, 16, 16, 96),
+                      padding: const EdgeInsets.only(
+                        top: AppSpace.lg,
+                        bottom: 96,
+                      ),
                       children: [
-                        OwnerAlertsSection(shops: shops),
-                        for (var i = 0; i < shops.length; i++) ...[
-                          _ShopTile(
-                            shop: shops[i],
-                            onTap: () => Navigator.of(context).push(
-                              MaterialPageRoute(
-                                builder: (_) => OwnerBarbershopManageView(
-                                  barbershopId: shops[i].id,
+                        ResponsiveBody(
+                          child: Column(
+                            crossAxisAlignment: CrossAxisAlignment.stretch,
+                            children: [
+                              OwnerAlertsSection(shops: shops),
+                              if (shops.isNotEmpty)
+                                SectionHeader(
+                                  title: 'Barberías (${shops.length})',
                                 ),
-                              ),
-                            ),
+                              for (final shop in shops) ...[
+                                _ShopTile(
+                                  shop: shop,
+                                  onTap: () => Navigator.of(context).push(
+                                    MaterialPageRoute(
+                                      builder: (_) => OwnerBarbershopManageView(
+                                        barbershopId: shop.id,
+                                      ),
+                                    ),
+                                  ),
+                                ),
+                                const SizedBox(height: AppSpace.md),
+                              ],
+                              if (drafts.isNotEmpty) ...[
+                                const SizedBox(height: AppSpace.sm),
+                                SectionHeader(
+                                  title:
+                                      'Borradores (${drafts.length}/$kMaxBarbershopDrafts)',
+                                ),
+                                Padding(
+                                  padding: const EdgeInsets.only(
+                                    bottom: AppSpace.md,
+                                  ),
+                                  child: Text(
+                                    'Sin pagar: solo tú los ves. Al pagar la '
+                                    'mensualidad pasan a revisión.',
+                                    style: Theme.of(context).textTheme.bodySmall
+                                        ?.copyWith(
+                                          color: AppColors.textSecondary,
+                                        ),
+                                  ),
+                                ),
+                                for (final draft in drafts) ...[
+                                  _ShopTile(
+                                    shop: draft,
+                                    onTap: () =>
+                                        _openForm(context, draft: draft),
+                                    trailing: IconButton(
+                                      tooltip: 'Eliminar borrador',
+                                      icon: const Icon(Icons.delete_outline),
+                                      color: AppColors.readable(
+                                        AppColors.error,
+                                      ),
+                                      onPressed: () =>
+                                          _deleteDraft(context, repo, draft),
+                                    ),
+                                  ),
+                                  const SizedBox(height: AppSpace.md),
+                                ],
+                              ],
+                            ],
                           ),
-                          const SizedBox(height: 10),
-                        ],
-                        if (drafts.isNotEmpty) ...[
-                          Padding(
-                            padding: const EdgeInsets.only(top: 8, bottom: 8),
-                            child: Text(
-                              'Borradores (${drafts.length}/$kMaxBarbershopDrafts) · sin pagar, solo tú los ves',
-                              style: TextStyle(
-                                color: AppColors.textSecondary,
-                                fontWeight: FontWeight.w700,
-                                fontSize: 13,
-                              ),
-                            ),
-                          ),
-                          for (final draft in drafts) ...[
-                            _ShopTile(
-                              shop: draft,
-                              onTap: () => _openForm(context, draft: draft),
-                              trailing: IconButton(
-                                tooltip: 'Eliminar borrador',
-                                icon: const Icon(Icons.delete_outline),
-                                color: AppColors.error,
-                                onPressed: () =>
-                                    _deleteDraft(context, repo, draft),
-                              ),
-                            ),
-                            const SizedBox(height: 10),
-                          ],
-                        ],
+                        ),
                       ],
                     );
                   },
@@ -176,51 +194,39 @@ class _ShopTile extends StatelessWidget {
 
   @override
   Widget build(BuildContext context) {
-    return PressableScale(
+    return AppCard(
       onTap: onTap,
-      child: Material(
-        color: AppColors.surface,
-        borderRadius: BorderRadius.circular(14),
-        elevation: 1,
-        shadowColor: AppColors.textPrimary.withValues(alpha: 0.08),
-        child: InkWell(
-          borderRadius: BorderRadius.circular(14),
-          onTap: onTap,
-          child: Padding(
-            padding: const EdgeInsets.all(12),
-            child: Row(
+      semanticLabel: shop.name,
+      padding: const EdgeInsets.all(AppSpace.md),
+      child: Row(
+        children: [
+          ShopAvatar(photoUrl: shop.photoUrl, name: shop.name, size: 52),
+          const SizedBox(width: AppSpace.md),
+          Expanded(
+            child: Column(
+              crossAxisAlignment: CrossAxisAlignment.start,
               children: [
-                ShopAvatar(photoUrl: shop.photoUrl, name: shop.name, size: 52),
-                const SizedBox(width: 12),
-                Expanded(
-                  child: Column(
-                    crossAxisAlignment: CrossAxisAlignment.start,
-                    children: [
-                      Text(
-                        shop.name,
-                        style: const TextStyle(fontWeight: FontWeight.w700),
-                      ),
-                      if ((shop.address ?? '').isNotEmpty)
-                        Text(
-                          shop.address!,
-                          maxLines: 1,
-                          overflow: TextOverflow.ellipsis,
-                          style: TextStyle(
-                            color: AppColors.textSecondary,
-                            fontSize: 12,
-                          ),
-                        ),
-                      const SizedBox(height: 6),
-                      ApprovalStatusBadge(status: shop.approvalStatus),
-                    ],
-                  ),
+                Text(
+                  shop.name,
+                  maxLines: 1,
+                  overflow: TextOverflow.ellipsis,
+                  style: Theme.of(context).textTheme.titleSmall,
                 ),
-                trailing ??
-                    Icon(Icons.chevron_right, color: AppColors.textSecondary),
+                if ((shop.address ?? '').isNotEmpty)
+                  Text(
+                    shop.address!,
+                    maxLines: 1,
+                    overflow: TextOverflow.ellipsis,
+                    style: Theme.of(context).textTheme.bodySmall
+                        ?.copyWith(color: AppColors.textSecondary),
+                  ),
+                const SizedBox(height: AppSpace.sm),
+                ApprovalStatusBadge(status: shop.approvalStatus),
               ],
             ),
           ),
-        ),
+          trailing ?? Icon(Icons.chevron_right, color: AppColors.textSecondary),
+        ],
       ),
     );
   }

@@ -3,11 +3,17 @@ import 'package:provider/provider.dart';
 
 import '../../repositories/shop_closure_repository.dart';
 import '../../theme/app_colors.dart';
+import '../../theme/app_tokens.dart';
+import '../../utils/date_labels.dart';
 import '../widgets/app_button.dart';
+import '../widgets/app_card.dart';
+import '../widgets/app_dialog.dart';
+import '../widgets/responsive_body.dart';
 
 /// Cierre de tienda por evento externo (spec 3.4): el dueño elige el rango
 /// de fechas/horas afectado y el motivo. Cada reserva pagada dentro de ese
-/// rango queda aplazada automáticamente y se notifica al cliente.
+/// rango queda aplazada y el cliente la ve como "Aplazada" en sus citas
+/// para reprogramarla (no hay envío de avisos sin servidor).
 class CloseShopView extends StatefulWidget {
   final String barbershopId;
 
@@ -21,8 +27,8 @@ class _CloseShopViewState extends State<CloseShopView> {
   final _reasonController = TextEditingController();
   DateTime? _from;
   DateTime? _until;
-  bool _saving = false;
   int? _appointmentsAffected;
+  String? _error;
 
   @override
   void dispose() {
@@ -34,7 +40,7 @@ class _CloseShopViewState extends State<CloseShopView> {
     final now = DateTime.now();
     final date = await showDatePicker(
       context: context,
-      initialDate: initial,
+      initialDate: initial.isBefore(now) ? now : initial,
       firstDate: now,
       lastDate: now.add(const Duration(days: 60)),
     );
@@ -49,128 +55,209 @@ class _CloseShopViewState extends State<CloseShopView> {
 
   Future<void> _pickFrom() async {
     final picked = await _pickDateTime(_from ?? DateTime.now());
-    if (picked != null) setState(() => _from = picked);
+    if (picked != null) {
+      setState(() {
+        _from = picked;
+        _error = null;
+      });
+    }
   }
 
   Future<void> _pickUntil() async {
     final picked = await _pickDateTime(
       _until ?? (_from ?? DateTime.now()).add(const Duration(hours: 4)),
     );
-    if (picked != null) setState(() => _until = picked);
+    if (picked != null) {
+      setState(() {
+        _until = picked;
+        _error = null;
+      });
+    }
+  }
+
+  /// Mensaje de validación, o null si el formulario está completo.
+  String? _validate() {
+    final from = _from;
+    final until = _until;
+    if (from == null || until == null) {
+      return 'Elige desde cuándo y hasta cuándo estará cerrada la barbería.';
+    }
+    if (!until.isAfter(from)) {
+      return 'El final del cierre debe ser posterior al inicio.';
+    }
+    if (_reasonController.text.trim().isEmpty) {
+      return 'Escribe el motivo del cierre.';
+    }
+    return null;
   }
 
   Future<void> _confirm() async {
-    final from = _from;
-    final until = _until;
-    if (from == null ||
-        until == null ||
-        _reasonController.text.trim().isEmpty) {
-      return;
-    }
+    final problem = _validate();
+    setState(() => _error = problem);
+    if (problem != null) return;
 
-    setState(() => _saving = true);
+    final ok = await AppDialog.confirm(
+      context,
+      title: 'Cerrar la barbería',
+      message:
+          'Las reservas pagadas entre ${numericDateTimeLabel(_from!)} y '
+          '${numericDateTimeLabel(_until!)} quedarán aplazadas y su '
+          'calificación tendrá un descuento de 1 estrella. No se puede '
+          'deshacer.',
+      confirmLabel: 'Cerrar y aplazar',
+      destructive: true,
+    );
+    if (!ok || !mounted) return;
+
     try {
       final affected = await context
           .read<ShopClosureRepository>()
           .closeForExternalEvent(
             barbershopId: widget.barbershopId,
-            closedFrom: from,
-            closedUntil: until,
+            closedFrom: _from!,
+            closedUntil: _until!,
             reason: _reasonController.text.trim(),
           );
-      setState(() => _appointmentsAffected = affected);
+      if (mounted) setState(() => _appointmentsAffected = affected);
     } catch (e) {
       if (mounted) {
         ScaffoldMessenger.of(context).showSnackBar(
           SnackBar(content: Text('No se pudo cerrar la barbería: $e')),
         );
       }
-    } finally {
-      if (mounted) setState(() => _saving = false);
     }
   }
-
-  String _label(DateTime? value) =>
-      value == null ? 'Elegir fecha y hora' : value.toString().substring(0, 16);
 
   @override
   Widget build(BuildContext context) {
     final affected = _appointmentsAffected;
     return Scaffold(
       appBar: AppBar(title: const Text('Cerrar por evento externo')),
-      body: Padding(
-        padding: const EdgeInsets.all(16),
-        child: affected != null ? _buildResult(affected) : _buildForm(),
-      ),
-    );
-  }
-
-  Widget _buildResult(int affected) {
-    return Center(
-      child: Column(
-        mainAxisAlignment: MainAxisAlignment.center,
-        children: [
-          const Icon(
-            Icons.check_circle_outline,
-            color: AppColors.success,
-            size: 56,
-          ),
-          const SizedBox(height: 16),
-          Text(
-            affected == 0
-                ? 'No había reservas pagadas afectadas en ese rango.'
-                : 'Se aplazaron $affected reserva(s) pagada(s) y se notificó a cada cliente.',
-            textAlign: TextAlign.center,
-          ),
-          const SizedBox(height: 20),
-          SizedBox(
-            width: 200,
-            child: AppButton(
-              onPressed: () => Navigator.of(context).pop(),
-              child: const Text('Listo'),
+      body: SafeArea(
+        child: ListView(
+          padding: const EdgeInsets.symmetric(vertical: AppSpace.lg),
+          children: [
+            ResponsiveBody(
+              maxWidth: AppLayout.formWidth,
+              child: affected != null
+                  ? _buildResult(context, affected)
+                  : _buildForm(context),
             ),
-          ),
-        ],
+          ],
+        ),
       ),
     );
   }
 
-  Widget _buildForm() {
-    return ListView(
+  Widget _buildResult(BuildContext context, int affected) {
+    return Column(
       children: [
+        const SizedBox(height: AppSpace.xxl),
+        Icon(
+          Icons.check_circle_outline,
+          color: AppColors.readable(AppColors.success),
+          size: 56,
+        ),
+        const SizedBox(height: AppSpace.lg),
         Text(
-          'Las reservas pagadas dentro de este rango quedarán aplazadas y sus clientes serán invitados a reprogramar. '
-          'Su calificación final tendrá un descuento obligatorio de 1 estrella, ya que el cierre afecta su experiencia '
-          'aunque no dependa de la barbería.',
-          style: TextStyle(color: AppColors.textSecondary, fontSize: 13),
+          affected == 0
+              ? 'No había reservas pagadas afectadas en ese rango.'
+              : 'Se aplazaron $affected reserva(s) pagada(s). Cada cliente la '
+                    'verá como "Aplazada" en sus citas para reprogramarla.',
+          textAlign: TextAlign.center,
+          style: Theme.of(context).textTheme.bodyLarge,
         ),
-        const SizedBox(height: 20),
-        OutlinedButton.icon(
+        const SizedBox(height: AppSpace.xl),
+        AppButton(
+          onPressed: () => Navigator.of(context).pop(),
+          child: const Text('Listo'),
+        ),
+      ],
+    );
+  }
+
+  Widget _buildForm(BuildContext context) {
+    final text = Theme.of(context).textTheme;
+    return Column(
+      crossAxisAlignment: CrossAxisAlignment.stretch,
+      children: [
+        AppCard(
+          color: AppColors.tint(AppColors.warning),
+          borderColor: AppColors.warning.withValues(alpha: 0.4),
+          child: Row(
+            crossAxisAlignment: CrossAxisAlignment.start,
+            children: [
+              Icon(
+                Icons.info_outline,
+                color: AppColors.readable(AppColors.warning),
+              ),
+              const SizedBox(width: AppSpace.md),
+              Expanded(
+                child: Text(
+                  'Las reservas pagadas dentro de este rango quedarán '
+                  'aplazadas y sus clientes podrán reprogramar. Su '
+                  'calificación final tendrá un descuento obligatorio de 1 '
+                  'estrella, porque el cierre afecta su experiencia aunque no '
+                  'dependa de la barbería.',
+                  style: text.bodyMedium,
+                ),
+              ),
+            ],
+          ),
+        ),
+        const SizedBox(height: AppSpace.xl),
+        AppButton(
+          variant: AppButtonVariant.secondary,
           onPressed: _pickFrom,
-          icon: const Icon(Icons.event),
-          label: Text('Desde: ${_label(_from)}'),
+          icon: Icons.event,
+          child: Text(
+            _from == null
+                ? 'Desde: elegir fecha y hora'
+                : 'Desde: ${numericDateTimeLabel(_from!)}',
+          ),
         ),
-        const SizedBox(height: 10),
-        OutlinedButton.icon(
+        const SizedBox(height: AppSpace.md),
+        AppButton(
+          variant: AppButtonVariant.secondary,
           onPressed: _pickUntil,
-          icon: const Icon(Icons.event),
-          label: Text('Hasta: ${_label(_until)}'),
+          icon: Icons.event,
+          child: Text(
+            _until == null
+                ? 'Hasta: elegir fecha y hora'
+                : 'Hasta: ${numericDateTimeLabel(_until!)}',
+          ),
         ),
-        const SizedBox(height: 14),
+        const SizedBox(height: AppSpace.lg),
         TextField(
           controller: _reasonController,
           maxLines: 3,
+          maxLength: 200,
+          textCapitalization: TextCapitalization.sentences,
+          onChanged: (_) {
+            if (_error != null) setState(() => _error = null);
+          },
           decoration: const InputDecoration(
-            hintText: 'Motivo del cierre (p. ej. corte de energía, emergencia)',
+            labelText: 'Motivo del cierre',
+            hintText: 'Corte de energía, emergencia…',
           ),
         ),
-        const SizedBox(height: 24),
+        if (_error != null) ...[
+          const SizedBox(height: AppSpace.sm),
+          Semantics(
+            liveRegion: true,
+            child: Text(
+              _error!,
+              style: text.bodyMedium?.copyWith(
+                color: AppColors.readable(AppColors.error),
+              ),
+            ),
+          ),
+        ],
+        const SizedBox(height: AppSpace.xl),
         AppButton(
-          onPressed: (_from != null && _until != null && !_saving)
-              ? _confirm
-              : null,
+          variant: AppButtonVariant.destructive,
+          onPressed: _confirm,
           icon: Icons.event_busy_outlined,
-          loading: _saving,
           child: const Text('Confirmar cierre'),
         ),
       ],

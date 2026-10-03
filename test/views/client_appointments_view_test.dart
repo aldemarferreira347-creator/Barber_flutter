@@ -185,6 +185,9 @@ void main() {
   testWidgets(
     'insistir en cancelar una cita pagada pide una justificación y llama a requestRefund',
     (tester) async {
+      tester.view.physicalSize = const Size(800, 1800);
+      tester.view.devicePixelRatio = 1;
+      addTearDown(tester.view.reset);
       final now = DateTime(2026);
       when(() => appointmentRepository.watchByClient(_kUid)).thenAnswer(
         (_) => Stream.value([
@@ -201,10 +204,18 @@ void main() {
       await tester.pumpWidget(wrap());
       await tester.pump();
 
+      // El botón de la tarjeta muestra su indicador mientras el flujo está
+      // abierto (animación infinita): se avanza el tiempo sin settle.
+      Future<void> advance() async {
+        for (var i = 0; i < 6; i++) {
+          await tester.pump(const Duration(milliseconds: 100));
+        }
+      }
+
       await tester.tap(find.text('Cancelar'));
-      await tester.pump(const Duration(milliseconds: 500));
+      await advance();
       await tester.tap(find.text('Cancelar de todas formas'));
-      await tester.pump(const Duration(milliseconds: 500));
+      await advance();
 
       expect(find.text('Justifica la cancelación'), findsOneWidget);
       await tester.enterText(find.byType(TextField), 'Emergencia médica');

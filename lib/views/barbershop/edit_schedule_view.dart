@@ -4,7 +4,10 @@ import 'package:provider/provider.dart';
 import '../../models/day_schedule.dart';
 import '../../repositories/barbershop_repository.dart';
 import '../../theme/app_colors.dart';
+import '../../theme/app_tokens.dart';
 import '../widgets/app_button.dart';
+import '../widgets/app_card.dart';
+import '../widgets/responsive_body.dart';
 
 class EditScheduleView extends StatefulWidget {
   final String barbershopId;
@@ -22,7 +25,6 @@ class EditScheduleView extends StatefulWidget {
 
 class _EditScheduleViewState extends State<EditScheduleView> {
   late Map<String, DaySchedule> _schedule;
-  bool _saving = false;
 
   @override
   void initState() {
@@ -53,8 +55,34 @@ class _EditScheduleViewState extends State<EditScheduleView> {
     });
   }
 
+  static int _minutes(String hhmm) {
+    final parts = hhmm.split(':');
+    return (int.tryParse(parts[0]) ?? 0) * 60 +
+        (int.tryParse(parts.length > 1 ? parts[1] : '0') ?? 0);
+  }
+
+  /// Días abiertos cuyo cierre no es posterior a la apertura.
+  List<String> get _invalidDays => [
+    for (final day in kWeekdays)
+      if (_schedule[day]!.isOpen &&
+          _minutes(_schedule[day]!.closeTime) <=
+              _minutes(_schedule[day]!.openTime))
+        day,
+  ];
+
   Future<void> _save() async {
-    setState(() => _saving = true);
+    final invalid = _invalidDays;
+    if (invalid.isNotEmpty) {
+      ScaffoldMessenger.of(context).showSnackBar(
+        SnackBar(
+          content: Text(
+            'La hora de cierre debe ser posterior a la de apertura '
+            '(${invalid.join(', ')}).',
+          ),
+        ),
+      );
+      return;
+    }
     try {
       await context.read<BarbershopRepository>().updateSchedule(
         widget.barbershopId,
@@ -66,74 +94,89 @@ class _EditScheduleViewState extends State<EditScheduleView> {
         ScaffoldMessenger.of(context)
             .showSnackBar(SnackBar(content: Text('No se pudo guardar: $e')));
       }
-    } finally {
-      if (mounted) setState(() => _saving = false);
     }
   }
 
   @override
   Widget build(BuildContext context) {
+    final invalid = _invalidDays.toSet();
+    final text = Theme.of(context).textTheme;
     return Scaffold(
       appBar: AppBar(title: const Text('Horarios de atención')),
-      body: ListView(
-        padding: const EdgeInsets.all(16),
-        children: [
-          for (final entry in kWeekdays.indexed) ...[
-            Container(
-              padding: const EdgeInsets.symmetric(horizontal: 14, vertical: 8),
-              decoration: BoxDecoration(
-                color: AppColors.surface,
-                borderRadius: BorderRadius.circular(14),
-                border: Border.all(color: AppColors.border),
-              ),
-              child: Row(
+      body: SafeArea(
+        child: ListView(
+          padding: const EdgeInsets.symmetric(vertical: AppSpace.lg),
+          children: [
+            ResponsiveBody(
+              maxWidth: AppLayout.formWidth,
+              child: Column(
+                crossAxisAlignment: CrossAxisAlignment.stretch,
                 children: [
-                  Expanded(
-                    flex: 2,
-                    child: Text(
-                      entry.$2[0].toUpperCase() + entry.$2.substring(1),
-                      style: const TextStyle(fontWeight: FontWeight.w600),
-                    ),
-                  ),
-                  Switch(
-                    value: _schedule[entry.$2]!.isOpen,
-                    onChanged: (value) => setState(
-                      () => _schedule[entry.$2] = _schedule[entry.$2]!.copyWith(
-                        isOpen: value,
+                  for (final day in kWeekdays) ...[
+                    AppCard(
+                      padding: const EdgeInsets.symmetric(
+                        horizontal: AppSpace.md,
+                        vertical: AppSpace.xs,
+                      ),
+                      borderColor: invalid.contains(day)
+                          ? AppColors.error
+                          : null,
+                      child: Row(
+                        children: [
+                          Expanded(
+                            flex: 2,
+                            child: Text(
+                              day[0].toUpperCase() + day.substring(1),
+                              style: text.titleSmall,
+                            ),
+                          ),
+                          Switch(
+                            value: _schedule[day]!.isOpen,
+                            onChanged: (value) => setState(
+                              () => _schedule[day] = _schedule[day]!.copyWith(
+                                isOpen: value,
+                              ),
+                            ),
+                          ),
+                          if (_schedule[day]!.isOpen) ...[
+                            TextButton(
+                              onPressed: () => _pickTime(day, true),
+                              child: Text(_schedule[day]!.openTime),
+                            ),
+                            Text(
+                              '–',
+                              style: TextStyle(color: AppColors.textSecondary),
+                            ),
+                            TextButton(
+                              onPressed: () => _pickTime(day, false),
+                              child: Text(_schedule[day]!.closeTime),
+                            ),
+                          ] else
+                            Expanded(
+                              child: Text(
+                                'Cerrado',
+                                textAlign: TextAlign.end,
+                                style: TextStyle(
+                                  color: AppColors.textSecondary,
+                                ),
+                              ),
+                            ),
+                        ],
                       ),
                     ),
+                    const SizedBox(height: AppSpace.sm),
+                  ],
+                  const SizedBox(height: AppSpace.lg),
+                  AppButton(
+                    onPressed: _save,
+                    icon: Icons.check_circle_outline,
+                    child: const Text('Guardar horarios'),
                   ),
-                  if (_schedule[entry.$2]!.isOpen) ...[
-                    TextButton(
-                      onPressed: () => _pickTime(entry.$2, true),
-                      child: Text(_schedule[entry.$2]!.openTime),
-                    ),
-                    Text('–', style: TextStyle(color: AppColors.textSecondary)),
-                    TextButton(
-                      onPressed: () => _pickTime(entry.$2, false),
-                      child: Text(_schedule[entry.$2]!.closeTime),
-                    ),
-                  ] else
-                    Expanded(
-                      child: Text(
-                        'Cerrado',
-                        textAlign: TextAlign.end,
-                        style: TextStyle(color: AppColors.textSecondary),
-                      ),
-                    ),
                 ],
               ),
             ),
-            const SizedBox(height: 10),
           ],
-          const SizedBox(height: 14),
-          AppButton(
-            onPressed: _save,
-            icon: Icons.check_circle_outline,
-            loading: _saving,
-            child: const Text('Guardar horarios'),
-          ),
-        ],
+        ),
       ),
     );
   }

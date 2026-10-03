@@ -14,10 +14,10 @@ import '../../theme/app_colors.dart';
 import '../../theme/app_text.dart';
 import '../../theme/app_tokens.dart';
 import '../../utils/date_labels.dart';
-import '../../utils/shop_hours.dart';
 import '../widgets/app_button.dart';
 import '../widgets/app_card.dart';
 import '../widgets/choice_tile.dart';
+import '../widgets/day_time_picker.dart';
 import '../widgets/empty_state.dart';
 import '../widgets/error_state.dart';
 import '../widgets/nequi_payment_sheet.dart';
@@ -44,7 +44,6 @@ class BookAppointmentView extends StatefulWidget {
 
 class _BookAppointmentViewState extends State<BookAppointmentView> {
   /// Días que se pueden reservar hacia adelante.
-  static const _daysAhead = 14;
 
   // Los streams se abren una sola vez: crearlos dentro de build() reabriría
   // la consulta (y mostraría el esqueleto de carga) con cada selección.
@@ -57,6 +56,13 @@ class _BookAppointmentViewState extends State<BookAppointmentView> {
   late final Stream<List<AppUser>> _barbers = context
       .read<UserRepository>()
       .watchBarbersByBarbershop(widget.barbershopId);
+
+  /// "Fuera de la tienda · vuelve ~10:30" mientras el barbero esté fuera.
+  String? _awayLabel(AppUser barber) {
+    final until = barber.awayUntilEstimate;
+    if (until == null || !until.isAfter(DateTime.now())) return null;
+    return 'Fuera de la tienda · vuelve ~${timeLabel(until)}';
+  }
 
   Service? _service;
   AppUser? _barber;
@@ -242,6 +248,7 @@ class _BookAppointmentViewState extends State<BookAppointmentView> {
                               ChoiceTile(
                                 selected: _barber?.uid == barber.uid,
                                 title: barber.name,
+                                subtitle: _awayLabel(barber),
                                 onTap: () => setState(() => _barber = barber),
                               ),
                           ],
@@ -253,14 +260,13 @@ class _BookAppointmentViewState extends State<BookAppointmentView> {
                     if (shop == null)
                       const ShimmerList(count: 1, itemHeight: 58)
                     else
-                      _DayAndTimePicker(
+                      DayAndTimePicker(
                         shop: shop,
                         durationMinutes: _service?.durationMinutes,
                         day: _day,
                         dateTime: _dateTime,
                         onDay: _pickDay,
                         onTime: (time) => setState(() => _dateTime = time),
-                        daysAhead: _daysAhead,
                       ),
                     const SizedBox(height: AppSpace.xl),
                     const SectionHeader(title: '4. ¿Cómo quieres reservar?'),
@@ -315,103 +321,6 @@ class _BookAppointmentViewState extends State<BookAppointmentView> {
           );
         },
       ),
-    );
-  }
-}
-
-/// Selector de día (próximos 14) y de hora (solo horas dentro del horario de
-/// la barbería que caben con la duración del servicio).
-class _DayAndTimePicker extends StatelessWidget {
-  final Barbershop shop;
-  final int? durationMinutes;
-  final DateTime? day;
-  final DateTime? dateTime;
-  final ValueChanged<DateTime> onDay;
-  final ValueChanged<DateTime> onTime;
-  final int daysAhead;
-
-  const _DayAndTimePicker({
-    required this.shop,
-    required this.durationMinutes,
-    required this.day,
-    required this.dateTime,
-    required this.onDay,
-    required this.onTime,
-    required this.daysAhead,
-  });
-
-  @override
-  Widget build(BuildContext context) {
-    final text = Theme.of(context).textTheme;
-    final today = DateTime.now();
-    final days = [
-      for (var i = 0; i < daysAhead; i++)
-        DateTime(today.year, today.month, today.day + i),
-    ];
-    final duration = durationMinutes;
-    final selectedDay = day;
-    final slots = (selectedDay == null || duration == null)
-        ? const <DateTime>[]
-        : availableTimeSlots(
-            shop.schedule,
-            day: selectedDay,
-            durationMinutes: duration,
-          );
-
-    return Column(
-      crossAxisAlignment: CrossAxisAlignment.start,
-      children: [
-        SizedBox(
-          height: 48,
-          child: ListView.separated(
-            scrollDirection: Axis.horizontal,
-            itemCount: days.length,
-            separatorBuilder: (_, _) => const SizedBox(width: AppSpace.sm),
-            itemBuilder: (context, index) {
-              final d = days[index];
-              final isSelected =
-                  selectedDay != null &&
-                  d.year == selectedDay.year &&
-                  d.month == selectedDay.month &&
-                  d.day == selectedDay.day;
-              return ChoiceChip(
-                label: Text(dayLabel(d)),
-                selected: isSelected,
-                onSelected: (_) => onDay(d),
-              );
-            },
-          ),
-        ),
-        const SizedBox(height: AppSpace.md),
-        if (duration == null)
-          Text('Primero elige un servicio.', style: text.secondary)
-        else if (selectedDay == null)
-          Text('Elige un día para ver las horas.', style: text.secondary)
-        else if (slots.isEmpty)
-          Text(
-            'No hay horas disponibles ese día. Prueba con otro.',
-            style: text.secondary,
-          )
-        else
-          Wrap(
-            spacing: AppSpace.sm,
-            runSpacing: AppSpace.sm,
-            children: [
-              for (final slot in slots)
-                ChoiceChip(
-                  label: Text(timeLabel(slot)),
-                  selected: dateTime == slot,
-                  onSelected: (_) => onTime(slot),
-                ),
-            ],
-          ),
-        const SizedBox(height: AppSpace.sm),
-        Text(
-          'Si el horario ya fue tomado por otra reserva pagada, te lo '
-          'avisaremos al confirmar.',
-          style: text.bodySmall,
-        ),
-      ],
     );
   }
 }

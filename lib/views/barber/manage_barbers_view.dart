@@ -5,8 +5,13 @@ import '../../models/app_user.dart';
 import '../../models/user_role.dart';
 import '../../repositories/user_repository.dart';
 import '../../theme/app_colors.dart';
+import '../../theme/app_tokens.dart';
+import '../widgets/app_button.dart';
+import '../widgets/app_card.dart';
+import '../widgets/app_dialog.dart';
 import '../widgets/empty_state.dart';
 import '../widgets/error_state.dart';
+import '../widgets/responsive_body.dart';
 import '../widgets/shimmer_box.dart';
 
 class ManageBarbersView extends StatelessWidget {
@@ -14,124 +19,68 @@ class ManageBarbersView extends StatelessWidget {
 
   const ManageBarbersView({super.key, required this.barbershopId});
 
+  void _snack(BuildContext context, String message) {
+    ScaffoldMessenger.of(context)
+        .showSnackBar(SnackBar(content: Text(message)));
+  }
+
   Future<void> _hireBarber(BuildContext context) async {
     final repo = context.read<UserRepository>();
-    final controller = TextEditingController();
-    final email = await showDialog<String>(
-      context: context,
-      builder: (context) => AlertDialog(
-        title: const Text('Contratar barbero'),
-        content: Column(
-          mainAxisSize: MainAxisSize.min,
-          children: [
-            Text(
-              'Escribe el correo de un cliente ya registrado en BarberFlow para contratarlo como barbero de tu barbería.',
-              style: TextStyle(color: AppColors.textSecondary, fontSize: 13),
-            ),
-            const SizedBox(height: 12),
-            TextField(
-              controller: controller,
-              keyboardType: TextInputType.emailAddress,
-              decoration: const InputDecoration(
-                labelText: 'Correo del barbero',
-                prefixIcon: Icon(Icons.mail_outline),
-              ),
-            ),
-          ],
-        ),
-        actions: [
-          TextButton(
-            onPressed: () => Navigator.of(context).pop(),
-            child: const Text('Cancelar'),
-          ),
-          FilledButton(
-            onPressed: () => Navigator.of(context).pop(controller.text.trim()),
-            child: const Text('Buscar'),
-          ),
-        ],
-      ),
+    final user = await AppBottomSheet.show<AppUser>(
+      context,
+      title: 'Contratar barbero',
+      child: _FindClientForm(repo: repo),
     );
-    if (email == null || email.isEmpty || !context.mounted) return;
+    if (user == null || !context.mounted) return;
+
+    final who = user.name.isEmpty ? user.email : user.name;
+    final confirmed = await AppDialog.confirm(
+      context,
+      title: 'Contratar a $who',
+      message:
+          '${user.email} pasará a ser barbero de tu barbería y podrá recibir '
+          'y atender citas.',
+      confirmLabel: 'Contratar',
+    );
+    if (!confirmed || !context.mounted) return;
 
     try {
-      final user = await repo.findByEmail(email);
-      if (!context.mounted) return;
-      if (user == null) {
-        ScaffoldMessenger.of(context).showSnackBar(
-          const SnackBar(
-            content: Text(
-              'No existe ninguna cuenta con ese correo. Pídele que se registre primero como cliente.',
-            ),
-          ),
-        );
-        return;
-      }
-      if (user.role != UserRole.client) {
-        ScaffoldMessenger.of(context).showSnackBar(
-          SnackBar(
-            content: Text(
-              '${user.name.isEmpty ? user.email : user.name} ya tiene otro rol y no se puede contratar.',
-            ),
-          ),
-        );
-        return;
-      }
       await repo.hireAsBarber(uid: user.uid, barbershopId: barbershopId);
-      if (!context.mounted) return;
-      ScaffoldMessenger.of(context).showSnackBar(
-        SnackBar(
-          content: Text('${user.name} ahora es barbero de tu barbería.'),
-        ),
-      );
+      if (context.mounted) _snack(context, '$who ahora es barbero.');
     } catch (e) {
-      if (context.mounted) {
-        ScaffoldMessenger.of(context)
-            .showSnackBar(SnackBar(content: Text('No se pudo contratar: $e')));
-      }
+      if (context.mounted) _snack(context, 'No se pudo contratar: $e');
     }
   }
 
   Future<void> _release(BuildContext context, AppUser barber) async {
-    final confirmed = await showDialog<bool>(
-      context: context,
-      builder: (context) => AlertDialog(
-        title: const Text('Dar de baja'),
-        content: Text(
-          '¿Quitar a ${barber.name} como barbero de tu barbería? Volverá a ser cliente.',
-        ),
-        actions: [
-          TextButton(
-            onPressed: () => Navigator.of(context).pop(false),
-            child: const Text('Cancelar'),
-          ),
-          FilledButton(
-            onPressed: () => Navigator.of(context).pop(true),
-            child: const Text('Dar de baja'),
-          ),
-        ],
-      ),
+    final confirmed = await AppDialog.confirm(
+      context,
+      title: 'Dar de baja',
+      message:
+          '¿Quitar a ${barber.name} como barbero de tu barbería? Volverá a '
+          'ser cliente.',
+      confirmLabel: 'Dar de baja',
+      destructive: true,
     );
-    if (confirmed != true || !context.mounted) return;
+    if (!confirmed || !context.mounted) return;
     try {
       await context.read<UserRepository>().releaseFromBarbershop(barber.uid);
     } catch (e) {
-      if (context.mounted) {
-        ScaffoldMessenger.of(
-          context,
-        ).showSnackBar(SnackBar(content: Text('No se pudo dar de baja: $e')));
-      }
+      if (context.mounted) _snack(context, 'No se pudo dar de baja: $e');
     }
   }
 
   @override
   Widget build(BuildContext context) {
     final repo = context.read<UserRepository>();
+    final text = Theme.of(context).textTheme;
 
     return Scaffold(
       appBar: AppBar(title: const Text('Barberos')),
-      floatingActionButton: FloatingActionButton(
+      floatingActionButton: FloatingActionButton.extended(
         onPressed: () => _hireBarber(context),
-        child: const Icon(Icons.person_add_alt_1),
+        icon: const Icon(Icons.person_add_alt_1),
+        label: const Text('Contratar'),
       ),
       body: StreamBuilder<List<AppUser>>(
         stream: repo.watchBarbersByBarbershop(barbershopId),
@@ -141,13 +90,13 @@ class ManageBarbersView extends StatelessWidget {
               child: ErrorState(title: 'No pudimos cargar los barberos'),
             );
           }
-          final barbers = snapshot.data ?? [];
-          if (snapshot.connectionState == ConnectionState.waiting) {
+          if (!snapshot.hasData) {
             return const Padding(
-              padding: EdgeInsets.all(16),
+              padding: EdgeInsets.all(AppSpace.lg),
               child: ShimmerList(),
             );
           }
+          final barbers = snapshot.data!;
           if (barbers.isEmpty) {
             return const Center(
               child: EmptyState(
@@ -157,69 +106,168 @@ class ManageBarbersView extends StatelessWidget {
               ),
             );
           }
-          return ListView.separated(
-            padding: const EdgeInsets.all(16),
-            itemCount: barbers.length,
-            separatorBuilder: (_, _) => const SizedBox(height: 10),
-            itemBuilder: (context, index) {
-              final barber = barbers[index];
-              return Container(
-                padding: const EdgeInsets.all(12),
-                decoration: BoxDecoration(
-                  color: AppColors.surface,
-                  borderRadius: BorderRadius.circular(14),
-                  border: Border.all(color: AppColors.border),
-                  boxShadow: [
-                    BoxShadow(
-                      color: AppColors.textPrimary.withValues(alpha: 0.05),
-                      blurRadius: 12,
-                      offset: const Offset(0, 5),
-                    ),
-                  ],
-                ),
-                child: Row(
+          return ListView(
+            padding: const EdgeInsets.only(top: AppSpace.lg, bottom: 96),
+            children: [
+              ResponsiveBody(
+                child: Column(
                   children: [
-                    CircleAvatar(
-                      backgroundColor: AppColors.primary,
-                      child: Text(
-                        barber.initials,
-                        style: const TextStyle(
-                          color: AppColors.onColor,
-                          fontSize: 12,
-                          fontWeight: FontWeight.w700,
+                    for (final barber in barbers) ...[
+                      AppCard(
+                        padding: const EdgeInsets.all(AppSpace.md),
+                        child: Row(
+                          children: [
+                            CircleAvatar(
+                              backgroundColor: AppColors.surfaceRaised,
+                              child: Text(
+                                barber.initials,
+                                style: text.labelLarge?.copyWith(
+                                  color: AppColors.textPrimary,
+                                ),
+                              ),
+                            ),
+                            const SizedBox(width: AppSpace.md),
+                            Expanded(
+                              child: Column(
+                                crossAxisAlignment: CrossAxisAlignment.start,
+                                children: [
+                                  Text(
+                                    barber.name,
+                                    maxLines: 1,
+                                    overflow: TextOverflow.ellipsis,
+                                    style: text.titleSmall,
+                                  ),
+                                  Text(
+                                    barber.email,
+                                    maxLines: 1,
+                                    overflow: TextOverflow.ellipsis,
+                                    style: text.bodySmall?.copyWith(
+                                      color: AppColors.textSecondary,
+                                    ),
+                                  ),
+                                ],
+                              ),
+                            ),
+                            TextButton(
+                              onPressed: () => _release(context, barber),
+                              child: Text(
+                                'Dar de baja',
+                                style: TextStyle(
+                                  color: AppColors.readable(AppColors.error),
+                                ),
+                              ),
+                            ),
+                          ],
                         ),
                       ),
-                    ),
-                    const SizedBox(width: 12),
-                    Expanded(
-                      child: Column(
-                        crossAxisAlignment: CrossAxisAlignment.start,
-                        children: [
-                          Text(
-                            barber.name,
-                            style: const TextStyle(fontWeight: FontWeight.w700),
-                          ),
-                          Text(
-                            barber.email,
-                            style: TextStyle(
-                              color: AppColors.textSecondary,
-                              fontSize: 12,
-                            ),
-                          ),
-                        ],
-                      ),
-                    ),
-                    TextButton(
-                      onPressed: () => _release(context, barber),
-                      child: const Text('Dar de baja'),
-                    ),
+                      const SizedBox(height: AppSpace.md),
+                    ],
                   ],
                 ),
-              );
-            },
+              ),
+            ],
           );
         },
       ),
+    );
+  }
+}
+
+/// Formulario de la hoja: busca por correo a un cliente ya registrado y lo
+/// devuelve si se puede contratar; si no, explica por qué en el mismo lugar.
+class _FindClientForm extends StatefulWidget {
+  final UserRepository repo;
+
+  const _FindClientForm({required this.repo});
+
+  @override
+  State<_FindClientForm> createState() => _FindClientFormState();
+}
+
+class _FindClientFormState extends State<_FindClientForm> {
+  final _email = TextEditingController();
+  String? _problem;
+
+  @override
+  void dispose() {
+    _email.dispose();
+    super.dispose();
+  }
+
+  Future<void> _search() async {
+    final email = _email.text.trim();
+    if (!RegExp(r'^[^@\s]+@[^@\s]+\.[^@\s]+$').hasMatch(email)) {
+      setState(() => _problem = 'Escribe un correo válido.');
+      return;
+    }
+    try {
+      final user = await widget.repo.findByEmail(email);
+      if (!mounted) return;
+      if (user == null) {
+        setState(
+          () => _problem =
+              'No existe ninguna cuenta con ese correo. Pídele que se '
+              'registre primero como cliente.',
+        );
+      } else if (user.role != UserRole.client) {
+        setState(
+          () => _problem =
+              '${user.name.isEmpty ? user.email : user.name} ya tiene otro '
+              'rol y no se puede contratar.',
+        );
+      } else {
+        Navigator.of(context).pop(user);
+      }
+    } catch (e) {
+      if (mounted) setState(() => _problem = 'No se pudo buscar: $e');
+    }
+  }
+
+  @override
+  Widget build(BuildContext context) {
+    final text = Theme.of(context).textTheme;
+    return Column(
+      crossAxisAlignment: CrossAxisAlignment.stretch,
+      children: [
+        Text(
+          'Escribe el correo de un cliente ya registrado en BarberFlow para '
+          'contratarlo como barbero de tu barbería.',
+          style: text.bodyMedium?.copyWith(color: AppColors.textSecondary),
+        ),
+        const SizedBox(height: AppSpace.lg),
+        TextField(
+          controller: _email,
+          keyboardType: TextInputType.emailAddress,
+          autofillHints: const [AutofillHints.email],
+          textInputAction: TextInputAction.search,
+          onChanged: (_) {
+            if (_problem != null) setState(() => _problem = null);
+          },
+          onSubmitted: (_) => _search(),
+          decoration: const InputDecoration(
+            labelText: 'Correo del barbero',
+            prefixIcon: Icon(Icons.mail_outline),
+          ),
+        ),
+        if (_problem != null) ...[
+          const SizedBox(height: AppSpace.sm),
+          Semantics(
+            liveRegion: true,
+            child: Text(
+              _problem!,
+              style: text.bodyMedium?.copyWith(
+                color: AppColors.readable(AppColors.error),
+              ),
+            ),
+          ),
+        ],
+        const SizedBox(height: AppSpace.lg),
+        AppButton(
+          onPressed: _search,
+          icon: Icons.search,
+          child: const Text('Buscar'),
+        ),
+      ],
     );
   }
 }

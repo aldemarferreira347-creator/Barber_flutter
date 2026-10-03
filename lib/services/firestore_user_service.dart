@@ -143,13 +143,19 @@ class FirestoreUserService implements UserRepository {
   }
 
   @override
-  Future<void> updateName(String uid, String name) {
-    return _users.doc(uid).update({'name': name.trim()});
-  }
-
-  @override
-  Future<void> updateEmail(String uid, String email) {
-    return _users.doc(uid).update({'email': email.trim().toLowerCase()});
+  Future<void> updateProfile(
+    String uid, {
+    String? name,
+    String? email,
+    UserRole? role,
+  }) {
+    final changes = <String, Object>{
+      if (name != null) 'name': name.trim(),
+      if (email != null) 'email': email.trim().toLowerCase(),
+      if (role != null) 'role': role.value,
+    };
+    if (changes.isEmpty) return Future.value();
+    return _users.doc(uid).update(changes);
   }
 
   @override
