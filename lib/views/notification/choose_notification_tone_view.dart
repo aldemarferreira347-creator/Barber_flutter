@@ -85,17 +85,6 @@ class _ChooseNotificationToneViewState
                                 : AppColors.border,
                             width: selected ? 2 : 1,
                           ),
-                          boxShadow: selected
-                              ? [
-                                  BoxShadow(
-                                    color: AppColors.accent.withValues(
-                                      alpha: 0.15,
-                                    ),
-                                    blurRadius: 12,
-                                    offset: const Offset(0, 4),
-                                  ),
-                                ]
-                              : [],
                         ),
                         child: Row(
                           children: [

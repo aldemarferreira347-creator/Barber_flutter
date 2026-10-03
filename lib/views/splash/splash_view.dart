@@ -54,23 +54,29 @@ class _SplashViewState extends State<SplashView> {
               children: [
                 Expanded(
                   child: Center(
-                    child: Column(
-                      mainAxisSize: MainAxisSize.min,
-                      children: [
-                        const BrandMark(size: 86, spin: false),
-                        const SizedBox(height: 18),
-                        Text(
-                          'BarberFlow',
-                          style: Theme.of(context).textTheme.headlineMedium
-                              ?.copyWith(color: onPhoto, fontSize: 32),
-                        ),
-                        const SizedBox(height: 8),
-                        Text(
-                          'Tu barbería, siempre conectada',
-                          style: Theme.of(context).textTheme.bodyLarge
-                              ?.copyWith(color: onPhoto.withValues(alpha: 0.8)),
-                        ),
-                      ],
+                    // En una ventana muy pequeña se reduce en vez de desbordar.
+                    child: FittedBox(
+                      fit: BoxFit.scaleDown,
+                      child: Column(
+                        mainAxisSize: MainAxisSize.min,
+                        children: [
+                          const BrandMark(size: 86, spin: false),
+                          const SizedBox(height: 18),
+                          Text(
+                            'BarberFlow',
+                            style: Theme.of(context).textTheme.headlineMedium
+                                ?.copyWith(color: onPhoto, fontSize: 32),
+                          ),
+                          const SizedBox(height: 8),
+                          Text(
+                            'Tu barbería, siempre conectada',
+                            style: Theme.of(context).textTheme.bodyLarge
+                                ?.copyWith(
+                                  color: onPhoto.withValues(alpha: 0.8),
+                                ),
+                          ),
+                        ],
+                      ),
                     ),
                   ),
                 ),

@@ -122,6 +122,9 @@ class AppTheme {
         titleTextStyle: textTheme.titleLarge,
       ),
       inputDecorationTheme: InputDecorationTheme(
+        // Ayudas y errores largos se parten en varias líneas, no se cortan.
+        helperMaxLines: 3,
+        errorMaxLines: 3,
         filled: true,
         fillColor: AppColors.surface,
         contentPadding: const EdgeInsets.symmetric(

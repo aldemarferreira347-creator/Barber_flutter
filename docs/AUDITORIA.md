@@ -7,17 +7,17 @@ Cada hallazgo se registra como **Hallazgo · Causa raíz · Corrección · Test*
 
 | Indicador | Antes | Después |
 |---|---|---|
-| `flutter analyze` / `flutter test` | 0 issues / 109 pasan | _(final)_ |
-| Functions build / lint / jest | OK / 1 error / 251 | _(final)_ |
-| `npm audit --omit=dev` | 2 moderate (`gaxios`) | _(final)_ |
-| `Color(0x…)` en `lib/` | 92 | _(final)_ |
-| `Colors.white/black` directos | 81 | _(final)_ |
-| `Semantics(` / `tooltip:` / `IconButton(` | 1 / 4 / 11 | _(final)_ |
-| `.animate(` en vistas / `BoxShadow` / gradientes | 94 / 26 / 8 | _(final)_ |
-| Archivos > 400 líneas | 5 vistas (hasta 1351) | _(final)_ |
-| Copias del cobro simulado | 4 | _(final)_ |
-| `catch (_)` que traga el error | 3 | _(final)_ |
-| Tests de reglas ejecutados | 0 (sin JDK ≥ 21) | _(final)_ |
+| `flutter analyze` / `flutter test` | 0 issues / 109 pasan | 0 issues / 242 pasan |
+| Functions build / lint / jest | OK / 1 error / 251 | OK / 0 errores / 251 |
+| `npm audit --omit=dev` | 2 moderate (`gaxios`) | 2 moderate (sin cambios; solo en Functions) |
+| `Color(0x…)` en `lib/` | 92 | 6 (solo los colores de marca del logo de Google) |
+| `Colors.white/black` directos | 81 | 0 fuera del tema |
+| `Semantics(` / `tooltip:` / `IconButton(` | 1 / 4 / 11 | 27 / 13 / 10 (todo `IconButton` con tooltip) |
+| `.animate(` en vistas / `BoxShadow` / gradientes | 94 / 26 / 8 | 0 / 0 / 0 |
+| Archivos > 400 líneas | 5 vistas (hasta 1351) | 4 (máx. 509; ninguno es una pantalla monolítica de gestión) |
+| Copias del cobro simulado | 4 | 0 (reemplazado por el pago Nequi manual verificado) |
+| `catch (_)` que traga el error | 3 | 4 intencionales y comentados (limpieza opcional de token, borrado de app temporal, fallback de Auth) |
+| Tests de reglas ejecutados | 0 (sin JDK ≥ 21) | 143 en 13 suites |
 
 ## Decisiones del dueño del producto
 

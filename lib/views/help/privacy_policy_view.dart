@@ -55,13 +55,6 @@ class PrivacyPolicyView extends StatelessWidget {
               color: AppColors.surface,
               borderRadius: BorderRadius.circular(14),
               border: Border.all(color: AppColors.border),
-              boxShadow: [
-                BoxShadow(
-                  color: AppColors.accent.withValues(alpha: 0.08),
-                  blurRadius: 12,
-                  offset: const Offset(0, 5),
-                ),
-              ],
             ),
             child: Row(
               children: [

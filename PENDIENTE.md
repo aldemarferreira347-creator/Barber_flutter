@@ -5,6 +5,26 @@ para retomar el trabajo sin perder contexto. Se basa en el plan original
 (`C:\Users\jaime\.claude\plans\immutable-noodling-seal.md`) y en el estado
 real del código a la fecha.
 
+## Estado actual (rama `audit/integral`, 2026-10-03)
+
+Lo que sigue en este archivo es el historial de fases anteriores; **esta sección manda** si algo se contradice. Detalle por fase y hallazgos: `docs/AUDITORIA.md`.
+
+**Verificado:** `flutter analyze` 0 issues, `flutter test` 242, Functions build/lint/jest (251), `npm run test:rules` 143 en 13 suites (las reglas SÍ se ejecutan ya contra el emulador, con JDK 21), APK debug compila, y recorrido en vivo contra emuladores de cliente, dueña y administrador.
+
+**Cambios de fondo respecto a lo descrito más abajo:**
+- El cobro **ya no es simulado**: pago Nequi manual (el pagador registra la referencia; el personal de la barbería o el admin la verifica). Nadie confirma su propio pago (reglas).
+- Mora, expiración de compras y recordatorios se resuelven **sin servidor** (estado derivado de fechas, reglas y avisos locales).
+- Rediseño completo de la interfaz con un único sistema de componentes; matriz responsive automatizada.
+- Nuevo: Mis compras del cliente, informe del dueño, ajustes de plataforma editables por el admin, catálogo editable (servicios y productos con foto).
+
+**Sigue pendiente (requiere decisión o datos de negocio):**
+1. Plan **Blaze** y despliegue de Cloud Functions (hoy la app funciona sin ellas; el código de Functions sigue ahí).
+2. Credenciales reales de Nequi/Twilio/SendGrid si algún día se automatiza el cobro o los avisos; hoy no hay push/SMS/correo.
+3. Correo y teléfono reales de soporte en `lib/support_info.dart` (marcadores).
+4. Catálogo de peinados y Fase 12 (IA), App Check y restricciones de la clave de API de GCP.
+5. Borrar de verdad la cuenta de acceso al eliminar un usuario (requiere Admin SDK): hoy "Eliminar perfil" borra solo los datos de la app.
+6. Decidir si se unen `audit/integral` → `master` y se sube (no se ha hecho).
+
 ## Hecho y commiteado (Fases 0–11 + alineación visual)
 
 Todo esto ya está en `master` y subido a
@@ -365,19 +385,11 @@ bloquea seguir desarrollando):
 - Consolidar este mismo documento con el resultado final para el
   usuario.
 
-## Limitación conocida y aceptada: reglas de Firestore/Storage sin ejecutar
+## Reglas de Firestore/Storage: ya se ejecutan
 
-El emulador de Firebase (`@firebase/rules-unit-testing`) necesita un
-JRE/Java que no está disponible en este entorno sandbox (el intento de
-`winget install` falló). Por eso **todos** los tests de reglas
-(`functions/test/rules/*.rules.test.ts`) están escritos y se
-type-chequean (`npx tsc --noEmit --strict ...`) pero nunca se ejecutan
-de verdad contra el emulador. Quedan excluidos de `npm test`
-(`testPathIgnorePatterns` en `functions/jest.config.js`) y solo
-correrían con `npm run test:rules`, que requiere el emulador. Si en
-algún momento hay una máquina con Java disponible, correr
-`npm run test:rules` en `functions/` para validar por primera vez todas
-las reglas escritas hasta ahora.
+Resuelto: con JDK 21 (más `-Djava.net.preferIPv4Stack=true` y un TEMP corto)
+`npm run test:rules` en `functions/` corre las 13 suites (143 pruebas) contra el
+emulador real. Quedan excluidas de `npm test` porque necesitan el emulador.
 
 ## Intervenciones humanas pendientes (no bloquean seguir desarrollando)
 
