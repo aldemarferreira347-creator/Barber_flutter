@@ -13,6 +13,7 @@ import '../widgets/app_button.dart';
 import '../widgets/app_card.dart';
 import '../widgets/app_dialog.dart';
 import '../widgets/brand_mark.dart';
+import '../widgets/choice_tile.dart';
 import '../widgets/responsive_body.dart';
 
 class ProfileMenuItem {
@@ -39,31 +40,21 @@ class ProfileMenuView extends StatelessWidget {
   Future<void> _showToneDialog(BuildContext context) async {
     final authController = context.read<AuthController>();
     final current = authController.profile?.notificationTone;
-    final tone = await showDialog<NotificationTone>(
-      context: context,
-      builder: (dialogContext) => SimpleDialog(
-        title: const Text('Tono de notificaciones'),
-        children: [
-          for (final option in NotificationTone.values)
-            SimpleDialogOption(
-              onPressed: () => Navigator.of(dialogContext).pop(option),
-              child: Row(
-                children: [
-                  Icon(
-                    option == current
-                        ? Icons.radio_button_checked
-                        : Icons.radio_button_off,
-                    color: option == current
-                        ? AppColors.accent
-                        : AppColors.textSecondary,
-                    size: 20,
-                  ),
-                  const SizedBox(width: AppSpace.md),
-                  Text(option.label),
-                ],
+    final tone = await AppBottomSheet.show<NotificationTone>(
+      context,
+      title: 'Tono de notificaciones',
+      child: Builder(
+        builder: (sheetContext) => Column(
+          crossAxisAlignment: CrossAxisAlignment.stretch,
+          children: [
+            for (final option in NotificationTone.values)
+              ChoiceTile(
+                selected: option == current,
+                title: option.label,
+                onTap: () => Navigator.of(sheetContext).pop(option),
               ),
-            ),
-        ],
+          ],
+        ),
       ),
     );
     if (tone == null || tone == current || !context.mounted) return;

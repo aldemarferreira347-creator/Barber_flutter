@@ -6,6 +6,8 @@ import 'package:barber/repositories/auth_repository.dart';
 import 'package:barber/repositories/user_repository.dart';
 import 'package:barber/services/push_notification_service.dart';
 import 'package:barber/views/notification/choose_notification_tone_view.dart';
+import 'package:barber/theme/theme_controller.dart';
+import 'package:barber/views/profile/profile_menu_view.dart';
 import 'package:barber/views/widgets/app_button.dart';
 import 'package:firebase_auth/firebase_auth.dart';
 import 'package:flutter/material.dart';
@@ -27,6 +29,8 @@ void main() {
   late MockUserRepository userRepository;
   late MockPushNotificationService pushService;
   late AuthController controller;
+
+  setUpAll(() => registerFallbackValue(NotificationTone.normal));
 
   setUp(() {
     authRepository = MockAuthRepository();
@@ -94,4 +98,54 @@ void main() {
     ).called(1);
     expect(controller.profile?.notificationTone, NotificationTone.informal);
   });
+
+  testWidgets(
+    'el perfil cambia el tono desde la hoja y guarda solo si cambió',
+    (tester) async {
+      when(
+        () => userRepository.setNotificationTone(
+          _kUid,
+          NotificationTone.friendly,
+        ),
+      ).thenAnswer((_) async {});
+      controller.profile = controller.profile!.copyWith(
+        notificationTone: NotificationTone.formal,
+      );
+
+      await tester.pumpWidget(
+        MultiProvider(
+          providers: [
+            ChangeNotifierProvider<AuthController>.value(value: controller),
+            ChangeNotifierProvider<ThemeController>(
+              create: (_) => ThemeController(),
+            ),
+          ],
+          child: const MaterialApp(
+            home: ProfileMenuView(
+              items: [ProfileMenuItem(icon: Icons.help, label: 'Ayuda')],
+            ),
+          ),
+        ),
+      );
+      await tester.pumpAndSettle();
+
+      await tester.tap(find.text('Tono de notificaciones'));
+      await tester.pumpAndSettle();
+      // Elegir el tono ya vigente no escribe nada.
+      await tester.tap(find.text(NotificationTone.formal.label).last);
+      await tester.pumpAndSettle();
+      verifyNever(() => userRepository.setNotificationTone(any(), any()));
+
+      await tester.tap(find.text('Tono de notificaciones'));
+      await tester.pumpAndSettle();
+      await tester.tap(find.text(NotificationTone.friendly.label).last);
+      await tester.pumpAndSettle();
+      verify(
+        () => userRepository.setNotificationTone(
+          _kUid,
+          NotificationTone.friendly,
+        ),
+      ).called(1);
+    },
+  );
 }
