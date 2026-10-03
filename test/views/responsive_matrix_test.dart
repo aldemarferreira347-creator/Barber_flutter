@@ -151,7 +151,6 @@ void main() {
           ownerId: _uid,
           name: 'Barbería Norte',
           active: true,
-          approvalStatus: BarbershopApprovalStatus.pending,
         ),
       ]),
     );

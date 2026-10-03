@@ -194,18 +194,40 @@ El mockup del repo (`lib/views/img/mockup.png`) es la fuente: negro `#000`, tarj
 
 Eliminar los `Color(0x…)` / `Colors.white|black` restantes de las vistas (login, registro, splash y algunas más) y blindarlo con un test que falle si reaparecen.
 
-## Fase 6 — Rediseño por área (EN CURSO)
+## Fase 6 — Rediseño por área
 
-**Hecho y verificado en la app real contra emuladores (claro y oscuro):** login, registro, teléfono y éxito (el login era inutilizable en oscuro); los 4 dashboards con contenido operativo (cliente: próxima cita real; barbero: resumen de hoy; dueño: actividad por barbería; admin: "requiere tu atención"); catálogo del cliente nuevo (foto, valoración, abierta ahora, búsqueda y filtros); perfil; navegación `NavigationBar`/`NavigationRail`; cambio de tema que ya no reinicia la app (`ThemeScope`); texto por defecto con color principal; precios unificados con `formatCop`; aviso de pago que mostraba código literal.
+**Verificado en la app real contra emuladores (claro y oscuro):** login, registro, teléfono y éxito (el login era inutilizable en oscuro); los 4 dashboards con contenido operativo (cliente: próxima cita real; barbero: resumen de hoy; dueño: actividad por barbería; admin: "requiere tu atención"); catálogo del cliente (foto, valoración, abierta ahora, búsqueda y filtros); perfil; navegación `NavigationBar`/`NavigationRail`; cambio de tema que ya no reinicia la app (`ThemeScope`); precios unificados con `formatCop`.
 
-**Pendiente de la Fase 6:** `IconButton` sin tooltip (6), `Image.network`/`NetworkImage` sin caché en 10 vistas (usar `AppNetworkImage`), partir `manage_users_view` (1351 líneas) y `manage_barbershops_view`, rediseño de las pantallas de gestión del dueño, agenda del barbero, reserva, detalle y compras; `ResponsiveBody` en las listas restantes.
+**Pantallas de gestión rediseñadas con los componentes comunes (`AppCard`, `AppButton`, `AppDialog`, `AppBottomSheet`, `ResponsiveBody`, `SectionHeader`, `StatusBadge`):**
+
+| Pantalla | Problema real encontrado | Corrección |
+|---|---|---|
+| Usuarios (admin, 1316 líneas) | Editar nombre/correo/rol eran 3 escrituras sueltas que podían quedar a medias; "notificación push" que no existe; errores tragados (`catchError((_) {})`) | Dividida en lista + formularios en hojas + estilo; `UserRepository.updateProfile` (una escritura); confirmación al cambiar rol, desactivar o crear admin; textos honestos |
+| Barberos | Contratar con diálogos encadenados y errores en snackbar | Hoja con búsqueda, error en el mismo lugar y confirmación antes de contratar |
+| Cierre por evento externo | Prometía "se notificó a cada cliente" (sin servidor no ocurre); el botón ignoraba el motivo vacío sin avisar; sin confirmación de una acción irreversible | Validación con mensajes, confirmación destructiva, texto verdadero |
+| Horarios | Se podía guardar un cierre anterior a la apertura | Validación + borde de error |
+| Disponibilidad del barbero | "Marcar salida" no tenía ningún efecto visible y prometía aplazar citas solo | El cliente ve "fuera de la tienda · vuelve ~HH:mm" al elegir barbero; texto verdadero |
+| Calificar cita | Si fallaba el comentario/foto se mostraba "no se pudo enviar la calificación" aunque ya estaba guardada, y reintentar fallaba | Etapas separadas; no se repite la calificación; botón "Reenviar comentario" |
+| Posponer cita pagada | Selector libre de fecha/hora (permitía fuera de horario) | `DayAndTimePicker` compartido con la reserva (solo horas dentro del horario) en una hoja con error inline |
+| Cancelar cita pagada | `AlertDialog` sueltos | Hojas con `AppButton`; el cancelar sin pago ya muestra el error si falla |
+| Reseñas, notificaciones, ayuda, mis barberías | `Container`+sombras, `PressableScale` | `AppCard`/`ResponsiveBody`; FAQ al día (Nequi, compras, recordatorios); se elimina `PressableScale` |
+
+**Errores en pantalla:** `errorText()` traduce códigos de Firebase y quita prefijos técnicos en 26 archivos que mostraban `Error: Dart exception: [cloud_firestore/…]`.
+
+**Hallazgo crítico de la verificación en vivo:** toda reserva con pago Nequi fallaba con `permission-denied`. La transacción de reserva hace `tx.get` sobre `appointmentSlots`, pero las reglas prohibían toda lectura de esa colección (y una prueba lo exigía), de modo que ninguna prueba de reglas ni de widgets lo detectaba. Corrección: `allow get` por id para autenticados, `list` sigue prohibido (nadie puede enumerar la agenda de un barbero); pruebas de reglas actualizadas.
 
 ## Fase 7 — Verificación final
 
-_(pendiente: matriz de tamaños × tema × texto grande)_
+- **Matriz responsive** (`test/views/responsive_matrix_test.dart`): 9 grupos de pantallas de los 4 roles × 4 tamaños (320×640, 390×844, 768×1024, 1280×800) × claro/oscuro × letra 100 %/150 % con nombres, correos y cifras largos. Encontró y se corrigieron 4 desbordamientos (fecha de la tarjeta de cita, resumen del barbero, cabecera de barbería del dueño, cifras de `StatCard`).
+- Recorrido en vivo (emulador, 375×812): cliente reserva con Nequi → "Pago en verificación · Ref."; cliente compra un producto; dueña confirma el pago de la compra (diálogo de confirmación, escritura atómica); informe del dueño; ayuda.
+- Compilación del APK debug con las notificaciones locales (hay que fijar `TMP=C:\tmp` y `-Djava.net.preferIPv4Stack=true`).
 
-## Fase 8 — Funcionalidad real sin servidor (PENDIENTE, diseño listo)
+## Fase 8 — Funcionalidad real sin servidor (implementada)
 
-1. **Pagos Nequi manuales con confirmación** (reemplazan el cobro simulado, que le dice al usuario "confirma en tu app Nequi" sin enviar nada): el cliente ve el número Nequi de la barbería, paga desde su app y registra la referencia; el dueño/barbero verifica y confirma (o rechaza y se libera el horario). Mensualidad: el dueño paga al número Nequi de la plataforma (configurable por el admin) y el admin confirma. Las reglas dejan de permitir que el pagador apruebe su propio pago (cierra el riesgo aceptado en la Fase 1). Reembolso con medio (Nequi o efectivo).
-2. **Sin servidor:** recordatorios locales 1 h y 15 min antes de la cita; bloqueo por mora con gracia como estado derivado y barrido del admin; compras vencidas (la regla debe impedir reclamar tras 24 h).
-3. **Ausentes:** "Mis compras" del cliente (hoy no puede volver a ver su código de reclamo), reportes del dueño (clientes atendidos, actividad por barbero), vincular compra a una cita, quitar el stub "Métodos de pago".
+1. **Pagos Nequi manuales con verificación** (sustituyen al cobro simulado): el pagador ve el número y el valor exactos y registra la referencia; el personal de la barbería (citas y compras) o el admin (mensualidad) confirma o rechaza; nadie aprueba su propio pago (cierra el riesgo aceptado de la Fase 1, impuesto en `firestore.rules`). Confirmaciones en una sola escritura atómica. Ajustes de plataforma (Nequi del admin, tarifa, días de gracia) editables.
+2. **Sin servidor:** mora derivada de fechas (reglas + cliente: una barbería en mora no recibe citas ni compras y sale del catálogo; el dueño no puede autorrenovarse), compras vencidas (la regla impide reclamar tras 24 h), recordatorios locales 1 h y 15 min antes de cada cita aceptada (`flutter_local_notifications`), consultas en vivo compartidas (`SharedStreams`) que eliminan parpadeos y listeners duplicados.
+3. **Ausentes ya cubiertos:** "Mis compras" del cliente (vuelve a ver su código), informe del dueño (citas atendidas, clientes, ingresos Nequi, actividad por barbero), catálogo editable (servicios y productos con foto), quitado el stub "Métodos de pago".
+
+## Fuera de alcance (necesitan datos de negocio o servicios de pago)
+
+Despliegue con Blaze y Cloud Functions, credenciales reales (Nequi/Twilio/SendGrid), correo y teléfono de soporte reales (`lib/support_info.dart` son marcadores), catálogo de peinados con IA, App Check y restricciones de la clave de API de GCP, envío real de push/SMS/correo, y borrar la cuenta de acceso al eliminar un usuario (requiere Admin SDK: hoy "Eliminar perfil" borra solo los datos de la app).
