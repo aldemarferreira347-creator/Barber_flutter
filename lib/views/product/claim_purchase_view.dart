@@ -15,6 +15,7 @@ import '../widgets/payment_status_line.dart';
 import '../widgets/responsive_body.dart';
 import '../widgets/section_header.dart';
 import '../widgets/status_badge.dart';
+import '../../utils/error_text.dart';
 
 /// Compras de productos de una barbería, para quien atiende (barbero o
 /// dueño): primero verifica los pagos Nequi que llegaron (al confirmarlos el
@@ -67,7 +68,9 @@ class _ClaimPurchaseViewState extends State<ClaimPurchaseView> {
         }
       });
     } catch (e) {
-      if (mounted) setState(() => _error = 'No se pudo buscar el código: $e');
+      if (mounted) {
+        setState(() => _error = 'No se pudo buscar el código: ${errorText(e)}');
+      }
     } finally {
       if (mounted) setState(() => _searching = false);
     }
@@ -95,7 +98,9 @@ class _ClaimPurchaseViewState extends State<ClaimPurchaseView> {
       );
     } catch (e) {
       if (mounted) {
-        setState(() => _error = 'No se pudo marcar como entregada: $e');
+        setState(
+          () => _error = 'No se pudo marcar como entregada: ${errorText(e)}',
+        );
       }
     }
   }
@@ -265,7 +270,7 @@ class _PendingPaymentCard extends StatelessWidget {
     } catch (e) {
       if (context.mounted) {
         ScaffoldMessenger.of(context)
-            .showSnackBar(SnackBar(content: Text('$failure: $e')));
+            .showSnackBar(SnackBar(content: Text('$failure: ${errorText(e)}')));
       }
     }
   }

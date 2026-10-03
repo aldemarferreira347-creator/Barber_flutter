@@ -11,6 +11,7 @@ import '../../theme/app_tokens.dart';
 import '../widgets/app_button.dart';
 import '../widgets/app_dialog.dart';
 import 'user_style.dart';
+import '../../utils/error_text.dart';
 
 final _emailPattern = RegExp(r'^[^@\s]+@[^@\s]+\.[^@\s]+$');
 
@@ -270,7 +271,9 @@ class _EditUserFormState extends State<EditUserForm> {
       );
       if (mounted) Navigator.of(context).pop(true);
     } catch (e) {
-      if (mounted) setState(() => _error = 'No se pudo guardar: $e');
+      if (mounted) {
+        setState(() => _error = 'No se pudo guardar: ${errorText(e)}');
+      }
     }
   }
 
@@ -362,7 +365,9 @@ class _NotifyUserFormState extends State<NotifyUserForm> {
       );
       if (mounted) Navigator.of(context).pop(true);
     } catch (e) {
-      if (mounted) setState(() => _error = 'No se pudo enviar: $e');
+      if (mounted) {
+        setState(() => _error = 'No se pudo enviar: ${errorText(e)}');
+      }
     }
   }
 

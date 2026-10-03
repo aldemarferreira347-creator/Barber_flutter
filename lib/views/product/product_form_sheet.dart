@@ -9,6 +9,7 @@ import '../../theme/app_tokens.dart';
 import '../widgets/app_button.dart';
 import '../widgets/app_dialog.dart';
 import '../widgets/photo_picker_field.dart';
+import '../../utils/error_text.dart';
 
 /// Crea o edita un producto en una hoja modal: nombre, descripción, precio y
 /// foto. Con [product] edita ese producto y además ofrece eliminarlo.
@@ -89,7 +90,9 @@ class _ProductFormState extends State<_ProductForm> {
       }
       navigator.pop(true);
     } catch (e) {
-      messenger.showSnackBar(SnackBar(content: Text('No se pudo guardar: $e')));
+      messenger.showSnackBar(
+        SnackBar(content: Text('No se pudo guardar: ${errorText(e)}')),
+      );
       if (mounted) setState(() => _saving = false);
     }
   }
@@ -115,7 +118,7 @@ class _ProductFormState extends State<_ProductForm> {
       navigator.pop(true);
     } catch (e) {
       messenger.showSnackBar(
-        SnackBar(content: Text('No se pudo eliminar: $e')),
+        SnackBar(content: Text('No se pudo eliminar: ${errorText(e)}')),
       );
     }
   }

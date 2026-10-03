@@ -10,6 +10,7 @@ import '../../utils/date_labels.dart';
 import '../widgets/app_button.dart';
 import '../widgets/app_card.dart';
 import '../widgets/responsive_body.dart';
+import '../../utils/error_text.dart';
 
 /// El barbero marca si está disponible para recibir citas nuevas — "darse
 /// de baja" temporalmente sin dejar la barbería — y, por separado, avisa de
@@ -121,8 +122,9 @@ class _AwayControlState extends State<_AwayControl> {
 
   void _fail(String action, Object e) {
     if (!mounted) return;
-    ScaffoldMessenger.of(context)
-        .showSnackBar(SnackBar(content: Text('No se pudo $action: $e')));
+    ScaffoldMessenger.of(context).showSnackBar(
+      SnackBar(content: Text('No se pudo $action: ${errorText(e)}')),
+    );
   }
 
   Future<void> _markAway() async {

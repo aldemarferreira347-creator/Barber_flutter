@@ -16,6 +16,7 @@ import '../widgets/nequi_payment_sheet.dart';
 import '../widgets/payment_status_line.dart';
 import '../widgets/responsive_body.dart';
 import 'claim_code_card.dart';
+import '../../utils/error_text.dart';
 
 /// Compra directa de un producto (spec 10.3), sin necesidad de una cita.
 /// El cliente elige la cantidad, paga por Nequi y registra su comprobante;
@@ -68,7 +69,9 @@ class _BuyProductViewState extends State<BuyProductView> {
       if (mounted) setState(() => _purchaseId = id);
     } catch (e) {
       if (mounted) {
-        setState(() => _error = 'No se pudo registrar la compra: $e');
+        setState(
+          () => _error = 'No se pudo registrar la compra: ${errorText(e)}',
+        );
       }
     } finally {
       if (mounted) setState(() => _buying = false);

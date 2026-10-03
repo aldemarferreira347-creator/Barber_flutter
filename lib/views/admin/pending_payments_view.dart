@@ -18,6 +18,7 @@ import '../widgets/error_state.dart';
 import '../widgets/payment_status_line.dart';
 import '../widgets/responsive_body.dart';
 import '../widgets/shimmer_box.dart';
+import '../../utils/error_text.dart';
 
 /// Mensualidades que los dueños dicen haber transferido al Nequi de la
 /// plataforma. El admin verifica cada una en su propio Nequi: si el dinero
@@ -98,7 +99,7 @@ class _PaymentCard extends StatelessWidget {
       );
     } catch (e) {
       messenger.showSnackBar(
-        SnackBar(content: Text('No se pudo confirmar: $e')),
+        SnackBar(content: Text('No se pudo confirmar: ${errorText(e)}')),
       );
     }
   }
@@ -121,7 +122,7 @@ class _PaymentCard extends StatelessWidget {
       messenger.showSnackBar(const SnackBar(content: Text('Pago rechazado')));
     } catch (e) {
       messenger.showSnackBar(
-        SnackBar(content: Text('No se pudo rechazar: $e')),
+        SnackBar(content: Text('No se pudo rechazar: ${errorText(e)}')),
       );
     }
   }

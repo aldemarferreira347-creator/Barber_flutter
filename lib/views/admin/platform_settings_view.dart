@@ -10,6 +10,7 @@ import '../widgets/app_button.dart';
 import '../widgets/error_state.dart';
 import '../widgets/responsive_body.dart';
 import '../widgets/shimmer_box.dart';
+import '../../utils/error_text.dart';
 
 /// Datos de cobro de la plataforma: a qué Nequi transfieren los dueños su
 /// mensualidad, cuánto cuesta y cuántos días de gracia tienen tras
@@ -90,7 +91,9 @@ class _SettingsFormState extends State<_SettingsForm> {
         const SnackBar(content: Text('Datos de cobro guardados')),
       );
     } catch (e) {
-      messenger.showSnackBar(SnackBar(content: Text('No se pudo guardar: $e')));
+      messenger.showSnackBar(
+        SnackBar(content: Text('No se pudo guardar: ${errorText(e)}')),
+      );
     }
   }
 

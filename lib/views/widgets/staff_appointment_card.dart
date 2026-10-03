@@ -10,6 +10,7 @@ import 'app_button.dart';
 import 'app_dialog.dart';
 import 'appointment_card.dart';
 import 'payment_status_line.dart';
+import '../../utils/error_text.dart';
 
 /// Tarjeta de una cita para quien atiende (barbero o dueño): reúne las
 /// acciones de la cita y, si es una cita pagada con Nequi, la verificación
@@ -38,7 +39,7 @@ class StaffAppointmentCard extends StatelessWidget {
     } catch (e) {
       if (context.mounted) {
         ScaffoldMessenger.of(context)
-            .showSnackBar(SnackBar(content: Text('$failure: $e')));
+            .showSnackBar(SnackBar(content: Text('$failure: ${errorText(e)}')));
       }
     }
   }

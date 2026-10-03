@@ -16,6 +16,7 @@ import '../widgets/app_dialog.dart';
 import '../widgets/nequi_payment_sheet.dart';
 import '../widgets/payment_status_line.dart';
 import 'payment_insight.dart';
+import '../../utils/error_text.dart';
 
 /// Mensualidad de una barbería aprobada, vista por su dueño: alertas de
 /// vencimiento o mora, estado del último pago Nequi y botón para pagar. El
@@ -49,7 +50,9 @@ class SubscriptionSection extends StatelessWidget {
       );
     } catch (e) {
       messenger.showSnackBar(
-        SnackBar(content: Text('No se pudo registrar el pago: $e')),
+        SnackBar(
+          content: Text('No se pudo registrar el pago: ${errorText(e)}'),
+        ),
       );
     }
   }
@@ -72,7 +75,7 @@ class SubscriptionSection extends StatelessWidget {
       await repo.cancelSubscription(shop.id);
     } catch (e) {
       messenger.showSnackBar(
-        SnackBar(content: Text('No se pudo cancelar: $e')),
+        SnackBar(content: Text('No se pudo cancelar: ${errorText(e)}')),
       );
     }
   }

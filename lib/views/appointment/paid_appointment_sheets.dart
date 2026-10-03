@@ -11,6 +11,7 @@ import '../../utils/date_labels.dart';
 import '../widgets/app_button.dart';
 import '../widgets/day_time_picker.dart';
 import '../widgets/shimmer_box.dart';
+import '../../utils/error_text.dart';
 
 /// Qué decide el cliente ante una cita ya pagada.
 enum PaidCancelChoice { postpone, cancel }
@@ -81,7 +82,7 @@ class _PostponeFormState extends State<PostponeForm> {
       if (mounted) Navigator.of(context).pop(true);
     } catch (e) {
       if (mounted) {
-        setState(() => _error = e.toString().replaceFirst('Exception: ', ''));
+        setState(() => _error = errorText(e));
       }
     }
   }
@@ -186,7 +187,9 @@ class _RefundReasonFormState extends State<RefundReasonForm> {
       if (mounted) Navigator.of(context).pop(true);
     } catch (e) {
       if (mounted) {
-        setState(() => _error = 'No se pudo enviar la solicitud: $e');
+        setState(
+          () => _error = 'No se pudo enviar la solicitud: ${errorText(e)}',
+        );
       }
     }
   }

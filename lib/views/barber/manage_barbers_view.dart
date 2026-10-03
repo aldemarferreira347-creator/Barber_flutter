@@ -13,6 +13,7 @@ import '../widgets/empty_state.dart';
 import '../widgets/error_state.dart';
 import '../widgets/responsive_body.dart';
 import '../widgets/shimmer_box.dart';
+import '../../utils/error_text.dart';
 
 class ManageBarbersView extends StatelessWidget {
   final String barbershopId;
@@ -48,7 +49,9 @@ class ManageBarbersView extends StatelessWidget {
       await repo.hireAsBarber(uid: user.uid, barbershopId: barbershopId);
       if (context.mounted) _snack(context, '$who ahora es barbero.');
     } catch (e) {
-      if (context.mounted) _snack(context, 'No se pudo contratar: $e');
+      if (context.mounted) {
+        _snack(context, 'No se pudo contratar: ${errorText(e)}');
+      }
     }
   }
 
@@ -66,7 +69,9 @@ class ManageBarbersView extends StatelessWidget {
     try {
       await context.read<UserRepository>().releaseFromBarbershop(barber.uid);
     } catch (e) {
-      if (context.mounted) _snack(context, 'No se pudo dar de baja: $e');
+      if (context.mounted) {
+        _snack(context, 'No se pudo dar de baja: ${errorText(e)}');
+      }
     }
   }
 
@@ -219,7 +224,9 @@ class _FindClientFormState extends State<_FindClientForm> {
         Navigator.of(context).pop(user);
       }
     } catch (e) {
-      if (mounted) setState(() => _problem = 'No se pudo buscar: $e');
+      if (mounted) {
+        setState(() => _problem = 'No se pudo buscar: ${errorText(e)}');
+      }
     }
   }
 

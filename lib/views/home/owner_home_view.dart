@@ -5,6 +5,7 @@ import '../../controllers/auth_controller.dart';
 import '../appointment/client_appointments_view.dart';
 import '../barbershop/barbershop_catalog_view.dart';
 import '../barbershop/my_barbershops_view.dart';
+import '../barbershop/owner_report_view.dart';
 import '../help/help_view.dart';
 import '../notification/notifications_view.dart';
 import '../profile/profile_menu_view.dart';
@@ -33,7 +34,7 @@ class OwnerHomeView extends StatelessWidget {
             page: OwnerDashboardTab(),
           ),
           const RoleTab(
-            label: 'Mis barberías',
+            label: 'Barberías',
             icon: Icons.storefront_outlined,
             page: MyBarbershopsView(),
           ),
@@ -71,6 +72,15 @@ class OwnerHomeView extends StatelessWidget {
                       onTap: () => Navigator.of(context).push(
                         MaterialPageRoute(
                           builder: (_) => const ClientAppointmentsView(),
+                        ),
+                      ),
+                    ),
+                    ProfileMenuItem(
+                      icon: Icons.insights_outlined,
+                      label: 'Informe',
+                      onTap: () => Navigator.of(context).push(
+                        MaterialPageRoute(
+                          builder: (_) => const OwnerReportView(),
                         ),
                       ),
                     ),

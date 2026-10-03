@@ -24,6 +24,7 @@ import '../widgets/nequi_payment_sheet.dart';
 import '../widgets/responsive_body.dart';
 import '../widgets/section_header.dart';
 import '../widgets/shimmer_box.dart';
+import '../../utils/error_text.dart';
 
 /// Reserva de una cita: servicio, barbero, día y hora (solo horas dentro del
 /// horario de la barbería) y forma de reserva. Pagar por Nequi bloquea el
@@ -153,8 +154,9 @@ class _BookAppointmentViewState extends State<BookAppointmentView> {
       );
     } catch (e) {
       if (mounted) {
-        ScaffoldMessenger.of(context)
-            .showSnackBar(SnackBar(content: Text('No se pudo agendar: $e')));
+        ScaffoldMessenger.of(context).showSnackBar(
+          SnackBar(content: Text('No se pudo agendar: ${errorText(e)}')),
+        );
       }
     } finally {
       if (mounted) setState(() => _saving = false);

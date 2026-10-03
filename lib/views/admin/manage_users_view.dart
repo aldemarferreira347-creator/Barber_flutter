@@ -17,6 +17,7 @@ import '../widgets/scroll_to_top_fab.dart';
 import '../widgets/shimmer_box.dart';
 import 'user_forms.dart';
 import 'user_style.dart';
+import '../../utils/error_text.dart';
 
 /// Acciones que el admin puede hacer sobre otro usuario.
 enum _UserAction { edit, toggleActive, notify, delete }
@@ -98,7 +99,7 @@ class _ManageUsersViewState extends State<ManageUsersView> {
         _snack(deactivating ? 'Cuenta desactivada' : 'Cuenta activada');
       }
     } catch (e) {
-      if (mounted) _snack('No se pudo cambiar el estado: $e');
+      if (mounted) _snack('No se pudo cambiar el estado: ${errorText(e)}');
     }
   }
 
@@ -128,7 +129,7 @@ class _ManageUsersViewState extends State<ManageUsersView> {
       await repo.deleteUser(user.uid);
       if (mounted) _snack('Perfil de ${user.name} eliminado');
     } catch (e) {
-      if (mounted) _snack('No se pudo eliminar: $e');
+      if (mounted) _snack('No se pudo eliminar: ${errorText(e)}');
     }
   }
 

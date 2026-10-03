@@ -11,6 +11,7 @@ import '../widgets/app_button.dart';
 import '../widgets/app_card.dart';
 import '../widgets/photo_picker_field.dart';
 import '../widgets/responsive_body.dart';
+import '../../utils/error_text.dart';
 
 /// Calificación y comentario opcional de una cita pagada y completada
 /// (spec 7.1/7.2), con los lineamientos de conducta (spec 7.4) mostrados
@@ -58,7 +59,9 @@ class _RateAppointmentViewState extends State<RateAppointmentView> {
         if (mounted) setState(() => _ratingSaved = true);
       } catch (e) {
         messenger.showSnackBar(
-          SnackBar(content: Text('No se pudo enviar la calificación: $e')),
+          SnackBar(
+            content: Text('No se pudo enviar la calificación: ${errorText(e)}'),
+          ),
         );
         return;
       }

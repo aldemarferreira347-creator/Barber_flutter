@@ -15,6 +15,8 @@ import '../widgets/responsive_body.dart';
 
 import 'package:cached_network_image/cached_network_image.dart';
 
+import '../../utils/error_text.dart';
+
 /// Edición de los datos básicos de una barbería que ya existe (Update del
 /// CRUD del dueño). No toca aprobación, bloqueo ni pago: esos campos los
 /// protege firestore.rules aunque se intentara.
@@ -133,8 +135,9 @@ class _EditBarbershopViewState extends State<EditBarbershopView> {
       }
     } catch (e) {
       if (mounted) {
-        ScaffoldMessenger.of(context)
-            .showSnackBar(SnackBar(content: Text('No se pudo guardar: $e')));
+        ScaffoldMessenger.of(context).showSnackBar(
+          SnackBar(content: Text('No se pudo guardar: ${errorText(e)}')),
+        );
       }
     } finally {
       if (mounted) setState(() => _saving = false);

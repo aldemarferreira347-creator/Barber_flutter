@@ -21,6 +21,7 @@ import 'approval_status_badge.dart';
 import 'barbershop_detail_view.dart';
 import 'owner_barbershop_manage_view.dart';
 import 'payment_insight.dart';
+import '../../utils/error_text.dart';
 
 enum AdminShopFilter { pending, ok, dueSoon, grace, blocked }
 
@@ -175,7 +176,9 @@ class _ManageBarbershopsViewState extends State<ManageBarbershopsView> {
       await action();
       messenger.showSnackBar(SnackBar(content: Text(success)));
     } catch (e) {
-      messenger.showSnackBar(SnackBar(content: Text('$failure: $e')));
+      messenger.showSnackBar(
+        SnackBar(content: Text('$failure: ${errorText(e)}')),
+      );
     }
   }
 

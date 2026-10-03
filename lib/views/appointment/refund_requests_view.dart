@@ -21,6 +21,7 @@ import '../widgets/payment_status_line.dart';
 import '../widgets/responsive_body.dart';
 import '../widgets/shimmer_box.dart';
 import '../widgets/status_badge.dart';
+import '../../utils/error_text.dart';
 
 /// Panel del dueño para aprobar/rechazar solicitudes de cancelación con
 /// justificación de citas pagadas (spec 6.3, 6.5). Al aprobar, el dueño
@@ -56,7 +57,7 @@ class RefundRequestsView extends StatelessWidget {
       );
     } catch (e) {
       messenger.showSnackBar(
-        SnackBar(content: Text('No se pudo resolver: $e')),
+        SnackBar(content: Text('No se pudo resolver: ${errorText(e)}')),
       );
     }
   }
@@ -99,7 +100,7 @@ class RefundRequestsView extends StatelessWidget {
       );
     } catch (e) {
       messenger.showSnackBar(
-        SnackBar(content: Text('No se pudo resolver: $e')),
+        SnackBar(content: Text('No se pudo resolver: ${errorText(e)}')),
       );
     }
   }

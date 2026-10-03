@@ -17,6 +17,7 @@ import '../widgets/empty_state.dart';
 import '../widgets/error_state.dart';
 import '../widgets/responsive_body.dart';
 import '../widgets/shimmer_box.dart';
+import '../../utils/error_text.dart';
 
 bool _isStaffOfShop(AppUser profile, Barbershop shop) {
   if (profile.role == UserRole.admin) return true;
@@ -188,7 +189,9 @@ class _CommentCardState extends State<_CommentCard> {
     } catch (e) {
       if (mounted) {
         ScaffoldMessenger.of(context).showSnackBar(
-          SnackBar(content: Text('No se pudo enviar la respuesta: $e')),
+          SnackBar(
+            content: Text('No se pudo enviar la respuesta: ${errorText(e)}'),
+          ),
         );
       }
     }

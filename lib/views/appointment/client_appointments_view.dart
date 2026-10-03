@@ -20,6 +20,7 @@ import '../widgets/error_state.dart';
 import '../widgets/shimmer_box.dart';
 import 'paid_appointment_sheets.dart';
 import 'rate_appointment_view.dart';
+import '../../utils/error_text.dart';
 
 // 'postponed' cuenta como próxima: su `date` ya es la nueva fecha futura
 // tras el cambio (spec 6.4) — sigue siendo una cita activa, no pasada.
@@ -54,7 +55,7 @@ class ClientAppointmentsView extends StatelessWidget {
       );
     } catch (e) {
       messenger.showSnackBar(
-        SnackBar(content: Text('No se pudo cancelar la cita: $e')),
+        SnackBar(content: Text('No se pudo cancelar la cita: ${errorText(e)}')),
       );
     }
   }

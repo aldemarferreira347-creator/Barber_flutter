@@ -2,7 +2,7 @@ import { readFileSync } from 'fs';
 import { join } from 'path';
 
 import { assertFails, assertSucceeds, initializeTestEnvironment, RulesTestEnvironment } from '@firebase/rules-unit-testing';
-import { deleteDoc, doc, getDoc, setDoc, Timestamp, updateDoc, writeBatch } from 'firebase/firestore';
+import { collection, deleteDoc, doc, getDoc, getDocs, query, setDoc, Timestamp, updateDoc, where, writeBatch } from 'firebase/firestore';
 
 const PROJECT_ID = 'demo-barber';
 const SHOP_ID = 'shop1';
@@ -240,9 +240,20 @@ describe('firestore.rules — reserva pagada, identidad inmutable y slots', () =
   describe('appointmentSlots/{id}', () => {
     const goodSlot = { appointmentId: 'apptNew', barberId: BARBER_UID, createdAt: new Date() };
 
-    it('nadie lee un slot directamente', async () => {
+    it('quien inició sesión puede leer un slot por id (la reserva lo necesita), exista o no', async () => {
       const db = testEnv.authenticatedContext(CLIENT_UID).firestore();
+      await assertSucceeds(getDoc(doc(db, `appointmentSlots/${slotIdOf(BARBER_UID, APPT_DATE)}`)));
+    });
+
+    it('sin sesión no se lee ningún slot', async () => {
+      const db = testEnv.unauthenticatedContext().firestore();
       await assertFails(getDoc(doc(db, `appointmentSlots/${slotIdOf(BARBER_UID, APPT_DATE)}`)));
+    });
+
+    it('la colección no se puede listar: nadie enumera la agenda de un barbero', async () => {
+      const db = testEnv.authenticatedContext(CLIENT_UID).firestore();
+      await assertFails(getDocs(collection(db, 'appointmentSlots')));
+      await assertFails(getDocs(query(collection(db, 'appointmentSlots'), where('barberId', '==', BARBER_UID))));
     });
 
     it('el cliente reserva: cita + slot del minuto exacto en la MISMA transacción', async () => {

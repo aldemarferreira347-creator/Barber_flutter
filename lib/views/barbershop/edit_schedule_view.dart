@@ -8,6 +8,7 @@ import '../../theme/app_tokens.dart';
 import '../widgets/app_button.dart';
 import '../widgets/app_card.dart';
 import '../widgets/responsive_body.dart';
+import '../../utils/error_text.dart';
 
 class EditScheduleView extends StatefulWidget {
   final String barbershopId;
@@ -91,8 +92,9 @@ class _EditScheduleViewState extends State<EditScheduleView> {
       if (mounted) Navigator.of(context).pop();
     } catch (e) {
       if (mounted) {
-        ScaffoldMessenger.of(context)
-            .showSnackBar(SnackBar(content: Text('No se pudo guardar: $e')));
+        ScaffoldMessenger.of(context).showSnackBar(
+          SnackBar(content: Text('No se pudo guardar: ${errorText(e)}')),
+        );
       }
     }
   }

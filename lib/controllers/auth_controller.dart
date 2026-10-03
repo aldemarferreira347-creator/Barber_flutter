@@ -13,6 +13,7 @@ import '../services/firebase_auth_service.dart';
 import '../services/firestore_user_service.dart';
 import '../services/push_notification_service.dart';
 import '../utils/shared_stream.dart';
+import '../utils/error_text.dart';
 
 export '../repositories/auth_repository.dart'
     show
@@ -137,7 +138,7 @@ class AuthController extends ChangeNotifier {
       // Manager, etc.) no debe desaparecer en silencio: sin este catch, la
       // vista no recibe outcome ni errorMessage y el botón "Continuar con
       // Google" parece no hacer nada al tocarlo.
-      errorMessage = 'No se pudo iniciar sesión con Google: $e';
+      errorMessage = 'No se pudo iniciar sesión con Google: ${errorText(e)}';
       return null;
     } finally {
       isBusy = false;

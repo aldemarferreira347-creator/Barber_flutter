@@ -9,6 +9,7 @@ import '../../theme/app_tokens.dart';
 import '../widgets/app_button.dart';
 import '../widgets/app_dialog.dart';
 import '../widgets/photo_picker_field.dart';
+import '../../utils/error_text.dart';
 
 /// Crea o edita un servicio en una hoja modal (en vez de una pantalla
 /// aparte): nombre, descripción, precio, duración y foto. Con [service]
@@ -95,7 +96,9 @@ class _ServiceFormState extends State<_ServiceForm> {
       }
       navigator.pop(true);
     } catch (e) {
-      messenger.showSnackBar(SnackBar(content: Text('No se pudo guardar: $e')));
+      messenger.showSnackBar(
+        SnackBar(content: Text('No se pudo guardar: ${errorText(e)}')),
+      );
       if (mounted) setState(() => _saving = false);
     }
   }
@@ -122,7 +125,7 @@ class _ServiceFormState extends State<_ServiceForm> {
       navigator.pop(true);
     } catch (e) {
       messenger.showSnackBar(
-        SnackBar(content: Text('No se pudo eliminar: $e')),
+        SnackBar(content: Text('No se pudo eliminar: ${errorText(e)}')),
       );
     }
   }

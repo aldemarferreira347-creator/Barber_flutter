@@ -23,6 +23,7 @@ import '../widgets/app_card.dart';
 import '../widgets/app_dialog.dart';
 import '../widgets/nequi_payment_sheet.dart';
 import '../widgets/responsive_body.dart';
+import '../../utils/error_text.dart';
 
 /// Alta de barbería. Registrar cuesta la mensualidad de la plataforma
 /// ([PlatformSettings.monthlyFee]): el dueño paga por Nequi y la envía a
@@ -203,12 +204,13 @@ class _AddBarbershopViewState extends State<AddBarbershopView> {
     } on BarbershopDraftLimitException catch (e) {
       if (mounted) {
         ScaffoldMessenger.of(context)
-            .showSnackBar(SnackBar(content: Text(e.toString())));
+            .showSnackBar(SnackBar(content: Text(errorText(e))));
       }
     } catch (e) {
       if (mounted) {
-        ScaffoldMessenger.of(context)
-            .showSnackBar(SnackBar(content: Text('No se pudo guardar: $e')));
+        ScaffoldMessenger.of(context).showSnackBar(
+          SnackBar(content: Text('No se pudo guardar: ${errorText(e)}')),
+        );
       }
     } finally {
       if (mounted) setState(() => _saving = false);
@@ -273,8 +275,9 @@ class _AddBarbershopViewState extends State<AddBarbershopView> {
       }
     } catch (e) {
       if (mounted) {
-        ScaffoldMessenger.of(context)
-            .showSnackBar(SnackBar(content: Text('No se pudo registrar: $e')));
+        ScaffoldMessenger.of(context).showSnackBar(
+          SnackBar(content: Text('No se pudo registrar: ${errorText(e)}')),
+        );
       }
     } finally {
       if (mounted) setState(() => _paying = false);

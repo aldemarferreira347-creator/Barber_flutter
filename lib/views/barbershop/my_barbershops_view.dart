@@ -18,6 +18,7 @@ import 'add_barbershop_view.dart';
 import 'approval_status_badge.dart';
 import 'owner_alerts_section.dart';
 import 'owner_barbershop_manage_view.dart';
+import '../../utils/error_text.dart';
 
 /// "Mis barberías": las barberías que administra el usuario autenticado y
 /// sus borradores — NO el catálogo para reservar (eso es `Explorar`).
@@ -51,8 +52,9 @@ class MyBarbershopsView extends StatelessWidget {
       await repo.deleteDraft(draft.id);
     } catch (e) {
       if (context.mounted) {
-        ScaffoldMessenger.of(context)
-            .showSnackBar(SnackBar(content: Text('No se pudo eliminar: $e')));
+        ScaffoldMessenger.of(context).showSnackBar(
+          SnackBar(content: Text('No se pudo eliminar: ${errorText(e)}')),
+        );
       }
     }
   }

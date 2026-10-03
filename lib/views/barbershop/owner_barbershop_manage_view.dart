@@ -29,6 +29,7 @@ import 'edit_barbershop_view.dart';
 import 'edit_schedule_view.dart';
 import 'payment_insight.dart';
 import 'subscription_section.dart';
+import '../../utils/error_text.dart';
 
 /// Panel de gestión de UNA barbería: revisar sus datos, editarlos y entrar a
 /// sus barberos, servicios, productos, horario, citas, compras, reseñas,
@@ -90,7 +91,7 @@ class OwnerBarbershopManageView extends StatelessWidget {
       );
     } catch (e) {
       messenger.showSnackBar(
-        SnackBar(content: Text('No se pudo eliminar: $e')),
+        SnackBar(content: Text('No se pudo eliminar: ${errorText(e)}')),
       );
     }
   }

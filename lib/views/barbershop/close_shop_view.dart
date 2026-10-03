@@ -9,6 +9,7 @@ import '../widgets/app_button.dart';
 import '../widgets/app_card.dart';
 import '../widgets/app_dialog.dart';
 import '../widgets/responsive_body.dart';
+import '../../utils/error_text.dart';
 
 /// Cierre de tienda por evento externo (spec 3.4): el dueño elige el rango
 /// de fechas/horas afectado y el motivo. Cada reserva pagada dentro de ese
@@ -122,7 +123,9 @@ class _CloseShopViewState extends State<CloseShopView> {
     } catch (e) {
       if (mounted) {
         ScaffoldMessenger.of(context).showSnackBar(
-          SnackBar(content: Text('No se pudo cerrar la barbería: $e')),
+          SnackBar(
+            content: Text('No se pudo cerrar la barbería: ${errorText(e)}'),
+          ),
         );
       }
     }

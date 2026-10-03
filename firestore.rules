@@ -498,8 +498,16 @@ service cloud.firestore {
     // transacción. Sin esto cualquiera podía bloquear la agenda entera de un
     // barbero creando slots sueltos, o liberar el horario de una cita ajena
     // para reservarlo encima.
+    //
+    // Lectura: solo `get` por id y para quien haya iniciado sesión. La
+    // transacción de reserva necesita leer el slot para saber si el horario
+    // ya está tomado (con `allow read: if false` TODA reserva con pago
+    // fallaba con permission-denied). El documento solo trae el id de la
+    // cita, el barbero y la fecha de creación; no se puede LISTAR la
+    // colección, así que no se puede enumerar la agenda de nadie.
     match /appointmentSlots/{id} {
-      allow read: if false;
+      allow get: if isSignedIn();
+      allow list: if false;
 
       allow create: if isSignedIn()
         && request.resource.data.keys().hasOnly(['appointmentId', 'barberId', 'createdAt'])

@@ -32,7 +32,13 @@ class StatCard extends StatelessWidget {
               child: Column(
                 crossAxisAlignment: CrossAxisAlignment.start,
                 children: [
-                  Text(value, style: text.headlineSmall),
+                  // Una cifra nunca se parte en dos líneas ("$35.00 / 0"):
+                  // si no cabe, se reduce.
+                  FittedBox(
+                    alignment: Alignment.centerLeft,
+                    fit: BoxFit.scaleDown,
+                    child: Text(value, style: text.headlineSmall),
+                  ),
                   const SizedBox(height: 2),
                   Text(label, style: text.secondary),
                 ],
