@@ -1,20 +1,19 @@
 import 'package:flutter/material.dart';
-
-import '../../models/barbershop.dart';
-
 import 'package:provider/provider.dart';
 
+import '../../models/barbershop.dart';
 import '../../models/service.dart';
 import '../../repositories/service_repository.dart';
-import '../../theme/app_colors.dart';
+import '../../theme/app_tokens.dart';
+import '../widgets/catalog_tile.dart';
 import '../widgets/empty_state.dart';
 import '../widgets/error_state.dart';
+import '../widgets/responsive_body.dart';
 import '../widgets/shimmer_box.dart';
-import 'add_service_view.dart';
-import '../widgets/app_network_image.dart';
+import 'service_form_sheet.dart';
 
-/// Lista de servicios de una barbería. [canManage] controla si se puede
-/// agregar/activar-desactivar (Dueño) o solo se muestran (Cliente).
+/// Catálogo de servicios de una barbería. Con [canManage] (dueño) se agregan,
+/// editan, eliminan y ocultan; sin él (cliente o barbero) solo se consultan.
 class ManageServicesView extends StatelessWidget {
   final String barbershopId;
   final bool canManage;
@@ -32,13 +31,11 @@ class ManageServicesView extends StatelessWidget {
     return Scaffold(
       appBar: AppBar(title: const Text('Servicios')),
       floatingActionButton: canManage
-          ? FloatingActionButton(
-              onPressed: () => Navigator.of(context).push(
-                MaterialPageRoute(
-                  builder: (_) => AddServiceView(barbershopId: barbershopId),
-                ),
-              ),
-              child: const Icon(Icons.add),
+          ? FloatingActionButton.extended(
+              onPressed: () =>
+                  showServiceForm(context, barbershopId: barbershopId),
+              icon: const Icon(Icons.add),
+              label: const Text('Nuevo servicio'),
             )
           : null,
       body: StreamBuilder<List<Service>>(
@@ -51,99 +48,63 @@ class ManageServicesView extends StatelessWidget {
           }
           if (snapshot.connectionState == ConnectionState.waiting) {
             return const Padding(
-              padding: EdgeInsets.all(16),
+              padding: EdgeInsets.all(AppSpace.lg),
               child: ShimmerList(),
             );
           }
-          final services = snapshot.data ?? [];
+          final services = [
+            for (final s in snapshot.data ?? const <Service>[])
+              if (canManage || s.active) s,
+          ];
           if (services.isEmpty) {
-            return const Center(
+            return Center(
               child: EmptyState(
                 icon: Icons.content_cut,
                 title: 'Sin servicios todavía',
-                subtitle: 'Añade cortes, coloración u otros servicios con precio y foto.',
+                subtitle: canManage
+                    ? 'Añade cortes, barba u otros servicios con precio, duración y foto.'
+                    : 'Esta barbería aún no publicó servicios.',
+                actionLabel: canManage ? 'Nuevo servicio' : null,
+                onAction: canManage
+                    ? () => showServiceForm(context, barbershopId: barbershopId)
+                    : null,
               ),
             );
           }
-          return ListView.separated(
-            padding: const EdgeInsets.all(16),
-            itemCount: services.length,
-            separatorBuilder: (_, _) => const SizedBox(height: 10),
-            itemBuilder: (context, index) {
-              final service = services[index];
-              return Container(
-                padding: const EdgeInsets.all(12),
-                decoration: BoxDecoration(
-                  color: AppColors.surface,
-                  borderRadius: BorderRadius.circular(14),
-                  border: Border.all(color: AppColors.border),
-                  boxShadow: [
-                    BoxShadow(
-                      color: AppColors.textPrimary.withValues(alpha: 0.05),
-                      blurRadius: 12,
-                      offset: const Offset(0, 5),
-                    ),
-                  ],
-                ),
-                child: Row(
-                  children: [
-                    ClipRRect(
-                      borderRadius: BorderRadius.circular(10),
-                      child: service.photoUrl != null
-                          ? AppNetworkImage(
-                              url: service.photoUrl!,
-                              width: 56,
-                              height: 56,
-                              decodeWidth: 56,
-                              semanticLabel:
-                                  'Foto del servicio ${service.name}',
-                            )
-                          : Container(
-                              width: 56,
-                              height: 56,
-                              color: AppColors.background,
-                              child: Icon(
-                                Icons.content_cut,
-                                color: AppColors.textSecondary,
-                              ),
-                            ),
-                    ),
-                    const SizedBox(width: 12),
-                    Expanded(
-                      child: Column(
-                        crossAxisAlignment: CrossAxisAlignment.start,
-                        children: [
-                          Text(
-                            service.name,
-                            style: const TextStyle(fontWeight: FontWeight.w700),
-                          ),
-                          Text(
-                            '${service.durationMinutes} min',
-                            style: TextStyle(
-                              color: AppColors.textSecondary,
-                              fontSize: 12,
-                            ),
-                          ),
-                        ],
-                      ),
-                    ),
-                    Text(
-                      formatCop(service.price),
-                      style: TextStyle(
-                        fontWeight: FontWeight.w800,
-                        color: AppColors.accent,
-                      ),
-                    ),
-                    if (canManage)
-                      Switch(
-                        value: service.active,
-                        onChanged: (value) =>
-                            repo.setActive(barbershopId, service.id, value),
-                      ),
-                  ],
-                ),
-              );
-            },
+          return ResponsiveBody(
+            maxWidth: AppLayout.formWidth,
+            child: ListView.separated(
+              padding: EdgeInsets.only(
+                top: AppSpace.lg,
+                bottom: canManage ? 96 : AppSpace.xl,
+              ),
+              itemCount: services.length,
+              separatorBuilder: (_, _) => const SizedBox(height: AppSpace.md),
+              itemBuilder: (context, index) {
+                final service = services[index];
+                return CatalogTile(
+                  name: service.name,
+                  detail:
+                      '${service.durationMinutes} min'
+                      '${(service.description ?? '').isEmpty ? '' : ' · ${service.description}'}',
+                  priceLabel: formatCop(service.price),
+                  photoUrl: service.photoUrl,
+                  fallbackIcon: Icons.content_cut,
+                  active: service.active,
+                  onActiveChanged: canManage
+                      ? (value) =>
+                            repo.setActive(barbershopId, service.id, value)
+                      : null,
+                  onTap: canManage
+                      ? () => showServiceForm(
+                          context,
+                          barbershopId: barbershopId,
+                          service: service,
+                        )
+                      : null,
+                );
+              },
+            ),
           );
         },
       ),

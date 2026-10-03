@@ -3,7 +3,7 @@ import 'package:provider/provider.dart';
 
 import '../../models/appointment.dart';
 import '../../repositories/appointment_repository.dart';
-import '../widgets/appointment_card.dart';
+import '../widgets/staff_appointment_card.dart';
 import '../widgets/empty_state.dart';
 import '../widgets/error_state.dart';
 import '../widgets/shimmer_box.dart';
@@ -49,7 +49,7 @@ class OwnerAppointmentsView extends StatelessWidget {
             separatorBuilder: (_, _) => const SizedBox(height: 10),
             itemBuilder: (context, index) {
               final appointment = appointments[index];
-              return AppointmentCard(
+              return StaffAppointmentCard(
                 appointment: appointment,
                 subtitle:
                     '${appointment.clientName} con ${appointment.barberName}',

@@ -7,17 +7,13 @@ import '../barbershop/barbershop_catalog_view.dart';
 import '../barbershop/my_barbershops_view.dart';
 import '../help/help_view.dart';
 import '../notification/notifications_view.dart';
+import '../product/my_purchases_view.dart';
 import '../widgets/role_shell.dart';
 import '../profile/profile_menu_view.dart';
 import 'client_dashboard_tab.dart';
 
 class ClientHomeView extends StatelessWidget {
   const ClientHomeView({super.key});
-
-  void _comingSoon(BuildContext context, String feature) {
-    ScaffoldMessenger.of(context)
-        .showSnackBar(SnackBar(content: Text('$feature próximamente')));
-  }
 
   @override
   Widget build(BuildContext context) {
@@ -57,9 +53,13 @@ class ClientHomeView extends StatelessWidget {
                       ),
                     ),
                   ProfileMenuItem(
-                    icon: Icons.payment_outlined,
-                    label: 'Métodos de pago',
-                    onTap: () => _comingSoon(context, 'Los métodos de pago'),
+                    icon: Icons.shopping_bag_outlined,
+                    label: 'Mis compras',
+                    onTap: () => Navigator.of(context).push(
+                      MaterialPageRoute(
+                        builder: (_) => const MyPurchasesView(),
+                      ),
+                    ),
                   ),
                   if (uid != null)
                     ProfileMenuItem(

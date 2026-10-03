@@ -1,15 +1,15 @@
 import 'package:flutter/material.dart';
 
 import '../../models/barbershop.dart';
+import '../../models/platform_settings.dart';
 import '../../theme/app_colors.dart';
+import '../../theme/app_text.dart';
+import '../../theme/app_tokens.dart';
+import '../widgets/app_button.dart';
 
-/// Días de gracia entre el vencimiento y el bloqueo automático (spec 12.5),
-/// espejo exacto de GRACE_PERIOD_MS en
-/// functions/src/barbershops/subscriptionService.ts (3 a 5 días, punto
-/// medio = 4). Se usa también como ventana simétrica de aviso "vence
-/// pronto" antes del vencimiento, para que el admin no se entere del
-/// vencimiento el mismo día que ocurre.
-const kPaymentWindowDays = 4;
+/// Días que se avisa "vence pronto" antes del vencimiento, para que el dueño
+/// y el admin no se enteren el mismo día que ocurre.
+const kDueSoonDays = 4;
 
 enum PaymentInsightLevel { ok, dueSoon, grace, graceExpired, blocked }
 
@@ -27,7 +27,15 @@ class PaymentInsight {
   });
 }
 
-PaymentInsight paymentInsight(Barbershop shop, {DateTime? now}) {
+/// Estado de la mensualidad de [shop], DERIVADO de su fecha de vencimiento y
+/// de los [graceDays] de gracia: no depende de que un proceso en el servidor
+/// haya actualizado `paymentStatus` (sin plan Blaze no corre ninguno). Las
+/// reglas aplican el mismo criterio al aceptar citas.
+PaymentInsight paymentInsight(
+  Barbershop shop, {
+  DateTime? now,
+  int graceDays = PlatformSettings.kDefaultGraceDays,
+}) {
   final today = now ?? DateTime.now();
 
   if (shop.paymentStatus == PaymentStatus.blocked) {
@@ -41,7 +49,8 @@ PaymentInsight paymentInsight(Barbershop shop, {DateTime? now}) {
 
   final due = shop.paymentDueDate;
 
-  if (shop.paymentStatus == PaymentStatus.overdue) {
+  final overdueByDate = due != null && today.isAfter(due);
+  if (shop.paymentStatus == PaymentStatus.overdue || overdueByDate) {
     if (due == null) {
       return const PaymentInsight(
         label: 'En mora',
@@ -50,7 +59,7 @@ PaymentInsight paymentInsight(Barbershop shop, {DateTime? now}) {
       );
     }
     final daysOverdue = today.difference(due).inDays;
-    final daysLeft = kPaymentWindowDays - daysOverdue;
+    final daysLeft = graceDays - daysOverdue;
     if (daysLeft > 0) {
       return PaymentInsight(
         label: 'Período de gracia',
@@ -62,8 +71,8 @@ PaymentInsight paymentInsight(Barbershop shop, {DateTime? now}) {
       );
     }
     return const PaymentInsight(
-      label: 'Gracia vencida',
-      detail: 'Ya debería bloquearse por impago',
+      label: 'Bloqueada por mora',
+      detail: 'Terminó la gracia: paga para reactivarla',
       color: AppColors.error,
       level: PaymentInsightLevel.graceExpired,
     );
@@ -78,7 +87,7 @@ PaymentInsight paymentInsight(Barbershop shop, {DateTime? now}) {
     );
   }
   final daysUntilDue = due.difference(today).inDays;
-  if (daysUntilDue <= kPaymentWindowDays) {
+  if (daysUntilDue <= kDueSoonDays) {
     final detail = daysUntilDue <= 0
         ? 'Vence hoy'
         : daysUntilDue == 1
@@ -117,7 +126,11 @@ class ShopAlert {
 /// Alertas de UNA barbería del dueño: primero el estado de revisión y luego
 /// el de la mensualidad (vence pronto, gracia, bloqueo). Lista vacía = todo
 /// en orden. Un borrador no tiene alertas de mensualidad: aún no se paga.
-List<ShopAlert> shopAlerts(Barbershop shop, {DateTime? now}) {
+List<ShopAlert> shopAlerts(
+  Barbershop shop, {
+  DateTime? now,
+  int graceDays = PlatformSettings.kDefaultGraceDays,
+}) {
   switch (shop.approvalStatus) {
     case BarbershopApprovalStatus.draft:
       return const [
@@ -132,7 +145,7 @@ List<ShopAlert> shopAlerts(Barbershop shop, {DateTime? now}) {
       return const [
         ShopAlert(
           title: 'Pendiente de revisión',
-          message: 'El administrador debe aprobarla antes de que aparezca en el catálogo. Tu mensualidad arranca al aprobarse.',
+          message: 'El administrador verificará tu pago y revisará la barbería antes de mostrarla en el catálogo. Tu mensualidad arranca al aprobarse.',
           color: AppColors.warning,
           icon: Icons.hourglass_top_outlined,
         ),
@@ -147,7 +160,7 @@ List<ShopAlert> shopAlerts(Barbershop shop, {DateTime? now}) {
         ),
       ];
     case BarbershopApprovalStatus.approved:
-      final insight = paymentInsight(shop, now: now);
+      final insight = paymentInsight(shop, now: now, graceDays: graceDays);
       return switch (insight.level) {
         PaymentInsightLevel.ok => const [],
         PaymentInsightLevel.dueSoon => [
@@ -169,8 +182,8 @@ List<ShopAlert> shopAlerts(Barbershop shop, {DateTime? now}) {
         ],
         PaymentInsightLevel.graceExpired => [
           ShopAlert(
-            title: 'Mensualidad vencida sin pagar',
-            message: 'Terminó el período de gracia: tu barbería puede bloquearse en cualquier momento. Paga ahora.',
+            title: 'Barbería bloqueada por mora',
+            message: 'Terminó el período de gracia: no aparece en el catálogo ni recibe citas. Paga la mensualidad para reactivarla.',
             color: insight.color,
             icon: Icons.error_outline,
           ),
@@ -202,55 +215,56 @@ class ShopAlertBanner extends StatelessWidget {
 
   @override
   Widget build(BuildContext context) {
-    return Container(
-      margin: const EdgeInsets.only(bottom: 10),
-      padding: const EdgeInsets.all(12),
-      decoration: BoxDecoration(
-        color: alert.color.withValues(alpha: 0.10),
-        borderRadius: BorderRadius.circular(12),
-        border: Border.all(color: alert.color.withValues(alpha: 0.35)),
-      ),
-      child: Row(
-        crossAxisAlignment: CrossAxisAlignment.start,
-        children: [
-          Icon(alert.icon, size: 20, color: alert.color),
-          const SizedBox(width: 10),
-          Expanded(
-            child: Column(
-              crossAxisAlignment: CrossAxisAlignment.start,
-              children: [
-                Text(
-                  alert.title,
-                  style: TextStyle(
-                    fontWeight: FontWeight.w700,
-                    fontSize: 13,
-                    color: alert.color,
+    final text = Theme.of(context).textTheme;
+    final color = AppColors.readable(alert.color);
+    return Padding(
+      padding: const EdgeInsets.only(bottom: AppSpace.md),
+      child: Semantics(
+        container: true,
+        child: Container(
+          padding: const EdgeInsets.all(AppSpace.md),
+          decoration: BoxDecoration(
+            color: AppColors.tint(alert.color),
+            borderRadius: BorderRadius.circular(AppRadius.md),
+            border: Border.all(color: alert.color.withValues(alpha: 0.35)),
+          ),
+          child: Column(
+            crossAxisAlignment: CrossAxisAlignment.start,
+            children: [
+              Row(
+                crossAxisAlignment: CrossAxisAlignment.start,
+                children: [
+                  Icon(alert.icon, size: 20, color: color),
+                  const SizedBox(width: AppSpace.sm),
+                  Expanded(
+                    child: Column(
+                      crossAxisAlignment: CrossAxisAlignment.start,
+                      children: [
+                        Text(
+                          alert.title,
+                          style: text.titleSmall?.copyWith(color: color),
+                        ),
+                        const SizedBox(height: 2),
+                        Text(alert.message, style: text.secondary),
+                      ],
+                    ),
                   ),
-                ),
-                const SizedBox(height: 2),
-                Text(
-                  alert.message,
-                  style: TextStyle(
-                    fontSize: 12,
-                    color: AppColors.textSecondary,
+                ],
+              ),
+              if (onAction != null && actionLabel != null) ...[
+                const SizedBox(height: AppSpace.md),
+                Align(
+                  alignment: Alignment.centerRight,
+                  child: AppButton(
+                    expand: false,
+                    onPressed: onAction,
+                    child: Text(actionLabel!),
                   ),
                 ),
               ],
-            ),
+            ],
           ),
-          if (onAction != null && actionLabel != null) ...[
-            const SizedBox(width: 8),
-            FilledButton(
-              onPressed: onAction,
-              style: FilledButton.styleFrom(
-                backgroundColor: alert.color,
-                minimumSize: const Size(0, 34),
-                padding: const EdgeInsets.symmetric(horizontal: 12),
-              ),
-              child: Text(actionLabel!, style: const TextStyle(fontSize: 12)),
-            ),
-          ],
-        ],
+        ),
       ),
     );
   }

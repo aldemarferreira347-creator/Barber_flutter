@@ -1,3 +1,4 @@
+import 'package:cloud_firestore/cloud_firestore.dart';
 import 'package:fake_cloud_firestore/fake_cloud_firestore.dart';
 import 'package:firebase_auth/firebase_auth.dart';
 import 'package:barber/models/purchase.dart';
@@ -22,11 +23,7 @@ void main() {
     user = MockUser();
     when(() => auth.currentUser).thenReturn(user);
     when(() => user.uid).thenReturn('buyer1');
-    service = CloudPurchaseService(
-      firestore: firestore,
-      auth: auth,
-      simulatedApprovalDelay: Duration.zero,
-    );
+    service = CloudPurchaseService(firestore: firestore, auth: auth);
   });
 
   Future<void> seedProduct({bool active = true, num price = 15000}) {
@@ -38,21 +35,23 @@ void main() {
         .set({'name': 'Cera', 'price': price, 'active': active});
   }
 
-  test('createPurchase recalcula el precio del catálogo, paga y entrega el código de reclamo', () async {
+  test('createPurchase recalcula el precio del catálogo y deja el pago Nequi pendiente de verificar', () async {
     await seedProduct();
 
     final id = await service.createPurchase(
       barbershopId: 'shop1',
       items: const [PurchaseItemInput(productId: 'p1', quantity: 2)],
+      reference: 'M1234567',
     );
 
     final doc = (await firestore.collection('purchases').doc(id).get()).data()!;
     expect(doc['buyerId'], 'buyer1');
     expect(doc['barbershopId'], 'shop1');
     expect(doc['totalAmount'], 30000);
-    expect(doc['status'], 'pending_claim');
-    expect(doc['claimCode'], isA<String>());
-    expect((doc['claimCode'] as String).length, 8);
+    // Sin verificar el dinero todavía no hay código ni plazo de reclamo.
+    expect(doc['status'], 'pending_payment');
+    expect(doc['claimCode'], isNull);
+    expect(doc['expiresAt'], isNull);
     final items = List<Map<String, dynamic>>.from(doc['items'] as List);
     expect(items.single['productName'], 'Cera');
     expect(items.single['unitPrice'], 15000);
@@ -62,10 +61,84 @@ void main() {
     final paymentId = doc['paymentId'] as String;
     final payment =
         (await firestore.collection('payments').doc(paymentId).get()).data()!;
-    expect(payment['status'], 'approved');
+    expect(payment['status'], 'pending');
     expect(payment['category'], 'product');
     expect(payment['amount'], 30000);
     expect(payment['relatedId'], id);
+    expect(payment['payerId'], 'buyer1');
+    expect(payment['reference'], 'M1234567');
+    expect(payment['method'], 'nequi');
+  });
+
+  group('verificación del pago por el personal', () {
+    late String purchaseId;
+
+    setUp(() async {
+      await seedProduct();
+      purchaseId = await service.createPurchase(
+        barbershopId: 'shop1',
+        items: const [PurchaseItemInput(productId: 'p1', quantity: 1)],
+        reference: 'M7654321',
+      );
+      // A partir de aquí actúa el personal de la barbería.
+      when(() => user.uid).thenReturn('barber1');
+    });
+
+    test(
+      'confirmPayment aprueba el pago y entrega código y 24 h de plazo',
+      () async {
+        await service.confirmPayment(purchaseId);
+
+        final purchase =
+            (await firestore.collection('purchases').doc(purchaseId).get())
+                .data()!;
+        expect(purchase['status'], 'pending_claim');
+        expect(purchase['claimCode'], matches(RegExp(r'^[0-9A-Z]{8}$')));
+        final expiresAt = (purchase['expiresAt'] as Timestamp).toDate();
+        expect(
+          expiresAt.difference(DateTime.now()).inHours,
+          inInclusiveRange(23, 24),
+        );
+
+        final payment =
+            (await firestore
+                    .collection('payments')
+                    .doc(purchase['paymentId'] as String)
+                    .get())
+                .data()!;
+        expect(payment['status'], 'approved');
+        expect(payment['resolvedBy'], 'barber1');
+      },
+    );
+
+    test('rejectPayment rechaza el pago y deja la compra fallida', () async {
+      await service.rejectPayment(purchaseId);
+
+      final purchase =
+          (await firestore.collection('purchases').doc(purchaseId).get())
+              .data()!;
+      expect(purchase['status'], 'payment_failed');
+      expect(purchase['claimCode'], isNull);
+      final payment =
+          (await firestore
+                  .collection('payments')
+                  .doc(purchase['paymentId'] as String)
+                  .get())
+              .data()!;
+      expect(payment['status'], 'rejected');
+    });
+
+    test('un pago ya resuelto no se puede volver a confirmar', () async {
+      await service.confirmPayment(purchaseId);
+      await expectLater(
+        () => service.confirmPayment(purchaseId),
+        throwsA(anything),
+      );
+      await expectLater(
+        () => service.rejectPayment(purchaseId),
+        throwsA(anything),
+      );
+    });
   });
 
   test('createPurchase rechaza un producto inactivo', () async {
@@ -75,6 +148,7 @@ void main() {
       () => service.createPurchase(
         barbershopId: 'shop1',
         items: const [PurchaseItemInput(productId: 'p1', quantity: 1)],
+        reference: 'M1234567',
       ),
       throwsA(anything),
     );
@@ -90,6 +164,7 @@ void main() {
           6,
           (_) => const PurchaseItemInput(productId: 'p1', quantity: 1),
         ),
+        reference: 'M1234567',
       ),
       throwsA(anything),
     );
@@ -102,6 +177,9 @@ void main() {
       'items': [],
       'totalAmount': 0,
       'status': 'pending_claim',
+      'expiresAt': Timestamp.fromDate(
+        DateTime.now().add(const Duration(hours: 5)),
+      ),
     });
 
     await service.claimPurchase('purchase1');
@@ -126,69 +204,25 @@ void main() {
     },
   );
 
-  test(
-    'refundItems marca los ítems seleccionados y reembolsa el pago',
-    () async {
-      await firestore.collection('payments').doc('pay1').set({
-        'payerId': 'buyer1',
-        'amount': 45000,
-        'category': 'product',
-        'status': 'approved',
-      });
-      await firestore.collection('purchases').doc('purchase1').set({
-        'paymentId': 'pay1',
-        'items': [
-          {
-            'productId': 'p1',
-            'productName': 'Cera',
-            'unitPrice': 15000,
-            'quantity': 1,
-            'refunded': false,
-          },
-          {
-            'productId': 'p2',
-            'productName': 'Shampoo',
-            'unitPrice': 30000,
-            'quantity': 1,
-            'refunded': false,
-          },
-        ],
-      });
-
-      await service.refundItems(purchaseId: 'purchase1', itemIndexes: [0]);
-
-      final purchase =
-          (await firestore.collection('purchases').doc('purchase1').get())
-              .data()!;
-      final items = List<Map<String, dynamic>>.from(purchase['items'] as List);
-      expect(items[0]['refunded'], true);
-      expect(items[1]['refunded'], false);
-
-      final payment = (await firestore.collection('payments').doc('pay1').get())
-          .data()!;
-      expect(payment['status'], 'refunded');
-      expect(payment['refundedAmount'], 15000);
-    },
-  );
-
-  test('refundItems rechaza un ítem ya reembolsado', () async {
+  test('claimPurchase rechaza una compra vencida', () async {
     await firestore.collection('purchases').doc('purchase1').set({
-      'paymentId': 'pay1',
-      'items': [
-        {
-          'productId': 'p1',
-          'productName': 'Cera',
-          'unitPrice': 15000,
-          'quantity': 1,
-          'refunded': true,
-        },
-      ],
+      'barbershopId': 'shop1',
+      'buyerId': 'buyer1',
+      'items': [],
+      'totalAmount': 0,
+      'status': 'pending_claim',
+      'expiresAt': Timestamp.fromDate(
+        DateTime.now().subtract(const Duration(minutes: 1)),
+      ),
     });
 
     await expectLater(
-      () => service.refundItems(purchaseId: 'purchase1', itemIndexes: [0]),
+      () => service.claimPurchase('purchase1'),
       throwsA(anything),
     );
+    final doc = (await firestore.collection('purchases').doc('purchase1').get())
+        .data()!;
+    expect(doc['status'], 'pending_claim');
   });
 
   test('watchPurchase traduce el snapshot a Purchase', () async {

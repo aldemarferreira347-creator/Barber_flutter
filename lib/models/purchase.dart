@@ -2,6 +2,9 @@ import 'package:cloud_firestore/cloud_firestore.dart';
 
 /// Estado de una compra de productos (spec 10.4/10.5). No confundir con
 /// [PaymentIntentStatus], que es el estado del PAGO asociado.
+/// Plazo para reclamar una compra desde que se verifica su pago.
+const kClaimWindow = Duration(hours: 24);
+
 enum PurchaseStatus {
   pendingPayment,
   pendingClaim,
@@ -20,7 +23,7 @@ extension PurchaseStatusX on PurchaseStatus {
   };
 
   String get label => switch (this) {
-    PurchaseStatus.pendingPayment => 'Procesando pago',
+    PurchaseStatus.pendingPayment => 'Pago por verificar',
     PurchaseStatus.pendingClaim => 'Lista para reclamar',
     PurchaseStatus.claimed => 'Reclamada',
     PurchaseStatus.expired => 'Vencida',
@@ -64,8 +67,9 @@ class PurchaseItem {
   }
 }
 
-/// Compra de productos (purchases/{id}). Solo la escribe el backend
-/// (createPurchase/claimPurchase/refundPurchaseItems) — el cliente únicamente la lee.
+/// Compra de productos (purchases/{id}). Cobro Nequi manual: nace
+/// `pending_payment`, el personal verifica el dinero y la deja
+/// `pending_claim` con su código; al entregarla pasa a `claimed`.
 class Purchase {
   final String id;
   final String barbershopId;
@@ -94,6 +98,22 @@ class Purchase {
     this.claimedAt,
     this.expiresAt,
   });
+
+  /// "Cera ×2, Aceite ×1" — resumen corto de lo comprado.
+  String get itemsLabel =>
+      items.map((item) => '${item.productName} ×${item.quantity}').join(', ');
+
+  /// Lista para reclamar pero con el plazo ya vencido. El estado guardado
+  /// sigue siendo `pending_claim` (no hay servidor que lo cambie); las
+  /// reglas impiden reclamarla y las pantallas la muestran como vencida.
+  bool get isExpired =>
+      status == PurchaseStatus.pendingClaim &&
+      expiresAt != null &&
+      !expiresAt!.isAfter(DateTime.now());
+
+  /// Estado que se debe mostrar: [PurchaseStatus.expired] si se venció.
+  PurchaseStatus get displayStatus =>
+      isExpired ? PurchaseStatus.expired : status;
 
   factory Purchase.fromMap(String id, Map<String, dynamic> map) {
     final createdAtValue = map['createdAt'];

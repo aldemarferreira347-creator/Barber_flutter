@@ -56,4 +56,65 @@ void main() {
       'Cerrada',
     );
   });
+
+  group('availableTimeSlots', () {
+    // lunes 2026-10-05, abierto 09:00–19:00.
+    final monday = DateTime(2026, 10, 5);
+
+    test('genera horas cada 30 min y la última termina al cierre', () {
+      final slots = availableTimeSlots(
+        week,
+        day: monday,
+        durationMinutes: 30,
+        now: DateTime(2026, 10, 4),
+      );
+      expect(slots.first, DateTime(2026, 10, 5, 9));
+      expect(slots.last, DateTime(2026, 10, 5, 18, 30));
+      expect(slots, hasLength(20));
+    });
+
+    test(
+      'un servicio largo no puede empezar si terminaría después del cierre',
+      () {
+        final slots = availableTimeSlots(
+          week,
+          day: monday,
+          durationMinutes: 90,
+          now: DateTime(2026, 10, 4),
+        );
+        expect(slots.last, DateTime(2026, 10, 5, 17, 30));
+      },
+    );
+
+    test('descarta horas pasadas o a menos de 15 min', () {
+      final slots = availableTimeSlots(
+        week,
+        day: monday,
+        durationMinutes: 30,
+        now: DateTime(2026, 10, 5, 10, 20),
+      );
+      expect(slots.first, DateTime(2026, 10, 5, 11));
+    });
+
+    test('día cerrado o sin lugar: sin horas', () {
+      expect(
+        availableTimeSlots(
+          week,
+          day: DateTime(2026, 10, 11),
+          durationMinutes: 30,
+          now: DateTime(2026, 10, 4),
+        ),
+        isEmpty,
+      );
+      expect(
+        availableTimeSlots(
+          week,
+          day: monday,
+          durationMinutes: 30,
+          now: DateTime(2026, 10, 5, 18, 50),
+        ),
+        isEmpty,
+      );
+    });
+  });
 }

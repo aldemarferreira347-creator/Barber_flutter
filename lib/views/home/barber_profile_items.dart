@@ -37,7 +37,7 @@ List<ProfileMenuItem> buildBarberProfileItems(
       ),
       ProfileMenuItem(
         icon: Icons.qr_code,
-        label: 'Reclamar compra de producto',
+        label: 'Compras de productos',
         onTap: () => Navigator.of(context).push(
           MaterialPageRoute(
             builder: (_) =>

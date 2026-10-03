@@ -6,7 +6,15 @@ import '../../models/appointment.dart';
 import '../../repositories/appointment_repository.dart';
 import '../../repositories/rating_repository.dart';
 import '../../theme/app_colors.dart';
+import '../../theme/app_text.dart';
+import '../../theme/app_tokens.dart';
+import '../widgets/app_button.dart';
+import '../widgets/app_card.dart';
+import '../widgets/app_dialog.dart';
 import '../widgets/appointment_card.dart';
+import '../widgets/payment_status_line.dart';
+import '../widgets/responsive_body.dart';
+import '../widgets/section_header.dart';
 import '../widgets/empty_state.dart';
 import '../widgets/error_state.dart';
 import '../widgets/shimmer_box.dart';
@@ -28,24 +36,15 @@ class ClientAppointmentsView extends StatelessWidget {
       await _cancelPaid(context, appointment);
       return;
     }
-    final confirmed = await showDialog<bool>(
-      context: context,
-      builder: (context) => AlertDialog(
-        title: const Text('Cancelar cita'),
-        content: Text('¿Cancelar tu cita de ${appointment.serviceName}?'),
-        actions: [
-          TextButton(
-            onPressed: () => Navigator.of(context).pop(false),
-            child: const Text('No'),
-          ),
-          FilledButton(
-            onPressed: () => Navigator.of(context).pop(true),
-            child: const Text('Sí, cancelar'),
-          ),
-        ],
-      ),
+    final confirmed = await AppDialog.confirm(
+      context,
+      title: 'Cancelar cita',
+      message: '¿Cancelar tu cita de ${appointment.serviceName}?',
+      confirmLabel: 'Sí, cancelar',
+      cancelLabel: 'No',
+      destructive: true,
     );
-    if (confirmed == true && context.mounted) {
+    if (confirmed && context.mounted) {
       await context.read<AppointmentRepository>().setStatus(
         appointment.id,
         AppointmentStatus.cancelled,
@@ -259,112 +258,92 @@ class ClientAppointmentsView extends StatelessWidget {
                         ? const <String>{}
                         : (ratedSnapshot.data ?? const <String>{});
 
-                    return ListView(
-                      padding: const EdgeInsets.all(16),
-                      children: [
-                        _SectionHeader(
-                          label: 'Próximas',
-                          count: upcoming.length,
+                    return ResponsiveBody(
+                      child: ListView(
+                        padding: const EdgeInsets.symmetric(
+                          vertical: AppSpace.lg,
                         ),
-                        const SizedBox(height: 10),
-                        if (upcoming.isEmpty)
-                          const _InlineEmptyNote(
-                            text: 'No tienes citas próximas.',
-                          )
-                        else
-                          for (final entry in upcoming.indexed) ...[
-                            AppointmentCard(
-                              appointment: entry.$2,
-                              subtitle: 'Con ${entry.$2.barberName}',
-                              actions: [
-                                TextButton(
-                                  onPressed: () => _cancel(context, entry.$2),
-                                  child: const Text(
-                                    'Cancelar',
-                                    style: TextStyle(color: AppColors.error),
-                                  ),
-                                ),
-                              ],
-                            ),
-                            const SizedBox(height: 10),
-                          ],
-                        const SizedBox(height: 18),
-                        _SectionHeader(
-                          label: 'Historial',
-                          count: history.length,
-                        ),
-                        const SizedBox(height: 10),
-                        if (history.isEmpty)
-                          const _InlineEmptyNote(
-                            text: 'Todavía no tienes citas pasadas.',
-                          )
-                        else
-                          for (final entry in history.indexed) ...[
-                            AppointmentCard(
-                              appointment: entry.$2,
-                              subtitle: 'Con ${entry.$2.barberName}',
-                              actions:
-                                  _canRate(entry.$2) &&
-                                      !ratedIds.contains(entry.$2.id)
-                                  ? [
-                                      TextButton(
-                                        onPressed: () => Navigator.of(context)
-                                            .push(
-                                              MaterialPageRoute(
-                                                builder: (_) =>
-                                                    RateAppointmentView(
-                                                      appointment: entry.$2,
-                                                    ),
-                                              ),
-                                            ),
-                                        child: const Text('Calificar'),
+                        children: [
+                          SectionHeader(title: 'Próximas (${upcoming.length})'),
+                          if (upcoming.isEmpty)
+                            const _InlineEmptyNote(
+                              text: 'No tienes citas próximas.',
+                            )
+                          else
+                            for (final entry in upcoming.indexed) ...[
+                              PaymentStreamBuilder(
+                                paymentId: entry.$2.paid
+                                    ? entry.$2.paymentId
+                                    : null,
+                                builder: (context, payment) => AppointmentCard(
+                                  appointment: entry.$2,
+                                  subtitle: 'Con ${entry.$2.barberName}',
+                                  payment: payment,
+                                  actions: [
+                                    AppButton(
+                                      expand: false,
+                                      variant: AppButtonVariant.text,
+                                      onPressed: () =>
+                                          _cancel(context, entry.$2),
+                                      child: Text(
+                                        'Cancelar',
+                                        style: TextStyle(
+                                          color: AppColors.readable(
+                                            AppColors.error,
+                                          ),
+                                        ),
                                       ),
-                                    ]
-                                  : const [],
-                            ),
-                            const SizedBox(height: 10),
-                          ],
-                      ],
+                                    ),
+                                  ],
+                                ),
+                              ),
+                              const SizedBox(height: AppSpace.md),
+                            ],
+                          const SizedBox(height: AppSpace.xl),
+                          SectionHeader(title: 'Historial (${history.length})'),
+                          if (history.isEmpty)
+                            const _InlineEmptyNote(
+                              text: 'Todavía no tienes citas pasadas.',
+                            )
+                          else
+                            for (final entry in history.indexed) ...[
+                              PaymentStreamBuilder(
+                                paymentId: entry.$2.paid
+                                    ? entry.$2.paymentId
+                                    : null,
+                                builder: (context, payment) => AppointmentCard(
+                                  appointment: entry.$2,
+                                  subtitle: 'Con ${entry.$2.barberName}',
+                                  payment: payment,
+                                  actions:
+                                      _canRate(entry.$2) &&
+                                          !ratedIds.contains(entry.$2.id)
+                                      ? [
+                                          TextButton(
+                                            onPressed: () =>
+                                                Navigator.of(context).push(
+                                                  MaterialPageRoute(
+                                                    builder: (_) =>
+                                                        RateAppointmentView(
+                                                          appointment: entry.$2,
+                                                        ),
+                                                  ),
+                                                ),
+                                            child: const Text('Calificar'),
+                                          ),
+                                        ]
+                                      : const [],
+                                ),
+                              ),
+                              const SizedBox(height: AppSpace.md),
+                            ],
+                        ],
+                      ),
                     );
                   },
                 );
               },
             ),
-    );
-  }
-}
-
-class _SectionHeader extends StatelessWidget {
-  final String label;
-  final int count;
-
-  const _SectionHeader({required this.label, required this.count});
-
-  @override
-  Widget build(BuildContext context) {
-    return Row(
-      children: [
-        Text(
-          label,
-          style: const TextStyle(fontWeight: FontWeight.w800, fontSize: 16),
-        ),
-        const SizedBox(width: 8),
-        Container(
-          padding: const EdgeInsets.symmetric(horizontal: 8, vertical: 2),
-          decoration: BoxDecoration(
-            color: AppColors.border,
-            borderRadius: BorderRadius.circular(10),
-          ),
-          child: Text(
-            '$count',
-            style: TextStyle(
-              fontSize: 12,
-              fontWeight: FontWeight.w600,
-              color: AppColors.textSecondary,
-            ),
-          ),
-        ),
-      ],
     );
   }
 }
@@ -376,18 +355,8 @@ class _InlineEmptyNote extends StatelessWidget {
 
   @override
   Widget build(BuildContext context) {
-    return Container(
-      width: double.infinity,
-      padding: const EdgeInsets.all(14),
-      decoration: BoxDecoration(
-        color: AppColors.surface,
-        borderRadius: BorderRadius.circular(12),
-        border: Border.all(color: AppColors.border),
-      ),
-      child: Text(
-        text,
-        style: TextStyle(color: AppColors.textSecondary, fontSize: 13),
-      ),
+    return AppCard(
+      child: Text(text, style: Theme.of(context).textTheme.secondary),
     );
   }
 }

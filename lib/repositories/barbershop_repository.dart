@@ -46,14 +46,15 @@ abstract class BarbershopRepository {
     required Uint8List bytes,
   });
 
-  /// Paga el registro de un borrador y lo convierte en barbería pendiente de
-  /// revisión (el borrador se elimina). Devuelve el id de la barbería.
-  Future<String> publishDraft(String draftId);
+  /// Registra el pago Nequi del primer mes ([reference] es la del
+  /// comprobante) y convierte el borrador en barbería pendiente de revisión
+  /// (el borrador se elimina). Devuelve el id de la barbería.
+  Future<String> publishDraft(String draftId, {required String reference});
 
   /// Registra una barbería nueva pagando de una vez, sin pasar por borrador.
   /// Solo así (o con [publishDraft]) puede existir una barbería nueva: sin
-  /// pago aprobado, firestore.rules rechaza la creación.
-  Future<String> createPaid(Barbershop barbershop);
+  /// un pago registrado, firestore.rules rechaza la creación.
+  Future<String> createPaid(Barbershop barbershop, {required String reference});
 
   /// Borra la barbería (Delete del CRUD del dueño). firestore.rules solo lo
   /// permite si no está aprobada o si ya se canceló su membresía (bloqueada);
@@ -69,14 +70,25 @@ abstract class BarbershopRepository {
     String? phone,
     String? email,
     String? description,
+    String? nequiPhone,
   });
 
   /// El admin aprueba o rechaza la solicitud (spec 12.1/12.4): si aprueba,
-  /// activa la barbería y arranca el primer ciclo de mensualidad.
+  /// confirma el pago del registro, activa la barbería y arranca el primer
+  /// ciclo de mensualidad; si rechaza, rechaza también ese pago.
   Future<void> resolveApproval(String id, {required bool approve});
 
-  /// El dueño paga/renueva la mensualidad de ESA barbería (spec 12.5).
-  Future<void> paySubscription(String id);
+  /// El dueño registra el pago Nequi de la mensualidad de ESA barbería
+  /// (spec 12.5). Queda pendiente: la barbería se renueva cuando el admin lo
+  /// confirma con [confirmSubscriptionPayment].
+  Future<void> paySubscription(String id, {required String reference});
+
+  /// El admin verificó el Nequi de la plataforma: aprueba el pago y renueva
+  /// la mensualidad de la barbería, en una sola escritura.
+  Future<void> confirmSubscriptionPayment(String paymentId);
+
+  /// El dinero no llegó: el admin rechaza el pago de la mensualidad.
+  Future<void> rejectSubscriptionPayment(String paymentId);
 
   /// El dueño cancela la membresía directamente: bloquea de inmediato, sin
   /// período de gracia (spec 12.5).
@@ -97,11 +109,9 @@ abstract class BarbershopRepository {
   /// admin (impuesto también en firestore.rules).
   Future<void> setPaymentStatus(String id, PaymentStatus status);
 
-  /// El admin confirma que la mensualidad de [id] fue pagada por una vía
-  /// distinta al gateway (p.ej. verificada manualmente): la marca al día,
-  /// reactiva la barbería si estaba bloqueada y arranca un nuevo ciclo de
-  /// 30 días desde hoy — mismos efectos que [BarbershopRepository]'s
-  /// `paySubscription` en Firestore, sin repetir el cobro (spec 12.5).
+  /// El admin recibió la mensualidad de [id] por una vía sin comprobante en
+  /// la app (p. ej. efectivo): la marca al día, reactiva la barbería si
+  /// estaba bloqueada y arranca un nuevo ciclo de 30 días (spec 12.5).
   Future<void> confirmPaymentReceived(String id);
 
   /// El admin bloquea [id] por falta de pago fuera del ciclo automático de

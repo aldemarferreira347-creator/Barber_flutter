@@ -1,48 +1,25 @@
 import 'dart:typed_data';
 
-import 'package:cloud_firestore/cloud_firestore.dart';
 import 'package:barber/models/barbershop.dart';
 import 'package:barber/repositories/barbershop_repository.dart';
 import 'package:barber/repositories/storage_repository.dart';
 import 'package:barber/services/firestore_barbershop_service.dart';
+import 'package:cloud_firestore/cloud_firestore.dart';
+import 'package:fake_cloud_firestore/fake_cloud_firestore.dart';
+import 'package:firebase_auth/firebase_auth.dart';
 import 'package:flutter_test/flutter_test.dart';
 import 'package:mocktail/mocktail.dart';
 
 class MockStorageRepository extends Mock implements StorageRepository {}
 
-class MockFirebaseFirestore extends Mock implements FirebaseFirestore {}
+class MockFirebaseAuth extends Mock implements FirebaseAuth {}
 
-// ignore: subtype_of_sealed_class
-class MockCollectionReference extends Mock
-    implements CollectionReference<Map<String, dynamic>> {}
-
-// ignore: subtype_of_sealed_class
-class MockQuery extends Mock implements Query<Map<String, dynamic>> {}
-
-// ignore: subtype_of_sealed_class
-class MockQuerySnapshot extends Mock
-    implements QuerySnapshot<Map<String, dynamic>> {}
-
-// ignore: subtype_of_sealed_class
-class MockQueryDocumentSnapshot extends Mock
-    implements QueryDocumentSnapshot<Map<String, dynamic>> {}
-
-// ignore: subtype_of_sealed_class
-class MockDocumentReference extends Mock
-    implements DocumentReference<Map<String, dynamic>> {}
-
-// ignore: subtype_of_sealed_class
-class MockDocumentSnapshot extends Mock
-    implements DocumentSnapshot<Map<String, dynamic>> {}
-
-class MockTransaction extends Mock implements Transaction {}
-
-class MockWriteBatch extends Mock implements WriteBatch {}
+class MockUser extends Mock implements User {}
 
 void main() {
+  late FakeFirebaseFirestore firestore;
   late MockStorageRepository storage;
-  late MockFirebaseFirestore firestore;
-  late MockCollectionReference collection;
+  late MockUser user;
   late FirestoreBarbershopService service;
 
   setUpAll(() {
@@ -50,27 +27,37 @@ void main() {
   });
 
   setUp(() {
+    firestore = FakeFirebaseFirestore();
     storage = MockStorageRepository();
-    firestore = MockFirebaseFirestore();
-    collection = MockCollectionReference();
-    when(() => firestore.collection('barbershops')).thenReturn(collection);
+    user = MockUser();
+    final auth = MockFirebaseAuth();
+    when(() => auth.currentUser).thenReturn(user);
+    when(() => user.uid).thenReturn('admin1');
     service = FirestoreBarbershopService(
       storage: storage,
       firestore: firestore,
-      simulatedApprovalDelay: Duration.zero,
+      auth: auth,
     );
   });
 
+  DocumentReference<Map<String, dynamic>> shop(String id) =>
+      firestore.collection('barbershops').doc(id);
+
+  Future<Map<String, dynamic>> read(
+    DocumentReference<Map<String, dynamic>> r,
+  ) async => (await r.get()).data()!;
+
+  double daysAhead(Timestamp due) =>
+      due.toDate().difference(DateTime.now()).inHours / 24;
+
   test('uploadPhoto sube la foto y guarda su URL en el documento', () async {
-    final docRef = MockDocumentReference();
+    await shop('shop1').set({'name': 'BarberFlow', 'ownerId': 'owner1'});
     when(
       () => storage.uploadBytes(
         path: any(named: 'path'),
         bytes: any(named: 'bytes'),
       ),
     ).thenAnswer((_) async => 'https://example.com/shop.png');
-    when(() => collection.doc('shop1')).thenReturn(docRef);
-    when(() => docRef.update(any())).thenAnswer((_) async {});
 
     final bytes = Uint8List.fromList([1, 2, 3]);
     await service.uploadPhoto('shop1', fileName: 'cover.png', bytes: bytes);
@@ -81,176 +68,315 @@ void main() {
         bytes: bytes,
       ),
     ).called(1);
-    verify(() => docRef.update({'photoUrl': 'https://example.com/shop.png'}))
-        .called(1);
+    expect(
+      (await read(shop('shop1')))['photoUrl'],
+      'https://example.com/shop.png',
+    );
   });
 
-  test('watchApproved filtra por approvalStatus aprobada y activa', () async {
-    final query1 = MockQuery();
-    final query2 = MockQuery();
-    final querySnapshot = MockQuerySnapshot();
-    final doc = MockQueryDocumentSnapshot();
-
-    when(() => collection.where('approvalStatus', isEqualTo: 'approved'))
-        .thenReturn(query1);
-    when(() => query1.where('active', isEqualTo: true)).thenReturn(query2);
-    when(() => query2.snapshots())
-        .thenAnswer((_) => Stream.value(querySnapshot));
-    when(() => querySnapshot.docs).thenReturn([doc]);
-    when(() => doc.id).thenReturn('shop1');
-    when(() => doc.data()).thenReturn({
-      'name': 'BarberFlow',
+  group('watchApproved (catálogo del cliente)', () {
+    Future<void> seed(String id, Map<String, dynamic> fields) => shop(id).set({
+      'name': id,
       'ownerId': 'owner1',
       'active': true,
       'approvalStatus': 'approved',
+      ...fields,
     });
 
-    final shops = await service.watchApproved().first;
+    test('solo trae barberías aprobadas y activas', () async {
+      await seed('ok', {});
+      await seed('pendiente', {'approvalStatus': 'pending'});
+      await seed('inactiva', {'active': false});
 
-    expect(shops, hasLength(1));
-    expect(shops.first.id, 'shop1');
-  });
+      final shops = await service.watchApproved().first;
 
-  test('paySubscription simula el pago (payments/{id}) y renueva la mensualidad 30 días', () async {
-    final shopDocRef = MockDocumentReference();
-    final shopSnap = MockDocumentSnapshot();
-    final paymentsCollection = MockCollectionReference();
-    final paymentDocRef = MockDocumentReference();
-
-    when(() => collection.doc('shop1')).thenReturn(shopDocRef);
-    when(() => shopDocRef.get()).thenAnswer((_) async => shopSnap);
-    when(() => shopSnap.id).thenReturn('shop1');
-    when(() => shopSnap.data()).thenReturn({
-      'name': 'BarberFlow',
-      'ownerId': 'owner1',
-      'approvalStatus': 'approved',
+      expect(shops.map((s) => s.id), ['ok']);
     });
-    when(() => shopDocRef.update(any())).thenAnswer((_) async {});
 
-    when(() => firestore.collection('payments')).thenReturn(paymentsCollection);
-    when(() => paymentsCollection.add(any()))
-        .thenAnswer((_) async => paymentDocRef);
-    when(() => paymentDocRef.update(any())).thenAnswer((_) async {});
+    test('oculta las que pasaron su mensualidad más allá de la gracia (4 días por defecto)', () async {
+      final now = DateTime.now();
+      await seed('vigente', {
+        'paymentDueDate': Timestamp.fromDate(now.add(const Duration(days: 10))),
+      });
+      await seed('en-gracia', {
+        'paymentDueDate': Timestamp.fromDate(
+          now.subtract(const Duration(days: 2)),
+        ),
+      });
+      await seed('vencida', {
+        'paymentDueDate': Timestamp.fromDate(
+          now.subtract(const Duration(days: 6)),
+        ),
+      });
 
-    when(() => paymentDocRef.id).thenReturn('pay1');
+      final shops = await service.watchApproved().first;
 
-    await service.paySubscription('shop1');
+      expect(shops.map((s) => s.id).toSet(), {'vigente', 'en-gracia'});
+    });
 
-    final paymentCreate = Map<String, dynamic>.from(
-      verify(() => paymentsCollection.add(captureAny())).captured.single as Map,
-    );
-    expect(paymentCreate['payerId'], 'owner1');
-    expect(paymentCreate['category'], 'subscription');
-    expect(paymentCreate['relatedId'], 'shop1');
-    expect(paymentCreate['status'], 'pending');
+    test('respeta los días de gracia que configuró el admin', () async {
+      await seed('vencida', {
+        'paymentDueDate': Timestamp.fromDate(
+          DateTime.now().subtract(const Duration(days: 6)),
+        ),
+      });
+      await firestore.collection('platformSettings').doc('main').set({
+        'nequiPhone': '3001234567',
+        'monthlyFee': 50000,
+        'graceDays': 10,
+      });
 
-    final paymentResolve = Map<String, dynamic>.from(
-      verify(() => paymentDocRef.update(captureAny())).captured.single as Map,
-    );
-    expect(paymentResolve['status'], 'approved');
+      final shops = await service.watchApproved().first;
 
-    final shopUpdate = Map<String, dynamic>.from(
-      verify(() => shopDocRef.update(captureAny())).captured.single as Map,
-    );
-    expect(shopUpdate['paymentStatus'], 'ok');
-    expect(shopUpdate['active'], true);
-    final dueDate = (shopUpdate['paymentDueDate'] as Timestamp).toDate();
-    final daysAhead = dueDate.difference(DateTime.now()).inHours / 24;
-    expect(daysAhead, greaterThan(29));
-    expect(daysAhead, lessThan(31));
+      expect(shops.map((s) => s.id), ['vencida']);
+    });
   });
 
-  test('cancelSubscription bloquea la barbería de inmediato, sin período de gracia', () async {
-    final docRef = MockDocumentReference();
-    when(() => collection.doc('shop1')).thenReturn(docRef);
-    when(() => docRef.update(any())).thenAnswer((_) async {});
+  group('mensualidad por Nequi', () {
+    Future<void> seedApproved({DateTime? due, String status = 'ok'}) =>
+        shop('shop1').set({
+          'name': 'BarberFlow',
+          'ownerId': 'owner1',
+          'approvalStatus': 'approved',
+          'active': status == 'ok',
+          'paymentStatus': status,
+          'paymentDueDate': due == null ? null : Timestamp.fromDate(due),
+        });
 
-    await service.cancelSubscription('shop1');
+    test(
+      'paySubscription solo registra el pago pendiente: la barbería NO cambia',
+      () async {
+        await seedApproved(status: 'overdue');
+        final before = await read(shop('shop1'));
 
-    verify(() => docRef.update({'paymentStatus': 'blocked', 'active': false}))
-        .called(1);
+        await service.paySubscription('shop1', reference: 'M1234567');
+
+        final payments = await firestore.collection('payments').get();
+        expect(payments.docs, hasLength(1));
+        final payment = payments.docs.single.data();
+        expect(payment['payerId'], 'owner1');
+        expect(payment['category'], 'subscription');
+        expect(payment['relatedId'], 'shop1');
+        expect(payment['status'], 'pending');
+        expect(payment['reference'], 'M1234567');
+        expect(payment['method'], 'nequi');
+        expect(payment['amount'], kBarbershopMonthlyFee);
+        expect(await read(shop('shop1')), before);
+      },
+    );
+
+    test(
+      'el valor del pago es la mensualidad configurada por el admin',
+      () async {
+        await seedApproved();
+        await firestore.collection('platformSettings').doc('main').set({
+          'nequiPhone': '3001234567',
+          'monthlyFee': 80000,
+          'graceDays': 4,
+        });
+
+        await service.paySubscription('shop1', reference: 'M1234567');
+
+        final payment =
+            (await firestore.collection('payments').get()).docs.single;
+        expect(payment.data()['amount'], 80000);
+      },
+    );
+
+    test('confirmSubscriptionPayment aprueba el pago y renueva 30 días (barbería vencida: desde hoy)', () async {
+      await seedApproved(
+        due: DateTime.now().subtract(const Duration(days: 8)),
+        status: 'blocked',
+      );
+      await service.paySubscription('shop1', reference: 'M1234567');
+      final paymentId =
+          (await firestore.collection('payments').get()).docs.single.id;
+
+      await service.confirmSubscriptionPayment(paymentId);
+
+      final payment = await read(
+        firestore.collection('payments').doc(paymentId),
+      );
+      expect(payment['status'], 'approved');
+      expect(payment['resolvedBy'], 'admin1');
+      final updated = await read(shop('shop1'));
+      expect(updated['paymentStatus'], 'ok');
+      expect(updated['active'], true);
+      expect(
+        daysAhead(updated['paymentDueDate'] as Timestamp),
+        inInclusiveRange(29, 30.1),
+      );
+    });
+
+    test(
+      'pagar antes del vencimiento suma 30 días al vencimiento actual',
+      () async {
+        await seedApproved(due: DateTime.now().add(const Duration(days: 10)));
+        await service.paySubscription('shop1', reference: 'M1234567');
+        final paymentId =
+            (await firestore.collection('payments').get()).docs.single.id;
+
+        await service.confirmSubscriptionPayment(paymentId);
+
+        final updated = await read(shop('shop1'));
+        expect(
+          daysAhead(updated['paymentDueDate'] as Timestamp),
+          inInclusiveRange(39, 40.1),
+        );
+      },
+    );
+
+    test('un pago ya resuelto no se puede confirmar de nuevo', () async {
+      await seedApproved();
+      await service.paySubscription('shop1', reference: 'M1234567');
+      final paymentId =
+          (await firestore.collection('payments').get()).docs.single.id;
+      await service.confirmSubscriptionPayment(paymentId);
+
+      await expectLater(
+        () => service.confirmSubscriptionPayment(paymentId),
+        throwsA(anything),
+      );
+    });
+
+    test('rejectSubscriptionPayment rechaza el pago y deja la barbería como estaba', () async {
+      await seedApproved(status: 'overdue');
+      await service.paySubscription('shop1', reference: 'M1234567');
+      final paymentId =
+          (await firestore.collection('payments').get()).docs.single.id;
+      final before = await read(shop('shop1'));
+
+      await service.rejectSubscriptionPayment(paymentId);
+
+      expect(
+        (await read(firestore.collection('payments').doc(paymentId)))['status'],
+        'rejected',
+      );
+      expect(await read(shop('shop1')), before);
+    });
+
+    test('cancelSubscription bloquea la barbería de inmediato, sin período de gracia', () async {
+      await seedApproved();
+
+      await service.cancelSubscription('shop1');
+
+      final updated = await read(shop('shop1'));
+      expect(updated['paymentStatus'], 'blocked');
+      expect(updated['active'], false);
+    });
   });
 
   group('resolveApproval', () {
-    test('approve: false solo marca rechazada', () async {
-      final docRef = MockDocumentReference();
-      when(() => collection.doc('shop1')).thenReturn(docRef);
-      when(() => docRef.update(any())).thenAnswer((_) async {});
+    Future<String> seedPendingWithPayment() async {
+      final payment = await firestore.collection('payments').add({
+        'payerId': 'owner1',
+        'category': 'subscription',
+        'relatedId': 'shop1',
+        'amount': 50000,
+        'status': 'pending',
+        'reference': 'M1234567',
+      });
+      await shop('shop1').set({
+        'name': 'BarberFlow',
+        'ownerId': 'owner1',
+        'approvalStatus': 'pending',
+        'active': false,
+        'paymentId': payment.id,
+      });
+      return payment.id;
+    }
 
-      await service.resolveApproval('shop1', approve: false);
+    test(
+      'rechazar marca la barbería rechazada y su pago como no recibido',
+      () async {
+        final paymentId = await seedPendingWithPayment();
 
-      verify(() => docRef.update({'approvalStatus': 'rejected'})).called(1);
-    });
+        await service.resolveApproval('shop1', approve: false);
 
-    test('approve: true activa la barbería y arranca el primer ciclo de mensualidad', () async {
-      final docRef = MockDocumentReference();
-      when(() => collection.doc('shop1')).thenReturn(docRef);
-      when(() => docRef.update(any())).thenAnswer((_) async {});
+        expect((await read(shop('shop1')))['approvalStatus'], 'rejected');
+        final payment = await read(
+          firestore.collection('payments').doc(paymentId),
+        );
+        expect(payment['status'], 'rejected');
+        expect(payment['resolvedBy'], 'admin1');
+      },
+    );
+
+    test(
+      'aprobar confirma el pago, activa la barbería y arranca el primer ciclo',
+      () async {
+        final paymentId = await seedPendingWithPayment();
+
+        await service.resolveApproval('shop1', approve: true);
+
+        final updated = await read(shop('shop1'));
+        expect(updated['approvalStatus'], 'approved');
+        expect(updated['active'], true);
+        expect(updated['paymentStatus'], 'ok');
+        expect(
+          daysAhead(updated['paymentDueDate'] as Timestamp),
+          inInclusiveRange(29, 30.1),
+        );
+        expect(
+          (await read(
+            firestore.collection('payments').doc(paymentId),
+          ))['status'],
+          'approved',
+        );
+      },
+    );
+
+    test('aprobar una barbería sin pago registrado también funciona', () async {
+      await shop('shop1').set({
+        'name': 'BarberFlow',
+        'ownerId': 'owner1',
+        'approvalStatus': 'pending',
+        'active': false,
+      });
 
       await service.resolveApproval('shop1', approve: true);
 
-      final captured = Map<String, dynamic>.from(
-        verify(() => docRef.update(captureAny())).captured.single as Map,
-      );
-      expect(captured['approvalStatus'], 'approved');
-      expect(captured['active'], true);
-      expect(captured['paymentStatus'], 'ok');
-      final dueDate = (captured['paymentDueDate'] as Timestamp).toDate();
-      final daysAhead = dueDate.difference(DateTime.now()).inHours / 24;
-      expect(daysAhead, greaterThan(29));
-      expect(daysAhead, lessThan(31));
+      expect((await read(shop('shop1')))['approvalStatus'], 'approved');
     });
   });
 
+  test(
+    'updateInfo guarda el Nequi normalizado, o lo borra si queda vacío',
+    () async {
+      await shop('shop1')
+          .set({'name': 'A', 'ownerId': 'owner1', 'nequiPhone': '3001112233'});
+
+      await service.updateInfo(
+        'shop1',
+        name: 'B',
+        address: 'Calle 1',
+        nequiPhone: '+57 300 123 4567',
+      );
+      expect((await read(shop('shop1')))['nequiPhone'], '3001234567');
+
+      await service.updateInfo(
+        'shop1',
+        name: 'B',
+        address: 'Calle 1',
+        nequiPhone: '  ',
+      );
+      expect((await read(shop('shop1')))['nequiPhone'], isNull);
+    },
+  );
+
   group('borradores (máximo $kMaxBarbershopDrafts, cupos {uid}_1..5)', () {
-    late MockCollectionReference drafts;
-    late MockTransaction tx;
-
-    setUp(() {
-      drafts = MockCollectionReference();
-      tx = MockTransaction();
-      registerFallbackValue(MockDocumentReference());
-      registerFallbackValue(Duration.zero);
-      when(() => firestore.collection('barbershopDrafts')).thenReturn(drafts);
-      when(
-        () => firestore.runTransaction<bool>(
-          any(),
-          timeout: any(named: 'timeout'),
-          maxAttempts: any(named: 'maxAttempts'),
-        ),
-      ).thenAnswer((invocation) async {
-        final handler =
-            invocation.positionalArguments.first as TransactionHandler<bool>;
-        return handler(tx);
-      });
-      when(() => tx.set<Map<String, dynamic>>(any(), any())).thenReturn(tx);
-    });
-
-    MockDocumentReference slot(int n, {required bool taken}) {
-      final ref = MockDocumentReference();
-      final snap = MockDocumentSnapshot();
-      when(() => ref.id).thenReturn('owner1_$n');
-      when(() => snap.exists).thenReturn(taken);
-      when(() => drafts.doc('owner1_$n')).thenReturn(ref);
-      when(() => tx.get(ref)).thenAnswer((_) async => snap);
-      return ref;
-    }
-
     const draft = Barbershop(id: '', name: 'Borrador', ownerId: 'owner1');
 
+    CollectionReference<Map<String, dynamic>> drafts() =>
+        firestore.collection('barbershopDrafts');
+
     test('saveDraft usa el primer cupo libre', () async {
-      slot(1, taken: true);
-      final free = slot(2, taken: false);
+      await drafts().doc('owner1_1').set({'ownerId': 'owner1', 'name': 'Otro'});
 
       final id = await service.saveDraft(draft);
 
       expect(id, 'owner1_2');
-      final data = Map<String, dynamic>.from(
-        verify(() => tx.set<Map<String, dynamic>>(free, captureAny()))
-                .captured
-                .single
-            as Map,
-      );
+      final data = await read(drafts().doc('owner1_2'));
       expect(data['ownerId'], 'owner1');
       expect(data['name'], 'Borrador');
       // Un borrador no lleva estados de aprobación ni de pago.
@@ -263,100 +389,49 @@ void main() {
       'saveDraft lanza BarbershopDraftLimitException con los 5 cupos ocupados',
       () async {
         for (var n = 1; n <= kMaxBarbershopDrafts; n++) {
-          slot(n, taken: true);
+          await drafts().doc('owner1_$n').set({'ownerId': 'owner1'});
         }
 
-        expect(
+        await expectLater(
           () => service.saveDraft(draft),
           throwsA(isA<BarbershopDraftLimitException>()),
         );
       },
     );
 
-    test('publishDraft cobra, crea la barbería pendiente con su paymentId y borra el borrador', () async {
-      final draftRef = MockDocumentReference();
-      final draftSnap = MockDocumentSnapshot();
-      when(() => drafts.doc('owner1_1')).thenReturn(draftRef);
-      when(() => draftRef.get()).thenAnswer((_) async => draftSnap);
-      when(() => draftSnap.id).thenReturn('owner1_1');
-      when(() => draftSnap.data()).thenReturn({
+    test('publishDraft registra el pago pendiente, crea la barbería pendiente y borra el borrador', () async {
+      await drafts().doc('owner1_1').set({
         'name': 'Mi barbería',
         'ownerId': 'owner1',
         'address': 'Calle 1',
       });
 
-      final shopRef = MockDocumentReference();
-      when(() => shopRef.id).thenReturn('newShop');
-      when(() => collection.doc()).thenReturn(shopRef);
+      final id = await service.publishDraft('owner1_1', reference: 'M1234567');
 
-      final paymentsCollection = MockCollectionReference();
-      final paymentRef = MockDocumentReference();
-      when(() => firestore.collection('payments'))
-          .thenReturn(paymentsCollection);
-      when(() => paymentsCollection.add(any()))
-          .thenAnswer((_) async => paymentRef);
-      when(() => paymentRef.id).thenReturn('pay1');
-      when(() => paymentRef.update(any())).thenAnswer((_) async {});
+      final payment =
+          (await firestore.collection('payments').get()).docs.single;
+      expect(payment.data()['payerId'], 'owner1');
+      expect(payment.data()['category'], 'subscription');
+      expect(payment.data()['relatedId'], id);
+      expect(payment.data()['amount'], kBarbershopMonthlyFee);
+      expect(payment.data()['status'], 'pending');
+      expect(payment.data()['reference'], 'M1234567');
 
-      final batch = MockWriteBatch();
-      when(() => firestore.batch()).thenReturn(batch);
-      when(() => batch.set<Map<String, dynamic>>(any(), any()))
-          .thenReturn(null);
-      when(() => batch.delete(any())).thenReturn(null);
-      when(() => batch.commit()).thenAnswer((_) async {});
-
-      final id = await service.publishDraft('owner1_1');
-
-      expect(id, 'newShop');
-      final payment = Map<String, dynamic>.from(
-        verify(() => paymentsCollection.add(captureAny())).captured.single
-            as Map,
-      );
-      expect(payment['payerId'], 'owner1');
-      expect(payment['category'], 'subscription');
-      expect(payment['relatedId'], 'newShop');
-      expect(payment['amount'], kBarbershopMonthlyFee);
-      final resolve = Map<String, dynamic>.from(
-        verify(() => paymentRef.update(captureAny())).captured.single as Map,
-      );
-      expect(resolve['status'], 'approved');
-
-      final shop = Map<String, dynamic>.from(
-        verify(() => batch.set<Map<String, dynamic>>(shopRef, captureAny()))
-                .captured
-                .single
-            as Map,
-      );
-      expect(shop['approvalStatus'], 'pending');
-      expect(shop['active'], false);
-      expect(shop['paymentId'], 'pay1');
-      expect(shop['ownerId'], 'owner1');
-      verify(() => batch.delete(draftRef)).called(1);
-      verify(() => batch.commit()).called(1);
+      final created = await read(shop(id));
+      expect(created['approvalStatus'], 'pending');
+      expect(created['active'], false);
+      expect(created['paymentId'], payment.id);
+      expect(created['ownerId'], 'owner1');
+      expect((await drafts().doc('owner1_1').get()).exists, false);
     });
 
     test('createPaid no toca ningún borrador', () async {
-      final shopRef = MockDocumentReference();
-      when(() => shopRef.id).thenReturn('newShop');
-      when(() => collection.doc()).thenReturn(shopRef);
-      final paymentsCollection = MockCollectionReference();
-      final paymentRef = MockDocumentReference();
-      when(() => firestore.collection('payments'))
-          .thenReturn(paymentsCollection);
-      when(() => paymentsCollection.add(any()))
-          .thenAnswer((_) async => paymentRef);
-      when(() => paymentRef.id).thenReturn('pay1');
-      when(() => paymentRef.update(any())).thenAnswer((_) async {});
-      final batch = MockWriteBatch();
-      when(() => firestore.batch()).thenReturn(batch);
-      when(() => batch.set<Map<String, dynamic>>(any(), any()))
-          .thenReturn(null);
-      when(() => batch.commit()).thenAnswer((_) async {});
+      await drafts().doc('owner1_1').set({'ownerId': 'owner1', 'name': 'Otro'});
 
-      await service.createPaid(draft);
+      final id = await service.createPaid(draft, reference: 'M1234567');
 
-      verifyNever(() => batch.delete(any()));
-      verify(() => batch.commit()).called(1);
+      expect((await shop(id).get()).exists, true);
+      expect((await drafts().doc('owner1_1').get()).exists, true);
     });
   });
 }

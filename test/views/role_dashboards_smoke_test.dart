@@ -2,11 +2,15 @@ import 'package:barber/controllers/auth_controller.dart';
 import 'package:barber/models/app_user.dart';
 import 'package:barber/models/appointment.dart';
 import 'package:barber/models/barbershop.dart';
+import 'package:barber/models/payment_record.dart';
+import 'package:barber/models/platform_settings.dart';
 import 'package:barber/models/user_role.dart';
 import 'package:barber/repositories/appointment_repository.dart';
 import 'package:barber/repositories/auth_repository.dart';
 import 'package:barber/repositories/barbershop_repository.dart';
 import 'package:barber/repositories/notification_repository.dart';
+import 'package:barber/repositories/payment_repository.dart';
+import 'package:barber/repositories/platform_settings_repository.dart';
 import 'package:barber/repositories/user_repository.dart';
 import 'package:barber/services/push_notification_service.dart';
 import 'package:barber/views/home/admin_dashboard_tab.dart';
@@ -39,6 +43,11 @@ class MockNotificationRepository extends Mock
 
 class MockAppointmentRepository extends Mock implements AppointmentRepository {}
 
+class MockPaymentRepository extends Mock implements PaymentRepository {}
+
+class MockPlatformSettingsRepository extends Mock
+    implements PlatformSettingsRepository {}
+
 const _uid = 'user1';
 
 String _nextTime() {
@@ -52,6 +61,8 @@ void main() {
   late MockUserRepository userRepository;
   late MockNotificationRepository notificationRepository;
   late MockAppointmentRepository appointmentRepository;
+  late MockPaymentRepository paymentRepository;
+  late MockPlatformSettingsRepository settingsRepository;
 
   setUp(() {
     final authRepository = MockAuthRepository();
@@ -66,6 +77,13 @@ void main() {
     userRepository = MockUserRepository();
     notificationRepository = MockNotificationRepository();
     appointmentRepository = MockAppointmentRepository();
+    paymentRepository = MockPaymentRepository();
+    settingsRepository = MockPlatformSettingsRepository();
+    when(() => paymentRepository.watchPendingSubscriptions())
+        .thenAnswer((_) => Stream.value(const <PaymentRecord>[]));
+    when(() => settingsRepository.watch()).thenAnswer(
+      (_) => Stream.value(const PlatformSettings(nequiPhone: '3001234567')),
+    );
 
     when(() => barbershopRepository.watchAll())
         .thenAnswer((_) => Stream.value(const []));
@@ -95,6 +113,8 @@ void main() {
         Provider<UserRepository>.value(value: userRepository),
         Provider<NotificationRepository>.value(value: notificationRepository),
         Provider<AppointmentRepository>.value(value: appointmentRepository),
+        Provider<PaymentRepository>.value(value: paymentRepository),
+        Provider<PlatformSettingsRepository>.value(value: settingsRepository),
       ],
       child: MaterialApp(home: child),
     );

@@ -41,7 +41,7 @@ void main() {
       _shop(payment: PaymentStatus.overdue, due: DateTime(2029, 12)),
       now: now,
     );
-    expect(alerts.single.title, contains('sin pagar'));
+    expect(alerts.single.title, contains('bloqueada por mora'));
   });
 
   test('bloqueada: alerta de barbería bloqueada', () {

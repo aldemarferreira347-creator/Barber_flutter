@@ -1,6 +1,8 @@
 import 'package:flutter/material.dart';
 
 import '../admin/manage_users_view.dart';
+import '../admin/pending_payments_view.dart';
+import '../admin/platform_settings_view.dart';
 import '../barbershop/manage_barbershops_view.dart';
 import '../help/help_view.dart';
 import '../profile/profile_menu_view.dart';
@@ -48,6 +50,24 @@ class AdminHomeView extends StatelessWidget {
                   onTap: () => Navigator.of(context).push(
                     MaterialPageRoute(
                       builder: (_) => const ManageBarbershopsView(),
+                    ),
+                  ),
+                ),
+                ProfileMenuItem(
+                  icon: Icons.fact_check_outlined,
+                  label: 'Pagos por verificar',
+                  onTap: () => Navigator.of(context).push(
+                    MaterialPageRoute(
+                      builder: (_) => const PendingPaymentsView(),
+                    ),
+                  ),
+                ),
+                ProfileMenuItem(
+                  icon: Icons.account_balance_wallet_outlined,
+                  label: 'Datos de cobro',
+                  onTap: () => Navigator.of(context).push(
+                    MaterialPageRoute(
+                      builder: (_) => const PlatformSettingsView(),
                     ),
                   ),
                 ),

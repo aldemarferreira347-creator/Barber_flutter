@@ -39,6 +39,21 @@ class FirestoreProductService implements ProductRepository {
   }
 
   @override
+  Future<void> update(Product product) {
+    return _products(product.barbershopId).doc(product.id).update({
+      'name': product.name,
+      'description': product.description,
+      'price': product.price,
+      'photoUrl': product.photoUrl,
+    });
+  }
+
+  @override
+  Future<void> delete(String barbershopId, String productId) {
+    return _products(barbershopId).doc(productId).delete();
+  }
+
+  @override
   Future<void> setActive(String barbershopId, String productId, bool active) {
     return _products(barbershopId).doc(productId).update({'active': active});
   }

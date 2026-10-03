@@ -2,6 +2,7 @@ import 'package:cloud_firestore/cloud_firestore.dart';
 import 'package:firebase_auth/firebase_auth.dart';
 
 import '../models/appointment.dart';
+import '../models/payment_record.dart';
 import '../models/refund_request.dart';
 import '../repositories/refund_request_repository.dart';
 import 'appointment_slot_id.dart';
@@ -62,9 +63,15 @@ class CloudRefundRequestService implements RefundRequestRepository {
   }
 
   @override
-  Future<void> resolve(String requestId, {required bool approve}) async {
-    // Antes esto lo hacía resolveAppointmentRefund (Admin SDK): el dueño
-    // de la barbería (o el admin) aprueba/rechaza la solicitud (spec 6.5).
+  Future<void> resolve(
+    String requestId, {
+    required bool approve,
+    RefundMethod? method,
+  }) async {
+    // El dueño de la barbería (o el admin) aprueba/rechaza la solicitud
+    // (spec 6.5). Todo el efecto de aprobar va en UNA escritura atómica: si
+    // fallara a medias quedaría una cita cancelada con el pago sin resolver
+    // (o al revés).
     final uid = _auth.currentUser?.uid;
     if (uid == null) throw Exception('Debes iniciar sesión.');
 
@@ -73,6 +80,9 @@ class CloudRefundRequestService implements RefundRequestRepository {
     final requestData = requestSnap.data();
     if (!requestSnap.exists || requestData == null) {
       throw Exception('La solicitud no existe.');
+    }
+    if (requestData['status'] != 'pending') {
+      throw Exception('Esta solicitud ya fue resuelta.');
     }
 
     if (!approve) {
@@ -96,34 +106,44 @@ class CloudRefundRequestService implements RefundRequestRepository {
       appointmentData,
     );
 
-    final writes = <Future<void>>[
-      appointmentRef.update({'status': 'cancelled'}),
-      requestRef.update({
-        'status': 'approved',
-        'resolvedAt': FieldValue.serverTimestamp(),
-        'resolvedBy': uid,
-      }),
-      _slots
-          .doc(appointmentSlotId(appointment.barberId, appointment.date))
-          .delete(),
-    ];
+    final batch = _firestore.batch();
+    batch.update(appointmentRef, {'status': 'cancelled'});
+    batch.update(requestRef, {
+      'status': 'approved',
+      'resolvedAt': FieldValue.serverTimestamp(),
+      'resolvedBy': uid,
+    });
+    batch.delete(
+      _slots.doc(appointmentSlotId(appointment.barberId, appointment.date)),
+    );
 
-    if (appointment.paymentId != null) {
-      writes.add(
-        _payments.doc(appointment.paymentId).update({
-          'status': 'refunded',
+    final paymentId = appointment.paymentId;
+    if (paymentId != null) {
+      final paymentRef = _payments.doc(paymentId);
+      final status = (await paymentRef.get()).data()?['status'];
+      if (status == PaymentIntentStatus.approved.value) {
+        // El dinero ya se había confirmado: quien aprueba lo devuelve por
+        // Nequi o en efectivo y deja registrado el medio.
+        if (method == null) {
+          throw Exception('Indica por qué medio devolviste el dinero.');
+        }
+        batch.update(paymentRef, {
+          'status': PaymentIntentStatus.refunded.value,
           'refundedAmount': appointment.servicePrice,
+          'refundMethod': method.value,
           'resolvedAt': FieldValue.serverTimestamp(),
-        }),
-      );
+        });
+      } else if (status == PaymentIntentStatus.pending.value) {
+        // Nunca se verificó el dinero: no hay nada que devolver, el pago se
+        // da por no recibido.
+        batch.update(paymentRef, {
+          'status': PaymentIntentStatus.rejected.value,
+          'resolvedAt': FieldValue.serverTimestamp(),
+          'resolvedBy': uid,
+        });
+      }
     }
 
-    // Nota: si la solicitud viene junto con una compra de producto
-    // (purchaseId/purchaseItemIndexes), el reembolso de esos ítems queda
-    // pendiente para cuando se migre el grupo de productos — hoy la UI
-    // nunca envía esos campos (ver requestRefund en book/client
-    // appointments), así que no hay caso real que cubrir todavía.
-
-    await Future.wait(writes);
+    await batch.commit();
   }
 }

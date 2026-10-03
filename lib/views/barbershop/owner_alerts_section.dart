@@ -1,6 +1,9 @@
 import 'package:flutter/material.dart';
+import 'package:provider/provider.dart';
 
 import '../../models/barbershop.dart';
+import '../../models/platform_settings.dart';
+import '../../repositories/platform_settings_repository.dart';
 import 'owner_barbershop_manage_view.dart';
 import 'payment_insight.dart';
 
@@ -14,29 +17,37 @@ class OwnerAlertsSection extends StatelessWidget {
 
   @override
   Widget build(BuildContext context) {
-    final banners = <Widget>[
-      for (final shop in shops)
-        for (final alert in shopAlerts(shop))
-          ShopAlertBanner(
-            alert: ShopAlert(
-              title: '${shop.name}: ${alert.title}',
-              message: alert.message,
-              color: alert.color,
-              icon: alert.icon,
-            ),
-            actionLabel: 'Ver',
-            onAction: () => Navigator.of(context).push(
-              MaterialPageRoute(
-                builder: (_) =>
-                    OwnerBarbershopManageView(barbershopId: shop.id),
+    return StreamBuilder<PlatformSettings>(
+      stream: context.read<PlatformSettingsRepository>().watch(),
+      initialData: PlatformSettings.defaults,
+      builder: (context, snapshot) {
+        final graceDays =
+            (snapshot.data ?? PlatformSettings.defaults).graceDays;
+        final banners = <Widget>[
+          for (final shop in shops)
+            for (final alert in shopAlerts(shop, graceDays: graceDays))
+              ShopAlertBanner(
+                alert: ShopAlert(
+                  title: '${shop.name}: ${alert.title}',
+                  message: alert.message,
+                  color: alert.color,
+                  icon: alert.icon,
+                ),
+                actionLabel: 'Ver',
+                onAction: () => Navigator.of(context).push(
+                  MaterialPageRoute(
+                    builder: (_) =>
+                        OwnerBarbershopManageView(barbershopId: shop.id),
+                  ),
+                ),
               ),
-            ),
-          ),
-    ];
-    if (banners.isEmpty) return const SizedBox.shrink();
-    return Column(
-      crossAxisAlignment: CrossAxisAlignment.stretch,
-      children: banners,
+        ];
+        if (banners.isEmpty) return const SizedBox.shrink();
+        return Column(
+          crossAxisAlignment: CrossAxisAlignment.stretch,
+          children: banners,
+        );
+      },
     );
   }
 }

@@ -12,6 +12,7 @@ import 'repositories/barber_availability_repository.dart';
 import 'repositories/barbershop_repository.dart';
 import 'repositories/notification_repository.dart';
 import 'repositories/payment_repository.dart';
+import 'repositories/platform_settings_repository.dart';
 import 'repositories/comment_repository.dart';
 import 'repositories/product_repository.dart';
 import 'repositories/purchase_repository.dart';
@@ -36,7 +37,8 @@ import 'services/firestore_notification_service.dart';
 import 'services/firestore_product_service.dart';
 import 'services/firestore_service_service.dart';
 import 'services/firestore_user_service.dart';
-import 'services/nequi_payment_gateway.dart';
+import 'services/firestore_payment_service.dart';
+import 'services/firestore_platform_settings_service.dart';
 import 'theme/app_theme.dart';
 import 'theme/theme_controller.dart';
 import 'theme/theme_scope.dart';
@@ -79,7 +81,10 @@ class BarberApp extends StatelessWidget {
         Provider<NotificationRepository>(
           create: (_) => FirestoreNotificationService(),
         ),
-        Provider<PaymentGateway>(create: (_) => NequiPaymentGateway()),
+        Provider<PaymentRepository>(create: (_) => FirestorePaymentService()),
+        Provider<PlatformSettingsRepository>(
+          create: (_) => FirestorePlatformSettingsService(),
+        ),
         Provider<PurchaseRepository>(create: (_) => CloudPurchaseService()),
         Provider<RefundRequestRepository>(
           create: (_) => CloudRefundRequestService(),

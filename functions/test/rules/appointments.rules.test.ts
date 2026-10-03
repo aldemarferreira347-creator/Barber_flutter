@@ -101,6 +101,13 @@ describe('firestore.rules — appointments/{id} (paid)', () => {
         paid: true,
         paymentId: 'payment1',
       });
+      await setDoc(doc(context.firestore(), 'payments/payment1'), {
+        payerId: CLIENT_UID,
+        amount: 20000,
+        category: 'appointment',
+        relatedId: 'appt1',
+        status: 'approved',
+      });
     });
     const db = testEnv.authenticatedContext(OWNER_UID).firestore();
     await assertFails(updateDoc(doc(db, 'appointments/appt1'), { status: 'accepted', paid: false }));
@@ -188,6 +195,14 @@ describe('firestore.rules — reserva pagada, identidad inmutable y slots', () =
       const db = testEnv.authenticatedContext(CLIENT_UID).firestore();
       await assertFails(setDoc(doc(db, 'appointments/apptNew'), paidAppointment({ paymentId: 'paySub' })));
     });
+
+    it('rechaza un pago por un monto distinto al precio del servicio', async () => {
+      await testEnv.withSecurityRulesDisabled(async (context) => {
+        await setDoc(doc(context.firestore(), 'payments/payBajo'), { payerId: CLIENT_UID, category: 'appointment', relatedId: 'apptNew', status: 'pending', amount: 1 });
+      });
+      const db = testEnv.authenticatedContext(CLIENT_UID).firestore();
+      await assertFails(setDoc(doc(db, 'appointments/apptNew'), paidAppointment({ paymentId: 'payBajo' })));
+    });
   });
 
   describe('campos de identidad de la cita', () => {
@@ -208,6 +223,8 @@ describe('firestore.rules — reserva pagada, identidad inmutable y slots', () =
       await assertFails(updateDoc(doc(db, 'appointments/apptP'), { status: 'postponed', serviceId: 'otro' }));
       await assertFails(updateDoc(doc(db, 'appointments/apptP'), { status: 'postponed', barbershopId: 'shopZ' }));
       await assertFails(updateDoc(doc(db, 'appointments/apptP'), { status: 'postponed', clientId: 'attacker1' }));
+      await assertFails(updateDoc(doc(db, 'appointments/apptP'), { status: 'postponed', barberId: 'otro-barbero' }));
+      await assertFails(updateDoc(doc(db, 'appointments/apptP'), { status: 'postponed', durationMinutes: 1 }));
     });
 
     it('el barbero y el dueño actualizan estado pero NO el precio ni el cliente', async () => {
@@ -343,5 +360,49 @@ describe('firestore.rules — refundRequests/{id}', () => {
   it('nadie puede escribir directamente, ni siquiera el dueño "aprobándola" él mismo', async () => {
     const db = testEnv.authenticatedContext(OWNER_UID).firestore();
     await assertFails(updateDoc(doc(db, `refundRequests/${REQUEST_ID}`), { status: 'approved' }));
+  });
+
+  describe('barbería que no puede operar (mora o sin aprobar)', () => {
+    const day = 24 * 60 * 60 * 1000;
+    const unpaid = () => ({ clientId: CLIENT_UID, barbershopId: SHOP_ID, barberId: BARBER_UID, status: 'pending', paid: false });
+
+    async function seedShop(fields: Record<string, unknown>) {
+      await testEnv.withSecurityRulesDisabled(async (context) => {
+        await setDoc(doc(context.firestore(), `barbershops/${SHOP_ID}`), { ownerId: OWNER_UID, ...fields });
+      });
+    }
+
+    it('una barbería inactiva no recibe citas', async () => {
+      await seedShop({ active: false });
+      const db = testEnv.authenticatedContext(CLIENT_UID).firestore();
+      await assertFails(setDoc(doc(db, 'appointments/a1'), unpaid()));
+    });
+
+    it('una barbería sin aprobar no recibe citas', async () => {
+      await seedShop({ active: true, approvalStatus: 'pending' });
+      const db = testEnv.authenticatedContext(CLIENT_UID).firestore();
+      await assertFails(setDoc(doc(db, 'appointments/a1'), unpaid()));
+    });
+
+    it('vencida pero dentro de la gracia sigue recibiendo citas', async () => {
+      await seedShop({ active: true, approvalStatus: 'approved', paymentDueDate: Timestamp.fromMillis(Date.now() - 2 * day) });
+      const db = testEnv.authenticatedContext(CLIENT_UID).firestore();
+      await assertSucceeds(setDoc(doc(db, 'appointments/a1'), unpaid()));
+    });
+
+    it('con la gracia vencida (4 días por defecto) ya no recibe citas', async () => {
+      await seedShop({ active: true, approvalStatus: 'approved', paymentDueDate: Timestamp.fromMillis(Date.now() - 6 * day) });
+      const db = testEnv.authenticatedContext(CLIENT_UID).firestore();
+      await assertFails(setDoc(doc(db, 'appointments/a1'), unpaid()));
+    });
+
+    it('los días de gracia salen de la configuración del admin', async () => {
+      await seedShop({ active: true, approvalStatus: 'approved', paymentDueDate: Timestamp.fromMillis(Date.now() - 6 * day) });
+      await testEnv.withSecurityRulesDisabled(async (context) => {
+        await setDoc(doc(context.firestore(), 'platformSettings/main'), { graceDays: 10, monthlyFee: 50000 });
+      });
+      const db = testEnv.authenticatedContext(CLIENT_UID).firestore();
+      await assertSucceeds(setDoc(doc(db, 'appointments/a1'), unpaid()));
+    });
   });
 });

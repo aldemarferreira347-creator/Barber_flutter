@@ -7,10 +7,10 @@ import '../../models/barbershop.dart';
 import '../../repositories/appointment_repository.dart';
 import '../../repositories/barbershop_repository.dart';
 import '../../theme/app_colors.dart';
-import '../widgets/appointment_card.dart';
 import '../widgets/empty_state.dart';
 import '../widgets/error_state.dart';
 import '../widgets/shimmer_box.dart';
+import '../widgets/staff_appointment_card.dart';
 
 /// "Mis citas" del Dueño: las citas que sus clientes agendaron en SUS
 /// barberías (no las que él mismo reserva como cliente — esas están en
@@ -167,7 +167,7 @@ class _AppointmentsListState extends State<_AppointmentsList> {
           itemBuilder: (context, index) {
             final appointment = appointments[index];
             final shopName = shopNames[appointment.barbershopId];
-            return AppointmentCard(
+            return StaffAppointmentCard(
               appointment: appointment,
               subtitle:
                   '${appointment.clientName} con ${appointment.barberName}'

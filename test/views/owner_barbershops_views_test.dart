@@ -2,10 +2,14 @@ import 'package:barber/controllers/auth_controller.dart';
 import 'package:barber/models/app_user.dart';
 import 'package:barber/models/appointment.dart';
 import 'package:barber/models/barbershop.dart';
+import 'package:barber/models/payment_record.dart';
+import 'package:barber/models/platform_settings.dart';
 import 'package:barber/models/user_role.dart';
 import 'package:barber/repositories/appointment_repository.dart';
 import 'package:barber/repositories/auth_repository.dart';
 import 'package:barber/repositories/barbershop_repository.dart';
+import 'package:barber/repositories/payment_repository.dart';
+import 'package:barber/repositories/platform_settings_repository.dart';
 import 'package:barber/repositories/user_repository.dart';
 import 'package:barber/services/push_notification_service.dart';
 import 'package:barber/views/barbershop/my_barbershops_view.dart';
@@ -30,6 +34,11 @@ class MockPushNotificationService extends Mock
 class MockBarbershopRepository extends Mock implements BarbershopRepository {}
 
 class MockAppointmentRepository extends Mock implements AppointmentRepository {}
+
+class MockPaymentRepository extends Mock implements PaymentRepository {}
+
+class MockPlatformSettingsRepository extends Mock
+    implements PlatformSettingsRepository {}
 
 const _uid = 'owner1';
 
@@ -63,6 +72,8 @@ void main() {
   late AuthController authController;
   late MockBarbershopRepository barbershops;
   late MockAppointmentRepository appointments;
+  late MockPaymentRepository payments;
+  late MockPlatformSettingsRepository settings;
 
   setUp(() {
     final authRepository = MockAuthRepository();
@@ -75,6 +86,17 @@ void main() {
     );
     barbershops = MockBarbershopRepository();
     appointments = MockAppointmentRepository();
+    payments = MockPaymentRepository();
+    settings = MockPlatformSettingsRepository();
+    when(
+      () => payments.watchSubscriptionPayments(
+        payerId: any(named: 'payerId'),
+        shopId: any(named: 'shopId'),
+      ),
+    ).thenAnswer((_) => Stream.value(const []));
+    when(() => settings.watch()).thenAnswer(
+      (_) => Stream.value(const PlatformSettings(nequiPhone: '3001234567')),
+    );
     when(() => barbershops.watchByOwner(any()))
         .thenAnswer((_) => Stream.value(const []));
     when(() => barbershops.watchDraftsByOwner(any()))
@@ -86,6 +108,8 @@ void main() {
       ChangeNotifierProvider<AuthController>.value(value: authController),
       Provider<BarbershopRepository>.value(value: barbershops),
       Provider<AppointmentRepository>.value(value: appointments),
+      Provider<PaymentRepository>.value(value: payments),
+      Provider<PlatformSettingsRepository>.value(value: settings),
     ],
     child: MaterialApp(home: child),
   );
@@ -152,8 +176,6 @@ void main() {
         300,
         scrollable: find.byType(Scrollable).first,
       );
-      // Los tiles nuevos arrancan su animación de entrada con un timer.
-      await tester.pumpAndSettle();
       expect(find.text('Citas de esta barbería'), findsOneWidget);
     });
 
@@ -186,6 +208,84 @@ void main() {
     });
 
     testWidgets(
+      'con un pago Nequi en verificación muestra su referencia y no deja enviar otro',
+      (tester) async {
+        authController.profile = _user(UserRole.owner);
+        final overdue = Barbershop(
+          id: 's1',
+          ownerId: _uid,
+          name: 'Barbería Central',
+          active: true,
+          approvalStatus: BarbershopApprovalStatus.approved,
+          paymentStatus: PaymentStatus.overdue,
+          paymentDueDate: DateTime.now().subtract(const Duration(days: 1)),
+        );
+        when(() => barbershops.watchOne('s1'))
+            .thenAnswer((_) => Stream.value(overdue));
+        when(
+          () => payments.watchSubscriptionPayments(payerId: _uid, shopId: 's1'),
+        ).thenAnswer(
+          (_) => Stream.value([
+            const PaymentRecord(
+              id: 'p1',
+              payerId: _uid,
+              amount: kBarbershopMonthlyFee,
+              category: PaymentCategory.subscription,
+              relatedId: 's1',
+              status: PaymentIntentStatus.pending,
+              reference: 'M7654321',
+            ),
+          ]),
+        );
+
+        await tester.pumpWidget(
+          wrap(const OwnerBarbershopManageView(barbershopId: 's1')),
+        );
+        await tester.pumpAndSettle();
+
+        expect(find.textContaining('Pago en verificación'), findsOneWidget);
+        expect(find.textContaining('Ref. M7654321'), findsOneWidget);
+        expect(
+          find.text('Pagar ${formatCop(kBarbershopMonthlyFee)}'),
+          findsNothing,
+        );
+      },
+    );
+
+    testWidgets(
+      'si el admin aún no configuró su Nequi, no ofrece pagar y lo explica',
+      (tester) async {
+        authController.profile = _user(UserRole.owner);
+        when(() => settings.watch())
+            .thenAnswer((_) => Stream.value(PlatformSettings.defaults));
+        final overdue = Barbershop(
+          id: 's1',
+          ownerId: _uid,
+          name: 'Barbería Central',
+          active: true,
+          approvalStatus: BarbershopApprovalStatus.approved,
+          paymentDueDate: DateTime.now().subtract(const Duration(days: 1)),
+        );
+        when(() => barbershops.watchOne('s1'))
+            .thenAnswer((_) => Stream.value(overdue));
+
+        await tester.pumpWidget(
+          wrap(const OwnerBarbershopManageView(barbershopId: 's1')),
+        );
+        await tester.pumpAndSettle();
+
+        expect(
+          find.text('Pagar ${formatCop(kBarbershopMonthlyFee)}'),
+          findsNothing,
+        );
+        expect(
+          find.textContaining('aún no configuró el Nequi'),
+          findsOneWidget,
+        );
+      },
+    );
+
+    testWidgets(
       'bloqueada (cancelada o en mora): alerta, ofrece pagar y se puede eliminar',
       (tester) async {
         authController.profile = _user(UserRole.owner);
@@ -204,7 +304,7 @@ void main() {
         );
         await tester.pumpAndSettle();
 
-        expect(find.text('Bloqueada'), findsWidgets);
+        expect(find.text('Barbería bloqueada'), findsOneWidget);
         expect(
           find.text('Pagar ${formatCop(kBarbershopMonthlyFee)}'),
           findsWidgets,

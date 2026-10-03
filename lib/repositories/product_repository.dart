@@ -7,6 +7,13 @@ abstract class ProductRepository {
 
   Future<void> create(Product product);
 
+  /// Guarda los cambios de un producto existente. Las compras ya hechas
+  /// conservan el precio con el que se pagaron.
+  Future<void> update(Product product);
+
+  /// Elimina el producto del catálogo. Las compras ya hechas no se afectan.
+  Future<void> delete(String barbershopId, String productId);
+
   Future<void> setActive(String barbershopId, String productId, bool active);
 
   Future<String> uploadPhoto({

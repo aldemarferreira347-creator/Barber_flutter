@@ -4,6 +4,8 @@ import 'package:barber/models/appointment.dart';
 import 'package:barber/models/user_role.dart';
 import 'package:barber/repositories/appointment_repository.dart';
 import 'package:barber/repositories/auth_repository.dart';
+import 'package:barber/models/payment_record.dart';
+import 'package:barber/repositories/payment_repository.dart';
 import 'package:barber/repositories/rating_repository.dart';
 import 'package:barber/repositories/user_repository.dart';
 import 'package:barber/services/push_notification_service.dart';
@@ -24,6 +26,8 @@ class MockPushNotificationService extends Mock
 class MockAppointmentRepository extends Mock implements AppointmentRepository {}
 
 class MockRatingRepository extends Mock implements RatingRepository {}
+
+class MockPaymentRepository extends Mock implements PaymentRepository {}
 
 const _kUid = 'client1';
 
@@ -55,6 +59,7 @@ void main() {
   late AuthController authController;
   late MockAppointmentRepository appointmentRepository;
   late MockRatingRepository ratingRepository;
+  late MockPaymentRepository paymentRepository;
 
   setUp(() {
     final authRepository = MockAuthRepository();
@@ -79,6 +84,20 @@ void main() {
 
     appointmentRepository = MockAppointmentRepository();
     ratingRepository = MockRatingRepository();
+    paymentRepository = MockPaymentRepository();
+    when(() => paymentRepository.watchPayment(any())).thenAnswer(
+      (_) => Stream.value(
+        const PaymentRecord(
+          id: 'payment1',
+          payerId: _kUid,
+          amount: 20000,
+          category: PaymentCategory.appointment,
+          relatedId: 'a1',
+          status: PaymentIntentStatus.pending,
+          reference: 'M1234567',
+        ),
+      ),
+    );
     when(() => ratingRepository.watchRatedAppointmentIds(_kUid))
         .thenAnswer((_) => Stream.value(const {}));
   });
@@ -89,6 +108,7 @@ void main() {
         ChangeNotifierProvider<AuthController>.value(value: authController),
         Provider<AppointmentRepository>.value(value: appointmentRepository),
         Provider<RatingRepository>.value(value: ratingRepository),
+        Provider<PaymentRepository>.value(value: paymentRepository),
       ],
       child: const MaterialApp(home: ClientAppointmentsView()),
     );
@@ -129,10 +149,8 @@ void main() {
       await tester.pumpWidget(wrap());
       await tester.pumpAndSettle();
 
-      expect(find.text('Próximas'), findsOneWidget);
-      expect(find.text('Historial'), findsOneWidget);
-      expect(find.text('1'), findsOneWidget); // contador de "Próximas"
-      expect(find.text('2'), findsOneWidget); // contador de "Historial"
+      expect(find.text('Próximas (1)'), findsOneWidget);
+      expect(find.text('Historial (2)'), findsOneWidget);
       // Solo la cita próxima (pending) ofrece cancelar.
       expect(find.text('Cancelar'), findsOneWidget);
     },
@@ -152,7 +170,9 @@ void main() {
       await tester.pump();
 
       await tester.tap(find.text('Cancelar'));
-      await tester.pumpAndSettle();
+      // El botón muestra un spinner mientras espera el diálogo: no se puede
+      // usar pumpAndSettle (la animación nunca termina).
+      await tester.pump(const Duration(milliseconds: 500));
 
       expect(find.text('Esta cita ya está pagada'), findsOneWidget);
       expect(find.text('Posponer'), findsOneWidget);
@@ -182,14 +202,14 @@ void main() {
       await tester.pump();
 
       await tester.tap(find.text('Cancelar'));
-      await tester.pumpAndSettle();
+      await tester.pump(const Duration(milliseconds: 500));
       await tester.tap(find.text('Cancelar de todas formas'));
-      await tester.pumpAndSettle();
+      await tester.pump(const Duration(milliseconds: 500));
 
       expect(find.text('Justifica la cancelación'), findsOneWidget);
       await tester.enterText(find.byType(TextField), 'Emergencia médica');
       await tester.tap(find.text('Enviar solicitud'));
-      await tester.pumpAndSettle();
+      await tester.pump(const Duration(milliseconds: 500));
 
       verify(
         () => appointmentRepository.requestRefund(
@@ -197,6 +217,28 @@ void main() {
           reason: 'Emergencia médica',
         ),
       ).called(1);
+    },
+  );
+
+  testWidgets(
+    'una cita pagada muestra el estado de su pago Nequi (en verificación)',
+    (tester) async {
+      when(() => appointmentRepository.watchByClient(_kUid)).thenAnswer(
+        (_) => Stream.value([
+          _appointment(
+            'a1',
+            AppointmentStatus.pending,
+            DateTime(2026),
+            paid: true,
+          ),
+        ]),
+      );
+
+      await tester.pumpWidget(wrap());
+      await tester.pumpAndSettle();
+
+      expect(find.textContaining('Pago en verificación'), findsOneWidget);
+      expect(find.textContaining('Ref. M1234567'), findsOneWidget);
     },
   );
 }

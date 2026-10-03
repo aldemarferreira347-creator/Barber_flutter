@@ -39,6 +39,22 @@ class FirestoreServiceService implements ServiceRepository {
   }
 
   @override
+  Future<void> update(Service service) {
+    return _services(service.barbershopId).doc(service.id).update({
+      'name': service.name,
+      'description': service.description,
+      'price': service.price,
+      'durationMinutes': service.durationMinutes,
+      'photoUrl': service.photoUrl,
+    });
+  }
+
+  @override
+  Future<void> delete(String barbershopId, String serviceId) {
+    return _services(barbershopId).doc(serviceId).delete();
+  }
+
+  @override
   Future<void> setActive(String barbershopId, String serviceId, bool active) {
     return _services(barbershopId).doc(serviceId).update({'active': active});
   }

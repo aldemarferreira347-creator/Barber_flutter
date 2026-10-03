@@ -1,10 +1,12 @@
 import 'package:flutter/material.dart';
 
 import '../../models/appointment.dart';
+import '../../models/payment_record.dart';
 import '../../theme/app_colors.dart';
 import '../../theme/app_text.dart';
 import '../../theme/app_tokens.dart';
 import 'app_card.dart';
+import 'payment_status_line.dart';
 import 'status_badge.dart';
 
 class AppointmentCard extends StatelessWidget {
@@ -12,11 +14,15 @@ class AppointmentCard extends StatelessWidget {
   final String subtitle;
   final List<Widget> actions;
 
+  /// Pago Nequi de una cita pagada; si se pasa se muestra su estado.
+  final PaymentRecord? payment;
+
   const AppointmentCard({
     super.key,
     required this.appointment,
     required this.subtitle,
     this.actions = const [],
+    this.payment,
   });
 
   Color get _statusColor => switch (appointment.status) {
@@ -65,6 +71,10 @@ class AppointmentCard extends StatelessWidget {
               Text(_dateLabel, style: text.bodySmall),
             ],
           ),
+          if (appointment.paid && payment != null) ...[
+            const SizedBox(height: AppSpace.sm),
+            PaymentStatusLine(payment: payment!),
+          ],
           if (actions.isNotEmpty) ...[
             const SizedBox(height: AppSpace.md),
             Wrap(

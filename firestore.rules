@@ -35,6 +35,33 @@ service cloud.firestore {
       return isOwnerOfShop(shopId) || isBarberOfShop(shopId);
     }
 
+    // Nequi de una barbería: celular colombiano de 10 dígitos (3XXXXXXXXX) o
+    // ausente. Es a donde el cliente transfiere, así que no puede ser basura.
+    function validNequi(data) {
+      return data.get('nequiPhone', null) == null ||
+        (data.nequiPhone is string && data.nequiPhone.matches('^3[0-9]{9}$'));
+    }
+
+    // Días de gracia tras el vencimiento de la mensualidad (los configura el
+    // admin en platformSettings/main; 4 por defecto).
+    function graceMs() {
+      return (exists(/databases/$(database)/documents/platformSettings/main)
+        ? get(/databases/$(database)/documents/platformSettings/main).data.get('graceDays', 4)
+        : 4) * 24 * 60 * 60 * 1000;
+    }
+
+    // Una barbería solo recibe citas y compras si está activa, aprobada y su
+    // mensualidad no lleva vencida más que la gracia. Se deriva de las
+    // fechas (no de que un proceso en el servidor haya actualizado el
+    // estado): sin plan Blaze no corre ningún cron de mora.
+    function shopOperational(shopId) {
+      let shop = get(/databases/$(database)/documents/barbershops/$(shopId)).data;
+      return shop.get('active', true) == true &&
+        shop.get('approvalStatus', 'approved') == 'approved' &&
+        (shop.get('paymentDueDate', null) == null ||
+          shop.paymentDueDate.toMillis() + graceMs() > request.time.toMillis());
+    }
+
     function pad2(n) {
       return n < 10 ? '0' + string(n) : string(n);
     }
@@ -234,9 +261,10 @@ service cloud.firestore {
       function hasDraftShape() {
         return request.resource.data.keys().hasOnly([
           'name', 'ownerId', 'address', 'location', 'phone', 'email',
-          'description', 'photoUrl', 'schedule', 'createdAt'
+          'description', 'photoUrl', 'schedule', 'createdAt', 'nequiPhone'
         ]) &&
-        request.resource.data.ownerId == request.auth.uid;
+        request.resource.data.ownerId == request.auth.uid &&
+        validNequi(request.resource.data);
       }
 
       allow read: if isSignedIn() &&
@@ -278,8 +306,9 @@ service cloud.firestore {
         && exists(/databases/$(database)/documents/payments/$(request.resource.data.paymentId))
         && get(/databases/$(database)/documents/payments/$(request.resource.data.paymentId)).data.payerId == request.auth.uid
         && get(/databases/$(database)/documents/payments/$(request.resource.data.paymentId)).data.category == 'subscription'
-        && get(/databases/$(database)/documents/payments/$(request.resource.data.paymentId)).data.status == 'approved'
-        && get(/databases/$(database)/documents/payments/$(request.resource.data.paymentId)).data.relatedId == shopId;
+        && get(/databases/$(database)/documents/payments/$(request.resource.data.paymentId)).data.status in ['pending', 'approved']
+        && get(/databases/$(database)/documents/payments/$(request.resource.data.paymentId)).data.relatedId == shopId
+        && validNequi(request.resource.data);
 
       allow update: if isSignedIn() && (
         (resource.data.ownerId == request.auth.uid &&
@@ -294,19 +323,12 @@ service cloud.firestore {
           // creada (o sin calificar todavía) no los tiene, y acceder a una
           // clave ausente con resource.data.X tumba la regla entera.
           request.resource.data.get('ratingSum', 0) == resource.data.get('ratingSum', 0) &&
-          request.resource.data.get('ratingCount', 0) == resource.data.get('ratingCount', 0)) ||
+          request.resource.data.get('ratingCount', 0) == resource.data.get('ratingCount', 0) &&
+          validNequi(request.resource.data)) ||
         isAdmin() ||
-        // El dueño paga/renueva la mensualidad de SU barbería (spec 12.5).
-        // Antes pasaba por payBarbershopSubscription (Admin SDK) — sin
-        // plan Blaze, la app simula el pago y escribe esto directo; la
-        // regla exige la transición exacta ("queda al día y activa") y
-        // que NINGÚN otro campo se toque en la misma escritura.
-        (resource.data.ownerId == request.auth.uid &&
-          resource.data.approvalStatus == 'approved' &&
-          request.resource.data.active == true &&
-          request.resource.data.paymentStatus == 'ok' &&
-          request.resource.data.diff(resource.data).affectedKeys()
-            .hasOnly(['active', 'paymentStatus', 'paymentDueDate'])) ||
+        // La mensualidad la renueva el ADMIN al confirmar el pago Nequi del
+        // dueño (rama isAdmin() de arriba): el dueño ya no puede marcarse a
+        // sí mismo al día ni reactivarse.
         // El dueño cancela la membresía directamente: bloquea de inmediato,
         // sin período de gracia (spec 12.5) — antes cancelBarbershopSubscription.
         (resource.data.ownerId == request.auth.uid &&
@@ -377,6 +399,7 @@ service cloud.firestore {
       allow create: if isSignedIn()
         && request.resource.data.clientId == request.auth.uid
         && request.resource.data.status == 'pending'
+        && shopOperational(request.resource.data.barbershopId)
         && (
           request.resource.data.paid == false ||
           (request.resource.data.paid == true &&
@@ -393,6 +416,7 @@ service cloud.firestore {
             // (p. ej. una suscripción) para reservar sin pagar.
             get(/databases/$(database)/documents/payments/$(request.resource.data.paymentId)).data.category == 'appointment' &&
             get(/databases/$(database)/documents/payments/$(request.resource.data.paymentId)).data.relatedId == appointmentId &&
+            get(/databases/$(database)/documents/payments/$(request.resource.data.paymentId)).data.amount == request.resource.data.servicePrice &&
             get(/databases/$(database)/documents/payments/$(request.resource.data.paymentId)).data.status == 'pending')
         );
 
@@ -426,7 +450,8 @@ service cloud.firestore {
             (resource.data.clientId == request.auth.uid &&
               resource.data.paid == false &&
               resource.data.status == 'pending' &&
-              request.resource.data.status == 'cancelled') ||
+              request.resource.data.status == 'cancelled' &&
+              request.resource.data.diff(resource.data).affectedKeys().hasOnly(['status'])) ||
             // El cliente pospone su propia cita PAGADA (spec 6.4) — el
             // barbero y el dueño ya podían por la rama de arriba, sin
             // restricción de campos. Antes pasaba por postponeAppointment
@@ -435,8 +460,15 @@ service cloud.firestore {
             (resource.data.clientId == request.auth.uid &&
               resource.data.paid == true &&
               !(resource.data.status in ['cancelled', 'completed']) &&
-              request.resource.data.status == 'postponed')
-          )
+              request.resource.data.status == 'postponed' &&
+              request.resource.data.diff(resource.data).affectedKeys().hasOnly(['status', 'date', 'rescheduleHistory']))
+          ) &&
+          // Una cita pagada solo se acepta cuando el pago Nequi ya fue
+          // verificado: la confirmación del pago va en la MISMA escritura.
+          (resource.data.paid != true ||
+            request.resource.data.status != 'accepted' ||
+            resource.data.status == 'accepted' ||
+            getAfter(/databases/$(database)/documents/payments/$(resource.data.paymentId)).data.status == 'approved')
         ) ||
         // closeShopForExternalEvent (spec 3.4): el dueño de ESA barbería
         // aplaza cada reserva PAGADA dentro del rango cerrado y marca el
@@ -562,57 +594,118 @@ service cloud.firestore {
       allow delete: if false;
     }
 
-    // payments/{id}: la pasarela sigue simulada (no hay Nequi real ni
-    // plan Blaze para correr requestPayment/refundPayment en el backend),
-    // así que la propia app crea el registro "pendiente" y lo marca
-    // "aprobado" tras un breve delay, igual que hacía SimulatedNequiGateway
-    // del lado del servidor. El pagador nunca puede fabricar un pago ya
-    // aprobado de una, ni tocar su monto una vez creado.
+    // payments/{id}: pago Nequi MANUAL (no hay pasarela real ni plan Blaze).
+    // El pagador transfiere desde su app Nequi al número de la barbería (o,
+    // para la mensualidad, al de la plataforma) y registra aquí la
+    // referencia del comprobante: el pago nace SIEMPRE 'pending'. Quien
+    // recibe el dinero lo verifica en su propio Nequi y lo confirma
+    // (approved) o lo rechaza — el pagador NUNCA puede aprobar su propio
+    // pago. Quién puede resolverlo sale del documento relacionado (la cita
+    // o la compra), no de un campo que ponga el pagador; la mensualidad la
+    // resuelve solo el admin.
     match /payments/{id} {
-      allow read: if isSignedIn() && (resource.data.payerId == request.auth.uid || isAdmin());
+      function canResolvePayment(payment) {
+        return payment.payerId != request.auth.uid && (
+          isAdmin() ||
+          (payment.category == 'appointment' &&
+            exists(/databases/$(database)/documents/appointments/$(payment.relatedId)) &&
+            isStaffOfShop(get(/databases/$(database)/documents/appointments/$(payment.relatedId)).data.barbershopId)) ||
+          (payment.category == 'product' &&
+            exists(/databases/$(database)/documents/purchases/$(payment.relatedId)) &&
+            isStaffOfShop(get(/databases/$(database)/documents/purchases/$(payment.relatedId)).data.barbershopId))
+        );
+      }
+
+      function platformFee() {
+        return exists(/databases/$(database)/documents/platformSettings/main)
+          ? get(/databases/$(database)/documents/platformSettings/main).data.get('monthlyFee', 50000)
+          : 50000;
+      }
+
+      allow read: if isSignedIn() && (
+        resource.data.payerId == request.auth.uid ||
+        isAdmin() ||
+        canResolvePayment(resource.data)
+      );
 
       allow create: if isSignedIn()
+        && request.resource.data.keys().hasOnly([
+             'payerId', 'amount', 'category', 'relatedId', 'description',
+             'status', 'createdAt', 'resolvedAt', 'refundedAmount',
+             'reference', 'method'
+           ])
         && request.resource.data.payerId == request.auth.uid
         && request.resource.data.status == 'pending'
         && request.resource.data.resolvedAt == null
-        && request.resource.data.refundedAmount == null;
+        && request.resource.data.refundedAmount == null
+        && request.resource.data.method == 'nequi'
+        && request.resource.data.category in ['appointment', 'product', 'subscription']
+        && request.resource.data.relatedId is string
+        && request.resource.data.amount is number
+        && request.resource.data.amount > 0
+        && request.resource.data.reference is string
+        && request.resource.data.reference.matches('^[A-Za-z0-9-]{4,30}$')
+        && (request.resource.data.category != 'subscription' ||
+            request.resource.data.amount == platformFee());
 
       allow update: if isSignedIn() && (
-        // El pagador resuelve su propio pago simulado: aprobado tras el
-        // delay, o rechazado si algo falló después de crearlo (p.ej. el
-        // horario se lo ganó otro cliente) y hay que dejar constancia sin
-        // dejarlo "pendiente" para siempre.
+        // El pagador retira su propio pago mientras sigue pendiente (p.ej.
+        // el horario se lo ganó otro cliente y hay que dejar constancia).
+        // Solo puede rechazarlo, nunca aprobarlo.
         (resource.data.payerId == request.auth.uid &&
           resource.data.status == 'pending' &&
-          request.resource.data.status in ['approved', 'rejected'] &&
+          request.resource.data.status == 'rejected' &&
           request.resource.data.diff(resource.data).affectedKeys().hasOnly(['status', 'resolvedAt'])) ||
+        // Quien recibió el dinero (personal de la barbería, o el admin) lo
+        // confirma o lo rechaza tras verificarlo en su Nequi.
+        (resource.data.status == 'pending' &&
+          canResolvePayment(resource.data) &&
+          request.resource.data.status in ['approved', 'rejected'] &&
+          request.resource.data.resolvedBy == request.auth.uid &&
+          request.resource.data.diff(resource.data).affectedKeys().hasOnly(['status', 'resolvedAt', 'resolvedBy'])) ||
         // Reembolso al aprobar una solicitud de cancelación de cita (spec
-        // 6.5): lo dispara el dueño de esa barbería (o el admin), no
-        // necesariamente el propio pagador. Acotado a categoría
-        // 'appointment'.
+        // 6.5): lo dispara el dueño de esa barbería (o el admin) e indica
+        // por qué medio devolvió el dinero.
         (resource.data.category == 'appointment' &&
           resource.data.status == 'approved' &&
           request.resource.data.status == 'refunded' &&
           request.resource.data.refundedAmount is number &&
           request.resource.data.refundedAmount > 0 &&
           request.resource.data.refundedAmount <= resource.data.amount &&
-          request.resource.data.diff(resource.data).affectedKeys().hasOnly(['status', 'refundedAmount', 'resolvedAt']) &&
+          request.resource.data.refundMethod in ['nequi', 'cash'] &&
+          request.resource.data.diff(resource.data).affectedKeys().hasOnly(['status', 'refundedAmount', 'resolvedAt', 'refundMethod']) &&
           (isAdmin() || isOwnerOfShop(get(/databases/$(database)/documents/appointments/$(resource.data.relatedId)).data.barbershopId))) ||
-        // refundPurchaseItems (spec 6.5/10.5): reservado al admin, igual
-        // que en el backend original (un comentario propio ahí dice que el
-        // flujo con aprobación del dueño llega en una fase posterior — no
-        // se adelanta aquí). Acotado a categoría 'product'.
+        // Reembolso de ítems de una compra (spec 6.5/10.5): reservado al
+        // admin. Acotado a categoría 'product'.
         (resource.data.category == 'product' &&
           resource.data.status == 'approved' &&
           request.resource.data.status == 'refunded' &&
           request.resource.data.refundedAmount is number &&
           request.resource.data.refundedAmount > 0 &&
           request.resource.data.refundedAmount <= resource.data.amount &&
-          request.resource.data.diff(resource.data).affectedKeys().hasOnly(['status', 'refundedAmount', 'resolvedAt']) &&
+          request.resource.data.refundMethod in ['nequi', 'cash'] &&
+          request.resource.data.diff(resource.data).affectedKeys().hasOnly(['status', 'refundedAmount', 'resolvedAt', 'refundMethod']) &&
           isAdmin())
       );
 
       allow delete: if false;
+    }
+
+    // platformSettings/main: datos de cobro de la PLATAFORMA que el admin
+    // configura (a qué Nequi paga el dueño su mensualidad y cuánto). Los
+    // lee cualquier usuario autenticado; solo el admin los escribe.
+    match /platformSettings/{docId} {
+      allow read: if isSignedIn();
+      allow write: if isAdmin()
+        && docId == 'main'
+        && request.resource.data.keys().hasOnly(['nequiPhone', 'nequiHolder', 'monthlyFee', 'graceDays', 'updatedAt'])
+        && request.resource.data.nequiPhone is string
+        && request.resource.data.nequiPhone.matches('^3[0-9]{9}$')
+        && request.resource.data.monthlyFee is number
+        && request.resource.data.monthlyFee > 0
+        && request.resource.data.graceDays is int
+        && request.resource.data.graceDays >= 0
+        && request.resource.data.graceDays <= 30;
     }
 
     // purchases/{id}: antes la ÚNICA vía de escritura era el backend
@@ -636,6 +729,7 @@ service cloud.firestore {
              'paymentId', 'claimCode', 'status', 'createdAt', 'claimedAt', 'expiresAt'
            ])
         && request.resource.data.buyerId == request.auth.uid
+        && shopOperational(request.resource.data.barbershopId)
         && request.resource.data.status == 'pending_payment'
         && request.resource.data.paymentId == null
         && request.resource.data.claimCode == null
@@ -652,38 +746,57 @@ service cloud.firestore {
         && request.resource.data.totalAmount == purchaseItemsTotal(request.resource.data.items);
 
       allow update: if isSignedIn() && (
-        // El comprador confirma su propio pago simulado ya aprobado y
-        // recibe el código de reclamo (spec 10.3) — antes createPurchase
-        // (Admin SDK) hacía esto en un solo paso; sin Cloud Functions se
-        // separa en dos escrituras secuenciales (crear el pago -> esperar
-        // -> aprobarlo -> ESTA transición), igual que el resto de flujos de
-        // pago simulado de esta migración.
+        // El comprador enlaza a su compra el pago Nequi que acaba de
+        // registrar (pendiente, de este mismo comprador, de esta compra y
+        // por el total exacto). Sigue 'pending_payment': hasta que el
+        // personal no verifique el dinero no hay código de reclamo.
         (resource.data.buyerId == request.auth.uid &&
           resource.data.status == 'pending_payment' &&
-          request.resource.data.status == 'pending_claim' &&
+          resource.data.paymentId == null &&
+          request.resource.data.status == 'pending_payment' &&
           request.resource.data.paymentId is string &&
           get(/databases/$(database)/documents/payments/$(request.resource.data.paymentId)).data.payerId == request.auth.uid &&
           get(/databases/$(database)/documents/payments/$(request.resource.data.paymentId)).data.category == 'product' &&
           get(/databases/$(database)/documents/payments/$(request.resource.data.paymentId)).data.relatedId == id &&
-          get(/databases/$(database)/documents/payments/$(request.resource.data.paymentId)).data.status == 'approved' &&
+          get(/databases/$(database)/documents/payments/$(request.resource.data.paymentId)).data.status == 'pending' &&
+          get(/databases/$(database)/documents/payments/$(request.resource.data.paymentId)).data.amount == resource.data.totalAmount &&
+          request.resource.data.diff(resource.data).affectedKeys().hasOnly(['paymentId'])) ||
+        // El comprador marca su propia compra 'payment_failed' si no pudo
+        // registrar el pago.
+        (resource.data.buyerId == request.auth.uid &&
+          resource.data.status == 'pending_payment' &&
+          request.resource.data.status == 'payment_failed' &&
+          request.resource.data.diff(resource.data).affectedKeys().hasOnly(['status'])) ||
+        // El personal de ESA barbería (o el admin) verificó el Nequi y
+        // confirma el pago: la compra queda lista para reclamar, con el
+        // código y 24 h de plazo (spec 10.3). El pago se aprueba en la
+        // MISMA escritura (getAfter) — no hay compra reclamable sin pago
+        // aprobado — y nadie confirma su propia compra.
+        (resource.data.status == 'pending_payment' &&
+          resource.data.buyerId != request.auth.uid &&
+          (isStaffOfShop(resource.data.barbershopId) || isAdmin()) &&
+          resource.data.paymentId is string &&
+          request.resource.data.status == 'pending_claim' &&
+          getAfter(/databases/$(database)/documents/payments/$(resource.data.paymentId)).data.status == 'approved' &&
           request.resource.data.claimCode is string &&
           request.resource.data.claimCode.matches('^[0-9A-Z]{8}$') &&
           request.resource.data.expiresAt is timestamp &&
           request.resource.data.expiresAt.toMillis() > request.time.toMillis() &&
           request.resource.data.expiresAt.toMillis() <= request.time.toMillis() + 25 * 60 * 60 * 1000 &&
-          request.resource.data.diff(resource.data).affectedKeys().hasOnly(['paymentId', 'claimCode', 'status', 'expiresAt'])) ||
-        // El comprador marca su propia compra 'payment_failed' si el pago
-        // simulado no pudo aprobarse (rama defensiva: con
-        // SimulatedNequiGateway esto no ocurre hoy, pero el contrato lo
-        // prevé para un gateway real).
-        (resource.data.buyerId == request.auth.uid &&
-          resource.data.status == 'pending_payment' &&
+          request.resource.data.diff(resource.data).affectedKeys().hasOnly(['claimCode', 'status', 'expiresAt'])) ||
+        // El personal rechaza el pago (no llegó el dinero): la compra
+        // queda 'payment_failed'.
+        (resource.data.status == 'pending_payment' &&
+          resource.data.buyerId != request.auth.uid &&
+          (isStaffOfShop(resource.data.barbershopId) || isAdmin()) &&
           request.resource.data.status == 'payment_failed' &&
           request.resource.data.diff(resource.data).affectedKeys().hasOnly(['status'])) ||
         // El personal de ESA barbería (o el admin) marca la compra
         // reclamada (spec 10.4) — antes claimPurchase (Admin SDK).
         (resource.data.status == 'pending_claim' &&
           isStaffOfShop(resource.data.barbershopId) &&
+          resource.data.get('expiresAt', null) != null &&
+          resource.data.expiresAt.toMillis() > request.time.toMillis() &&
           request.resource.data.status == 'claimed' &&
           request.resource.data.claimedAt == request.time &&
           request.resource.data.diff(resource.data).affectedKeys().hasOnly(['status', 'claimedAt'])) ||

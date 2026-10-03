@@ -2,7 +2,7 @@ import { readFileSync } from 'fs';
 import { join } from 'path';
 
 import { assertFails, assertSucceeds, initializeTestEnvironment, RulesTestEnvironment } from '@firebase/rules-unit-testing';
-import { deleteDoc, doc, setDoc } from 'firebase/firestore';
+import { deleteDoc, doc, setDoc, updateDoc } from 'firebase/firestore';
 
 const PROJECT_ID = 'demo-barber';
 const SHOP_ID = 'shop1';
@@ -72,8 +72,8 @@ describe('firestore.rules — barbershops/{id} (spec 12.1: aprobación del admin
     const db = testEnv.authenticatedContext(OWNER_UID).firestore();
     await assertFails(setDoc(doc(db, `barbershops/${SHOP_ID}`), newShop({ paymentId: 'no-existe' })));
 
-    await seedPayment('pending', { status: 'pending' });
-    await assertFails(setDoc(doc(db, `barbershops/${SHOP_ID}`), newShop({ paymentId: 'pending' })));
+    await seedPayment('rechazado', { status: 'rejected' });
+    await assertFails(setDoc(doc(db, `barbershops/${SHOP_ID}`), newShop({ paymentId: 'rechazado' })));
 
     await seedPayment('ajeno', { payerId: 'otro-usuario' });
     await assertFails(setDoc(doc(db, `barbershops/${SHOP_ID}`), newShop({ paymentId: 'ajeno' })));
@@ -185,6 +185,66 @@ describe('firestore.rules — barbershops/{id} (spec 12.1: aprobación del admin
       await seedShop({ approvalStatus: 'approved', active: true });
       const db = testEnv.authenticatedContext(ADMIN_UID).firestore();
       await assertSucceeds(deleteDoc(doc(db, `barbershops/${SHOP_ID}`)));
+    });
+  });
+
+  describe('mensualidad y Nequi de la barbería', () => {
+    async function seedApproved(fields: Record<string, unknown> = {}) {
+      await testEnv.withSecurityRulesDisabled(async (context) => {
+        await setDoc(doc(context.firestore(), `barbershops/${SHOP_ID}`), {
+          ownerId: OWNER_UID,
+          name: 'BarberFlow Centro',
+          approvalStatus: 'approved',
+          active: false,
+          paymentStatus: 'blocked',
+          ...fields,
+        });
+      });
+    }
+
+    it('el dueño ya NO puede marcarse al día ni reactivarse sin que el admin confirme su pago', async () => {
+      await seedApproved();
+      const db = testEnv.authenticatedContext(OWNER_UID).firestore();
+      await assertFails(
+        updateDoc(doc(db, `barbershops/${SHOP_ID}`), { active: true, paymentStatus: 'ok', paymentDueDate: new Date(Date.now() + 30 * 86400000) }),
+      );
+    });
+
+    it('el admin sí la renueva al confirmar el pago', async () => {
+      await seedApproved();
+      const db = testEnv.authenticatedContext(ADMIN_UID).firestore();
+      await assertSucceeds(
+        updateDoc(doc(db, `barbershops/${SHOP_ID}`), { active: true, paymentStatus: 'ok', paymentDueDate: new Date(Date.now() + 30 * 86400000) }),
+      );
+    });
+
+    it('el dueño guarda el Nequi de su barbería solo con 10 dígitos que empiecen en 3', async () => {
+      await seedApproved({ active: true, paymentStatus: 'ok' });
+      const db = testEnv.authenticatedContext(OWNER_UID).firestore();
+      await assertSucceeds(updateDoc(doc(db, `barbershops/${SHOP_ID}`), { nequiPhone: '3001234567' }));
+      await assertSucceeds(updateDoc(doc(db, `barbershops/${SHOP_ID}`), { nequiPhone: null }));
+      await assertFails(updateDoc(doc(db, `barbershops/${SHOP_ID}`), { nequiPhone: '12345' }));
+      await assertFails(updateDoc(doc(db, `barbershops/${SHOP_ID}`), { nequiPhone: '3001234567 ; DROP' }));
+      await assertFails(updateDoc(doc(db, `barbershops/${SHOP_ID}`), { nequiPhone: 3001234567 }));
+    });
+
+    it('al registrar una barbería con un pago Nequi pendiente nace pendiente de revisión', async () => {
+      await testEnv.withSecurityRulesDisabled(async (context) => {
+        await setDoc(doc(context.firestore(), 'payments/payNew'), {
+          payerId: OWNER_UID,
+          category: 'subscription',
+          relatedId: SHOP_ID,
+          status: 'pending',
+        });
+      });
+      const db = testEnv.authenticatedContext(OWNER_UID).firestore();
+      await assertSucceeds(setDoc(doc(db, `barbershops/${SHOP_ID}`), newShop({ paymentId: 'payNew', nequiPhone: '3001234567' })));
+    });
+
+    it('rechaza registrar una barbería con Nequi inválido', async () => {
+      await seedPayment('pay1');
+      const db = testEnv.authenticatedContext(OWNER_UID).firestore();
+      await assertFails(setDoc(doc(db, `barbershops/${SHOP_ID}`), newShop({ nequiPhone: 'abc' })));
     });
   });
 });

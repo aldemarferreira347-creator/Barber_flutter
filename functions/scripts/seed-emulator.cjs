@@ -1,7 +1,7 @@
 // Carga datos de PRUEBA en los emuladores (nunca en el proyecto real): un
 // usuario por rol y una barbería de ejemplo con servicios, productos,
-// citas, reseñas, compras y notificaciones. Es idempotente: se puede
-// ejecutar varias veces.
+// citas, reseñas, compras, pagos Nequi (confirmados y por verificar) y
+// notificaciones. Es idempotente: se puede ejecutar varias veces.
 //
 // Uso (con `npm run emulators` corriendo): npm run seed
 //
@@ -77,6 +77,7 @@ async function seedShops() {
     address: 'Calle 123 #45-67, Bogotá',
     location: new GeoPoint(4.711, -74.0721),
     phone: '+573000000010',
+    nequiPhone: '3001234567',
     email: 'central@barber.test',
     description: 'Cortes clásicos, barba y afeitado con toalla caliente. Atención con cita.',
     photoUrl: null,
@@ -101,7 +102,41 @@ async function seedShops() {
     approvalStatus: 'pending',
     paymentStatus: 'ok',
     paymentDueDate: null,
+    paymentId: 'paySubShop2',
     schedule,
+  });
+  // Datos de cobro de la plataforma (los configura el admin).
+  await db.doc('platformSettings/main').set({
+    nequiPhone: '3009876543',
+    nequiHolder: 'BarberFlow SAS',
+    monthlyFee: 50000,
+    graceDays: 4,
+    updatedAt: at(-10 * DAY),
+  });
+  // Primera mensualidad de la sede nueva y renovación de la central: ambas
+  // esperan que el admin verifique su Nequi.
+  const subscription = {
+    payerId: 'owner1',
+    amount: 50000,
+    category: 'subscription',
+    status: 'pending',
+    createdAt: at(-3 * 60 * 60 * 1000),
+    resolvedAt: null,
+    refundedAmount: null,
+    method: 'nequi',
+  };
+  await db.doc('payments/paySubShop2').set({
+    ...subscription,
+    relatedId: 'shop2',
+    description: 'Registro de barbershops/shop2',
+    reference: 'M4455667',
+  });
+  await db.doc('payments/paySubShop1').set({
+    ...subscription,
+    relatedId: 'shop1',
+    description: 'Mensualidad de barbershops/shop1',
+    reference: 'M7788991',
+    createdAt: at(-60 * 60 * 1000),
   });
 
   const services = [
@@ -153,7 +188,8 @@ async function seedAppointments() {
     { id: 'apptDone1', serviceId: 'svc3', serviceName: 'Corte + Barba', servicePrice: 35000, date: atHour(-6, 11), status: 'completed', paid: true, paymentId: 'payDone1' },
     { id: 'apptDone2', serviceId: 'svc1', serviceName: 'Corte clásico', servicePrice: 25000, date: atHour(-14, 15), status: 'completed', paid: true, paymentId: 'payDone2' },
     { id: 'apptCancelled', serviceId: 'svc2', serviceName: 'Barba', servicePrice: 15000, date: atHour(-3, 9), status: 'cancelled', paid: false },
-    { id: 'apptOther', clientId: 'client2', clientName: 'Laura Gómez', barberId: 'barber2', barberName: 'Mateo Ríos', serviceId: 'svc1', serviceName: 'Corte clásico', servicePrice: 25000, date: atHour(2, 12), status: 'pending', paid: false },
+    // Cita pagada por Nequi cuyo pago el barbero todavía debe verificar.
+    { id: 'apptOther', clientId: 'client2', clientName: 'Laura Gómez', barberId: 'barber2', barberName: 'Mateo Ríos', serviceId: 'svc1', serviceName: 'Corte clásico', servicePrice: 25000, date: atHour(2, 12), status: 'pending', paid: true, paymentId: 'payOther' },
   ];
   for (const { id, ...rest } of appts) {
     await db.doc(`appointments/${id}`).set({ ...base, ...rest });
@@ -172,8 +208,34 @@ async function seedAppointments() {
       status: 'approved',
       createdAt: at(-7 * DAY),
       resolvedAt: at(-7 * DAY),
+      resolvedBy: 'barber1',
       refundedAmount: null,
+      reference: `M${relatedId.slice(-3).toUpperCase()}0001`.replace(/[^A-Z0-9]/g, 'X'),
+      method: 'nequi',
     });
+  }
+  await db.doc('payments/payOther').set({
+    payerId: 'client2',
+    amount: 25000,
+    category: 'appointment',
+    relatedId: 'apptOther',
+    description: 'Cita en barbershops/shop1',
+    status: 'pending',
+    createdAt: at(-2 * 60 * 60 * 1000),
+    resolvedAt: null,
+    refundedAmount: null,
+    reference: 'M9900112',
+    method: 'nequi',
+  });
+  const slotId = (barberId, ts) => `${barberId}_${ts.toDate().toISOString().slice(0, 16)}`;
+  for (const a of appts) {
+    if (a.paid && a.status !== 'cancelled' && a.status !== 'completed') {
+      await db.doc(`appointmentSlots/${slotId(a.barberId ?? 'barber1', a.date)}`).set({
+        appointmentId: a.id,
+        barberId: a.barberId ?? 'barber1',
+        createdAt: at(-60 * 60 * 1000),
+      });
+    }
   }
 }
 
@@ -221,7 +283,10 @@ async function seedPurchasesAndNotifications() {
     status: 'approved',
     createdAt: at(-2 * 60 * 60 * 1000),
     resolvedAt: at(-2 * 60 * 60 * 1000),
+    resolvedBy: 'barber1',
     refundedAmount: null,
+    reference: 'M5566778',
+    method: 'nequi',
   });
   await db.doc('purchases/purchase1').set({
     barbershopId: 'shop1',
@@ -235,6 +300,34 @@ async function seedPurchasesAndNotifications() {
     createdAt: at(-2 * 60 * 60 * 1000),
     claimedAt: null,
     expiresAt: at(22 * 60 * 60 * 1000),
+  });
+
+  // Compra de otra clienta cuyo pago el personal todavía debe verificar.
+  await db.doc('payments/payProd2').set({
+    payerId: 'client2',
+    amount: 22000,
+    category: 'product',
+    relatedId: 'purchase2',
+    description: 'Compra en barbershops/shop1',
+    status: 'pending',
+    createdAt: at(-30 * 60 * 1000),
+    resolvedAt: null,
+    refundedAmount: null,
+    reference: 'M3322110',
+    method: 'nequi',
+  });
+  await db.doc('purchases/purchase2').set({
+    barbershopId: 'shop1',
+    buyerId: 'client2',
+    appointmentId: null,
+    items: [{ productId: 'prod3', productName: 'Shampoo premium', unitPrice: 22000, quantity: 1, refunded: false }],
+    totalAmount: 22000,
+    paymentId: 'payProd2',
+    claimCode: null,
+    status: 'pending_payment',
+    createdAt: at(-30 * 60 * 1000),
+    claimedAt: null,
+    expiresAt: null,
   });
 
   const notifications = [

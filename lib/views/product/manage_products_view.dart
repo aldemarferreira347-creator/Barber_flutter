@@ -1,22 +1,21 @@
 import 'package:flutter/material.dart';
-
-import '../../models/barbershop.dart';
-
 import 'package:provider/provider.dart';
 
+import '../../models/barbershop.dart';
 import '../../models/product.dart';
 import '../../repositories/product_repository.dart';
-import '../../theme/app_colors.dart';
+import '../../theme/app_tokens.dart';
+import '../widgets/catalog_tile.dart';
 import '../widgets/empty_state.dart';
 import '../widgets/error_state.dart';
-import '../widgets/pressable_scale.dart';
+import '../widgets/responsive_body.dart';
 import '../widgets/shimmer_box.dart';
-import 'add_product_view.dart';
 import 'buy_product_view.dart';
-import '../widgets/app_network_image.dart';
+import 'product_form_sheet.dart';
 
-/// Catálogo de productos de una barbería. [canManage] controla si se puede
-/// agregar/activar-desactivar (Dueño) o solo se muestran (Cliente).
+/// Catálogo de productos de una barbería. Con [canManage] (dueño) se agregan,
+/// editan, eliminan y ocultan; sin él (cliente) solo se ven los activos y se
+/// pueden comprar.
 class ManageProductsView extends StatelessWidget {
   final String barbershopId;
   final bool canManage;
@@ -34,13 +33,11 @@ class ManageProductsView extends StatelessWidget {
     return Scaffold(
       appBar: AppBar(title: const Text('Productos')),
       floatingActionButton: canManage
-          ? FloatingActionButton(
-              onPressed: () => Navigator.of(context).push(
-                MaterialPageRoute(
-                  builder: (_) => AddProductView(barbershopId: barbershopId),
-                ),
-              ),
-              child: const Icon(Icons.add),
+          ? FloatingActionButton.extended(
+              onPressed: () =>
+                  showProductForm(context, barbershopId: barbershopId),
+              icon: const Icon(Icons.add),
+              label: const Text('Nuevo producto'),
             )
           : null,
       body: StreamBuilder<List<Product>>(
@@ -53,117 +50,65 @@ class ManageProductsView extends StatelessWidget {
           }
           if (snapshot.connectionState == ConnectionState.waiting) {
             return const Padding(
-              padding: EdgeInsets.all(16),
+              padding: EdgeInsets.all(AppSpace.lg),
               child: ShimmerList(),
             );
           }
-          final products = snapshot.data ?? [];
+          final products = [
+            for (final p in snapshot.data ?? const <Product>[])
+              if (canManage || p.active) p,
+          ];
           if (products.isEmpty) {
-            return const Center(
+            return Center(
               child: EmptyState(
                 icon: Icons.shopping_bag_outlined,
                 title: 'Sin productos todavía',
-                subtitle:
-                    'Añade ceras, tintes u otros productos con precio y foto.',
+                subtitle: canManage
+                    ? 'Añade ceras, tintes u otros productos con precio y foto.'
+                    : 'Esta barbería aún no publicó productos.',
+                actionLabel: canManage ? 'Nuevo producto' : null,
+                onAction: canManage
+                    ? () => showProductForm(context, barbershopId: barbershopId)
+                    : null,
               ),
             );
           }
-          return ListView.separated(
-            padding: const EdgeInsets.all(16),
-            itemCount: products.length,
-            separatorBuilder: (_, _) => const SizedBox(height: 10),
-            itemBuilder: (context, index) {
-              final product = products[index];
-              final onTap = canManage || !product.active
-                  ? null
-                  : () => Navigator.of(context).push(
-                      MaterialPageRoute(
-                        builder: (_) => BuyProductView(product: product),
-                      ),
-                    );
-              return PressableScale(
-                onTap: onTap,
-                child: Material(
-                  color: AppColors.surface,
-                  borderRadius: BorderRadius.circular(14),
-                  elevation: 1,
-                  shadowColor: AppColors.textPrimary.withValues(alpha: 0.08),
-                  child: InkWell(
-                    borderRadius: BorderRadius.circular(14),
-                    onTap: onTap,
-                    child: Container(
-                      padding: const EdgeInsets.all(12),
-                      decoration: BoxDecoration(
-                        borderRadius: BorderRadius.circular(14),
-                        border: Border.all(color: AppColors.border),
-                      ),
-                      child: Row(
-                        children: [
-                          ClipRRect(
-                            borderRadius: BorderRadius.circular(10),
-                            child: product.photoUrl != null
-                                ? AppNetworkImage(
-                                    url: product.photoUrl!,
-                                    width: 56,
-                                    height: 56,
-                                    decodeWidth: 56,
-                                    semanticLabel: 'Foto de ${product.name}',
-                                  )
-                                : Container(
-                                    width: 56,
-                                    height: 56,
-                                    color: AppColors.background,
-                                    child: Icon(
-                                      Icons.shopping_bag_outlined,
-                                      color: AppColors.textSecondary,
-                                    ),
-                                  ),
+          return ResponsiveBody(
+            maxWidth: AppLayout.formWidth,
+            child: ListView.separated(
+              padding: EdgeInsets.only(
+                top: AppSpace.lg,
+                bottom: canManage ? 96 : AppSpace.xl,
+              ),
+              itemCount: products.length,
+              separatorBuilder: (_, _) => const SizedBox(height: AppSpace.md),
+              itemBuilder: (context, index) {
+                final product = products[index];
+                return CatalogTile(
+                  name: product.name,
+                  detail: product.description,
+                  priceLabel: formatCop(product.price),
+                  photoUrl: product.photoUrl,
+                  fallbackIcon: Icons.shopping_bag_outlined,
+                  active: product.active,
+                  onActiveChanged: canManage
+                      ? (value) =>
+                            repo.setActive(barbershopId, product.id, value)
+                      : null,
+                  onTap: canManage
+                      ? () => showProductForm(
+                          context,
+                          barbershopId: barbershopId,
+                          product: product,
+                        )
+                      : () => Navigator.of(context).push(
+                          MaterialPageRoute(
+                            builder: (_) => BuyProductView(product: product),
                           ),
-                          const SizedBox(width: 12),
-                          Expanded(
-                            child: Column(
-                              crossAxisAlignment: CrossAxisAlignment.start,
-                              children: [
-                                Text(
-                                  product.name,
-                                  style: const TextStyle(
-                                    fontWeight: FontWeight.w700,
-                                  ),
-                                ),
-                                if ((product.description ?? '').isNotEmpty)
-                                  Text(
-                                    product.description!,
-                                    style: TextStyle(
-                                      color: AppColors.textSecondary,
-                                      fontSize: 12,
-                                    ),
-                                  ),
-                              ],
-                            ),
-                          ),
-                          Text(
-                            formatCop(product.price),
-                            style: TextStyle(
-                              fontWeight: FontWeight.w800,
-                              color: AppColors.accent,
-                            ),
-                          ),
-                          if (canManage)
-                            Switch(
-                              value: product.active,
-                              onChanged: (value) => repo.setActive(
-                                barbershopId,
-                                product.id,
-                                value,
-                              ),
-                            ),
-                        ],
-                      ),
-                    ),
-                  ),
-                ),
-              );
-            },
+                        ),
+                );
+              },
+            ),
           );
         },
       ),

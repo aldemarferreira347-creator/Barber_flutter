@@ -5,9 +5,11 @@ abstract class AppointmentRepository {
   /// puede intentarlo aunque otro ya haya tomado esa hora.
   Future<String> create(Appointment appointment);
 
-  /// Reserva PAGADA (spec 6.1/6.2): bloquea el horario mediante una
-  /// transacción en el backend antes de cobrar — si alguien más ya lo
-  /// tomó, lanza una excepción en vez de crear la cita.
+  /// Reserva PAGADA (spec 6.1/6.2): bloquea el horario con una transacción
+  /// y registra el pago Nequi (pendiente, con la [reference] del
+  /// comprobante) — si alguien más ya tomó el horario, lanza una excepción
+  /// en vez de crear la cita. El personal verifica el dinero después con
+  /// [confirmPayment] o [rejectPayment].
   Future<String> createPaid({
     required String barbershopId,
     required String barberId,
@@ -15,7 +17,19 @@ abstract class AppointmentRepository {
     required String serviceId,
     required String clientName,
     required DateTime date,
+    required String reference,
   });
+
+  /// El personal verificó el Nequi: aprueba el pago y acepta la cita, en
+  /// una sola escritura.
+  Future<void> confirmPayment(String appointmentId);
+
+  /// El dinero no llegó: rechaza el pago, cancela la cita y libera el
+  /// horario, en una sola escritura.
+  Future<void> rejectPayment(String appointmentId);
+
+  /// Una cita en vivo (null si ya no existe o no se puede leer).
+  Stream<Appointment?> watchOne(String appointmentId);
 
   Stream<List<Appointment>> watchByClient(String clientId);
 

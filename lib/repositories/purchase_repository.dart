@@ -7,17 +7,26 @@ class PurchaseItemInput {
   const PurchaseItemInput({required this.productId, required this.quantity});
 }
 
-/// Abstracción sobre compras de productos (spec 10.1–10.5). Crear, reclamar
-/// y reembolsar siempre pasan por el backend (recalcula precios, genera el
-/// código de reclamo y llama a [PaymentGateway]) — el cliente solo lee.
+/// Abstracción sobre compras de productos (spec 10.1–10.5). Cobro Nequi
+/// manual: el comprador transfiere y registra la referencia; el personal de
+/// la barbería verifica el dinero y entrega el código de reclamo.
 abstract class PurchaseRepository {
   /// Crea la compra (vinculada a [appointmentId] si aplica, o directa si se
-  /// omite) y devuelve su id. El estado se sigue en vivo con [watchPurchase].
+  /// omite) con su pago Nequi pendiente ([reference] es la del comprobante)
+  /// y devuelve su id. El estado se sigue en vivo con [watchPurchase].
   Future<String> createPurchase({
     required String barbershopId,
     required List<PurchaseItemInput> items,
+    required String reference,
     String? appointmentId,
   });
+
+  /// El personal verificó el Nequi: aprueba el pago y deja la compra lista
+  /// para reclamar (código y plazo de 24 h), en una sola escritura.
+  Future<void> confirmPayment(String purchaseId);
+
+  /// El dinero no llegó: rechaza el pago y la compra queda fallida.
+  Future<void> rejectPayment(String purchaseId);
 
   Stream<Purchase?> watchPurchase(String purchaseId);
 
@@ -32,12 +41,6 @@ abstract class PurchaseRepository {
     required String claimCode,
   });
 
-  /// El barbero marca la compra completa como reclamada.
+  /// El barbero marca la compra completa como reclamada. Falla si ya venció.
   Future<void> claimPurchase(String purchaseId);
-
-  /// Reembolso parcial por checklist de ítems (spec 6.5/10.5).
-  Future<void> refundItems({
-    required String purchaseId,
-    required List<int> itemIndexes,
-  });
 }

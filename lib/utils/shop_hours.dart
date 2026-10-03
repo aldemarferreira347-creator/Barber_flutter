@@ -67,3 +67,31 @@ ShopOpenStatus shopOpenStatus(
   }
   return const ShopOpenStatus(isOpen: false, label: 'Cerrada');
 }
+
+/// Horas de inicio disponibles para una cita de [durationMinutes] el día
+/// [day], cada [stepMinutes], dentro del horario de la barbería: la cita
+/// debe terminar a más tardar al cierre y empezar al menos [leadMinutes]
+/// después de [now]. Vacío si ese día no abre.
+List<DateTime> availableTimeSlots(
+  Map<String, DaySchedule> schedule, {
+  required DateTime day,
+  required int durationMinutes,
+  DateTime? now,
+  int stepMinutes = 30,
+  int leadMinutes = 15,
+}) {
+  final week = schedule.isEmpty ? weekScheduleFromMap(null) : schedule;
+  final daySchedule = week[kWeekdays[day.weekday - 1]];
+  if (daySchedule == null || !daySchedule.isOpen) return const [];
+  final open = _minutesOf(daySchedule.openTime);
+  final close = _minutesOf(daySchedule.closeTime);
+  if (open == null || close == null) return const [];
+
+  final earliest = (now ?? DateTime.now()).add(Duration(minutes: leadMinutes));
+  final slots = <DateTime>[];
+  for (var m = open; m + durationMinutes <= close; m += stepMinutes) {
+    final start = DateTime(day.year, day.month, day.day, m ~/ 60, m % 60);
+    if (start.isAfter(earliest)) slots.add(start);
+  }
+  return slots;
+}

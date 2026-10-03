@@ -1,5 +1,6 @@
 import 'dart:typed_data';
 
+import 'package:cached_network_image/cached_network_image.dart';
 import 'package:cloud_firestore/cloud_firestore.dart';
 import 'package:flutter/material.dart';
 import 'package:geolocator/geolocator.dart';
@@ -8,23 +9,26 @@ import 'package:provider/provider.dart';
 
 import '../../controllers/auth_controller.dart';
 import '../../models/barbershop.dart';
+import '../../models/platform_settings.dart';
 import '../../models/user_role.dart';
 import '../../repositories/barbershop_repository.dart';
+import '../../repositories/platform_settings_repository.dart';
 import '../../repositories/user_repository.dart';
 import '../../services/location_service.dart';
 import '../../theme/app_colors.dart';
+import '../../theme/app_text.dart';
+import '../../theme/app_tokens.dart';
 import '../widgets/app_button.dart';
+import '../widgets/app_card.dart';
+import '../widgets/app_dialog.dart';
+import '../widgets/nequi_payment_sheet.dart';
+import '../widgets/responsive_body.dart';
 
-import 'package:cached_network_image/cached_network_image.dart';
-
-Widget _entrance(Widget child, int index) {
-  return child;
-}
-
-/// Alta de barbería. Registrar cuesta [kBarbershopMonthlyFee]: el dueño
-/// puede pagar y enviarla a revisión, o dejarla como borrador (máximo
-/// [kMaxBarbershopDrafts]) y pagar después. Con [draft] edita un borrador
-/// existente.
+/// Alta de barbería. Registrar cuesta la mensualidad de la plataforma
+/// ([PlatformSettings.monthlyFee]): el dueño paga por Nequi y la envía a
+/// revisión (el administrador verifica el pago y la aprueba), o la deja como
+/// borrador (máximo [kMaxBarbershopDrafts]) y paga después. Con [draft]
+/// edita un borrador existente.
 class AddBarbershopView extends StatefulWidget {
   final Barbershop? draft;
 
@@ -40,9 +44,13 @@ class _AddBarbershopViewState extends State<AddBarbershopView> {
   final _addressController = TextEditingController();
   final _phoneController = TextEditingController();
   final _emailController = TextEditingController();
+  final _nequiController = TextEditingController();
   final _descriptionController = TextEditingController();
   final _locationService = LocationService();
   final _picker = ImagePicker();
+  late final Stream<PlatformSettings> _settings = context
+      .read<PlatformSettingsRepository>()
+      .watch();
   bool _saving = false;
   bool _locating = false;
   bool _paying = false;
@@ -59,6 +67,7 @@ class _AddBarbershopViewState extends State<AddBarbershopView> {
       _addressController.text = draft.address ?? '';
       _phoneController.text = draft.phone ?? '';
       _emailController.text = draft.email ?? '';
+      _nequiController.text = draft.nequiPhone ?? '';
       _descriptionController.text = draft.description ?? '';
     }
   }
@@ -69,6 +78,7 @@ class _AddBarbershopViewState extends State<AddBarbershopView> {
     _addressController.dispose();
     _phoneController.dispose();
     _emailController.dispose();
+    _nequiController.dispose();
     _descriptionController.dispose();
     super.dispose();
   }
@@ -87,33 +97,26 @@ class _AddBarbershopViewState extends State<AddBarbershopView> {
     });
   }
 
-  void _showPhotoOptions() {
-    showModalBottomSheet(
-      context: context,
-      builder: (context) => SafeArea(
-        child: Column(
-          mainAxisSize: MainAxisSize.min,
-          children: [
-            ListTile(
-              leading: const Icon(Icons.photo_camera_outlined),
-              title: const Text('Tomar foto'),
-              onTap: () {
-                Navigator.of(context).pop();
-                _pickPhoto(ImageSource.camera);
-              },
-            ),
-            ListTile(
-              leading: const Icon(Icons.photo_library_outlined),
-              title: const Text('Elegir de galería'),
-              onTap: () {
-                Navigator.of(context).pop();
-                _pickPhoto(ImageSource.gallery);
-              },
-            ),
-          ],
-        ),
+  Future<void> _showPhotoOptions() async {
+    final source = await AppBottomSheet.show<ImageSource>(
+      context,
+      title: 'Foto de portada',
+      child: Column(
+        children: [
+          ListTile(
+            leading: const Icon(Icons.photo_camera_outlined),
+            title: const Text('Tomar foto'),
+            onTap: () => Navigator.of(context).pop(ImageSource.camera),
+          ),
+          ListTile(
+            leading: const Icon(Icons.photo_library_outlined),
+            title: const Text('Elegir de galería'),
+            onTap: () => Navigator.of(context).pop(ImageSource.gallery),
+          ),
+        ],
       ),
     );
+    if (source != null) await _pickPhoto(source);
   }
 
   Future<void> _useCurrentLocation() async {
@@ -132,6 +135,7 @@ class _AddBarbershopViewState extends State<AddBarbershopView> {
   }
 
   Barbershop _buildShop(String ownerId) {
+    final nequi = normalizeNequiPhone(_nequiController.text);
     return Barbershop(
       id: widget.draft?.id ?? '',
       name: _nameController.text.trim(),
@@ -141,6 +145,7 @@ class _AddBarbershopViewState extends State<AddBarbershopView> {
       email: _emailController.text.trim(),
       description: _descriptionController.text.trim(),
       photoUrl: widget.draft?.photoUrl,
+      nequiPhone: nequi.isEmpty ? null : nequi,
       location: _position != null
           ? GeoPoint(_position!.latitude, _position!.longitude)
           : widget.draft?.location,
@@ -210,34 +215,21 @@ class _AddBarbershopViewState extends State<AddBarbershopView> {
     }
   }
 
-  Future<void> _payAndRegister() async {
+  Future<void> _payAndRegister(PlatformSettings settings) async {
     if (!_formKey.currentState!.validate()) return;
     final auth = context.read<AuthController>();
     final ownerId = auth.profile?.uid;
     if (ownerId == null) return;
 
-    final confirmed = await showDialog<bool>(
-      context: context,
-      builder: (context) => AlertDialog(
-        title: const Text('Pagar y registrar'),
-        content: Text(
-          'Se cobrarán ${formatCop(kBarbershopMonthlyFee)} de la primera '
-          'mensualidad. Después el administrador revisará tu barbería antes '
-          'de publicarla en el catálogo.',
-        ),
-        actions: [
-          TextButton(
-            onPressed: () => Navigator.of(context).pop(false),
-            child: const Text('Volver'),
-          ),
-          FilledButton(
-            onPressed: () => Navigator.of(context).pop(true),
-            child: const Text('Pagar'),
-          ),
-        ],
-      ),
+    final reference = await showNequiPaymentSheet(
+      context,
+      title: 'Pagar primera mensualidad',
+      amount: settings.monthlyFee,
+      payeeName: 'BarberFlow',
+      payeePhone: settings.nequiPhone!,
+      verifier: 'el administrador de BarberFlow',
     );
-    if (confirmed != true || !mounted) return;
+    if (reference == null || !mounted) return;
 
     setState(() => _paying = true);
     final repo = context.read<BarbershopRepository>();
@@ -247,9 +239,12 @@ class _AddBarbershopViewState extends State<AddBarbershopView> {
         // Se guardan primero las ediciones del formulario: publishDraft
         // convierte lo que hay guardado en el borrador.
         final id = await _persistDraft(repo, ownerId);
-        await repo.publishDraft(id);
+        await repo.publishDraft(id, reference: reference);
       } else {
-        final shopId = await repo.createPaid(_buildShop(ownerId));
+        final shopId = await repo.createPaid(
+          _buildShop(ownerId),
+          reference: reference,
+        );
         if (_photoBytes != null) {
           await repo.uploadPhoto(
             shopId,
@@ -258,12 +253,9 @@ class _AddBarbershopViewState extends State<AddBarbershopView> {
           );
         }
       }
-      // Solicitud de rol de Dueño (spec 12.1). Antes pasaba por la función
-      // en la nube requestBarbershopOwnership (Admin SDK, porque el rol
-      // propio está congelado por firestore.rules para el resto de
-      // transiciones) — sin plan Blaze esa función no se puede desplegar,
-      // así que aquí se hace directo contra Firestore; la regla tiene una
-      // rama dedicada y acotada solo a client->owner (ver firestore.rules).
+      // Solicitud de rol de Dueño (spec 12.1): sin plan Blaze no hay función
+      // en la nube; la regla de users/{uid} tiene una rama dedicada y
+      // acotada solo a client->owner (ver firestore.rules).
       if (auth.profile?.role == UserRole.client) {
         await userRepo.setRole(ownerId, UserRole.owner);
         await auth.refreshProfile();
@@ -273,7 +265,8 @@ class _AddBarbershopViewState extends State<AddBarbershopView> {
         ScaffoldMessenger.of(context).showSnackBar(
           const SnackBar(
             content: Text(
-              'Pago recibido. Tu barbería quedó pendiente de revisión por el administrador.',
+              'Comprobante enviado. El administrador verificará tu pago y '
+              'revisará tu barbería.',
             ),
           ),
         );
@@ -288,225 +281,225 @@ class _AddBarbershopViewState extends State<AddBarbershopView> {
     }
   }
 
+  Widget _photoPicker() {
+    final text = Theme.of(context).textTheme;
+    final remote = widget.draft?.photoUrl;
+    final hasPhoto = _photoBytes != null || remote != null;
+    return Semantics(
+      button: true,
+      label: hasPhoto ? 'Cambiar foto de portada' : 'Añadir foto de portada',
+      child: InkWell(
+        borderRadius: BorderRadius.circular(AppRadius.lg),
+        onTap: _showPhotoOptions,
+        child: Container(
+          width: double.infinity,
+          height: 160,
+          decoration: BoxDecoration(
+            color: AppColors.surface,
+            borderRadius: BorderRadius.circular(AppRadius.lg),
+            border: Border.all(color: AppColors.border),
+            image: _photoBytes != null
+                ? DecorationImage(
+                    image: MemoryImage(_photoBytes!),
+                    fit: BoxFit.cover,
+                  )
+                : remote != null
+                ? DecorationImage(
+                    image: CachedNetworkImageProvider(remote),
+                    fit: BoxFit.cover,
+                  )
+                : null,
+          ),
+          child: hasPhoto
+              ? null
+              : Column(
+                  mainAxisAlignment: MainAxisAlignment.center,
+                  children: [
+                    Icon(
+                      Icons.add_a_photo_outlined,
+                      color: AppColors.textSecondary,
+                    ),
+                    const SizedBox(height: AppSpace.xs),
+                    Text('Añadir foto de portada', style: text.bodySmall),
+                  ],
+                ),
+        ),
+      ),
+    );
+  }
+
   @override
   Widget build(BuildContext context) {
+    final text = Theme.of(context).textTheme;
     return Scaffold(
       appBar: AppBar(
         title: Text(
           widget.draft == null ? 'Nueva barbería' : 'Editar borrador',
         ),
       ),
-      body: Padding(
-        padding: const EdgeInsets.all(16),
-        child: Form(
-          key: _formKey,
-          child: ListView(
-            children: [
-              _entrance(
-                Center(
-                  child: GestureDetector(
-                    onTap: _showPhotoOptions,
-                    child: Container(
-                      width: double.infinity,
-                      height: 140,
-                      decoration: BoxDecoration(
-                        color: AppColors.surface,
-                        borderRadius: BorderRadius.circular(16),
-                        border: Border.all(color: AppColors.border),
-                        image: _photoBytes != null
-                            ? DecorationImage(
-                                image: MemoryImage(_photoBytes!),
-                                fit: BoxFit.cover,
-                              )
-                            : widget.draft?.photoUrl != null
-                            ? DecorationImage(
-                                image: CachedNetworkImageProvider(
-                                  widget.draft!.photoUrl!,
-                                ),
-                                fit: BoxFit.cover,
-                              )
-                            : null,
-                        boxShadow: [
-                          BoxShadow(
-                            color: AppColors.textPrimary.withValues(
-                              alpha: 0.06,
-                            ),
-                            blurRadius: 14,
-                            offset: const Offset(0, 6),
-                          ),
-                        ],
-                      ),
-                      child:
-                          (_photoBytes == null &&
-                              widget.draft?.photoUrl == null)
-                          ? Column(
-                              mainAxisAlignment: MainAxisAlignment.center,
-                              children: [
-                                Icon(
-                                  Icons.add_a_photo_outlined,
-                                  color: AppColors.textSecondary,
-                                ),
-                                const SizedBox(height: 6),
-                                Text(
-                                  'Añadir foto de portada',
-                                  style: TextStyle(
-                                    color: AppColors.textSecondary,
-                                    fontSize: 12,
-                                  ),
-                                ),
-                              ],
-                            )
-                          : null,
-                    ),
-                  ),
-                ),
-                0,
-              ),
-              const SizedBox(height: 16),
-              _entrance(
-                Container(
-                  padding: const EdgeInsets.all(12),
-                  decoration: BoxDecoration(
-                    color: AppColors.accent.withValues(alpha: 0.08),
-                    borderRadius: BorderRadius.circular(12),
-                    border: Border.all(
-                      color: AppColors.accent.withValues(alpha: 0.2),
-                    ),
-                  ),
-                  child: Row(
+      body: StreamBuilder<PlatformSettings>(
+        stream: _settings,
+        initialData: PlatformSettings.defaults,
+        builder: (context, snapshot) {
+          final settings = snapshot.data ?? PlatformSettings.defaults;
+          final busy = _saving || _paying;
+          return Form(
+            key: _formKey,
+            child: ListView(
+              padding: const EdgeInsets.symmetric(vertical: AppSpace.lg),
+              children: [
+                ResponsiveBody(
+                  maxWidth: AppLayout.formWidth,
+                  child: Column(
+                    crossAxisAlignment: CrossAxisAlignment.stretch,
                     children: [
-                      Icon(
-                        Icons.info_outline,
-                        size: 18,
-                        color: AppColors.accent,
+                      _photoPicker(),
+                      const SizedBox(height: AppSpace.lg),
+                      AppCard(
+                        color: AppColors.surfaceRaised,
+                        child: Row(
+                          crossAxisAlignment: CrossAxisAlignment.start,
+                          children: [
+                            Icon(
+                              Icons.info_outline,
+                              size: 18,
+                              color: AppColors.textSecondary,
+                            ),
+                            const SizedBox(width: AppSpace.sm),
+                            Expanded(
+                              child: Text(
+                                'Para registrarla pagas la primera mensualidad '
+                                '(${formatCop(settings.monthlyFee)}) por Nequi; '
+                                'el administrador verifica el pago y revisa la '
+                                'barbería antes de mostrarla en el catálogo. '
+                                'Si prefieres, guárdala como borrador (máximo '
+                                '$kMaxBarbershopDrafts) y págala después.',
+                                style: text.bodySmall,
+                              ),
+                            ),
+                          ],
+                        ),
                       ),
-                      const SizedBox(width: 8),
-                      Expanded(
-                        child: Text(
-                          'Para registrarla debes pagar la primera mensualidad (${formatCop(kBarbershopMonthlyFee)}); luego el administrador la revisa antes de mostrarla en el catálogo. Si prefieres, guárdala como borrador (máximo $kMaxBarbershopDrafts) y págala después.',
-                          style: TextStyle(
-                            fontSize: 12,
-                            color: AppColors.textSecondary,
+                      const SizedBox(height: AppSpace.xl),
+                      TextFormField(
+                        controller: _nameController,
+                        textCapitalization: TextCapitalization.words,
+                        decoration: const InputDecoration(
+                          labelText: 'Nombre',
+                          prefixIcon: Icon(Icons.storefront_outlined),
+                        ),
+                        validator: (value) =>
+                            (value == null || value.trim().isEmpty)
+                            ? 'Requerido'
+                            : null,
+                      ),
+                      const SizedBox(height: AppSpace.lg),
+                      TextFormField(
+                        controller: _addressController,
+                        textCapitalization: TextCapitalization.sentences,
+                        decoration: const InputDecoration(
+                          labelText: 'Dirección',
+                          prefixIcon: Icon(Icons.location_on_outlined),
+                        ),
+                        validator: (value) =>
+                            (value == null || value.trim().isEmpty)
+                            ? 'Requerido'
+                            : null,
+                      ),
+                      const SizedBox(height: AppSpace.lg),
+                      TextFormField(
+                        controller: _phoneController,
+                        keyboardType: TextInputType.phone,
+                        decoration: const InputDecoration(
+                          labelText: 'Teléfono',
+                          prefixIcon: Icon(Icons.phone_outlined),
+                        ),
+                      ),
+                      const SizedBox(height: AppSpace.lg),
+                      TextFormField(
+                        controller: _emailController,
+                        keyboardType: TextInputType.emailAddress,
+                        decoration: const InputDecoration(
+                          labelText: 'Correo de contacto',
+                          prefixIcon: Icon(Icons.mail_outline),
+                        ),
+                      ),
+                      const SizedBox(height: AppSpace.lg),
+                      TextFormField(
+                        controller: _nequiController,
+                        keyboardType: TextInputType.phone,
+                        decoration: const InputDecoration(
+                          labelText: 'Nequi para cobros (opcional)',
+                          helperText:
+                              'Tus clientes pagarán citas y productos a este '
+                              'número. Sin él solo cobras en el local.',
+                          helperMaxLines: 2,
+                          prefixIcon: Icon(
+                            Icons.account_balance_wallet_outlined,
                           ),
                         ),
+                        validator: validateNequiPhone,
+                      ),
+                      const SizedBox(height: AppSpace.lg),
+                      TextFormField(
+                        controller: _descriptionController,
+                        maxLines: 3,
+                        textCapitalization: TextCapitalization.sentences,
+                        decoration: const InputDecoration(
+                          labelText: 'Descripción',
+                          prefixIcon: Icon(Icons.notes_outlined),
+                        ),
+                      ),
+                      const SizedBox(height: AppSpace.lg),
+                      AppButton(
+                        variant: AppButtonVariant.secondary,
+                        onPressed: _locating ? null : _useCurrentLocation,
+                        loading: _locating,
+                        icon: _position == null
+                            ? Icons.my_location_outlined
+                            : Icons.check_circle_outline,
+                        child: Text(
+                          _position == null
+                              ? 'Usar mi ubicación actual'
+                              : 'Ubicación guardada',
+                        ),
+                      ),
+                      const SizedBox(height: AppSpace.xl),
+                      if (!settings.canCharge)
+                        Padding(
+                          padding: const EdgeInsets.only(bottom: AppSpace.md),
+                          child: Text(
+                            'El administrador aún no configuró el Nequi de la '
+                            'plataforma, así que por ahora solo puedes '
+                            'guardar la barbería como borrador.',
+                            style: text.secondary,
+                          ),
+                        ),
+                      AppButton(
+                        onPressed: (busy || !settings.canCharge)
+                            ? null
+                            : () => _payAndRegister(settings),
+                        icon: Icons.payments_outlined,
+                        loading: _paying,
+                        child: Text(
+                          'Pagar y registrar (${formatCop(settings.monthlyFee)})',
+                        ),
+                      ),
+                      const SizedBox(height: AppSpace.md),
+                      AppButton(
+                        variant: AppButtonVariant.secondary,
+                        onPressed: busy ? null : _saveDraft,
+                        loading: _saving,
+                        icon: Icons.edit_note_outlined,
+                        child: const Text('Guardar como borrador'),
                       ),
                     ],
                   ),
                 ),
-                1,
-              ),
-              const SizedBox(height: 20),
-              _entrance(
-                TextFormField(
-                  controller: _nameController,
-                  decoration: const InputDecoration(
-                    labelText: 'Nombre',
-                    prefixIcon: Icon(Icons.storefront_outlined),
-                  ),
-                  validator: (value) => (value == null || value.trim().isEmpty)
-                      ? 'Requerido'
-                      : null,
-                ),
-                2,
-              ),
-              const SizedBox(height: 14),
-              _entrance(
-                TextFormField(
-                  controller: _addressController,
-                  decoration: const InputDecoration(
-                    labelText: 'Dirección',
-                    prefixIcon: Icon(Icons.location_on_outlined),
-                  ),
-                  validator: (value) => (value == null || value.trim().isEmpty)
-                      ? 'Requerido'
-                      : null,
-                ),
-                3,
-              ),
-              const SizedBox(height: 14),
-              _entrance(
-                TextFormField(
-                  controller: _phoneController,
-                  keyboardType: TextInputType.phone,
-                  decoration: const InputDecoration(
-                    labelText: 'Teléfono',
-                    prefixIcon: Icon(Icons.phone_outlined),
-                  ),
-                ),
-                4,
-              ),
-              const SizedBox(height: 14),
-              _entrance(
-                TextFormField(
-                  controller: _emailController,
-                  keyboardType: TextInputType.emailAddress,
-                  decoration: const InputDecoration(
-                    labelText: 'Correo de contacto',
-                    prefixIcon: Icon(Icons.mail_outline),
-                  ),
-                ),
-                5,
-              ),
-              const SizedBox(height: 14),
-              _entrance(
-                TextFormField(
-                  controller: _descriptionController,
-                  maxLines: 3,
-                  decoration: const InputDecoration(
-                    labelText: 'Descripción',
-                    prefixIcon: Icon(Icons.notes_outlined),
-                  ),
-                ),
-                6,
-              ),
-              const SizedBox(height: 14),
-              _entrance(
-                OutlinedButton.icon(
-                  onPressed: _locating ? null : _useCurrentLocation,
-                  icon: _locating
-                      ? const SizedBox(
-                          height: 16,
-                          width: 16,
-                          child: CircularProgressIndicator(strokeWidth: 2),
-                        )
-                      : Icon(
-                          _position == null
-                              ? Icons.my_location_outlined
-                              : Icons.check_circle,
-                          color: _position == null ? null : AppColors.success,
-                        ),
-                  label: Text(
-                    _position == null
-                        ? 'Usar mi ubicación actual'
-                        : 'Ubicación guardada ✓',
-                  ),
-                ),
-                7,
-              ),
-              const SizedBox(height: 24),
-              AppButton(
-                onPressed: (_saving || _paying) ? null : _payAndRegister,
-                icon: Icons.payments_outlined,
-                loading: _paying,
-                child: Text(
-                  'Pagar y registrar (${formatCop(kBarbershopMonthlyFee)})',
-                ),
-              ),
-              const SizedBox(height: 10),
-              OutlinedButton.icon(
-                onPressed: (_saving || _paying) ? null : _saveDraft,
-                icon: _saving
-                    ? const SizedBox(
-                        height: 16,
-                        width: 16,
-                        child: CircularProgressIndicator(strokeWidth: 2),
-                      )
-                    : const Icon(Icons.edit_note_outlined),
-                label: const Text('Guardar como borrador'),
-              ),
-            ],
-          ),
-        ),
+              ],
+            ),
+          );
+        },
       ),
     );
   }

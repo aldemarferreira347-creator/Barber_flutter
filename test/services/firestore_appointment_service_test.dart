@@ -25,11 +25,7 @@ void main() {
     user = MockUser();
     when(() => auth.currentUser).thenReturn(user);
     when(() => user.uid).thenReturn('client1');
-    service = FirestoreAppointmentService(
-      firestore: firestore,
-      auth: auth,
-      simulatedApprovalDelay: Duration.zero,
-    );
+    service = FirestoreAppointmentService(firestore: firestore, auth: auth);
   });
 
   Future<void> seedService({bool active = true}) {
@@ -46,55 +42,56 @@ void main() {
         });
   }
 
+  test('createPaid bloquea el horario, registra el pago Nequi pendiente y crea la cita pagada', () async {
+    await seedService();
+
+    final date = DateTime.utc(2026, 6, 1, 15);
+    final id = await service.createPaid(
+      barbershopId: 'shop1',
+      barberId: 'barber1',
+      barberName: 'Beto',
+      serviceId: 'svc1',
+      clientName: 'Ana',
+      date: date,
+      reference: 'M1234567',
+    );
+
+    final appointmentSnap = await firestore
+        .collection('appointments')
+        .doc(id)
+        .get();
+    final appointment = appointmentSnap.data()!;
+    expect(appointment['paid'], true);
+    expect(appointment['status'], 'pending');
+    expect(appointment['clientId'], 'client1');
+    expect(appointment['servicePrice'], 20000);
+    expect(appointment['serviceName'], 'Corte');
+
+    final slotSnap = await firestore
+        .collection('appointmentSlots')
+        .doc('barber1_2026-06-01T15:00')
+        .get();
+    expect(slotSnap.exists, true);
+    expect(slotSnap.data()!['appointmentId'], id);
+
+    final paymentId = appointment['paymentId'] as String;
+    final paymentSnap = await firestore
+        .collection('payments')
+        .doc(paymentId)
+        .get();
+    final payment = paymentSnap.data()!;
+    // El dinero aún no se verificó: lo confirma el personal después.
+    expect(payment['status'], 'pending');
+    expect(payment['reference'], 'M1234567');
+    expect(payment['method'], 'nequi');
+    expect(payment['payerId'], 'client1');
+    expect(payment['amount'], 20000);
+    expect(payment['category'], 'appointment');
+    expect(payment['relatedId'], id);
+  });
+
   test(
-    'createPaid bloquea el horario, simula el pago y crea la cita pagada',
-    () async {
-      await seedService();
-
-      final date = DateTime.utc(2026, 6, 1, 15);
-      final id = await service.createPaid(
-        barbershopId: 'shop1',
-        barberId: 'barber1',
-        barberName: 'Beto',
-        serviceId: 'svc1',
-        clientName: 'Ana',
-        date: date,
-      );
-
-      final appointmentSnap = await firestore
-          .collection('appointments')
-          .doc(id)
-          .get();
-      final appointment = appointmentSnap.data()!;
-      expect(appointment['paid'], true);
-      expect(appointment['status'], 'pending');
-      expect(appointment['clientId'], 'client1');
-      expect(appointment['servicePrice'], 20000);
-      expect(appointment['serviceName'], 'Corte');
-
-      final slotSnap = await firestore
-          .collection('appointmentSlots')
-          .doc('barber1_2026-06-01T15:00')
-          .get();
-      expect(slotSnap.exists, true);
-      expect(slotSnap.data()!['appointmentId'], id);
-
-      final paymentId = appointment['paymentId'] as String;
-      final paymentSnap = await firestore
-          .collection('payments')
-          .doc(paymentId)
-          .get();
-      final payment = paymentSnap.data()!;
-      expect(payment['status'], 'approved');
-      expect(payment['payerId'], 'client1');
-      expect(payment['amount'], 20000);
-      expect(payment['category'], 'appointment');
-      expect(payment['relatedId'], id);
-    },
-  );
-
-  test(
-    'createPaid falla y rechaza el pago simulado si el horario ya está tomado',
+    'createPaid falla y rechaza el pago si el horario ya está tomado',
     () async {
       await seedService();
       await firestore
@@ -111,6 +108,7 @@ void main() {
           serviceId: 'svc1',
           clientName: 'Ana',
           date: date,
+          reference: 'M1234567',
         ),
         throwsA(anything),
       );
@@ -137,6 +135,7 @@ void main() {
           serviceId: 'svc1',
           clientName: 'Ana',
           date: DateTime.utc(2026, 6, 1, 15),
+          reference: 'M1234567',
         ),
         throwsA(anything),
       );
@@ -145,6 +144,95 @@ void main() {
       expect(slots.docs, isEmpty);
     },
   );
+
+  group('verificación del pago por el personal', () {
+    late String appointmentId;
+    final date = DateTime.utc(2026, 6, 1, 15);
+
+    setUp(() async {
+      await seedService();
+      appointmentId = await service.createPaid(
+        barbershopId: 'shop1',
+        barberId: 'barber1',
+        barberName: 'Beto',
+        serviceId: 'svc1',
+        clientName: 'Ana',
+        date: date,
+        reference: 'M1234567',
+      );
+      // A partir de aquí actúa el personal de la barbería.
+      when(() => user.uid).thenReturn('barber1');
+    });
+
+    Future<Map<String, dynamic>> payment() async {
+      final appointment =
+          (await firestore.collection('appointments').doc(appointmentId).get())
+              .data()!;
+      return (await firestore
+              .collection('payments')
+              .doc(appointment['paymentId'] as String)
+              .get())
+          .data()!;
+    }
+
+    test('confirmPayment aprueba el pago y acepta la cita', () async {
+      await service.confirmPayment(appointmentId);
+
+      final appointment =
+          (await firestore.collection('appointments').doc(appointmentId).get())
+              .data()!;
+      expect(appointment['status'], 'accepted');
+      final paid = await payment();
+      expect(paid['status'], 'approved');
+      expect(paid['resolvedBy'], 'barber1');
+      expect(paid['resolvedAt'], isNotNull);
+    });
+
+    test(
+      'rejectPayment rechaza el pago, cancela la cita y libera el horario',
+      () async {
+        await service.rejectPayment(appointmentId);
+
+        final appointment =
+            (await firestore
+                    .collection('appointments')
+                    .doc(appointmentId)
+                    .get())
+                .data()!;
+        expect(appointment['status'], 'cancelled');
+        expect((await payment())['status'], 'rejected');
+        final slot = await firestore
+            .collection('appointmentSlots')
+            .doc('barber1_2026-06-01T15:00')
+            .get();
+        expect(slot.exists, isFalse);
+      },
+    );
+
+    test('un pago ya resuelto no se vuelve a resolver', () async {
+      await service.confirmPayment(appointmentId);
+      await expectLater(
+        () => service.rejectPayment(appointmentId),
+        throwsA(anything),
+      );
+      expect((await payment())['status'], 'approved');
+    });
+
+    test('una cita sin pago no tiene nada que verificar', () async {
+      await firestore.collection('appointments').doc('free').set({
+        'barbershopId': 'shop1',
+        'barberId': 'barber1',
+        'clientId': 'client1',
+        'status': 'pending',
+        'paid': false,
+        'date': Timestamp.fromDate(date),
+      });
+      await expectLater(
+        () => service.confirmPayment('free'),
+        throwsA(anything),
+      );
+    });
+  });
 
   test('postponePaid libera el horario viejo y reclama el nuevo', () async {
     final oldDate = DateTime.utc(2026, 6, 1, 15);

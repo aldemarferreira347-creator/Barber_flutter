@@ -4,6 +4,7 @@ import 'package:cloud_firestore/cloud_firestore.dart';
 import 'package:firebase_auth/firebase_auth.dart';
 
 import '../models/appointment.dart';
+import '../models/payment_record.dart';
 import '../repositories/appointment_repository.dart';
 import 'appointment_slot_id.dart';
 
@@ -15,18 +16,12 @@ import 'appointment_slot_id.dart';
 class FirestoreAppointmentService implements AppointmentRepository {
   final FirebaseFirestore _firestore;
   final FirebaseAuth _auth;
-  final Duration _simulatedApprovalDelay;
 
   FirestoreAppointmentService({
     FirebaseFirestore? firestore,
     FirebaseAuth? auth,
-    // Configurable solo para que los tests no esperen el delay real — igual
-    // que el parámetro `delayMs` de SimulatedNequiGateway en el backend.
-    Duration? simulatedApprovalDelay,
   }) : _firestore = firestore ?? FirebaseFirestore.instance,
-       _auth = auth ?? FirebaseAuth.instance,
-       _simulatedApprovalDelay =
-           simulatedApprovalDelay ?? const Duration(milliseconds: 1500);
+       _auth = auth ?? FirebaseAuth.instance;
 
   CollectionReference<Map<String, dynamic>> get _appointments =>
       _firestore.collection('appointments');
@@ -51,6 +46,7 @@ class FirestoreAppointmentService implements AppointmentRepository {
     required String serviceId,
     required String clientName,
     required DateTime date,
+    required String reference,
   }) async {
     final clientId = _auth.currentUser?.uid;
     if (clientId == null) throw Exception('Debes iniciar sesión.');
@@ -80,20 +76,21 @@ class FirestoreAppointmentService implements AppointmentRepository {
     final appointmentRef = _appointments.doc();
     final paymentRef = _payments.doc();
 
-    // El pago (simulado) se crea ANTES de intentar el bloqueo del horario:
-    // así, si la transacción falla porque alguien más ya lo tomó, queda
-    // constancia del intento fallido en vez de un pago fantasma.
-    await paymentRef.set({
-      'payerId': clientId,
-      'amount': servicePrice,
-      'category': 'appointment',
-      'relatedId': appointmentRef.id,
-      'description': 'Cita en barbershops/$barbershopId',
-      'status': 'pending',
-      'createdAt': FieldValue.serverTimestamp(),
-      'resolvedAt': null,
-      'refundedAmount': null,
-    });
+    // El pago Nequi (pendiente, con la referencia del comprobante) se crea
+    // ANTES de intentar el bloqueo del horario: así, si la transacción falla
+    // porque alguien más ya lo tomó, queda constancia del intento fallido
+    // en vez de un pago fantasma. Queda pendiente hasta que el personal
+    // verifique el dinero en su Nequi (confirmPayment).
+    await paymentRef.set(
+      PaymentRecord.newPendingMap(
+        payerId: clientId,
+        amount: servicePrice as num,
+        category: PaymentCategory.appointment,
+        relatedId: appointmentRef.id,
+        description: 'Cita en barbershops/$barbershopId',
+        reference: reference,
+      ),
+    );
 
     try {
       await _firestore.runTransaction((tx) async {
@@ -133,13 +130,75 @@ class FirestoreAppointmentService implements AppointmentRepository {
       rethrow;
     }
 
-    await Future<void>.delayed(_simulatedApprovalDelay);
-    await paymentRef.update({
-      'status': 'approved',
-      'resolvedAt': FieldValue.serverTimestamp(),
-    });
-
     return appointmentRef.id;
+  }
+
+  /// Lee la cita y su pago pendiente; falla con un mensaje claro si ya no
+  /// hay nada que verificar (otro miembro del personal ya lo resolvió).
+  Future<
+    ({Appointment appointment, DocumentReference<Map<String, dynamic>> payment})
+  >
+  _pendingPaidAppointment(String appointmentId) async {
+    final snap = await _appointments.doc(appointmentId).get();
+    final data = snap.data();
+    if (!snap.exists || data == null) throw Exception('La cita no existe.');
+    final appointment = Appointment.fromMap(snap.id, data);
+    final paymentId = appointment.paymentId;
+    if (!appointment.paid || paymentId == null) {
+      throw Exception('Esta cita no tiene un pago por verificar.');
+    }
+    final paymentRef = _payments.doc(paymentId);
+    final paymentSnap = await paymentRef.get();
+    if (paymentSnap.data()?['status'] != PaymentIntentStatus.pending.value) {
+      throw Exception('El pago de esta cita ya fue resuelto.');
+    }
+    return (appointment: appointment, payment: paymentRef);
+  }
+
+  Map<String, dynamic> _resolution(String status) => {
+    'status': status,
+    'resolvedAt': FieldValue.serverTimestamp(),
+    'resolvedBy': _auth.currentUser?.uid,
+  };
+
+  @override
+  Future<void> confirmPayment(String appointmentId) async {
+    final pending = await _pendingPaidAppointment(appointmentId);
+    // Una sola escritura: el pago queda verificado y la cita aceptada (las
+    // reglas no dejan aceptar una cita pagada con el pago sin verificar).
+    final batch = _firestore.batch();
+    batch.update(
+      pending.payment,
+      _resolution(PaymentIntentStatus.approved.value),
+    );
+    batch.update(_appointments.doc(appointmentId), {
+      'status': AppointmentStatus.accepted.value,
+    });
+    await batch.commit();
+  }
+
+  @override
+  Future<void> rejectPayment(String appointmentId) async {
+    final pending = await _pendingPaidAppointment(appointmentId);
+    // El dinero no llegó: el pago se rechaza, la cita se cancela y el
+    // horario vuelve a quedar libre — todo junto.
+    final batch = _firestore.batch();
+    batch.update(
+      pending.payment,
+      _resolution(PaymentIntentStatus.rejected.value),
+    );
+    batch.update(_appointments.doc(appointmentId), {
+      'status': AppointmentStatus.cancelled.value,
+    });
+    batch.delete(
+      _slots.doc(
+        appointmentSlotId(
+          pending.appointment.barberId,
+          pending.appointment.date,
+        ),
+      ),
+    );
+    await batch.commit();
   }
 
   /// Citas que se escuchan por consulta: las más recientes (incluye las
@@ -153,6 +212,15 @@ class FirestoreAppointmentService implements AppointmentRepository {
       .toList()
       .reversed
       .toList();
+
+  @override
+  Stream<Appointment?> watchOne(String appointmentId) {
+    return _appointments.doc(appointmentId).snapshots().map((doc) {
+      final data = doc.data();
+      if (!doc.exists || data == null) return null;
+      return Appointment.fromMap(doc.id, data);
+    });
+  }
 
   @override
   Stream<List<Appointment>> watchByClient(String clientId) {

@@ -9,7 +9,9 @@ import '../../models/barbershop.dart';
 import '../../repositories/barbershop_repository.dart';
 import '../../services/location_service.dart';
 import '../../theme/app_colors.dart';
+import '../../theme/app_tokens.dart';
 import '../widgets/app_button.dart';
+import '../widgets/responsive_body.dart';
 
 import 'package:cached_network_image/cached_network_image.dart';
 
@@ -37,6 +39,9 @@ class _EditBarbershopViewState extends State<EditBarbershopView> {
   late final _emailController = TextEditingController(
     text: widget.shop.email ?? '',
   );
+  late final _nequiController = TextEditingController(
+    text: widget.shop.nequiPhone ?? '',
+  );
   late final _descriptionController = TextEditingController(
     text: widget.shop.description ?? '',
   );
@@ -54,6 +59,7 @@ class _EditBarbershopViewState extends State<EditBarbershopView> {
     _addressController.dispose();
     _phoneController.dispose();
     _emailController.dispose();
+    _nequiController.dispose();
     _descriptionController.dispose();
     super.dispose();
   }
@@ -105,6 +111,7 @@ class _EditBarbershopViewState extends State<EditBarbershopView> {
         phone: _optional(_phoneController),
         email: _optional(_emailController),
         description: _optional(_descriptionController),
+        nequiPhone: _nequiController.text,
       );
       if (_position != null) {
         await repo.updateLocation(
@@ -139,11 +146,12 @@ class _EditBarbershopViewState extends State<EditBarbershopView> {
     final currentPhoto = widget.shop.photoUrl;
     return Scaffold(
       appBar: AppBar(title: const Text('Editar barbería')),
-      body: Padding(
-        padding: const EdgeInsets.all(16),
+      body: ResponsiveBody(
+        maxWidth: AppLayout.formWidth,
         child: Form(
           key: _formKey,
           child: ListView(
+            padding: const EdgeInsets.symmetric(vertical: AppSpace.lg),
             children: [
               GestureDetector(
                 onTap: _pickPhoto,
@@ -225,6 +233,20 @@ class _EditBarbershopViewState extends State<EditBarbershopView> {
                   labelText: 'Correo de contacto',
                   prefixIcon: Icon(Icons.mail_outline),
                 ),
+              ),
+              const SizedBox(height: 14),
+              TextFormField(
+                controller: _nequiController,
+                keyboardType: TextInputType.phone,
+                decoration: const InputDecoration(
+                  labelText: 'Nequi para cobros (opcional)',
+                  helperText:
+                      'Tus clientes pagarán citas y productos a este número. '
+                      'Sin él solo cobras en el local.',
+                  helperMaxLines: 2,
+                  prefixIcon: Icon(Icons.account_balance_wallet_outlined),
+                ),
+                validator: validateNequiPhone,
               ),
               const SizedBox(height: 14),
               TextFormField(
