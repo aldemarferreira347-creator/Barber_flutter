@@ -37,6 +37,7 @@ import 'services/firestore_notification_service.dart';
 import 'services/firestore_product_service.dart';
 import 'services/firestore_service_service.dart';
 import 'services/firestore_user_service.dart';
+import 'services/reminder_service.dart';
 import 'services/firestore_payment_service.dart';
 import 'services/firestore_platform_settings_service.dart';
 import 'theme/app_theme.dart';
@@ -81,6 +82,7 @@ class BarberApp extends StatelessWidget {
         Provider<NotificationRepository>(
           create: (_) => FirestoreNotificationService(),
         ),
+        Provider<ReminderScheduler>(create: (_) => createReminderScheduler()),
         Provider<PaymentRepository>(create: (_) => FirestorePaymentService()),
         Provider<PlatformSettingsRepository>(
           create: (_) => FirestorePlatformSettingsService(),

@@ -5,8 +5,11 @@ import 'package:cloud_firestore/cloud_firestore.dart';
 import '../models/product.dart';
 import '../repositories/product_repository.dart';
 import '../repositories/storage_repository.dart';
+import '../utils/shared_stream.dart';
 
 class FirestoreProductService implements ProductRepository {
+  final _shared = SharedStreams();
+
   final FirebaseFirestore _firestore;
   final StorageRepository _storage;
 
@@ -23,14 +26,16 @@ class FirestoreProductService implements ProductRepository {
 
   @override
   Stream<List<Product>> watchByBarbershop(String barbershopId) {
-    return _products(barbershopId)
-        .orderBy('name')
-        .snapshots()
-        .map(
-          (snapshot) => snapshot.docs
-              .map((doc) => Product.fromMap(doc.id, barbershopId, doc.data()))
-              .toList(),
-        );
+    return _shared.of<List<Product>>('watchByBarbershop:$barbershopId', () {
+      return _products(barbershopId)
+          .orderBy('name')
+          .snapshots()
+          .map(
+            (snapshot) => snapshot.docs
+                .map((doc) => Product.fromMap(doc.id, barbershopId, doc.data()))
+                .toList(),
+          );
+    });
   }
 
   @override

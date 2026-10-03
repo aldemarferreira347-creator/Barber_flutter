@@ -7,6 +7,7 @@ import '../models/comment.dart';
 import '../repositories/comment_repository.dart';
 import '../repositories/storage_repository.dart';
 import 'content_moderation_filter.dart';
+import '../utils/shared_stream.dart';
 
 const _maxTextLength = 500;
 
@@ -19,6 +20,8 @@ const _maxTextLength = 500;
 // propio filtro de moderación, así que un cliente manipulado podría en
 // teoría escribir 'published' con texto ofensivo saltándose la app.
 class CloudCommentService implements CommentRepository {
+  final _shared = SharedStreams();
+
   final FirebaseFirestore _firestore;
   final FirebaseAuth _auth;
   final StorageRepository _storage;
@@ -116,17 +119,22 @@ class CloudCommentService implements CommentRepository {
 
   @override
   Stream<List<Comment>> watchPublishedByBarbershop(String barbershopId) {
-    return _comments
-        .where('barbershopId', isEqualTo: barbershopId)
-        .where('status', isEqualTo: 'published')
-        .orderBy('createdAt', descending: true)
-        .limit(_maxPublished)
-        .snapshots()
-        .map(
-          (snapshot) => snapshot.docs
-              .map((doc) => Comment.fromMap(doc.id, doc.data()))
-              .toList(),
-        );
+    return _shared.of<List<Comment>>(
+      'watchPublishedByBarbershop:$barbershopId',
+      () {
+        return _comments
+            .where('barbershopId', isEqualTo: barbershopId)
+            .where('status', isEqualTo: 'published')
+            .orderBy('createdAt', descending: true)
+            .limit(_maxPublished)
+            .snapshots()
+            .map(
+              (snapshot) => snapshot.docs
+                  .map((doc) => Comment.fromMap(doc.id, doc.data()))
+                  .toList(),
+            );
+      },
+    );
   }
 
   @override

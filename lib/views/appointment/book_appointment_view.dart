@@ -46,9 +46,17 @@ class _BookAppointmentViewState extends State<BookAppointmentView> {
   /// Días que se pueden reservar hacia adelante.
   static const _daysAhead = 14;
 
+  // Los streams se abren una sola vez: crearlos dentro de build() reabriría
+  // la consulta (y mostraría el esqueleto de carga) con cada selección.
   late final Stream<Barbershop?> _shop = context
       .read<BarbershopRepository>()
       .watchOne(widget.barbershopId);
+  late final Stream<List<Service>> _services = context
+      .read<ServiceRepository>()
+      .watchByBarbershop(widget.barbershopId);
+  late final Stream<List<AppUser>> _barbers = context
+      .read<UserRepository>()
+      .watchBarbersByBarbershop(widget.barbershopId);
 
   Service? _service;
   AppUser? _barber;
@@ -149,9 +157,6 @@ class _BookAppointmentViewState extends State<BookAppointmentView> {
 
   @override
   Widget build(BuildContext context) {
-    final serviceRepo = context.read<ServiceRepository>();
-    final userRepo = context.read<UserRepository>();
-
     return Scaffold(
       appBar: AppBar(title: Text('Agendar en ${widget.barbershopName}')),
       body: StreamBuilder<Barbershop?>(
@@ -168,9 +173,7 @@ class _BookAppointmentViewState extends State<BookAppointmentView> {
                   children: [
                     const SectionHeader(title: '1. Elige un servicio'),
                     StreamBuilder<List<Service>>(
-                      stream: serviceRepo.watchByBarbershop(
-                        widget.barbershopId,
-                      ),
+                      stream: _services,
                       builder: (context, snapshot) {
                         if (snapshot.hasError) {
                           return const ErrorState(
@@ -212,9 +215,7 @@ class _BookAppointmentViewState extends State<BookAppointmentView> {
                     const SizedBox(height: AppSpace.xl),
                     const SectionHeader(title: '2. Elige un barbero'),
                     StreamBuilder<List<AppUser>>(
-                      stream: userRepo.watchBarbersByBarbershop(
-                        widget.barbershopId,
-                      ),
+                      stream: _barbers,
                       builder: (context, snapshot) {
                         if (snapshot.hasError) {
                           return const ErrorState(

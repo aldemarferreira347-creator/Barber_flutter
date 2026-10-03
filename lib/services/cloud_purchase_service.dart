@@ -5,6 +5,7 @@ import '../models/payment_record.dart';
 import '../models/purchase.dart';
 import '../repositories/purchase_repository.dart';
 import 'claim_code.dart';
+import '../utils/shared_stream.dart';
 
 // Nombre histórico (antes llamaba a createPurchase/claimPurchase/
 // refundPurchaseItems, Cloud Functions) — sin plan Blaze escribe Firestore
@@ -23,6 +24,8 @@ import 'claim_code.dart';
 // verifique el dinero (confirmPayment), que es cuando se genera el código
 // de reclamo y empieza el plazo de 24 h.
 class CloudPurchaseService implements PurchaseRepository {
+  final _shared = SharedStreams();
+
   final FirebaseFirestore _firestore;
   final FirebaseAuth _auth;
 
@@ -124,10 +127,12 @@ class CloudPurchaseService implements PurchaseRepository {
 
   @override
   Stream<Purchase?> watchPurchase(String purchaseId) {
-    return _purchases.doc(purchaseId).snapshots().map((doc) {
-      final data = doc.data();
-      if (!doc.exists || data == null) return null;
-      return Purchase.fromMap(doc.id, data);
+    return _shared.of<Purchase?>('watchPurchase:$purchaseId', () {
+      return _purchases.doc(purchaseId).snapshots().map((doc) {
+        final data = doc.data();
+        if (!doc.exists || data == null) return null;
+        return Purchase.fromMap(doc.id, data);
+      });
     });
   }
 
@@ -136,30 +141,34 @@ class CloudPurchaseService implements PurchaseRepository {
 
   @override
   Stream<List<Purchase>> watchByBuyer(String buyerId) {
-    return _purchases
-        .where('buyerId', isEqualTo: buyerId)
-        .orderBy('createdAt', descending: true)
-        .limit(_maxListItems)
-        .snapshots()
-        .map(
-          (snapshot) => snapshot.docs
-              .map((doc) => Purchase.fromMap(doc.id, doc.data()))
-              .toList(),
-        );
+    return _shared.of<List<Purchase>>('watchByBuyer:$buyerId', () {
+      return _purchases
+          .where('buyerId', isEqualTo: buyerId)
+          .orderBy('createdAt', descending: true)
+          .limit(_maxListItems)
+          .snapshots()
+          .map(
+            (snapshot) => snapshot.docs
+                .map((doc) => Purchase.fromMap(doc.id, doc.data()))
+                .toList(),
+          );
+    });
   }
 
   @override
   Stream<List<Purchase>> watchByBarbershop(String barbershopId) {
-    return _purchases
-        .where('barbershopId', isEqualTo: barbershopId)
-        .orderBy('createdAt', descending: true)
-        .limit(_maxListItems)
-        .snapshots()
-        .map(
-          (snapshot) => snapshot.docs
-              .map((doc) => Purchase.fromMap(doc.id, doc.data()))
-              .toList(),
-        );
+    return _shared.of<List<Purchase>>('watchByBarbershop:$barbershopId', () {
+      return _purchases
+          .where('barbershopId', isEqualTo: barbershopId)
+          .orderBy('createdAt', descending: true)
+          .limit(_maxListItems)
+          .snapshots()
+          .map(
+            (snapshot) => snapshot.docs
+                .map((doc) => Purchase.fromMap(doc.id, doc.data()))
+                .toList(),
+          );
+    });
   }
 
   @override

@@ -5,8 +5,11 @@ import 'package:cloud_firestore/cloud_firestore.dart';
 import '../models/service.dart';
 import '../repositories/service_repository.dart';
 import '../repositories/storage_repository.dart';
+import '../utils/shared_stream.dart';
 
 class FirestoreServiceService implements ServiceRepository {
+  final _shared = SharedStreams();
+
   final FirebaseFirestore _firestore;
   final StorageRepository _storage;
 
@@ -23,14 +26,16 @@ class FirestoreServiceService implements ServiceRepository {
 
   @override
   Stream<List<Service>> watchByBarbershop(String barbershopId) {
-    return _services(barbershopId)
-        .orderBy('name')
-        .snapshots()
-        .map(
-          (snapshot) => snapshot.docs
-              .map((doc) => Service.fromMap(doc.id, barbershopId, doc.data()))
-              .toList(),
-        );
+    return _shared.of<List<Service>>('watchByBarbershop:$barbershopId', () {
+      return _services(barbershopId)
+          .orderBy('name')
+          .snapshots()
+          .map(
+            (snapshot) => snapshot.docs
+                .map((doc) => Service.fromMap(doc.id, barbershopId, doc.data()))
+                .toList(),
+          );
+    });
   }
 
   @override

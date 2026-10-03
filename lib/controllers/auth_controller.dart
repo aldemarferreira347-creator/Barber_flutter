@@ -12,6 +12,7 @@ import '../repositories/user_repository.dart';
 import '../services/firebase_auth_service.dart';
 import '../services/firestore_user_service.dart';
 import '../services/push_notification_service.dart';
+import '../utils/shared_stream.dart';
 
 export '../repositories/auth_repository.dart'
     show
@@ -66,6 +67,8 @@ class AuthController extends ChangeNotifier {
 
   Future<void> _onAuthChanged(User? user) async {
     if (user == null) {
+      // Nada de la cuenta anterior debe servirse a la siguiente.
+      SharedStreams.resetAll();
       unawaited(_tokenRefreshSubscription?.cancel());
       _tokenRefreshSubscription = null;
       status = AuthStatus.unauthenticated;

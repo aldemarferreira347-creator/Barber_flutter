@@ -2,12 +2,15 @@ import 'package:cloud_firestore/cloud_firestore.dart';
 import 'package:firebase_auth/firebase_auth.dart';
 
 import '../repositories/rating_repository.dart';
+import '../utils/shared_stream.dart';
 
 // Nombre histórico (antes llamaba a submitAppointmentRating, Cloud
 // Function) — sin plan Blaze escribe Firestore directo. La validación de
 // estrellas/penalización forzada y de que la cita sea propia, pagada y
 // completada vive en firestore.rules, igual que en el backend.
 class CloudRatingService implements RatingRepository {
+  final _shared = SharedStreams();
+
   final FirebaseFirestore _firestore;
   final FirebaseAuth _auth;
 
@@ -93,9 +96,11 @@ class CloudRatingService implements RatingRepository {
 
   @override
   Stream<Set<String>> watchRatedAppointmentIds(String clientId) {
-    return _ratings
-        .where('clientId', isEqualTo: clientId)
-        .snapshots()
-        .map((snapshot) => snapshot.docs.map((doc) => doc.id).toSet());
+    return _shared.of<Set<String>>('watchRatedAppointmentIds:$clientId', () {
+      return _ratings
+          .where('clientId', isEqualTo: clientId)
+          .snapshots()
+          .map((snapshot) => snapshot.docs.map((doc) => doc.id).toSet());
+    });
   }
 }

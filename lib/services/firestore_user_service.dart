@@ -4,9 +4,12 @@ import '../models/app_user.dart';
 import '../models/notification_tone.dart';
 import '../models/user_role.dart';
 import '../repositories/user_repository.dart';
+import '../utils/shared_stream.dart';
 
 /// CRUD del documento de perfil/rol en users/{uid}.
 class FirestoreUserService implements UserRepository {
+  final _shared = SharedStreams();
+
   final FirebaseFirestore _firestore;
 
   FirestoreUserService({FirebaseFirestore? firestore})
@@ -39,14 +42,16 @@ class FirestoreUserService implements UserRepository {
 
   @override
   Stream<List<AppUser>> watchAll() {
-    return _users
-        .orderBy('name')
-        .snapshots()
-        .map(
-          (snapshot) => snapshot.docs
-              .map((doc) => AppUser.fromMap(doc.id, doc.data()))
-              .toList(),
-        );
+    return _shared.of<List<AppUser>>('watchAll', () {
+      return _users
+          .orderBy('name')
+          .snapshots()
+          .map(
+            (snapshot) => snapshot.docs
+                .map((doc) => AppUser.fromMap(doc.id, doc.data()))
+                .toList(),
+          );
+    });
   }
 
   @override
@@ -61,15 +66,20 @@ class FirestoreUserService implements UserRepository {
 
   @override
   Stream<List<AppUser>> watchBarbersByBarbershop(String barbershopId) {
-    return _users
-        .where('barbershopId', isEqualTo: barbershopId)
-        .where('role', isEqualTo: UserRole.barber.value)
-        .snapshots()
-        .map(
-          (snapshot) => snapshot.docs
-              .map((doc) => AppUser.fromMap(doc.id, doc.data()))
-              .toList(),
-        );
+    return _shared.of<List<AppUser>>(
+      'watchBarbersByBarbershop:$barbershopId',
+      () {
+        return _users
+            .where('barbershopId', isEqualTo: barbershopId)
+            .where('role', isEqualTo: UserRole.barber.value)
+            .snapshots()
+            .map(
+              (snapshot) => snapshot.docs
+                  .map((doc) => AppUser.fromMap(doc.id, doc.data()))
+                  .toList(),
+            );
+      },
+    );
   }
 
   @override

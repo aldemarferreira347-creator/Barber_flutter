@@ -6,12 +6,15 @@ import '../models/payment_record.dart';
 import '../models/refund_request.dart';
 import '../repositories/refund_request_repository.dart';
 import 'appointment_slot_id.dart';
+import '../utils/shared_stream.dart';
 
 // El nombre quedó de cuando `resolve` llamaba a resolveAppointmentRefund
 // (Cloud Function) — sin plan Blaze, ahora escribe Firestore directo (ver
 // firestore.rules), pero se deja el nombre para no romper el resto de
 // referencias a esta clase de nuevo tras el cambio anterior.
 class CloudRefundRequestService implements RefundRequestRepository {
+  final _shared = SharedStreams();
+
   final FirebaseFirestore _firestore;
   final FirebaseAuth _auth;
 
@@ -36,30 +39,37 @@ class CloudRefundRequestService implements RefundRequestRepository {
 
   @override
   Stream<List<RefundRequest>> watchByBarbershop(String barbershopId) {
-    return _requests
-        .where('barbershopId', isEqualTo: barbershopId)
-        .orderBy('createdAt', descending: true)
-        .limit(_maxListItems)
-        .snapshots()
-        .map(
-          (snapshot) => snapshot.docs
-              .map((doc) => RefundRequest.fromMap(doc.id, doc.data()))
-              .toList(),
-        );
+    return _shared.of<List<RefundRequest>>(
+      'watchByBarbershop:$barbershopId',
+      () {
+        return _requests
+            .where('barbershopId', isEqualTo: barbershopId)
+            .orderBy('createdAt', descending: true)
+            .limit(_maxListItems)
+            .snapshots()
+            .map(
+              (snapshot) => snapshot.docs
+                  .map((doc) => RefundRequest.fromMap(doc.id, doc.data()))
+                  .toList(),
+            );
+      },
+    );
   }
 
   @override
   Stream<List<RefundRequest>> watchByClient(String clientId) {
-    return _requests
-        .where('clientId', isEqualTo: clientId)
-        .orderBy('createdAt', descending: true)
-        .limit(_maxListItems)
-        .snapshots()
-        .map(
-          (snapshot) => snapshot.docs
-              .map((doc) => RefundRequest.fromMap(doc.id, doc.data()))
-              .toList(),
-        );
+    return _shared.of<List<RefundRequest>>('watchByClient:$clientId', () {
+      return _requests
+          .where('clientId', isEqualTo: clientId)
+          .orderBy('createdAt', descending: true)
+          .limit(_maxListItems)
+          .snapshots()
+          .map(
+            (snapshot) => snapshot.docs
+                .map((doc) => RefundRequest.fromMap(doc.id, doc.data()))
+                .toList(),
+          );
+    });
   }
 
   @override

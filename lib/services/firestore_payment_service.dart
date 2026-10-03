@@ -2,8 +2,11 @@ import 'package:cloud_firestore/cloud_firestore.dart';
 
 import '../models/payment_record.dart';
 import '../repositories/payment_repository.dart';
+import '../utils/shared_stream.dart';
 
 class FirestorePaymentService implements PaymentRepository {
+  final _shared = SharedStreams();
+
   final FirebaseFirestore _firestore;
 
   FirestorePaymentService({FirebaseFirestore? firestore})
@@ -20,29 +23,33 @@ class FirestorePaymentService implements PaymentRepository {
 
   @override
   Stream<PaymentRecord?> watchPayment(String paymentId) {
-    return _payments.doc(paymentId).snapshots().map((doc) {
-      final data = doc.data();
-      if (!doc.exists || data == null) return null;
-      return PaymentRecord.fromMap(doc.id, data);
+    return _shared.of<PaymentRecord?>('watchPayment:$paymentId', () {
+      return _payments.doc(paymentId).snapshots().map((doc) {
+        final data = doc.data();
+        if (!doc.exists || data == null) return null;
+        return PaymentRecord.fromMap(doc.id, data);
+      });
     });
   }
 
   @override
   Stream<List<PaymentRecord>> watchPendingSubscriptions() {
-    // Consulta solo con igualdades (no pide índice compuesto); se ordena
-    // en el cliente porque los pendientes son pocos.
-    return _payments
-        .where('category', isEqualTo: PaymentCategory.subscription.value)
-        .where('status', isEqualTo: PaymentIntentStatus.pending.value)
-        .limit(_maxPayments)
-        .snapshots()
-        .map(
-          (snapshot) =>
-              snapshot.docs
-                  .map((doc) => PaymentRecord.fromMap(doc.id, doc.data()))
-                  .toList()
-                ..sort((a, b) => _newestFirst(b, a)),
-        );
+    return _shared.of<List<PaymentRecord>>('watchPendingSubscriptions', () {
+      // Consulta solo con igualdades (no pide índice compuesto); se ordena
+      // en el cliente porque los pendientes son pocos.
+      return _payments
+          .where('category', isEqualTo: PaymentCategory.subscription.value)
+          .where('status', isEqualTo: PaymentIntentStatus.pending.value)
+          .limit(_maxPayments)
+          .snapshots()
+          .map(
+            (snapshot) =>
+                snapshot.docs
+                    .map((doc) => PaymentRecord.fromMap(doc.id, doc.data()))
+                    .toList()
+                  ..sort((a, b) => _newestFirst(b, a)),
+          );
+    });
   }
 
   @override
@@ -50,18 +57,23 @@ class FirestorePaymentService implements PaymentRepository {
     required String payerId,
     required String shopId,
   }) {
-    return _payments
-        .where('payerId', isEqualTo: payerId)
-        .where('category', isEqualTo: PaymentCategory.subscription.value)
-        .where('relatedId', isEqualTo: shopId)
-        .limit(_maxPayments)
-        .snapshots()
-        .map(
-          (snapshot) =>
-              snapshot.docs
-                  .map((doc) => PaymentRecord.fromMap(doc.id, doc.data()))
-                  .toList()
-                ..sort(_newestFirst),
-        );
+    return _shared.of<List<PaymentRecord>>(
+      'watchSubscriptionPayments:$payerId:$shopId',
+      () {
+        return _payments
+            .where('payerId', isEqualTo: payerId)
+            .where('category', isEqualTo: PaymentCategory.subscription.value)
+            .where('relatedId', isEqualTo: shopId)
+            .limit(_maxPayments)
+            .snapshots()
+            .map(
+              (snapshot) =>
+                  snapshot.docs
+                      .map((doc) => PaymentRecord.fromMap(doc.id, doc.data()))
+                      .toList()
+                    ..sort(_newestFirst),
+            );
+      },
+    );
   }
 }

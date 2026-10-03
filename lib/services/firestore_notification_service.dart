@@ -2,6 +2,7 @@ import 'package:cloud_firestore/cloud_firestore.dart';
 
 import '../models/app_notification.dart';
 import '../repositories/notification_repository.dart';
+import '../utils/shared_stream.dart';
 
 const _maxTitleLength = 120;
 const _maxBodyLength = 1000;
@@ -11,6 +12,8 @@ const _allowedTypes = {
 };
 
 class FirestoreNotificationService implements NotificationRepository {
+  final _shared = SharedStreams();
+
   final FirebaseFirestore _firestore;
 
   FirestoreNotificationService({FirebaseFirestore? firestore})
@@ -24,16 +27,18 @@ class FirestoreNotificationService implements NotificationRepository {
 
   @override
   Stream<List<AppNotification>> watchForUser(String uid) {
-    return _notifications
-        .where('toUserId', isEqualTo: uid)
-        .orderBy('createdAt', descending: true)
-        .limit(_maxItems)
-        .snapshots()
-        .map(
-          (snapshot) => snapshot.docs
-              .map((doc) => AppNotification.fromMap(doc.id, doc.data()))
-              .toList(),
-        );
+    return _shared.of<List<AppNotification>>('watchForUser:$uid', () {
+      return _notifications
+          .where('toUserId', isEqualTo: uid)
+          .orderBy('createdAt', descending: true)
+          .limit(_maxItems)
+          .snapshots()
+          .map(
+            (snapshot) => snapshot.docs
+                .map((doc) => AppNotification.fromMap(doc.id, doc.data()))
+                .toList(),
+          );
+    });
   }
 
   @override

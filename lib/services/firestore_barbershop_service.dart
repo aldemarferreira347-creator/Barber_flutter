@@ -10,8 +10,11 @@ import '../models/platform_settings.dart';
 import '../repositories/barbershop_repository.dart';
 import '../repositories/storage_repository.dart';
 import '../utils/stream_combine.dart';
+import '../utils/shared_stream.dart';
 
 class FirestoreBarbershopService implements BarbershopRepository {
+  final _shared = SharedStreams();
+
   final FirebaseFirestore _firestore;
   final StorageRepository _storage;
 
@@ -31,63 +34,72 @@ class FirestoreBarbershopService implements BarbershopRepository {
 
   @override
   Stream<List<Barbershop>> watchAll() {
-    return _barbershops
-        .orderBy('name')
-        .snapshots()
-        .map(
-          (snapshot) => snapshot.docs
-              .map((doc) => Barbershop.fromMap(doc.id, doc.data()))
-              .toList(),
-        );
+    return _shared.of<List<Barbershop>>('watchAll', () {
+      return _barbershops
+          .orderBy('name')
+          .snapshots()
+          .map(
+            (snapshot) => snapshot.docs
+                .map((doc) => Barbershop.fromMap(doc.id, doc.data()))
+                .toList(),
+          );
+    });
   }
 
   @override
   Stream<List<Barbershop>> watchApproved() {
-    // Solo las que pueden operar: aprobadas, activas y con la mensualidad
-    // vigente o dentro de la gracia (la configura el admin). Se deriva de la
-    // fecha porque ningún proceso del servidor bloquea por mora.
-    final shops = _barbershops
-        .where(
-          'approvalStatus',
-          isEqualTo: BarbershopApprovalStatus.approved.value,
-        )
-        .where('active', isEqualTo: true)
-        .snapshots();
-    return combineLatest2<
-      QuerySnapshot<Map<String, dynamic>>,
-      DocumentSnapshot<Map<String, dynamic>>,
-      List<Barbershop>
-    >(shops, _settings.snapshots(), (snapshot, settingsDoc) {
-      final graceDays = PlatformSettings.fromMap(settingsDoc.data()).graceDays;
-      return [
-        for (final doc in snapshot.docs)
-          if (Barbershop.fromMap(
-            doc.id,
-            doc.data(),
-          ).isOperational(graceDays: graceDays))
-            Barbershop.fromMap(doc.id, doc.data()),
-      ];
+    return _shared.of<List<Barbershop>>('watchApproved', () {
+      // Solo las que pueden operar: aprobadas, activas y con la mensualidad
+      // vigente o dentro de la gracia (la configura el admin). Se deriva de la
+      // fecha porque ningún proceso del servidor bloquea por mora.
+      final shops = _barbershops
+          .where(
+            'approvalStatus',
+            isEqualTo: BarbershopApprovalStatus.approved.value,
+          )
+          .where('active', isEqualTo: true)
+          .snapshots();
+      return combineLatest2<
+        QuerySnapshot<Map<String, dynamic>>,
+        DocumentSnapshot<Map<String, dynamic>>,
+        List<Barbershop>
+      >(shops, _settings.snapshots(), (snapshot, settingsDoc) {
+        final graceDays = PlatformSettings.fromMap(settingsDoc.data())
+            .graceDays;
+        return [
+          for (final doc in snapshot.docs)
+            if (Barbershop.fromMap(
+              doc.id,
+              doc.data(),
+            ).isOperational(graceDays: graceDays))
+              Barbershop.fromMap(doc.id, doc.data()),
+        ];
+      });
     });
   }
 
   @override
   Stream<List<Barbershop>> watchByOwner(String ownerId) {
-    return _barbershops
-        .where('ownerId', isEqualTo: ownerId)
-        .snapshots()
-        .map(
-          (snapshot) => snapshot.docs
-              .map((doc) => Barbershop.fromMap(doc.id, doc.data()))
-              .toList(),
-        );
+    return _shared.of<List<Barbershop>>('watchByOwner:$ownerId', () {
+      return _barbershops
+          .where('ownerId', isEqualTo: ownerId)
+          .snapshots()
+          .map(
+            (snapshot) => snapshot.docs
+                .map((doc) => Barbershop.fromMap(doc.id, doc.data()))
+                .toList(),
+          );
+    });
   }
 
   @override
   Stream<Barbershop?> watchOne(String id) {
-    return _barbershops.doc(id).snapshots().map((doc) {
-      final data = doc.data();
-      if (!doc.exists || data == null) return null;
-      return Barbershop.fromMap(doc.id, data);
+    return _shared.of<Barbershop?>('watchOne:$id', () {
+      return _barbershops.doc(id).snapshots().map((doc) {
+        final data = doc.data();
+        if (!doc.exists || data == null) return null;
+        return Barbershop.fromMap(doc.id, data);
+      });
     });
   }
 
@@ -102,14 +114,16 @@ class FirestoreBarbershopService implements BarbershopRepository {
 
   @override
   Stream<List<Barbershop>> watchDraftsByOwner(String ownerId) {
-    return _drafts
-        .where('ownerId', isEqualTo: ownerId)
-        .snapshots()
-        .map(
-          (snapshot) => snapshot.docs
-              .map((doc) => Barbershop.fromDraftMap(doc.id, doc.data()))
-              .toList(),
-        );
+    return _shared.of<List<Barbershop>>('watchDraftsByOwner:$ownerId', () {
+      return _drafts
+          .where('ownerId', isEqualTo: ownerId)
+          .snapshots()
+          .map(
+            (snapshot) => snapshot.docs
+                .map((doc) => Barbershop.fromDraftMap(doc.id, doc.data()))
+                .toList(),
+          );
+    });
   }
 
   @override

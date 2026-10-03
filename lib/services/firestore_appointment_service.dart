@@ -7,6 +7,7 @@ import '../models/appointment.dart';
 import '../models/payment_record.dart';
 import '../repositories/appointment_repository.dart';
 import 'appointment_slot_id.dart';
+import '../utils/shared_stream.dart';
 
 // Nota: a diferencia de FirestoreBarbershopService (que sí conserva un
 // método atado a Cloud Functions para cuando el proyecto suba a Blaze),
@@ -14,6 +15,8 @@ import 'appointment_slot_id.dart';
 // requestAppointmentRefund se migraron todos a Firestore directo, así que
 // esta clase ya no depende de FirebaseFunctions.
 class FirestoreAppointmentService implements AppointmentRepository {
+  final _shared = SharedStreams();
+
   final FirebaseFirestore _firestore;
   final FirebaseAuth _auth;
 
@@ -215,76 +218,89 @@ class FirestoreAppointmentService implements AppointmentRepository {
 
   @override
   Stream<Appointment?> watchOne(String appointmentId) {
-    return _appointments.doc(appointmentId).snapshots().map((doc) {
-      final data = doc.data();
-      if (!doc.exists || data == null) return null;
-      return Appointment.fromMap(doc.id, data);
+    return _shared.of<Appointment?>('watchOne:$appointmentId', () {
+      return _appointments.doc(appointmentId).snapshots().map((doc) {
+        final data = doc.data();
+        if (!doc.exists || data == null) return null;
+        return Appointment.fromMap(doc.id, data);
+      });
     });
   }
 
   @override
   Stream<List<Appointment>> watchByClient(String clientId) {
-    return _appointments
-        .where('clientId', isEqualTo: clientId)
-        .orderBy('date', descending: true)
-        .limit(_maxAppointments)
-        .snapshots()
-        .map(_toAscendingList);
+    return _shared.of<List<Appointment>>('watchByClient:$clientId', () {
+      return _appointments
+          .where('clientId', isEqualTo: clientId)
+          .orderBy('date', descending: true)
+          .limit(_maxAppointments)
+          .snapshots()
+          .map(_toAscendingList);
+    });
   }
 
   @override
   Stream<List<Appointment>> watchByBarber(String barberId) {
-    return _appointments
-        .where('barberId', isEqualTo: barberId)
-        .orderBy('date', descending: true)
-        .limit(_maxAppointments)
-        .snapshots()
-        .map(_toAscendingList);
+    return _shared.of<List<Appointment>>('watchByBarber:$barberId', () {
+      return _appointments
+          .where('barberId', isEqualTo: barberId)
+          .orderBy('date', descending: true)
+          .limit(_maxAppointments)
+          .snapshots()
+          .map(_toAscendingList);
+    });
   }
 
   @override
   Stream<List<Appointment>> watchByBarbershop(String barbershopId) {
-    return _appointments
-        .where('barbershopId', isEqualTo: barbershopId)
-        .orderBy('date', descending: true)
-        .limit(_maxAppointments)
-        .snapshots()
-        .map(_toAscendingList);
+    return _shared.of<List<Appointment>>('watchByBarbershop:$barbershopId', () {
+      return _appointments
+          .where('barbershopId', isEqualTo: barbershopId)
+          .orderBy('date', descending: true)
+          .limit(_maxAppointments)
+          .snapshots()
+          .map(_toAscendingList);
+    });
   }
 
   @override
   Stream<List<Appointment>> watchByBarbershops(List<String> barbershopIds) {
-    if (barbershopIds.isEmpty) return Stream.value(const <Appointment>[]);
-    late StreamController<List<Appointment>> controller;
-    final subscriptions = <StreamSubscription<List<Appointment>>>[];
-    final latest = <String, List<Appointment>>{};
+    return _shared.of<List<Appointment>>(
+      'watchByBarbershops:${(List.of(barbershopIds)..sort()).join(',')}',
+      () {
+        if (barbershopIds.isEmpty) return Stream.value(const <Appointment>[]);
+        late StreamController<List<Appointment>> controller;
+        final subscriptions = <StreamSubscription<List<Appointment>>>[];
+        final latest = <String, List<Appointment>>{};
 
-    void emit() {
-      if (latest.length < barbershopIds.length) return;
-      controller.add(
-        [for (final list in latest.values) ...list]
-          ..sort((a, b) => a.date.compareTo(b.date)),
-      );
-    }
-
-    controller = StreamController<List<Appointment>>(
-      onListen: () {
-        for (final id in barbershopIds) {
-          subscriptions.add(
-            watchByBarbershop(id).listen((list) {
-              latest[id] = list;
-              emit();
-            }, onError: controller.addError),
+        void emit() {
+          if (latest.length < barbershopIds.length) return;
+          controller.add(
+            [for (final list in latest.values) ...list]
+              ..sort((a, b) => a.date.compareTo(b.date)),
           );
         }
-      },
-      onCancel: () async {
-        for (final sub in subscriptions) {
-          await sub.cancel();
-        }
+
+        controller = StreamController<List<Appointment>>(
+          onListen: () {
+            for (final id in barbershopIds) {
+              subscriptions.add(
+                watchByBarbershop(id).listen((list) {
+                  latest[id] = list;
+                  emit();
+                }, onError: controller.addError),
+              );
+            }
+          },
+          onCancel: () async {
+            for (final sub in subscriptions) {
+              await sub.cancel();
+            }
+          },
+        );
+        return controller.stream;
       },
     );
-    return controller.stream;
   }
 
   @override
