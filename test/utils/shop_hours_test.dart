@@ -1,4 +1,6 @@
+import 'package:barber/models/barbershop.dart';
 import 'package:barber/models/day_schedule.dart';
+import 'package:barber/models/shop_closure.dart';
 import 'package:barber/utils/shop_hours.dart';
 import 'package:flutter_test/flutter_test.dart';
 
@@ -114,6 +116,133 @@ void main() {
           now: DateTime(2026, 10, 5, 18, 50),
         ),
         isEmpty,
+      );
+    });
+  });
+
+  group('cierre por evento externo', () {
+    final monday = DateTime(2026, 10, 5);
+    // Aún no son las 9: todas las horas del día siguen siendo futuras.
+    final early = DateTime(2026, 10, 5, 6);
+
+    Barbershop shop(ShopClosure? closure) => Barbershop(
+      id: 's',
+      name: 'S',
+      ownerId: 'o',
+      schedule: week,
+      closure: closure,
+    );
+
+    test('sin cierre se ofrecen todas las horas del horario', () {
+      final slots = availableSlotsForShop(
+        shop(null),
+        day: monday,
+        durationMinutes: 30,
+        now: early,
+      );
+      expect(slots.first, DateTime(2026, 10, 5, 9));
+      expect(slots.length, 20);
+    });
+
+    test('las horas que se cruzan con el cierre desaparecen', () {
+      final closure = ShopClosure(
+        id: 'c',
+        from: DateTime(2026, 10, 5, 12),
+        until: DateTime(2026, 10, 5, 14),
+        reason: 'Corte de luz',
+      );
+      final slots = availableSlotsForShop(
+        shop(closure),
+        day: monday,
+        durationMinutes: 30,
+        now: early,
+      );
+      expect(slots, isNot(contains(DateTime(2026, 10, 5, 12))));
+      expect(slots, isNot(contains(DateTime(2026, 10, 5, 13, 30))));
+      expect(slots, contains(DateTime(2026, 10, 5, 11, 30)));
+      expect(slots, contains(DateTime(2026, 10, 5, 14)));
+    });
+
+    test('una cita larga que arranca antes pero invade el cierre se quita', () {
+      final closure = ShopClosure(
+        id: 'c',
+        from: DateTime(2026, 10, 5, 12),
+        until: DateTime(2026, 10, 5, 14),
+        reason: 'x',
+      );
+      final slots = availableSlotsForShop(
+        shop(closure),
+        day: monday,
+        durationMinutes: 60,
+        now: early,
+      );
+      expect(slots, isNot(contains(DateTime(2026, 10, 5, 11, 30))));
+      expect(slots, contains(DateTime(2026, 10, 5, 11)));
+    });
+
+    test('sin fecha de regreso no queda ninguna hora desde el inicio', () {
+      final closure = ShopClosure(
+        id: 'c',
+        from: DateTime(2026, 10, 4),
+        reason: 'Remodelación',
+      );
+      expect(
+        availableSlotsForShop(
+          shop(closure),
+          day: DateTime(2026, 10, 12),
+          durationMinutes: 30,
+          now: early,
+        ),
+        isEmpty,
+      );
+    });
+
+    test(
+      'shopStatusOf dice cerrada mientras dura y vuelve a la normalidad',
+      () {
+        final closure = ShopClosure(
+          id: 'c',
+          from: DateTime(2026, 10, 5, 8),
+          until: DateTime(2026, 10, 5, 18),
+          reason: 'x',
+        );
+        final during = shopStatusOf(
+          shop(closure),
+          now: DateTime(2026, 10, 5, 10),
+        );
+        expect(during.isOpen, isFalse);
+        expect(during.label, startsWith('Cerrada hasta'));
+        expect(
+          shopStatusOf(
+            shop(closure),
+            now: DateTime(2026, 10, 5, 18, 30),
+          ).isOpen,
+          isTrue,
+        );
+        final indefinite = ShopClosure(
+          id: 'c',
+          from: DateTime(2026, 10, 5, 8),
+          reason: 'x',
+        );
+        expect(
+          shopStatusOf(shop(indefinite), now: DateTime(2026, 10, 9, 10)).label,
+          'Cerrada temporalmente',
+        );
+      },
+    );
+
+    test('un cierre cuya fecha ya pasó deja de ser relevante', () {
+      final ended = ShopClosure(
+        id: 'c',
+        from: DateTime(2020, 1, 5),
+        until: DateTime(2020, 1, 6),
+        reason: 'x',
+      );
+      expect(shop(ended).relevantClosure(), isNull);
+      expect(
+        shop(ShopClosure(id: 'c', from: DateTime(2020, 1, 5), reason: 'x'))
+            .relevantClosure(),
+        isNotNull,
       );
     });
   });

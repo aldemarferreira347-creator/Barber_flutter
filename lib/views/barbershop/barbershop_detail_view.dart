@@ -243,7 +243,7 @@ class _Summary extends StatelessWidget {
   @override
   Widget build(BuildContext context) {
     final text = Theme.of(context).textTheme;
-    final open = shopOpenStatus(shop.schedule);
+    final open = shopStatusOf(shop);
     return Column(
       crossAxisAlignment: CrossAxisAlignment.start,
       children: [
@@ -298,7 +298,12 @@ class _BookButton extends StatelessWidget {
       builder: (context, snapshot) {
         final graceDays =
             (snapshot.data ?? PlatformSettings.defaults).graceDays;
-        final operational = shop.isOperational(graceDays: graceDays);
+        // Cerrada hasta nuevo aviso: no hay a qué fecha reservar. Con fecha
+        // de regreso sí se puede reservar para después.
+        final closedIndefinitely =
+            shop.relevantClosure()?.isIndefinite ?? false;
+        final operational =
+            shop.isOperational(graceDays: graceDays) && !closedIndefinitely;
         return Column(
           crossAxisAlignment: CrossAxisAlignment.stretch,
           children: [
@@ -320,7 +325,10 @@ class _BookButton extends StatelessWidget {
               Padding(
                 padding: const EdgeInsets.only(top: AppSpace.sm),
                 child: Text(
-                  'Esta barbería no está recibiendo citas por ahora.',
+                  closedIndefinitely
+                      ? 'Esta barbería está cerrada hasta nuevo aviso: '
+                            'volverá a recibir citas cuando reabra.'
+                      : 'Esta barbería no está recibiendo citas por ahora.',
                   textAlign: TextAlign.center,
                   style: Theme.of(context).textTheme.bodySmall,
                 ),

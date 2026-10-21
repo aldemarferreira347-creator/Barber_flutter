@@ -1,18 +1,25 @@
 import 'package:cloud_firestore/cloud_firestore.dart';
 
-enum NotificationType { manual, autoPaymentOverdue, appointmentReminder }
+enum NotificationType {
+  manual,
+  autoPaymentOverdue,
+  appointmentReminder,
+  shopClosure,
+}
 
 extension NotificationTypeX on NotificationType {
   String get value => switch (this) {
     NotificationType.manual => 'manual',
     NotificationType.autoPaymentOverdue => 'auto_payment_overdue',
     NotificationType.appointmentReminder => 'appointment_reminder',
+    NotificationType.shopClosure => 'shop_closure',
   };
 
   static NotificationType fromValue(String value) {
     return switch (value) {
       'auto_payment_overdue' => NotificationType.autoPaymentOverdue,
       'appointment_reminder' => NotificationType.appointmentReminder,
+      'shop_closure' => NotificationType.shopClosure,
       _ => NotificationType.manual,
     };
   }

@@ -48,8 +48,8 @@ class DayAndTimePicker extends StatelessWidget {
     final selectedDay = day;
     final slots = (selectedDay == null || duration == null)
         ? const <DateTime>[]
-        : availableTimeSlots(
-            shop.schedule,
+        : availableSlotsForShop(
+            shop,
             day: selectedDay,
             durationMinutes: duration,
           );
@@ -85,7 +85,9 @@ class DayAndTimePicker extends StatelessWidget {
           Text('Elige un día para ver las horas.', style: text.secondary)
         else if (slots.isEmpty)
           Text(
-            'No hay horas disponibles ese día. Prueba con otro.',
+            shop.relevantClosure()?.isIndefinite ?? false
+                ? 'La barbería está cerrada hasta nuevo aviso.'
+                : 'No hay horas disponibles ese día. Prueba con otro.',
             style: text.secondary,
           )
         else

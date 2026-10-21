@@ -1,6 +1,7 @@
 import 'package:cloud_firestore/cloud_firestore.dart';
 
 import 'day_schedule.dart';
+import 'shop_closure.dart';
 
 enum PaymentStatus { ok, overdue, blocked }
 
@@ -123,6 +124,9 @@ class Barbershop {
   final int ratingSum;
   final int ratingCount;
 
+  /// Cierre vigente o programado por un evento externo; null si no hay.
+  final ShopClosure? closure;
+
   const Barbershop({
     required this.id,
     required this.name,
@@ -142,7 +146,25 @@ class Barbershop {
     this.schedule = const {},
     this.ratingSum = 0,
     this.ratingCount = 0,
+    this.closure,
   });
+
+  /// El cierre que sigue importando: el vigente o uno futuro. Uno cuya fecha
+  /// de regreso ya pasó se ignora.
+  ShopClosure? relevantClosure([DateTime? now]) {
+    final c = closure;
+    if (c == null) return null;
+    final until = c.until;
+    return until == null || until.isAfter(now ?? DateTime.now()) ? c : null;
+  }
+
+  /// Cerrada por un evento externo en este momento.
+  bool isClosedNow([DateTime? now]) =>
+      closure?.isActiveAt(now ?? DateTime.now()) ?? false;
+
+  /// Un horario [start]-[end] cae (aunque sea en parte) dentro de un cierre.
+  bool isClosedDuring(DateTime start, DateTime end) =>
+      closure?.overlaps(start, end) ?? false;
 
   bool get acceptsNequi => nequiPhone != null && nequiPhone!.isNotEmpty;
 
@@ -194,6 +216,7 @@ class Barbershop {
       schedule: weekScheduleFromMap(map['schedule'] as Map<String, dynamic>?),
       ratingSum: (map['ratingSum'] as num?)?.toInt() ?? 0,
       ratingCount: (map['ratingCount'] as num?)?.toInt() ?? 0,
+      closure: ShopClosure.fromMap(map['closure']),
     );
   }
 

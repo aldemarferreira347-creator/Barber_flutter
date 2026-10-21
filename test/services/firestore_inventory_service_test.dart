@@ -89,20 +89,23 @@ void main() {
     expect((await movements()).single['previousStock'], 0);
   });
 
-  test('sacar de un producto sin inventario se explica y no escribe nada', () async {
-    await expectLater(
-      service.registerMovement(
-        barbershopId: 'shop1',
-        productId: 'pNull',
-        type: StockMovementType.outbound,
-        quantity: 1,
-        reason: StockReason.sale,
-      ),
-      throwsA(isA<InsufficientStockException>()),
-    );
-    expect(await stockOf('pNull'), isNull);
-    expect(await movements(), isEmpty);
-  });
+  test(
+    'sacar de un producto sin inventario se explica y no escribe nada',
+    () async {
+      await expectLater(
+        service.registerMovement(
+          barbershopId: 'shop1',
+          productId: 'pNull',
+          type: StockMovementType.outbound,
+          quantity: 1,
+          reason: StockReason.sale,
+        ),
+        throwsA(isA<InsufficientStockException>()),
+      );
+      expect(await stockOf('pNull'), isNull);
+      expect(await movements(), isEmpty);
+    },
+  );
 
   test('no se puede sacar más de lo que hay', () async {
     await expectLater(
@@ -124,28 +127,31 @@ void main() {
     expect(await stockOf('p1'), 5);
   });
 
-  test('cantidades inválidas y motivos que no corresponden se rechazan', () async {
-    await expectLater(
-      service.registerMovement(
-        barbershopId: 'shop1',
-        productId: 'p1',
-        type: StockMovementType.inbound,
-        quantity: 0,
-        reason: StockReason.restock,
-      ),
-      throwsException,
-    );
-    await expectLater(
-      service.registerMovement(
-        barbershopId: 'shop1',
-        productId: 'p1',
-        type: StockMovementType.inbound,
-        quantity: 1,
-        reason: StockReason.sale,
-      ),
-      throwsException,
-    );
-  });
+  test(
+    'cantidades inválidas y motivos que no corresponden se rechazan',
+    () async {
+      await expectLater(
+        service.registerMovement(
+          barbershopId: 'shop1',
+          productId: 'p1',
+          type: StockMovementType.inbound,
+          quantity: 0,
+          reason: StockReason.restock,
+        ),
+        throwsException,
+      );
+      await expectLater(
+        service.registerMovement(
+          barbershopId: 'shop1',
+          productId: 'p1',
+          type: StockMovementType.inbound,
+          quantity: 1,
+          reason: StockReason.sale,
+        ),
+        throwsException,
+      );
+    },
+  );
 
   test('un producto inexistente da un error claro', () async {
     await expectLater(
@@ -160,51 +166,57 @@ void main() {
     );
   });
 
-  test('watchMovements solo trae los de esa barbería, el más reciente primero', () async {
-    await firestore.collection('stockMovements').add({
-      'barbershopId': 'shop1',
-      'productId': 'p1',
-      'productName': 'Cera',
-      'type': 'in',
-      'quantity': 1,
-      'reason': 'restock',
-      'previousStock': 0,
-      'stockAfter': 1,
-      'byUserId': 'x',
-      'byUserName': 'X',
-      'createdAt': Timestamp.fromDate(DateTime(2026, 1, 1)),
-    });
-    await firestore.collection('stockMovements').add({
-      'barbershopId': 'shop1',
-      'productId': 'p1',
-      'productName': 'Cera',
-      'type': 'out',
-      'quantity': 1,
-      'reason': 'sale',
-      'previousStock': 1,
-      'stockAfter': 0,
-      'byUserId': 'x',
-      'byUserName': 'X',
-      'createdAt': Timestamp.fromDate(DateTime(2026, 2, 1)),
-    });
-    await firestore.collection('stockMovements').add({
-      'barbershopId': 'otra',
-      'productId': 'p9',
-      'productName': 'Ajena',
-      'type': 'in',
-      'quantity': 1,
-      'reason': 'restock',
-      'previousStock': 0,
-      'stockAfter': 1,
-      'byUserId': 'x',
-      'byUserName': 'X',
-      'createdAt': Timestamp.fromDate(DateTime(2026, 3, 1)),
-    });
+  test(
+    'watchMovements solo trae los de esa barbería, el más reciente primero',
+    () async {
+      await firestore.collection('stockMovements').add({
+        'barbershopId': 'shop1',
+        'productId': 'p1',
+        'productName': 'Cera',
+        'type': 'in',
+        'quantity': 1,
+        'reason': 'restock',
+        'previousStock': 0,
+        'stockAfter': 1,
+        'byUserId': 'x',
+        'byUserName': 'X',
+        'createdAt': Timestamp.fromDate(DateTime(2026, 1, 5)),
+      });
+      await firestore.collection('stockMovements').add({
+        'barbershopId': 'shop1',
+        'productId': 'p1',
+        'productName': 'Cera',
+        'type': 'out',
+        'quantity': 1,
+        'reason': 'sale',
+        'previousStock': 1,
+        'stockAfter': 0,
+        'byUserId': 'x',
+        'byUserName': 'X',
+        'createdAt': Timestamp.fromDate(DateTime(2026, 2, 5)),
+      });
+      await firestore.collection('stockMovements').add({
+        'barbershopId': 'otra',
+        'productId': 'p9',
+        'productName': 'Ajena',
+        'type': 'in',
+        'quantity': 1,
+        'reason': 'restock',
+        'previousStock': 0,
+        'stockAfter': 1,
+        'byUserId': 'x',
+        'byUserName': 'X',
+        'createdAt': Timestamp.fromDate(DateTime(2026, 3, 5)),
+      });
 
-    final list = await service.watchMovements('shop1').first;
+      final list = await service.watchMovements('shop1').first;
 
-    expect(list.map((m) => m.reason), [StockReason.sale, StockReason.restock]);
-  });
+      expect(list.map((m) => m.reason), [
+        StockReason.sale,
+        StockReason.restock,
+      ]);
+    },
+  );
 
   group('registerPurchaseDelivery', () {
     Purchase purchase(List<PurchaseItem> items) => Purchase(

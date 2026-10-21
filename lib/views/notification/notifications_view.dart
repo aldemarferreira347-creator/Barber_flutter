@@ -35,12 +35,14 @@ class _NotificationsViewState extends State<NotificationsView> {
     NotificationType.autoPaymentOverdue => Icons.warning_amber_outlined,
     NotificationType.appointmentReminder => Icons.alarm,
     NotificationType.manual => Icons.campaign_outlined,
+    NotificationType.shopClosure => Icons.storefront_outlined,
   };
 
   Color _colorFor(NotificationType type) => switch (type) {
     NotificationType.autoPaymentOverdue => AppColors.warning,
     NotificationType.appointmentReminder => AppColors.accent,
     NotificationType.manual => AppColors.accent,
+    NotificationType.shopClosure => AppColors.warning,
   };
 
   @override

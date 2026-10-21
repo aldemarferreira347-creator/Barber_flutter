@@ -6,6 +6,7 @@ import '../../models/app_user.dart';
 import '../../models/appointment.dart';
 import '../../models/barbershop.dart';
 import '../../models/product.dart';
+import '../../models/shop_closure.dart';
 import '../../models/service.dart';
 import '../../repositories/appointment_repository.dart';
 import '../../repositories/barbershop_repository.dart';
@@ -139,8 +140,8 @@ class _BookAppointmentViewState extends State<BookAppointmentView> {
       return;
     }
     setState(() => _loadingTaken = true);
-    final slots = availableTimeSlots(
-      shop.schedule,
+    final slots = availableSlotsForShop(
+      shop,
       day: day,
       durationMinutes: service.durationMinutes,
     );
@@ -325,6 +326,8 @@ class _BookAppointmentViewState extends State<BookAppointmentView> {
                 child: Column(
                   crossAxisAlignment: CrossAxisAlignment.stretch,
                   children: [
+                    if (shop?.relevantClosure() != null)
+                      _ClosureNotice(closure: shop!.relevantClosure()!),
                     const SectionHeader(title: '1. Elige un servicio'),
                     StreamBuilder<List<Service>>(
                       stream: _services,
@@ -711,6 +714,50 @@ class _ProductPickRow extends StatelessWidget {
               onPressed: enabled && canAddNew && quantity < maxQuantity
                   ? () => onChanged(quantity + 1)
                   : null,
+            ),
+          ],
+        ),
+      ),
+    );
+  }
+}
+
+/// Aviso de que la barbería tiene un cierre vigente o programado: las horas
+/// que caen dentro del cierre no se ofrecen.
+class _ClosureNotice extends StatelessWidget {
+  final ShopClosure closure;
+
+  const _ClosureNotice({required this.closure});
+
+  @override
+  Widget build(BuildContext context) {
+    final text = Theme.of(context).textTheme;
+    return Padding(
+      padding: const EdgeInsets.only(bottom: AppSpace.lg),
+      child: AppCard(
+        color: AppColors.tint(AppColors.warning),
+        borderColor: AppColors.warning.withValues(alpha: 0.4),
+        child: Row(
+          crossAxisAlignment: CrossAxisAlignment.start,
+          children: [
+            Icon(
+              Icons.event_busy_outlined,
+              color: AppColors.readable(AppColors.warning),
+            ),
+            const SizedBox(width: AppSpace.md),
+            Expanded(
+              child: Text(
+                closure.isIndefinite
+                    ? 'Esta barbería está cerrada hasta nuevo aviso'
+                          '${closure.reason.isEmpty ? '' : ' (${closure.reason})'}. '
+                          'Podrás reservar cuando vuelva a abrir.'
+                    : 'Esta barbería estará cerrada desde '
+                          '${dateTimeLabel(closure.from)} hasta '
+                          '${dateTimeLabel(closure.until!)}'
+                          '${closure.reason.isEmpty ? '' : ' (${closure.reason})'}. '
+                          'Esas horas no están disponibles.',
+                style: text.bodyMedium,
+              ),
             ),
           ],
         ),

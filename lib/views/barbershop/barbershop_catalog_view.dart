@@ -44,7 +44,7 @@ class _BarbershopCatalogViewState extends State<BarbershopCatalogView> {
           (s.address ?? '').toLowerCase().contains(_query);
     }).toList();
     if (_filter == _CatalogFilter.openNow) {
-      result = result.where((s) => shopOpenStatus(s.schedule).isOpen).toList();
+      result = result.where((s) => shopStatusOf(s).isOpen).toList();
     }
     result.sort((a, b) {
       if (_filter == _CatalogFilter.topRated) {
@@ -138,7 +138,7 @@ class _ShopCard extends StatelessWidget {
   @override
   Widget build(BuildContext context) {
     final text = Theme.of(context).textTheme;
-    final status = shopOpenStatus(shop.schedule);
+    final status = shopStatusOf(shop);
     final statusColor = status.isOpen ? AppColors.success : AppColors.warning;
     final url = shop.photoUrl;
 

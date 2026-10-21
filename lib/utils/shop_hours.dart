@@ -1,4 +1,6 @@
+import '../models/barbershop.dart';
 import '../models/day_schedule.dart';
+import 'date_labels.dart';
 
 /// Estado de apertura de una barbería a una hora dada, listo para mostrar
 /// ("Abierta · cierra 19:00", "Cerrada · abre mañana 09:00").
@@ -68,6 +70,23 @@ ShopOpenStatus shopOpenStatus(
   return const ShopOpenStatus(isOpen: false, label: 'Cerrada');
 }
 
+/// Estado de apertura de [shop] teniendo en cuenta un cierre por evento
+/// externo: mientras dure, la barbería figura cerrada aunque su horario diga
+/// que abre.
+ShopOpenStatus shopStatusOf(Barbershop shop, {DateTime? now}) {
+  final current = now ?? DateTime.now();
+  final closure = shop.closure;
+  if (closure != null && closure.isActiveAt(current)) {
+    return ShopOpenStatus(
+      isOpen: false,
+      label: closure.until == null
+          ? 'Cerrada temporalmente'
+          : 'Cerrada hasta ${dateTimeLabel(closure.until!)}',
+    );
+  }
+  return shopOpenStatus(shop.schedule, now: current);
+}
+
 /// Horas de inicio disponibles para una cita de [durationMinutes] el día
 /// [day], cada [stepMinutes], dentro del horario de la barbería: la cita
 /// debe terminar a más tardar al cierre y empezar al menos [leadMinutes]
@@ -94,4 +113,27 @@ List<DateTime> availableTimeSlots(
     if (start.isAfter(earliest)) slots.add(start);
   }
   return slots;
+}
+
+/// Horas disponibles de [shop] el día [day]: las de su horario semanal menos
+/// las que se cruzan con un cierre por evento externo.
+List<DateTime> availableSlotsForShop(
+  Barbershop shop, {
+  required DateTime day,
+  required int durationMinutes,
+  DateTime? now,
+}) {
+  return [
+    for (final slot in availableTimeSlots(
+      shop.schedule,
+      day: day,
+      durationMinutes: durationMinutes,
+      now: now,
+    ))
+      if (!shop.isClosedDuring(
+        slot,
+        slot.add(Duration(minutes: durationMinutes)),
+      ))
+        slot,
+  ];
 }

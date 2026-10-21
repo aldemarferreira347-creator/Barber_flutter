@@ -62,6 +62,16 @@ service cloud.firestore {
           shop.paymentDueDate.toMillis() + graceMs() > request.time.toMillis());
     }
 
+    // Cierre por evento externo (barbershops/{id}.closure): la barbería no
+    // recibe reservas cuyo horario cae dentro del cierre. `until` nulo =
+    // cerrada hasta que el dueño la reabra.
+    function shopClosedAt(shopId, ts) {
+      let closure = get(/databases/$(database)/documents/barbershops/$(shopId)).data.get('closure', null);
+      return closure != null &&
+        closure.from <= ts &&
+        (closure.get('until', null) == null || ts < closure.until);
+    }
+
     function pad2(n) {
       return n < 10 ? '0' + string(n) : string(n);
     }
@@ -324,6 +334,10 @@ service cloud.firestore {
           // clave ausente con resource.data.X tumba la regla entera.
           request.resource.data.get('ratingSum', 0) == resource.data.get('ratingSum', 0) &&
           request.resource.data.get('ratingCount', 0) == resource.data.get('ratingCount', 0) &&
+          // `closure` (cierre por evento externo) es nulo/ausente o trae
+          // al menos su fecha de inicio.
+          (request.resource.data.get('closure', null) == null ||
+            request.resource.data.closure.from is timestamp) &&
           validNequi(request.resource.data)) ||
         isAdmin() ||
         // La mensualidad la renueva el ADMIN al confirmar el pago Nequi del
@@ -474,6 +488,7 @@ service cloud.firestore {
         && request.resource.data.clientId == request.auth.uid
         && request.resource.data.status == 'pending'
         && shopOperational(request.resource.data.barbershopId)
+        && !shopClosedAt(request.resource.data.barbershopId, request.resource.data.date)
         && (
           request.resource.data.paid == false ||
           (request.resource.data.paid == true &&
@@ -628,15 +643,20 @@ service cloud.firestore {
         && request.resource.data.appointmentsAffected == 0
         && request.resource.data.reason is string && request.resource.data.reason.size() > 0
         && request.resource.data.closedFrom is timestamp
-        && request.resource.data.closedUntil is timestamp
-        && request.resource.data.closedUntil > request.resource.data.closedFrom;
+        // Sin closedUntil (nulo) el cierre no tiene fecha de regreso.
+        && (request.resource.data.get('closedUntil', null) == null ||
+            (request.resource.data.closedUntil is timestamp &&
+             request.resource.data.closedUntil > request.resource.data.closedFrom));
 
+      // Solo se completan los conteos del cierre o se anota que terminó
+      // (reapertura); nada de lo que el dueño declaró se reescribe.
       allow update: if isSignedIn()
         && isOwnerOfShop(resource.data.barbershopId)
         && resource.data.requestedBy == request.auth.uid
+        && request.resource.data.diff(resource.data).affectedKeys().hasOnly(['appointmentsAffected', 'notificationsSent', 'endedAt'])
         && request.resource.data.appointmentsAffected is int
         && request.resource.data.appointmentsAffected >= 0
-        && request.resource.data.diff(resource.data).affectedKeys().hasOnly(['appointmentsAffected']);
+        && request.resource.data.get('notificationsSent', 0) is int;
 
       allow delete: if false;
     }
@@ -812,6 +832,7 @@ service cloud.firestore {
            ])
         && request.resource.data.buyerId == request.auth.uid
         && shopOperational(request.resource.data.barbershopId)
+        && !shopClosedAt(request.resource.data.barbershopId, request.time)
         && request.resource.data.status == 'pending_payment'
         && request.resource.data.paymentId == null
         && request.resource.data.claimCode == null
@@ -1026,6 +1047,36 @@ service cloud.firestore {
         && request.resource.data.type in ['manual', 'auto_payment_overdue']
         && request.resource.data.read == false
         && request.resource.data.createdAt == request.time;
+      // Aviso de cierre de barbería: lo crea el DUEÑO de esa barbería, pero
+      // solo para alguien que de verdad tiene una cita o una compra suya, y
+      // con un id determinista que ata el aviso a ese cierre y a esa cita o
+      // compra (así no puede escribirle a usuarios cualquiera ni repetir).
+      allow create: if isSignedIn()
+        && request.resource.data.type == 'shop_closure'
+        && request.resource.data.keys().hasOnly([
+             'toUserId', 'title', 'body', 'type', 'read', 'createdAt',
+             'barbershopId', 'closureId', 'relatedKind', 'relatedId'
+           ])
+        && request.resource.data.toUserId is string
+        && request.resource.data.title is string
+        && request.resource.data.title.size() > 0 && request.resource.data.title.size() <= 120
+        && request.resource.data.body is string
+        && request.resource.data.body.size() > 0 && request.resource.data.body.size() <= 1000
+        && request.resource.data.read == false
+        && request.resource.data.createdAt == request.time
+        && isOwnerOfShop(request.resource.data.barbershopId)
+        && exists(/databases/$(database)/documents/shopClosures/$(request.resource.data.closureId))
+        && get(/databases/$(database)/documents/shopClosures/$(request.resource.data.closureId)).data.barbershopId == request.resource.data.barbershopId
+        && id == 'closure_' + request.resource.data.closureId + '_' + request.resource.data.relatedId
+        && (
+          (request.resource.data.relatedKind == 'appointment' &&
+            get(/databases/$(database)/documents/appointments/$(request.resource.data.relatedId)).data.clientId == request.resource.data.toUserId &&
+            get(/databases/$(database)/documents/appointments/$(request.resource.data.relatedId)).data.barbershopId == request.resource.data.barbershopId) ||
+          (request.resource.data.relatedKind == 'purchase' &&
+            get(/databases/$(database)/documents/purchases/$(request.resource.data.relatedId)).data.buyerId == request.resource.data.toUserId &&
+            get(/databases/$(database)/documents/purchases/$(request.resource.data.relatedId)).data.barbershopId == request.resource.data.barbershopId)
+        );
+
       allow update: if isSignedIn() &&
         resource.data.toUserId == request.auth.uid &&
         request.resource.data.read == true &&

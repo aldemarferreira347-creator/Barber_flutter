@@ -24,9 +24,8 @@ void main() {
   setUp(() {
     products = MockProductRepository();
     inventory = MockInventoryRepository();
-    when(() => inventory.watchMovements('shop1')).thenAnswer(
-      (_) => Stream.value(const <StockMovement>[]),
-    );
+    when(() => inventory.watchMovements('shop1'))
+        .thenAnswer((_) => Stream.value(const <StockMovement>[]));
   });
 
   Future<void> pump(WidgetTester tester) async {
@@ -62,9 +61,8 @@ void main() {
   testWidgets('sin productos explica qué pasará, no muestra error', (
     tester,
   ) async {
-    when(
-      () => products.watchByBarbershop('shop1'),
-    ).thenAnswer((_) => Stream.value(const <Product>[]));
+    when(() => products.watchByBarbershop('shop1'))
+        .thenAnswer((_) => Stream.value(const <Product>[]));
 
     await pump(tester);
 
@@ -75,9 +73,8 @@ void main() {
   testWidgets('muestra las existencias y bloquea la salida sin inventario', (
     tester,
   ) async {
-    when(
-      () => products.watchByBarbershop('shop1'),
-    ).thenAnswer((_) => Stream.value(const [stocked, untracked]));
+    when(() => products.watchByBarbershop('shop1'))
+        .thenAnswer((_) => Stream.value(const [stocked, untracked]));
 
     await pump(tester);
 
@@ -89,9 +86,8 @@ void main() {
   });
 
   testWidgets('registra una salida con su motivo', (tester) async {
-    when(
-      () => products.watchByBarbershop('shop1'),
-    ).thenAnswer((_) => Stream.value(const [stocked]));
+    when(() => products.watchByBarbershop('shop1'))
+        .thenAnswer((_) => Stream.value(const [stocked]));
     when(
       () => inventory.registerMovement(
         barbershopId: any(named: 'barbershopId'),
@@ -146,9 +142,8 @@ void main() {
   testWidgets('la pestaña de movimientos muestra quién movió qué', (
     tester,
   ) async {
-    when(
-      () => products.watchByBarbershop('shop1'),
-    ).thenAnswer((_) => Stream.value(const <Product>[]));
+    when(() => products.watchByBarbershop('shop1'))
+        .thenAnswer((_) => Stream.value(const <Product>[]));
     when(() => inventory.watchMovements('shop1')).thenAnswer(
       (_) => Stream.value([
         StockMovement(
