@@ -231,5 +231,28 @@ describe('firestore.rules — cierre de barbería (closure, avisos y reservas)',
       await assertSucceeds(setDoc(doc(db, 'appointments/new4'), appointment(hours(30))));
       await assertSucceeds(setDoc(doc(db, 'appointments/new5'), appointment(hours(5))));
     });
+
+    it('un cliente no puede reprogramar su cita pospuesta hacia una hora dentro del cierre', async () => {
+      await testEnv.withSecurityRulesDisabled(async (context) => {
+        const db = context.firestore();
+        await setDoc(doc(db, 'appointments/paid1'), {
+          clientId: CLIENT_UID,
+          barbershopId: SHOP_ID,
+          barberId: BARBER_UID,
+          status: 'postponed',
+          paid: true,
+          paymentId: 'pay1',
+          date: hours(2),
+          rescheduleHistory: [],
+          forcedRatingPenalty: true,
+        });
+        await updateDoc(doc(db, `barbershops/${SHOP_ID}`), {
+          closure: { closureId: CLOSURE_ID, from: hours(10), until: hours(20), reason: 'x' },
+        });
+      });
+      const db = testEnv.authenticatedContext(CLIENT_UID).firestore();
+      await assertFails(updateDoc(doc(db, 'appointments/paid1'), { status: 'postponed', date: hours(15), rescheduleHistory: [] }));
+      await assertSucceeds(updateDoc(doc(db, 'appointments/paid1'), { status: 'postponed', date: hours(30), rescheduleHistory: [] }));
+    });
   });
 });

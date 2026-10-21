@@ -1,5 +1,6 @@
 import 'package:cloud_firestore/cloud_firestore.dart';
 import 'package:firebase_auth/firebase_auth.dart';
+import 'package:flutter/foundation.dart';
 
 import '../models/purchase.dart';
 import '../models/stock_movement.dart';
@@ -130,28 +131,37 @@ class FirestoreInventoryService implements InventoryRepository {
   }
 
   @override
-  Future<int> registerPurchaseDelivery(Purchase purchase) async {
+  Future<({int discounted, int failed})> registerPurchaseDelivery(
+    Purchase purchase,
+  ) async {
     var discounted = 0;
+    var failed = 0;
     for (final item in purchase.items) {
       if (item.refunded || item.quantity <= 0) continue;
-      final snap = await _product(purchase.barbershopId, item.productId).get();
-      final stock = (snap.data()?['stock'] as num?)?.toInt();
-      if (stock == null || stock <= 0) continue;
-      final quantity = item.quantity > stock ? stock : item.quantity;
       try {
+        final snap = await _product(
+          purchase.barbershopId,
+          item.productId,
+        ).get();
+        final stock = (snap.data()?['stock'] as num?)?.toInt();
+        if (stock == null || stock <= 0) continue;
         await registerMovement(
           barbershopId: purchase.barbershopId,
           productId: item.productId,
           type: StockMovementType.outbound,
-          quantity: quantity,
+          quantity: item.quantity > stock ? stock : item.quantity,
           reason: StockReason.claim,
           note: 'Compra ${purchase.id}',
         );
         discounted++;
       } on InsufficientStockException {
-        // Otro movimiento se llevó el stock entre la lectura y la escritura.
+        // Otro movimiento se llevó el stock entre la lectura y la escritura:
+        // no es un fallo, ya no hay nada que descontar.
+      } catch (error) {
+        debugPrint('Inventario: ${item.productName} no se descontó: $error');
+        failed++;
       }
     }
-    return discounted;
+    return (discounted: discounted, failed: failed);
   }
 }

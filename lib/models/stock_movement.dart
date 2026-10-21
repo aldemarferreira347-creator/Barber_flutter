@@ -43,7 +43,8 @@ enum StockReason {
 }
 
 /// Registro de inventario: quién metió o sacó cuántas unidades de qué
-/// producto y cómo quedó el stock (`barbershops/{id}/stockMovements`).
+/// producto y cómo quedó el stock (colección `stockMovements`, con el id de
+/// la barbería en `barbershopId`).
 class StockMovement {
   final String id;
   final String barbershopId;

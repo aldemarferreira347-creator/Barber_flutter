@@ -76,7 +76,8 @@ class FirestoreBarbershopService implements BarbershopRepository {
   }
 
   /// Días de gracia vigentes. Si la configuración del admin no llega en
-  /// [_settingsWait] (o falla, o no existe) se usa el valor por defecto: el
+  /// [_settingsWait] (o falla) se usa el valor por defecto y, si más tarde
+  /// llega, se corrige: el
   /// catálogo NUNCA se queda esperando ni falla por un documento que el
   /// cliente no necesita para ver barberías (antes, si
   /// `platformSettings/main` no cargaba, no cargaba el catálogo).
@@ -109,7 +110,7 @@ class FirestoreBarbershopService implements BarbershopRepository {
     return controller.stream;
   }
 
-  static const _settingsWait = Duration(seconds: 2);
+  static const _settingsWait = Duration(seconds: 4);
 
   @override
   Stream<List<Barbershop>> watchByOwner(String ownerId) {

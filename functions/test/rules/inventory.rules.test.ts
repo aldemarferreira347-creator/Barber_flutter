@@ -2,7 +2,7 @@ import { readFileSync } from 'fs';
 import { join } from 'path';
 
 import { assertFails, assertSucceeds, initializeTestEnvironment, RulesTestEnvironment } from '@firebase/rules-unit-testing';
-import { doc, getDoc, serverTimestamp, setDoc, updateDoc, writeBatch } from 'firebase/firestore';
+import { doc, getDoc, serverTimestamp, setDoc, Timestamp, updateDoc, writeBatch } from 'firebase/firestore';
 
 const PROJECT_ID = 'demo-barber';
 const SHOP_ID = 'shop1';
@@ -108,6 +108,14 @@ describe('firestore.rules — inventario (stock y stockMovements)', () => {
 
   it('el movimiento no puede firmarse a nombre de otra persona', async () => {
     await assertFails(registerAs(BARBER_UID, movement(OWNER_UID), 3));
+  });
+
+  it('el barbero NO puede reutilizar un movimiento viejo para cambiar el stock sin dejar registro nuevo', async () => {
+    await testEnv.withSecurityRulesDisabled(async (context) => {
+      await setDoc(doc(context.firestore(), 'stockMovements/viejo'), movement(BARBER_UID, { type: 'in', reason: 'restock', quantity: 45, previousStock: 5, stockAfter: 50, createdAt: Timestamp.now() }));
+    });
+    const db = testEnv.authenticatedContext(BARBER_UID).firestore();
+    await assertFails(updateDoc(doc(db, productPath('p1')), { stock: 50, lastMovementId: 'viejo' }));
   });
 
   it('el barbero NO puede cambiar precio ni nombre del producto', async () => {

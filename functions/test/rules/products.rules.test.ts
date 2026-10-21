@@ -2,7 +2,7 @@ import { readFileSync } from 'fs';
 import { join } from 'path';
 
 import { assertFails, assertSucceeds, initializeTestEnvironment, RulesTestEnvironment } from '@firebase/rules-unit-testing';
-import { deleteDoc, doc, getDoc, setDoc } from 'firebase/firestore';
+import { deleteDoc, doc, getDoc, setDoc, updateDoc } from 'firebase/firestore';
 
 const PROJECT_ID = 'demo-barber';
 const SHOP_ID = 'shop1';
@@ -83,5 +83,18 @@ describe('firestore.rules — barbershops/{shopId}/products', () => {
     await assertSucceeds(deleteDoc(doc(owner, `barbershops/${SHOP_ID}/products/pDel`)));
     const admin = testEnv.authenticatedContext(ADMIN_UID).firestore();
     await assertSucceeds(setDoc(doc(admin, `barbershops/${SHOP_ID}/products/pAdm`), { name: 'Gel', price: 200, active: true }));
+  });
+
+  it('un producto o servicio guardado antes con precio 0 todavía se puede ocultar, pero no subirle a negativo', async () => {
+    await testEnv.withSecurityRulesDisabled(async (context) => {
+      const db = context.firestore();
+      await setDoc(doc(db, `barbershops/${SHOP_ID}/products/pOld`), { name: 'Cera', price: 0, active: true });
+      await setDoc(doc(db, `barbershops/${SHOP_ID}/services/sOld`), { name: 'Corte', price: 0, durationMinutes: 30, active: true });
+    });
+    const db = testEnv.authenticatedContext(OWNER_UID).firestore();
+    await assertSucceeds(updateDoc(doc(db, `barbershops/${SHOP_ID}/products/pOld`), { active: false }));
+    await assertSucceeds(updateDoc(doc(db, `barbershops/${SHOP_ID}/services/sOld`), { active: false }));
+    await assertFails(updateDoc(doc(db, `barbershops/${SHOP_ID}/products/pOld`), { price: -5 }));
+    await assertSucceeds(updateDoc(doc(db, `barbershops/${SHOP_ID}/products/pOld`), { price: 1000 }));
   });
 });

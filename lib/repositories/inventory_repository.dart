@@ -36,6 +36,9 @@ abstract class InventoryRepository {
 
   /// Descuenta del inventario lo entregado en una compra reclamada. Solo
   /// afecta a los productos que llevan inventario y nunca baja de cero.
-  /// Devuelve cuántos productos se descontaron.
-  Future<int> registerPurchaseDelivery(Purchase purchase);
+  /// Intenta con todos los productos aunque alguno falle y cuenta cuántos se
+  /// descontaron y cuántos no se pudieron descontar.
+  Future<({int discounted, int failed})> registerPurchaseDelivery(
+    Purchase purchase,
+  );
 }

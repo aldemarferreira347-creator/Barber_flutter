@@ -24,6 +24,9 @@ class ClosureResult {
   final int cancelled;
   final int purchasesNotified;
 
+  /// Citas que no se pudieron actualizar (el cierre sí quedó aplicado).
+  final int appointmentsFailed;
+
   /// Avisos que sí quedaron guardados para los clientes.
   final int notificationsSent;
 
@@ -34,6 +37,7 @@ class ClosureResult {
     this.postponed = 0,
     this.cancelled = 0,
     this.purchasesNotified = 0,
+    this.appointmentsFailed = 0,
     this.notificationsSent = 0,
     this.notificationsFailed = 0,
   });

@@ -246,7 +246,8 @@ void main() {
         ]),
       );
 
-      expect(discounted, 1);
+      expect(discounted.discounted, 1);
+      expect(discounted.failed, 0);
       expect(await stockOf('p1'), 3);
       expect(await stockOf('pNull'), isNull);
       expect((await movements()).single['reason'], 'claim');
@@ -278,7 +279,7 @@ void main() {
           ),
         ]),
       );
-      expect(discounted, 0);
+      expect(discounted.discounted, 0);
       expect(await stockOf('p1'), 5);
     });
   });

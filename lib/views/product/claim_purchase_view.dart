@@ -89,19 +89,31 @@ class _ClaimPurchaseViewState extends State<ClaimPurchaseView> {
     if (!ok || !mounted) return;
     try {
       final inventory = context.read<InventoryRepository>();
+      final messenger = ScaffoldMessenger.of(context);
       await context.read<PurchaseRepository>().claimPurchase(purchase.id);
       // Lo entregado sale del inventario. Si esto falla la entrega ya
-      // quedó registrada: el barbero puede ajustar el stock a mano.
+      // quedó registrada: se avisa para que el barbero ajuste el stock.
+      var stockProblem = false;
       try {
-        await inventory.registerPurchaseDelivery(purchase);
-      } catch (_) {}
+        final result = await inventory.registerPurchaseDelivery(purchase);
+        stockProblem = result.failed > 0;
+      } catch (_) {
+        stockProblem = true;
+      }
       if (!mounted) return;
       setState(() {
         _purchase = null;
         _codeController.clear();
       });
-      ScaffoldMessenger.of(context).showSnackBar(
-        const SnackBar(content: Text('Compra marcada como entregada.')),
+      messenger.showSnackBar(
+        SnackBar(
+          content: Text(
+            stockProblem
+                ? 'Compra entregada, pero no se pudo descontar del '
+                      'inventario. Ajusta el stock desde "Inventario".'
+                : 'Compra marcada como entregada.',
+          ),
+        ),
       );
     } catch (e) {
       if (mounted) {

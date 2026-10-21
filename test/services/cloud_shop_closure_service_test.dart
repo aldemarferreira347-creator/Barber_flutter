@@ -26,12 +26,14 @@ void main() {
     bool paid = false,
     String clientId = 'client1',
     String barberId = 'barber1',
+    int durationMinutes = 30,
   }) {
     return firestore.collection('appointments').doc(id).set({
       'barbershopId': 'shop1',
       'barberId': barberId,
       'clientId': clientId,
       'serviceName': 'Corte',
+      'durationMinutes': durationMinutes,
       'date': Timestamp.fromDate(date),
       'status': status,
       'paid': paid,
@@ -310,4 +312,53 @@ void main() {
     );
     expect((await firestore.collection('shopClosures').get()).docs, isEmpty);
   });
+
+  test('el cruce es exacto: la cita que empieza al terminar el cierre no se toca, la que lo invade sí', () async {
+    // Cierre 08:00-12:00.
+    await appointment('atEnd', date: DateTime.utc(2026, 1, 10, 12), paid: true);
+    await appointment(
+      'invades',
+      date: DateTime.utc(2026, 1, 10, 7, 30),
+      durationMinutes: 60,
+      paid: true,
+    );
+    await appointment('before', date: DateTime.utc(2026, 1, 10, 7), paid: true);
+
+    final result = await service.closeForExternalEvent(
+      barbershopId: 'shop1',
+      closedFrom: from,
+      closedUntil: until,
+      reason: 'Corte',
+    );
+
+    expect(result.postponed, 1);
+    expect((await read('appointments', 'invades'))['status'], 'postponed');
+    expect((await read('appointments', 'atEnd'))['status'], 'accepted');
+    expect((await read('appointments', 'before'))['status'], 'accepted');
+  });
+
+  test(
+    'una cita pagada ya pospuesta (sin horario bloqueado) no aborta el cierre',
+    () async {
+      await appointment(
+        'again',
+        date: DateTime.utc(2026, 1, 10, 9),
+        status: 'postponed',
+        paid: true,
+      );
+      await appointment('next', date: DateTime.utc(2026, 1, 10, 10));
+
+      final result = await service.closeForExternalEvent(
+        barbershopId: 'shop1',
+        closedFrom: from,
+        closedUntil: until,
+        reason: 'Corte',
+      );
+
+      expect(result.appointmentsFailed, 0);
+      expect(result.postponed, 1);
+      expect(result.cancelled, 1);
+      expect(result.notificationsSent, 2);
+    },
+  );
 }

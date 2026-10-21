@@ -332,6 +332,18 @@ class _CloseShopViewState extends State<CloseShopView> {
           textAlign: TextAlign.center,
           style: text.bodyLarge,
         ),
+        if (result.appointmentsFailed > 0) ...[
+          const SizedBox(height: AppSpace.md),
+          Text(
+            'No se pudieron actualizar ${result.appointmentsFailed} cita(s). '
+            'Revísalas en "Citas de esta barbería" y aplázalas o cancélalas '
+            'a mano.',
+            textAlign: TextAlign.center,
+            style: text.bodyMedium?.copyWith(
+              color: AppColors.readable(AppColors.error),
+            ),
+          ),
+        ],
         if (result.notificationsFailed > 0) ...[
           const SizedBox(height: AppSpace.md),
           Text(

@@ -36,30 +36,50 @@ class CloudShopClosureService implements ShopClosureRepository {
   /// Avisos que se escriben a la vez.
   static const _notificationChunk = 20;
 
+  /// Duración máxima que se supone para una cita al buscar las que empiezan
+  /// antes del cierre pero lo invaden.
+  static const _longestAppointment = Duration(hours: 8);
+
   DocumentReference<Map<String, dynamic>> _shop(String id) =>
       _firestore.collection('barbershops').doc(id);
 
-  /// Citas abiertas de la barbería que caen dentro del cierre.
+  /// Citas abiertas de la barbería que se cruzan con el cierre. Se consulta
+  /// con margen hacia atrás (una cita que empieza antes de las [from] pero
+  /// dura hasta dentro del cierre también cuenta) y se filtra por cruce
+  /// exacto: la cita que empieza justo cuando el cierre termina NO se toca.
   Future<List<QueryDocumentSnapshot<Map<String, dynamic>>>> _appointments(
     String barbershopId,
     DateTime from,
     DateTime? until,
   ) async {
+    final closure = ShopClosure(id: '', from: from, until: until, reason: '');
     var query = _firestore
         .collection('appointments')
         .where('barbershopId', isEqualTo: barbershopId)
-        .where('date', isGreaterThanOrEqualTo: Timestamp.fromDate(from));
+        .where(
+          'date',
+          isGreaterThanOrEqualTo: Timestamp.fromDate(
+            from.subtract(_longestAppointment),
+          ),
+        );
     if (until != null) {
-      query = query.where(
-        'date',
-        isLessThanOrEqualTo: Timestamp.fromDate(until),
-      );
+      query = query.where('date', isLessThan: Timestamp.fromDate(until));
     }
     final snap = await query.get();
     return [
       for (final doc in snap.docs)
-        if (_openAppointmentStatuses.contains(doc.data()['status'])) doc,
+        if (_openAppointmentStatuses.contains(doc.data()['status']) &&
+            _overlaps(closure, doc.data()))
+          doc,
     ];
+  }
+
+  static bool _overlaps(ShopClosure closure, Map<String, dynamic> data) {
+    final raw = data['date'];
+    if (raw is! Timestamp) return false;
+    final start = raw.toDate();
+    final minutes = (data['durationMinutes'] as num?)?.toInt() ?? 30;
+    return closure.overlaps(start, start.add(Duration(minutes: minutes)));
   }
 
   Future<List<QueryDocumentSnapshot<Map<String, dynamic>>>> _purchases(
@@ -148,6 +168,7 @@ class CloudShopClosureService implements ShopClosureRepository {
       closedFrom,
       closedUntil,
     );
+    var failed = 0;
     for (final doc in appointments) {
       final data = doc.data();
       final date = (data['date'] as Timestamp).toDate();
@@ -155,21 +176,29 @@ class CloudShopClosureService implements ShopClosureRepository {
       final service = data['serviceName'] as String? ?? 'tu servicio';
       final isPaid = data['paid'] == true;
 
-      if (isPaid) {
-        final slotRef = _firestore
-            .collection('appointmentSlots')
-            .doc(appointmentSlotId(data['barberId'] as String, date));
-        await Future.wait([
-          doc.reference.update({
+      // Un fallo en una cita no debe dejar a las demás sin procesar ni sin
+      // aviso: se cuenta y se sigue.
+      try {
+        if (isPaid) {
+          await doc.reference.update({
             'status': 'postponed',
             'forcedRatingPenalty': true,
-          }),
-          slotRef.delete(),
-        ]);
-        postponed++;
-      } else {
-        await doc.reference.update({'status': 'cancelled'});
-        cancelled++;
+          });
+          // Una cita ya pospuesta antes ya no tiene horario bloqueado:
+          // borrar un documento que no existe lo rechazan las reglas.
+          final slotRef = _firestore
+              .collection('appointmentSlots')
+              .doc(appointmentSlotId(data['barberId'] as String, date));
+          if ((await slotRef.get()).exists) await slotRef.delete();
+          postponed++;
+        } else {
+          await doc.reference.update({'status': 'cancelled'});
+          cancelled++;
+        }
+      } catch (error) {
+        debugPrint('Cita ${doc.id} no se pudo cerrar: $error');
+        failed++;
+        continue;
       }
       if (clientId != null && clientId.isNotEmpty) {
         notices.add(
@@ -232,6 +261,7 @@ class CloudShopClosureService implements ShopClosureRepository {
     return ClosureResult(
       postponed: postponed,
       cancelled: cancelled,
+      appointmentsFailed: failed,
       purchasesNotified: purchases.length,
       notificationsSent: sent,
       notificationsFailed: notices.length - sent,

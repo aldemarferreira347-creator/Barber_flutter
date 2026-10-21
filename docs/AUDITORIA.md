@@ -252,7 +252,7 @@ firebase deploy --only firestore:rules,firestore:indexes,storage --project barbe
 
 El índice nuevo (`stockMovements`: `barbershopId` + `createdAt` descendente) tarda unos minutos en construirse. Si una pantalla muestra "Código: failed-precondition", falta algún índice por terminar. Que las reglas desplegadas en `barber-5082f` estén al día con el repositorio es la causa más probable de que fallaran a la vez catálogo, datos de cobro, compras y citas: se puede comprobar en la consola de Firebase (Firestore > Reglas) o leyendo el "Código" que ahora muestra cada pantalla de error.
 
-**Verificación en este entorno:** `flutter analyze` (solo 3 avisos de estilo ya existentes), `flutter test` 306, Functions build/lint/jest (251), `npm run test:rules` 177 de 180. Los 3 que no pasan aquí son pruebas de `storage.rules` que consultan Firestore desde Storage (`firestore.exists`): fallan igual en el estado anterior de este contenedor (2 ya existentes y 1 nueva con la misma consulta) y no por las reglas; hay que ejecutarlas en una máquina con los emuladores completos. Las reglas del tipo de archivo (sin Firestore) sí se verificaron.
+**Verificación en este entorno:** `flutter analyze` (solo 3 avisos de estilo ya existentes), `flutter test` 308, Functions build/lint/jest (251), `npm run test:rules` 180 de 183. Los 3 que no pasan aquí son pruebas de `storage.rules` que consultan Firestore desde Storage (`firestore.exists`): fallan igual en el estado anterior de este contenedor (2 ya existentes y 1 nueva con la misma consulta) y no por las reglas; hay que ejecutarlas en una máquina con los emuladores completos. Las reglas del tipo de archivo (sin Firestore) sí se verificaron.
 
 ## Fuera de alcance (necesitan datos de negocio o servicios de pago)
 

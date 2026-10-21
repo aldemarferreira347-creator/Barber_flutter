@@ -375,8 +375,14 @@ service cloud.firestore {
       // montos que las reglas de appointments y purchases comparan.
       match /services/{serviceId} {
         allow read: if isSignedIn();
-        allow create, update: if isSignedIn() && (isOwnerOfShop(shopId) || isAdmin())
+        allow create: if isSignedIn() && (isOwnerOfShop(shopId) || isAdmin())
           && request.resource.data.price is number && request.resource.data.price > 0
+          && request.resource.data.durationMinutes is int && request.resource.data.durationMinutes > 0;
+        // Al editar, el precio debe ser > 0 o seguir igual: un servicio
+        // guardado antes con precio 0 todavía se puede ocultar o borrar.
+        allow update: if isSignedIn() && (isOwnerOfShop(shopId) || isAdmin())
+          && request.resource.data.price is number
+          && (request.resource.data.price > 0 || request.resource.data.price == resource.data.price)
           && request.resource.data.durationMinutes is int && request.resource.data.durationMinutes > 0;
         allow delete: if isSignedIn() && (isOwnerOfShop(shopId) || isAdmin());
       }
@@ -402,6 +408,7 @@ service cloud.firestore {
             && request.resource.data.stock is int
             && request.resource.data.stock >= 0
             && request.resource.data.lastMovementId is string
+            && !exists(movementPath)
             && existsAfter(movementPath)
             && getAfter(movementPath).data.barbershopId == shopId
             && getAfter(movementPath).data.productId == productId
@@ -414,7 +421,8 @@ service cloud.firestore {
           && stockValid(request.resource.data);
         allow update: if isSignedIn() && (
           ((isOwnerOfShop(shopId) || isAdmin())
-            && request.resource.data.price is number && request.resource.data.price > 0
+            && request.resource.data.price is number
+            && (request.resource.data.price > 0 || request.resource.data.price == resource.data.price)
             && stockValid(request.resource.data)) ||
           staffStockChange()
         );
@@ -550,7 +558,9 @@ service cloud.firestore {
               resource.data.paid == true &&
               !(resource.data.status in ['cancelled', 'completed']) &&
               request.resource.data.status == 'postponed' &&
-              request.resource.data.diff(resource.data).affectedKeys().hasOnly(['status', 'date', 'rescheduleHistory']))
+              request.resource.data.diff(resource.data).affectedKeys().hasOnly(['status', 'date', 'rescheduleHistory']) &&
+              // La nueva fecha tampoco puede caer dentro de un cierre.
+              !shopClosedAt(resource.data.barbershopId, request.resource.data.date))
           ) &&
           // Una cita pagada solo se acepta cuando el pago Nequi ya fue
           // verificado: la confirmación del pago va en la MISMA escritura.

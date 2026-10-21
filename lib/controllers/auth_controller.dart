@@ -77,7 +77,12 @@ class AuthController extends ChangeNotifier {
     notifyListeners();
   }
 
+  /// Cuenta los cambios de sesión: una carga de perfil que termina cuando la
+  /// sesión ya cambió (cerró sesión, entró otra cuenta) se descarta.
+  int _sessionGeneration = 0;
+
   Future<void> _onAuthChanged(User? user) async {
+    final generation = ++_sessionGeneration;
     if (user == null) {
       // Nada de la cuenta anterior debe servirse a la siguiente.
       SharedStreams.resetAll();
@@ -88,7 +93,8 @@ class AuthController extends ChangeNotifier {
       notifyListeners();
       return;
     }
-    await _loadProfile(user.uid);
+    final loaded = await _loadProfile(user.uid, generation);
+    if (!loaded) return;
     status = AuthStatus.authenticated;
     notifyListeners();
     if (profile != null) _registerPushToken(user.uid);
@@ -99,20 +105,28 @@ class AuthController extends ChangeNotifier {
   /// asienta o por el token que todavía no llega a Firestore. Antes, ese
   /// fallo dejaba la app en "cargando" para siempre y el usuario tenía que
   /// iniciar sesión varias veces.
-  Future<void> _loadProfile(String uid) async {
+  ///
+  /// Devuelve false si la sesión cambió mientras se cargaba: en ese caso no se
+  /// toca nada (el perfil de la cuenta anterior jamás se le muestra a la
+  /// siguiente).
+  Future<bool> _loadProfile(String uid, int generation) async {
     profileLoadFailed = false;
     for (var attempt = 0; ; attempt++) {
       try {
-        profile = await _userService.fetchUserProfile(uid);
-        return;
+        final loaded = await _userService.fetchUserProfile(uid);
+        if (generation != _sessionGeneration) return false;
+        profile = loaded;
+        return true;
       } catch (error) {
         debugPrint('Perfil no cargado (intento ${attempt + 1}): $error');
         if (attempt >= _profileRetryDelays.length) {
+          if (generation != _sessionGeneration) return false;
           profile = null;
           profileLoadFailed = true;
-          return;
+          return true;
         }
         await Future<void>.delayed(_profileRetryDelays[attempt]);
+        if (generation != _sessionGeneration) return false;
       }
     }
   }
@@ -123,7 +137,7 @@ class AuthController extends ChangeNotifier {
     if (uid == null) return;
     isBusy = true;
     notifyListeners();
-    await _loadProfile(uid);
+    await _loadProfile(uid, _sessionGeneration);
     isBusy = false;
     notifyListeners();
     if (profile != null) _registerPushToken(uid);

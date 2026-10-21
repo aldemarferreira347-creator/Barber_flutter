@@ -1,3 +1,5 @@
+import 'dart:async';
+
 import 'package:flutter/material.dart';
 import 'package:provider/provider.dart';
 
@@ -94,6 +96,10 @@ class _BookAppointmentViewState extends State<BookAppointmentView> {
   /// Productos activos de la barbería (último dato recibido).
   List<Product> _catalog = const [];
 
+  /// Respuestas ya conocidas de "¿está tomada esta hora?" por barbero y hora:
+  /// cambiar de servicio o volver a un día ya visto no repite lecturas.
+  final Map<String, bool> _slotCache = {};
+
   /// Horas del barbero elegido que una reserva pagada ya bloqueó.
   Set<DateTime> _taken = {};
   bool _loadingTaken = false;
@@ -145,11 +151,25 @@ class _BookAppointmentViewState extends State<BookAppointmentView> {
       day: day,
       durationMinutes: service.durationMinutes,
     );
-    final taken = await context.read<AppointmentRepository>().takenSlots(
-      barberId: barber.uid,
-      slots: slots,
-    );
+    String keyOf(DateTime slot) => '${barber.uid}|${slot.toIso8601String()}';
+    final unknown = [
+      for (final slot in slots)
+        if (!_slotCache.containsKey(keyOf(slot))) slot,
+    ];
+    if (unknown.isNotEmpty) {
+      final known = await context.read<AppointmentRepository>().takenSlots(
+        barberId: barber.uid,
+        slots: unknown,
+      );
+      for (final slot in unknown) {
+        _slotCache[keyOf(slot)] = known.contains(slot);
+      }
+    }
     if (!mounted || request != _takenRequest) return;
+    final taken = {
+      for (final slot in slots)
+        if (_slotCache[keyOf(slot)] == true) slot,
+    };
     setState(() {
       _taken = taken;
       _loadingTaken = false;
@@ -237,6 +257,9 @@ class _BookAppointmentViewState extends State<BookAppointmentView> {
           SnackBar(content: Text('No se pudo agendar: ${errorText(e)}')),
         );
         setState(() => _saving = false);
+        // Quizá alguien tomó esa hora: se vuelven a consultar las ocupadas.
+        _slotCache.clear();
+        unawaited(_loadTaken());
       }
       return;
     }
