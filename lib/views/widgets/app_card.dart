@@ -3,9 +3,9 @@ import 'package:flutter/material.dart';
 import '../../theme/app_colors.dart';
 import '../../theme/app_tokens.dart';
 
-/// Contenedor base de la app: superficie con borde fino, sin sombras. Si
-/// recibe [onTap] se vuelve tocable con feedback de tinta y semántica de
-/// botón.
+/// Contenedor base de la app: superficie con borde fino y una sombra suave
+/// (solo en modo claro) que la separa del fondo. Si recibe [onTap] se vuelve
+/// tocable con feedback de tinta y semántica de botón.
 class AppCard extends StatelessWidget {
   final Widget child;
   final VoidCallback? onTap;
@@ -29,6 +29,8 @@ class AppCard extends StatelessWidget {
     final content = Padding(padding: padding, child: child);
     return Material(
       color: color ?? AppColors.surface,
+      elevation: 1.5,
+      shadowColor: AppColors.shadow,
       clipBehavior: Clip.antiAlias,
       shape: RoundedRectangleBorder(
         borderRadius: BorderRadius.circular(AppRadius.lg),

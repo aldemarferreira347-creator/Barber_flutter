@@ -37,7 +37,7 @@ class ClientDashboardTab extends StatelessWidget {
         : 'Cliente';
 
     return DashboardScaffold(
-      greeting: 'Hola, $greetingName 👋',
+      greeting: 'Hola, $greetingName',
       subtitle: 'Tu estilo, nuestra prioridad',
       notificationsUid: profile?.uid,
       children: [

@@ -4,12 +4,14 @@ import 'package:provider/provider.dart';
 import '../../models/barbershop.dart';
 import '../../models/service.dart';
 import '../../repositories/service_repository.dart';
+import '../../theme/app_colors.dart';
 import '../../theme/app_tokens.dart';
 import '../widgets/catalog_tile.dart';
 import '../widgets/empty_state.dart';
 import '../widgets/error_state.dart';
 import '../widgets/responsive_body.dart';
 import '../widgets/shimmer_box.dart';
+import '../widgets/status_badge.dart';
 import 'service_form_sheet.dart';
 
 /// Catálogo de servicios de una barbería. Con [canManage] (dueño) se agregan,
@@ -87,9 +89,13 @@ class ManageServicesView extends StatelessWidget {
                 final service = services[index];
                 return CatalogTile(
                   name: service.name,
-                  detail:
-                      '${service.durationMinutes} min'
-                      '${(service.description ?? '').isEmpty ? '' : ' · ${service.description}'}',
+                  detail: service.description,
+                  badges: [
+                    StatusBadge(
+                      label: '${service.durationMinutes} min',
+                      color: AppColors.accent,
+                    ),
+                  ],
                   priceLabel: formatCop(service.price),
                   photoUrl: service.photoUrl,
                   fallbackIcon: Icons.content_cut,

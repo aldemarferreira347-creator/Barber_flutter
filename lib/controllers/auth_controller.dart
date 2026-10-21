@@ -35,10 +35,17 @@ class AuthController extends ChangeNotifier {
   final PushNotificationService _pushService;
   String? _fcmToken;
 
+  /// Esperas entre los reintentos de carga del perfil tras iniciar sesión.
+  final List<Duration> _profileRetryDelays;
+
   AuthController({
     AuthRepository? authService,
     UserRepository? userService,
     PushNotificationService? pushService,
+    this._profileRetryDelays = const [
+      Duration(milliseconds: 400),
+      Duration(milliseconds: 1200),
+    ],
   }) : _authService = authService ?? FirebaseAuthService(),
        _userService = userService ?? FirestoreUserService(),
        _pushService = pushService ?? PushNotificationService() {
@@ -52,6 +59,10 @@ class AuthController extends ChangeNotifier {
   AppUser? profile;
   String? errorMessage;
   bool isBusy = false;
+
+  /// El perfil no se pudo leer (red, permisos) aun con sesión iniciada; la
+  /// pantalla ofrece reintentar en lugar de quedarse cargando.
+  bool profileLoadFailed = false;
 
   /// Vuelve a cargar el perfil desde Firestore sin pasar por un cambio de
   /// sesión. [profile] solo se refresca normalmente en `_onAuthChanged`
@@ -77,10 +88,45 @@ class AuthController extends ChangeNotifier {
       notifyListeners();
       return;
     }
-    profile = await _userService.fetchUserProfile(user.uid);
+    await _loadProfile(user.uid);
     status = AuthStatus.authenticated;
     notifyListeners();
-    _registerPushToken(user.uid);
+    if (profile != null) _registerPushToken(user.uid);
+  }
+
+  /// Lee el perfil con unos reintentos cortos: justo después de iniciar
+  /// sesión la primera lectura puede fallar por una red que aún no se
+  /// asienta o por el token que todavía no llega a Firestore. Antes, ese
+  /// fallo dejaba la app en "cargando" para siempre y el usuario tenía que
+  /// iniciar sesión varias veces.
+  Future<void> _loadProfile(String uid) async {
+    profileLoadFailed = false;
+    for (var attempt = 0; ; attempt++) {
+      try {
+        profile = await _userService.fetchUserProfile(uid);
+        return;
+      } catch (error) {
+        debugPrint('Perfil no cargado (intento ${attempt + 1}): $error');
+        if (attempt >= _profileRetryDelays.length) {
+          profile = null;
+          profileLoadFailed = true;
+          return;
+        }
+        await Future<void>.delayed(_profileRetryDelays[attempt]);
+      }
+    }
+  }
+
+  /// Reintenta cargar el perfil desde la pantalla de error.
+  Future<void> retryProfile() async {
+    final uid = _authService.currentUser?.uid;
+    if (uid == null) return;
+    isBusy = true;
+    notifyListeners();
+    await _loadProfile(uid);
+    isBusy = false;
+    notifyListeners();
+    if (profile != null) _registerPushToken(uid);
   }
 
   /// Guarda el token FCM del dispositivo y lo mantiene al día mientras dure
@@ -172,7 +218,7 @@ class AuthController extends ChangeNotifier {
     try {
       return await _authService.startPhoneVerification(phoneNumber);
     } on FirebaseException catch (e) {
-      errorMessage = e.message ?? 'No se pudo enviar el código';
+      errorMessage = authErrorText(e, fallback: 'No se pudo enviar el código');
       return null;
     } finally {
       isBusy = false;
@@ -299,7 +345,7 @@ class AuthController extends ChangeNotifier {
       await tempAuth.signOut();
       return true;
     } on FirebaseException catch (e) {
-      errorMessage = e.message ?? 'Error al registrar usuario';
+      errorMessage = authErrorText(e, fallback: 'Error al registrar usuario');
       return false;
     } finally {
       if (tempApp != null) {
@@ -350,7 +396,7 @@ class AuthController extends ChangeNotifier {
       await action();
       return true;
     } on FirebaseException catch (e) {
-      errorMessage = e.message ?? 'Error de autenticación';
+      errorMessage = authErrorText(e, fallback: 'Error de autenticación');
       return false;
     } finally {
       isBusy = false;

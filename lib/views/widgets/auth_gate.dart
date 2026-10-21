@@ -65,7 +65,9 @@ class _AuthGateState extends State<AuthGate> {
                     ),
                     const SizedBox(height: 20),
                     Text(
-                      'No pudimos cargar tu perfil',
+                      auth.profileLoadFailed
+                          ? 'No pudimos conectar'
+                          : 'No pudimos cargar tu perfil',
                       style: TextStyle(
                         fontSize: 20,
                         fontWeight: FontWeight.w800,
@@ -74,11 +76,28 @@ class _AuthGateState extends State<AuthGate> {
                     ),
                     const SizedBox(height: 8),
                     Text(
-                      'Tu sesión existe pero no encontramos tus datos. Cierra sesión e intenta iniciar de nuevo.',
+                      auth.profileLoadFailed
+                          ? 'Tu sesión está iniciada pero no logramos leer tus datos. Revisa tu conexión e inténtalo de nuevo.'
+                          : 'Tu sesión existe pero no encontramos tus datos. Cierra sesión e intenta iniciar de nuevo.',
                       textAlign: TextAlign.center,
                       style: TextStyle(color: AppColors.textSecondary),
                     ),
                     const SizedBox(height: 24),
+                    if (auth.profileLoadFailed) ...[
+                      SizedBox(
+                        width: double.infinity,
+                        child: FilledButton.icon(
+                          onPressed: auth.isBusy
+                              ? null
+                              : () => context
+                                    .read<AuthController>()
+                                    .retryProfile(),
+                          icon: const Icon(Icons.refresh),
+                          label: const Text('Reintentar'),
+                        ),
+                      ),
+                      const SizedBox(height: 12),
+                    ],
                     SizedBox(
                       width: double.infinity,
                       child: OutlinedButton.icon(

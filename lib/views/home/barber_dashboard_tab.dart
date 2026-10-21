@@ -35,7 +35,7 @@ class BarberDashboardTab extends StatelessWidget {
     final barbershopId = profile?.barbershopId;
 
     return DashboardScaffold(
-      greeting: 'Hola, $greetingName 👋',
+      greeting: 'Hola, $greetingName',
       subtitle: 'Tu talento, nuestra prioridad',
       notificationsUid: profile?.uid,
       children: [

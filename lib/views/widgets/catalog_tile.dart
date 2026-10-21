@@ -22,6 +22,10 @@ class CatalogTile extends StatelessWidget {
   final VoidCallback? onTap;
   final String? semanticLabel;
 
+  /// Etiquetas bajo el nombre (duración, stock...). Cada una es un
+  /// [StatusBadge] o similar.
+  final List<Widget> badges;
+
   const CatalogTile({
     super.key,
     required this.name,
@@ -33,6 +37,7 @@ class CatalogTile extends StatelessWidget {
     this.onActiveChanged,
     this.onTap,
     this.semanticLabel,
+    this.badges = const [],
   });
 
   @override
@@ -50,20 +55,25 @@ class CatalogTile extends StatelessWidget {
             AppNetworkImage(
               url: url,
               semanticLabel: 'Foto de $name',
-              width: 56,
-              height: 56,
-              decodeWidth: 56,
+              width: 72,
+              height: 72,
+              decodeWidth: 72,
               borderRadius: radius,
             )
           else
             Container(
-              width: 56,
-              height: 56,
+              width: 72,
+              height: 72,
               decoration: BoxDecoration(
                 color: AppColors.surfaceRaised,
                 borderRadius: radius,
+                border: Border.all(color: AppColors.border),
               ),
-              child: Icon(fallbackIcon, color: AppColors.textSecondary),
+              child: Icon(
+                fallbackIcon,
+                size: 30,
+                color: AppColors.textSecondary,
+              ),
             ),
           const SizedBox(width: AppSpace.md),
           Expanded(
@@ -71,22 +81,53 @@ class CatalogTile extends StatelessWidget {
               crossAxisAlignment: CrossAxisAlignment.start,
               children: [
                 Text(name, style: text.titleSmall),
-                if ((detail ?? '').isNotEmpty)
+                if ((detail ?? '').isNotEmpty) ...[
+                  const SizedBox(height: 2),
                   Text(
                     detail!,
                     style: text.bodySmall,
                     maxLines: 2,
                     overflow: TextOverflow.ellipsis,
                   ),
-                if (onActiveChanged != null && !active) ...[
-                  const SizedBox(height: AppSpace.xs),
-                  StatusBadge(label: 'Oculto', color: AppColors.textSecondary),
                 ],
+                if (badges.isNotEmpty ||
+                    (onActiveChanged != null && !active)) ...[
+                  const SizedBox(height: AppSpace.sm),
+                  Wrap(
+                    spacing: AppSpace.xs,
+                    runSpacing: AppSpace.xs,
+                    children: [
+                      ...badges,
+                      if (onActiveChanged != null && !active)
+                        StatusBadge(
+                          label: 'Oculto',
+                          color: AppColors.textSecondary,
+                        ),
+                    ],
+                  ),
+                ],
+                const SizedBox(height: AppSpace.sm),
+                // El precio es lo primero que busca el cliente: va en una
+                // píldora propia, no suelto al borde de la fila.
+                Container(
+                  padding: const EdgeInsets.symmetric(
+                    horizontal: AppSpace.md,
+                    vertical: AppSpace.xs,
+                  ),
+                  decoration: BoxDecoration(
+                    color: AppColors.tint(AppColors.accent),
+                    borderRadius: BorderRadius.circular(AppRadius.pill),
+                  ),
+                  child: Text(
+                    priceLabel,
+                    style: text.titleSmall?.copyWith(
+                      color: AppColors.readable(AppColors.accent),
+                    ),
+                  ),
+                ),
               ],
             ),
           ),
-          const SizedBox(width: AppSpace.sm),
-          Text(priceLabel, style: text.titleSmall),
           if (onActiveChanged != null)
             Semantics(
               label: active ? 'Ocultar $name' : 'Mostrar $name',

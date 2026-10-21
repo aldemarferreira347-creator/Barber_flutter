@@ -167,7 +167,7 @@ void main() {
 
       expect(ok, isFalse);
       expect(controller.profile, isNull);
-      expect(controller.errorMessage, 'Contraseña incorrecta');
+      expect(controller.errorMessage, 'Contraseña incorrecta.');
     });
   });
 }

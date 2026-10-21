@@ -121,7 +121,7 @@ class _AdminDashboardTabState extends State<AdminDashboardTab> {
         : 'Admin';
 
     return DashboardScaffold(
-      greeting: 'Hola, $greetingName 👋',
+      greeting: 'Hola, $greetingName',
       subtitle: 'Panel de administración',
       avatar: CircleAvatar(
         radius: 22,

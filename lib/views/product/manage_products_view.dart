@@ -4,24 +4,32 @@ import 'package:provider/provider.dart';
 import '../../models/barbershop.dart';
 import '../../models/product.dart';
 import '../../repositories/product_repository.dart';
+import '../../theme/app_colors.dart';
 import '../../theme/app_tokens.dart';
 import '../widgets/catalog_tile.dart';
 import '../widgets/empty_state.dart';
 import '../widgets/error_state.dart';
 import '../widgets/responsive_body.dart';
 import '../widgets/shimmer_box.dart';
+import '../widgets/status_badge.dart';
 import 'buy_product_view.dart';
 import 'product_form_sheet.dart';
 
-String? _detail(Product product, bool canManage) {
-  final parts = [
-    if ((product.description ?? '').isNotEmpty) product.description!,
-    if (product.tracksStock && (canManage || !product.inStock))
-      !product.inStock
-          ? 'Agotado'
-          : 'Stock: ${product.stock}${product.isLowStock ? ' (bajo)' : ''}',
-  ];
-  return parts.isEmpty ? null : parts.join(' · ');
+/// Etiqueta de inventario de un producto: solo cuando importa (agotado, o
+/// stock visible para quien administra).
+List<Widget> _stockBadges(Product product, bool canManage) {
+  if (!product.tracksStock) return const [];
+  if (!product.inStock) {
+    return const [StatusBadge(label: 'Agotado', color: AppColors.error)];
+  }
+  if (product.isLowStock) {
+    return [
+      StatusBadge(label: 'Quedan ${product.stock}', color: AppColors.warning),
+    ];
+  }
+  return canManage
+      ? [StatusBadge(label: 'Stock ${product.stock}', color: AppColors.success)]
+      : const [];
 }
 
 /// Catálogo de productos de una barbería. Con [canManage] (dueño) se agregan,
@@ -100,7 +108,8 @@ class ManageProductsView extends StatelessWidget {
                 final product = products[index];
                 return CatalogTile(
                   name: product.name,
-                  detail: _detail(product, canManage),
+                  detail: product.description,
+                  badges: _stockBadges(product, canManage),
                   priceLabel: formatCop(product.price),
                   photoUrl: product.photoUrl,
                   fallbackIcon: Icons.shopping_bag_outlined,

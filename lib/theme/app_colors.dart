@@ -19,7 +19,7 @@ class AppColors {
   static Color get primary =>
       isDark ? const Color(0xFF2563EB) : const Color(0xFF0F172A);
   static Color get accent =>
-      isDark ? const Color(0xFF3B82F6) : const Color(0xFF2563EB);
+      isDark ? const Color(0xFF3B82F6) : const Color(0xFF1F5FE0);
   static const success = Color(0xFF10B981);
   static const warning = Color(0xFFF59E0B);
   static const error = Color(0xFFEF4444);
@@ -32,20 +32,30 @@ class AppColors {
   // Negro verdadero + gris carbón, igual que el mockup de referencia — nada
   // de grises "zinc" con dominante azulada, que era lo que hacía que el modo
   // oscuro se sintiera como "negro con azul" en vez de un negro premium.
+  //
+  // Tres capas visibles a simple vista (como en iOS): fondo < tarjeta <
+  // superficie elevada. En claro el fondo es un gris azulado más oscuro que
+  // la tarjeta blanca; en oscuro la tarjeta es un carbón claramente más
+  // claro que el negro del fondo.
   static Color get background =>
-      isDark ? const Color(0xFF000000) : const Color(0xFFF1F5F9);
-  static Color get surface => isDark ? const Color(0xFF1A1A1A) : Colors.white;
+      isDark ? const Color(0xFF000000) : const Color(0xFFE7ECF3);
+  static Color get surface => isDark ? const Color(0xFF1C1C1E) : Colors.white;
 
   /// Superficie elevada sobre [surface] (campos dentro de una tarjeta,
   /// filas seleccionadas, hojas modales).
   static Color get surfaceRaised =>
-      isDark ? const Color(0xFF222222) : const Color(0xFFF8FAFC);
+      isDark ? const Color(0xFF2C2C2E) : const Color(0xFFF3F6FA);
   static Color get textPrimary =>
       isDark ? const Color(0xFFFFFFFF) : const Color(0xFF0F172A);
   static Color get textSecondary =>
-      isDark ? const Color(0xFFA1A1AA) : const Color(0xFF5E6E85);
+      isDark ? const Color(0xFFA1A1AA) : const Color(0xFF4F5F76);
   static Color get border =>
-      isDark ? const Color(0xFF2A2A2A) : const Color(0xFFE2E8F0);
+      isDark ? const Color(0xFF3A3A3C) : const Color(0xFFC9D3E0);
+
+  /// Sombra suave de las tarjetas y hojas (solo en claro: en oscuro una
+  /// sombra negra sobre fondo negro no se ve y la separación la da el borde).
+  static Color get shadow =>
+      isDark ? const Color(0x00000000) : const Color(0x1F0F172A);
 
   /// Botón de acción principal: blanco sobre negro en oscuro (como el
   /// mockup) y azul marino sobre claro. [onAction] es el texto/ícono encima.

@@ -134,7 +134,7 @@ void main() {
     await tester.pumpAndSettle();
 
     expect(tester.takeException(), isNull);
-    expect(find.text('Hola, Ada 👋'), findsOneWidget);
+    expect(find.text('Hola, Ada'), findsOneWidget);
     await tester.scrollUntilVisible(
       find.text('Gestionar usuarios'),
       300,
@@ -159,7 +159,7 @@ void main() {
       await tester.pumpAndSettle();
 
       expect(tester.takeException(), isNull);
-      expect(find.text('Hola, Oli 👋'), findsOneWidget);
+      expect(find.text('Hola, Oli'), findsOneWidget);
       expect(find.text('Aún no tienes barberías'), findsOneWidget);
     },
   );
@@ -208,7 +208,7 @@ void main() {
 
     expect(tester.takeException(), isNull);
     expect(find.text('Mi agenda'), findsOneWidget);
-    expect(find.text('Hola, Beto 👋'), findsOneWidget);
+    expect(find.text('Hola, Beto'), findsOneWidget);
   });
 
   testWidgets('ClientDashboardTab construye sin errores y sin citas próximas', (

@@ -37,7 +37,7 @@ class OwnerDashboardTab extends StatelessWidget {
         : 'Dueño';
 
     return DashboardScaffold(
-      greeting: 'Hola, $greetingName 👋',
+      greeting: 'Hola, $greetingName',
       subtitle: 'Tus barberías en buenas manos',
       notificationsUid: profile?.uid,
       children: [

@@ -278,7 +278,7 @@ class _EditBarbershopViewState extends State<EditBarbershopView> {
                 label: Text(
                   _position == null
                       ? 'Actualizar con mi ubicación actual'
-                      : 'Ubicación nueva lista ✓',
+                      : 'Ubicación nueva lista',
                 ),
               ),
               const SizedBox(height: 24),

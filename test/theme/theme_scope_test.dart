@@ -65,7 +65,7 @@ void main() {
       );
       expect(
         panelColor(),
-        const Color(0xFF1A1A1A),
+        const Color(0xFF1C1C1E),
         reason: 'y se repintó en oscuro',
       );
 
