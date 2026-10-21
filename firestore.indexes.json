@@ -4,105 +4,200 @@
       "collectionGroup": "appointments",
       "queryScope": "COLLECTION",
       "fields": [
-        {"fieldPath": "clientId", "order": "ASCENDING"},
-        {"fieldPath": "date", "order": "ASCENDING"}
+        {
+          "fieldPath": "clientId",
+          "order": "ASCENDING"
+        },
+        {
+          "fieldPath": "date",
+          "order": "ASCENDING"
+        }
       ]
     },
     {
       "collectionGroup": "appointments",
       "queryScope": "COLLECTION",
       "fields": [
-        {"fieldPath": "barberId", "order": "ASCENDING"},
-        {"fieldPath": "date", "order": "ASCENDING"}
+        {
+          "fieldPath": "barberId",
+          "order": "ASCENDING"
+        },
+        {
+          "fieldPath": "date",
+          "order": "ASCENDING"
+        }
       ]
     },
     {
       "collectionGroup": "appointments",
       "queryScope": "COLLECTION",
       "fields": [
-        {"fieldPath": "barbershopId", "order": "ASCENDING"},
-        {"fieldPath": "date", "order": "ASCENDING"}
+        {
+          "fieldPath": "barbershopId",
+          "order": "ASCENDING"
+        },
+        {
+          "fieldPath": "date",
+          "order": "ASCENDING"
+        }
       ]
     },
     {
       "collectionGroup": "users",
       "queryScope": "COLLECTION",
       "fields": [
-        {"fieldPath": "barbershopId", "order": "ASCENDING"},
-        {"fieldPath": "role", "order": "ASCENDING"}
+        {
+          "fieldPath": "barbershopId",
+          "order": "ASCENDING"
+        },
+        {
+          "fieldPath": "role",
+          "order": "ASCENDING"
+        }
       ]
     },
     {
       "collectionGroup": "notifications",
       "queryScope": "COLLECTION",
       "fields": [
-        {"fieldPath": "toUserId", "order": "ASCENDING"},
-        {"fieldPath": "createdAt", "order": "DESCENDING"}
+        {
+          "fieldPath": "toUserId",
+          "order": "ASCENDING"
+        },
+        {
+          "fieldPath": "createdAt",
+          "order": "DESCENDING"
+        }
       ]
     },
     {
       "collectionGroup": "purchases",
       "queryScope": "COLLECTION",
       "fields": [
-        {"fieldPath": "barbershopId", "order": "ASCENDING"},
-        {"fieldPath": "claimCode", "order": "ASCENDING"}
+        {
+          "fieldPath": "barbershopId",
+          "order": "ASCENDING"
+        },
+        {
+          "fieldPath": "claimCode",
+          "order": "ASCENDING"
+        }
       ]
     },
     {
       "collectionGroup": "purchases",
       "queryScope": "COLLECTION",
       "fields": [
-        {"fieldPath": "barbershopId", "order": "ASCENDING"},
-        {"fieldPath": "createdAt", "order": "DESCENDING"}
+        {
+          "fieldPath": "barbershopId",
+          "order": "ASCENDING"
+        },
+        {
+          "fieldPath": "createdAt",
+          "order": "DESCENDING"
+        }
       ]
     },
     {
       "collectionGroup": "purchases",
       "queryScope": "COLLECTION",
       "fields": [
-        {"fieldPath": "buyerId", "order": "ASCENDING"},
-        {"fieldPath": "createdAt", "order": "DESCENDING"}
+        {
+          "fieldPath": "buyerId",
+          "order": "ASCENDING"
+        },
+        {
+          "fieldPath": "createdAt",
+          "order": "DESCENDING"
+        }
       ]
     },
     {
       "collectionGroup": "purchases",
       "queryScope": "COLLECTION",
       "fields": [
-        {"fieldPath": "status", "order": "ASCENDING"},
-        {"fieldPath": "expiresAt", "order": "ASCENDING"}
+        {
+          "fieldPath": "status",
+          "order": "ASCENDING"
+        },
+        {
+          "fieldPath": "expiresAt",
+          "order": "ASCENDING"
+        }
       ]
     },
     {
       "collectionGroup": "refundRequests",
       "queryScope": "COLLECTION",
       "fields": [
-        {"fieldPath": "barbershopId", "order": "ASCENDING"},
-        {"fieldPath": "createdAt", "order": "DESCENDING"}
+        {
+          "fieldPath": "barbershopId",
+          "order": "ASCENDING"
+        },
+        {
+          "fieldPath": "createdAt",
+          "order": "DESCENDING"
+        }
       ]
     },
     {
       "collectionGroup": "refundRequests",
       "queryScope": "COLLECTION",
       "fields": [
-        {"fieldPath": "clientId", "order": "ASCENDING"},
-        {"fieldPath": "createdAt", "order": "DESCENDING"}
+        {
+          "fieldPath": "clientId",
+          "order": "ASCENDING"
+        },
+        {
+          "fieldPath": "createdAt",
+          "order": "DESCENDING"
+        }
       ]
     },
     {
       "collectionGroup": "comments",
       "queryScope": "COLLECTION",
       "fields": [
-        {"fieldPath": "barbershopId", "order": "ASCENDING"},
-        {"fieldPath": "status", "order": "ASCENDING"},
-        {"fieldPath": "createdAt", "order": "DESCENDING"}
+        {
+          "fieldPath": "barbershopId",
+          "order": "ASCENDING"
+        },
+        {
+          "fieldPath": "status",
+          "order": "ASCENDING"
+        },
+        {
+          "fieldPath": "createdAt",
+          "order": "DESCENDING"
+        }
       ]
     },
     {
       "collectionGroup": "barbershops",
       "queryScope": "COLLECTION",
       "fields": [
-        {"fieldPath": "paymentStatus", "order": "ASCENDING"},
-        {"fieldPath": "paymentDueDate", "order": "ASCENDING"}
+        {
+          "fieldPath": "paymentStatus",
+          "order": "ASCENDING"
+        },
+        {
+          "fieldPath": "paymentDueDate",
+          "order": "ASCENDING"
+        }
+      ]
+    },
+    {
+      "collectionGroup": "stockMovements",
+      "queryScope": "COLLECTION",
+      "fields": [
+        {
+          "fieldPath": "barbershopId",
+          "order": "ASCENDING"
+        },
+        {
+          "fieldPath": "createdAt",
+          "order": "DESCENDING"
+        }
       ]
     }
   ],

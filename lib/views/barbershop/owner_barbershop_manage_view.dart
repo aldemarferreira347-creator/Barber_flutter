@@ -11,6 +11,7 @@ import '../appointment/owner_appointments_view.dart';
 import '../appointment/refund_requests_view.dart';
 import '../barber/manage_barbers_view.dart';
 import '../product/claim_purchase_view.dart';
+import '../product/inventory_view.dart';
 import '../product/manage_products_view.dart';
 import '../service/manage_services_view.dart';
 import '../widgets/action_list_tile.dart';
@@ -212,6 +213,14 @@ class OwnerBarbershopManageView extends StatelessWidget {
                     context,
                     ManageProductsView(barbershopId: shop.id, canManage: true),
                   ),
+                ),
+                gap(),
+                ActionListTile(
+                  icon: Icons.inventory_2_outlined,
+                  label: 'Inventario',
+                  subtitle: 'Existencias y quién movió qué',
+                  onTap: () =>
+                      _push(context, InventoryView(barbershopId: shop.id)),
                 ),
                 const SizedBox(height: AppSpace.xl),
                 const SectionHeader(title: 'Operación'),

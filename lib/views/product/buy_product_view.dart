@@ -104,7 +104,9 @@ class _BuyProductViewState extends State<BuyProductView> {
       stream: _shop,
       builder: (context, snapshot) {
         final shop = snapshot.data;
-        final canPay = shop != null && shop.acceptsNequi;
+        final canPay =
+            shop != null && shop.acceptsNequi && widget.product.inStock;
+        final limit = widget.product.maxPurchasable(_maxQuantity);
         return Column(
           crossAxisAlignment: CrossAxisAlignment.stretch,
           children: [
@@ -147,7 +149,7 @@ class _BuyProductViewState extends State<BuyProductView> {
                   ),
                   IconButton(
                     tooltip: 'Agregar una unidad',
-                    onPressed: _quantity < _maxQuantity
+                    onPressed: _quantity < limit
                         ? () => setState(() => _quantity++)
                         : null,
                     icon: const Icon(Icons.add_circle_outline),
@@ -163,6 +165,23 @@ class _BuyProductViewState extends State<BuyProductView> {
               ],
             ),
             const SizedBox(height: AppSpace.lg),
+            if (!widget.product.inStock)
+              Padding(
+                padding: const EdgeInsets.only(bottom: AppSpace.md),
+                child: Text(
+                  'Este producto está agotado por ahora. Pregunta en la '
+                  'barbería cuándo vuelve a llegar.',
+                  style: text.secondary,
+                ),
+              )
+            else if (widget.product.isLowStock)
+              Padding(
+                padding: const EdgeInsets.only(bottom: AppSpace.md),
+                child: Text(
+                  'Quedan solo ${widget.product.stock} unidades.',
+                  style: text.secondary,
+                ),
+              ),
             if (shop != null && !shop.acceptsNequi)
               Padding(
                 padding: const EdgeInsets.only(bottom: AppSpace.md),

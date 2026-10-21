@@ -13,6 +13,17 @@ import '../widgets/shimmer_box.dart';
 import 'buy_product_view.dart';
 import 'product_form_sheet.dart';
 
+String? _detail(Product product, bool canManage) {
+  final parts = [
+    if ((product.description ?? '').isNotEmpty) product.description!,
+    if (product.tracksStock && (canManage || !product.inStock))
+      !product.inStock
+          ? 'Agotado'
+          : 'Stock: ${product.stock}${product.isLowStock ? ' (bajo)' : ''}',
+  ];
+  return parts.isEmpty ? null : parts.join(' · ');
+}
+
 /// Catálogo de productos de una barbería. Con [canManage] (dueño) se agregan,
 /// editan, eliminan y ocultan; sin él (cliente) solo se ven los activos y se
 /// pueden comprar.
@@ -89,7 +100,7 @@ class ManageProductsView extends StatelessWidget {
                 final product = products[index];
                 return CatalogTile(
                   name: product.name,
-                  detail: product.description,
+                  detail: _detail(product, canManage),
                   priceLabel: formatCop(product.price),
                   photoUrl: product.photoUrl,
                   fallbackIcon: Icons.shopping_bag_outlined,

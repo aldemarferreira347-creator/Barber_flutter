@@ -362,16 +362,48 @@ service cloud.firestore {
       match /services/{serviceId} {
         allow read: if isSignedIn();
         allow create, update: if isSignedIn() && (isOwnerOfShop(shopId) || isAdmin())
-          && request.resource.data.price is number && request.resource.data.price >= 0
+          && request.resource.data.price is number && request.resource.data.price > 0
           && request.resource.data.durationMinutes is int && request.resource.data.durationMinutes > 0;
         allow delete: if isSignedIn() && (isOwnerOfShop(shopId) || isAdmin());
       }
 
-      // productos del catálogo: mismo criterio que servicios.
+      // productos del catálogo: el dueño (o el admin) los administra con su
+      // precio, que debe ser mayor que 0. El stock es null (sin inventario)
+      // o un entero >= 0.
+      //
+      // Los barberos de la barbería manejan SOLO el inventario: pueden
+      // cambiar `stock` (y `lastMovementId`) y nada más, y únicamente si en
+      // la MISMA escritura se crea el movimiento de inventario que lo
+      // explica (quién, cuánto y cómo quedó). Nunca tocan precio ni nombre.
       match /products/{productId} {
+        function stockValid(data) {
+          return data.get('stock', null) == null ||
+            (data.stock is int && data.stock >= 0);
+        }
+
+        function staffStockChange() {
+          let movementPath = /databases/$(database)/documents/stockMovements/$(request.resource.data.get('lastMovementId', 'none'));
+          return isBarberOfShop(shopId)
+            && request.resource.data.diff(resource.data).affectedKeys().hasOnly(['stock', 'lastMovementId'])
+            && request.resource.data.stock is int
+            && request.resource.data.stock >= 0
+            && request.resource.data.lastMovementId is string
+            && existsAfter(movementPath)
+            && getAfter(movementPath).data.barbershopId == shopId
+            && getAfter(movementPath).data.productId == productId
+            && getAfter(movementPath).data.stockAfter == request.resource.data.stock;
+        }
+
         allow read: if isSignedIn();
-        allow create, update: if isSignedIn() && (isOwnerOfShop(shopId) || isAdmin())
-          && request.resource.data.price is number && request.resource.data.price >= 0;
+        allow create: if isSignedIn() && (isOwnerOfShop(shopId) || isAdmin())
+          && request.resource.data.price is number && request.resource.data.price > 0
+          && stockValid(request.resource.data);
+        allow update: if isSignedIn() && (
+          ((isOwnerOfShop(shopId) || isAdmin())
+            && request.resource.data.price is number && request.resource.data.price > 0
+            && stockValid(request.resource.data)) ||
+          staffStockChange()
+        );
         allow delete: if isSignedIn() && (isOwnerOfShop(shopId) || isAdmin());
       }
 
@@ -379,6 +411,48 @@ service cloud.firestore {
         allow read: if isSignedIn();
         allow write: if isAdmin();
       }
+    }
+
+    // stockMovements/{id}: bitácora de inventario (quién metió o sacó cuántas
+    // unidades de qué producto). Vive en una colección propia, y no bajo
+    // barbershops/{id}, porque esa subárbol es legible por cualquier usuario
+    // con sesión. Solo el personal de la barbería (y el admin) la lee y la
+    // escribe; nunca se edita ni se borra. Cada movimiento debe cuadrar: la
+    // salida resta y la entrada suma sobre el stock real del producto, y el
+    // producto queda con ese stock en la misma escritura.
+    match /stockMovements/{movementId} {
+      function productPath() {
+        return /databases/$(database)/documents/barbershops/$(request.resource.data.barbershopId)/products/$(request.resource.data.productId);
+      }
+
+      allow read: if isSignedIn() && (isStaffOfShop(resource.data.barbershopId) || isAdmin());
+      allow create: if isSignedIn() && (isStaffOfShop(request.resource.data.barbershopId) || isAdmin())
+        && request.resource.data.keys().hasOnly([
+             'barbershopId', 'productId', 'productName', 'type', 'quantity', 'reason', 'note',
+             'previousStock', 'stockAfter', 'byUserId', 'byUserName', 'createdAt'
+           ])
+        && request.resource.data.keys().hasAll([
+             'barbershopId', 'productId', 'type', 'quantity', 'reason', 'previousStock',
+             'stockAfter', 'byUserId', 'createdAt'
+           ])
+        && request.resource.data.barbershopId is string
+        && request.resource.data.productId is string
+        && request.resource.data.type in ['in', 'out']
+        && request.resource.data.quantity is int
+        && request.resource.data.quantity > 0 && request.resource.data.quantity <= 10000
+        && request.resource.data.previousStock is int && request.resource.data.previousStock >= 0
+        && request.resource.data.stockAfter is int && request.resource.data.stockAfter >= 0
+        && request.resource.data.byUserId == request.auth.uid
+        && request.resource.data.createdAt == request.time
+        && (request.resource.data.type == 'in'
+              ? request.resource.data.stockAfter == request.resource.data.previousStock + request.resource.data.quantity
+              : request.resource.data.stockAfter == request.resource.data.previousStock - request.resource.data.quantity)
+        && exists(productPath())
+        && (get(productPath()).data.get('stock', null) == null
+              ? request.resource.data.previousStock == 0
+              : get(productPath()).data.stock == request.resource.data.previousStock)
+        && getAfter(productPath()).data.stock == request.resource.data.stockAfter;
+      allow update, delete: if false;
     }
 
     // appointments/{id}: el cliente crea su propia cita SIN pago (status

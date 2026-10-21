@@ -4,6 +4,7 @@ import '../../models/app_user.dart';
 import '../help/help_view.dart';
 import '../notification/notifications_view.dart';
 import '../product/claim_purchase_view.dart';
+import '../product/inventory_view.dart';
 import '../profile/profile_menu_view.dart';
 import '../service/manage_services_view.dart';
 
@@ -32,6 +33,15 @@ List<ProfileMenuItem> buildBarberProfileItems(
           MaterialPageRoute(
             builder: (_) =>
                 ManageServicesView(barbershopId: profile!.barbershopId!),
+          ),
+        ),
+      ),
+      ProfileMenuItem(
+        icon: Icons.inventory_2_outlined,
+        label: 'Inventario',
+        onTap: () => Navigator.of(context).push(
+          MaterialPageRoute(
+            builder: (_) => InventoryView(barbershopId: profile!.barbershopId!),
           ),
         ),
       ),

@@ -58,17 +58,19 @@ describe('firestore.rules — barbershops/{shopId}/products', () => {
     await assertSucceeds(getDoc(doc(db, `barbershops/${SHOP_ID}/products/p1`)));
   });
 
-  it('el precio de un producto debe ser un número no negativo', async () => {
+  it('el precio de un producto debe ser un número mayor que cero', async () => {
     const db = testEnv.authenticatedContext(OWNER_UID).firestore();
     await assertFails(setDoc(doc(db, `barbershops/${SHOP_ID}/products/pNeg`), { name: 'Cera', price: -1, active: true }));
     await assertFails(setDoc(doc(db, `barbershops/${SHOP_ID}/products/pStr`), { name: 'Cera', price: '15000', active: true }));
     await assertFails(setDoc(doc(db, `barbershops/${SHOP_ID}/products/pNone`), { name: 'Cera', active: true }));
-    await assertSucceeds(setDoc(doc(db, `barbershops/${SHOP_ID}/products/pOk`), { name: 'Cera', price: 0, active: true }));
+    await assertFails(setDoc(doc(db, `barbershops/${SHOP_ID}/products/pZero`), { name: 'Cera', price: 0, active: true }));
+    await assertSucceeds(setDoc(doc(db, `barbershops/${SHOP_ID}/products/pOk`), { name: 'Cera', price: 1000, active: true }));
   });
 
-  it('el precio de un servicio debe ser un número no negativo y la duración positiva', async () => {
+  it('el precio de un servicio debe ser mayor que cero y la duración positiva', async () => {
     const db = testEnv.authenticatedContext(OWNER_UID).firestore();
     await assertFails(setDoc(doc(db, `barbershops/${SHOP_ID}/services/sNeg`), { name: 'Corte', price: -5000, durationMinutes: 30, active: true }));
+    await assertFails(setDoc(doc(db, `barbershops/${SHOP_ID}/services/sZero`), { name: 'Corte', price: 0, durationMinutes: 30, active: true }));
     await assertFails(setDoc(doc(db, `barbershops/${SHOP_ID}/services/sDur`), { name: 'Corte', price: 5000, durationMinutes: 0, active: true }));
     await assertSucceeds(setDoc(doc(db, `barbershops/${SHOP_ID}/services/sOk`), { name: 'Corte', price: 5000, durationMinutes: 30, active: true }));
   });

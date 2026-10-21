@@ -13,6 +13,7 @@ import '../../utils/date_labels.dart';
 import '../appointment/barber_appointments_view.dart';
 import '../barber/barber_availability_view.dart';
 import '../barbershop/barbershop_detail_view.dart';
+import '../product/inventory_view.dart';
 import '../service/manage_services_view.dart';
 import '../widgets/action_list_tile.dart';
 import '../widgets/app_card.dart';
@@ -69,6 +70,19 @@ class BarberDashboardTab extends StatelessWidget {
                   MaterialPageRoute(
                     builder: (_) =>
                         ManageServicesView(barbershopId: barbershopId),
+                  ),
+                ),
+        ),
+        const SizedBox(height: AppSpace.sm),
+        ActionListTile(
+          icon: Icons.inventory_2_outlined,
+          label: 'Inventario',
+          subtitle: 'Qué productos entran y cuáles salen',
+          onTap: barbershopId == null
+              ? null
+              : () => Navigator.of(context).push(
+                  MaterialPageRoute(
+                    builder: (_) => InventoryView(barbershopId: barbershopId),
                   ),
                 ),
         ),

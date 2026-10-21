@@ -47,6 +47,7 @@ class _ProductFormState extends State<_ProductForm> {
         ? ''
         : widget.product!.price.round().toString(),
   );
+  late final _stock = TextEditingController();
   PickedPhoto? _photo;
   bool _saving = false;
 
@@ -55,6 +56,7 @@ class _ProductFormState extends State<_ProductForm> {
     _name.dispose();
     _description.dispose();
     _price.dispose();
+    _stock.dispose();
     super.dispose();
   }
 
@@ -75,6 +77,9 @@ class _ProductFormState extends State<_ProductForm> {
         price: double.parse(_price.text.trim()),
         photoUrl: widget.product?.photoUrl,
         active: widget.product?.active ?? true,
+        // El inventario inicial solo se fija al crear; después cambia con
+        // entradas y salidas (así queda quién y cuándo).
+        stock: widget.product == null ? int.tryParse(_stock.text.trim()) : null,
       );
       // Primero el producto y después la foto: si la foto falla, el producto
       // queda guardado (con su precio) y no se pierde nada ni quedan fotos
@@ -200,6 +205,27 @@ class _ProductFormState extends State<_ProductForm> {
               return (price == null || price <= 0) ? 'Mayor que 0' : null;
             },
           ),
+          if (widget.product == null) ...[
+            const SizedBox(height: AppSpace.lg),
+            TextFormField(
+              controller: _stock,
+              keyboardType: TextInputType.number,
+              inputFormatters: [FilteringTextInputFormatter.digitsOnly],
+              decoration: const InputDecoration(
+                labelText: 'Unidades disponibles (opcional)',
+                helperText:
+                    'Déjalo vacío si no llevas inventario de este producto',
+                prefixIcon: Icon(Icons.inventory_2_outlined),
+              ),
+            ),
+          ] else if (widget.product!.tracksStock) ...[
+            const SizedBox(height: AppSpace.lg),
+            Text(
+              'Hay ${widget.product!.stock} unidades. Cámbialas desde '
+              '"Inventario" para que quede registro.',
+              style: Theme.of(context).textTheme.bodySmall,
+            ),
+          ],
           const SizedBox(height: AppSpace.xl),
           AppButton(
             onPressed: _saving ? null : _save,

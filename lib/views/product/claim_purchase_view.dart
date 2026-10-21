@@ -4,6 +4,7 @@ import 'package:provider/provider.dart';
 import '../../models/barbershop.dart';
 import '../../models/payment_record.dart';
 import '../../models/purchase.dart';
+import '../../repositories/inventory_repository.dart';
 import '../../repositories/purchase_repository.dart';
 import '../../theme/app_colors.dart';
 import '../../theme/app_tokens.dart';
@@ -87,7 +88,13 @@ class _ClaimPurchaseViewState extends State<ClaimPurchaseView> {
     );
     if (!ok || !mounted) return;
     try {
+      final inventory = context.read<InventoryRepository>();
       await context.read<PurchaseRepository>().claimPurchase(purchase.id);
+      // Lo entregado sale del inventario. Si esto falla la entrega ya
+      // quedó registrada: el barbero puede ajustar el stock a mano.
+      try {
+        await inventory.registerPurchaseDelivery(purchase);
+      } catch (_) {}
       if (!mounted) return;
       setState(() {
         _purchase = null;

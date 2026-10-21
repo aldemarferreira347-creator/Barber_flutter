@@ -10,6 +10,7 @@ import 'repositories/appointment_repository.dart';
 import 'repositories/auth_repository.dart';
 import 'repositories/barber_availability_repository.dart';
 import 'repositories/barbershop_repository.dart';
+import 'repositories/inventory_repository.dart';
 import 'repositories/notification_repository.dart';
 import 'repositories/payment_repository.dart';
 import 'repositories/platform_settings_repository.dart';
@@ -33,6 +34,7 @@ import 'services/firebase_auth_service.dart';
 import 'services/firebase_storage_service.dart';
 import 'services/firestore_appointment_service.dart';
 import 'services/firestore_barbershop_service.dart';
+import 'services/firestore_inventory_service.dart';
 import 'services/firestore_notification_service.dart';
 import 'services/firestore_product_service.dart';
 import 'services/firestore_service_service.dart';
@@ -100,6 +102,9 @@ class BarberApp extends StatelessWidget {
         Provider<RatingRepository>(create: (_) => CloudRatingService()),
         ProxyProvider<StorageRepository, ProductRepository>(
           update: (_, storage, _) => FirestoreProductService(storage: storage),
+        ),
+        Provider<InventoryRepository>(
+          create: (_) => FirestoreInventoryService(),
         ),
         ProxyProvider<StorageRepository, CommentRepository>(
           update: (_, storage, _) => CloudCommentService(storage: storage),
