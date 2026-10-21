@@ -49,6 +49,15 @@ class ErrorState extends StatelessWidget {
     };
   }
 
+  /// Código corto del error, para que quien lo reporte (o quien da soporte)
+  /// sepa qué falló de verdad sin abrir los registros del teléfono.
+  String? get _technicalCode {
+    final e = error;
+    if (e == null) return null;
+    if (e is LoadTimeoutException) return 'tiempo-agotado';
+    return failureCode(e) ?? e.runtimeType.toString();
+  }
+
   IconData get _icon => switch (_kind) {
     FailureKind.network => Icons.wifi_off_outlined,
     FailureKind.access => Icons.lock_outline,
@@ -81,6 +90,14 @@ class ErrorState extends StatelessWidget {
           Text(title, textAlign: TextAlign.center, style: text.titleMedium),
           const SizedBox(height: AppSpace.xs),
           Text(_subtitle, textAlign: TextAlign.center, style: text.secondary),
+          if (_technicalCode != null) ...[
+            const SizedBox(height: AppSpace.sm),
+            Text(
+              'Código: $_technicalCode',
+              textAlign: TextAlign.center,
+              style: text.bodySmall,
+            ),
+          ],
           if (onRetry != null) ...[
             const SizedBox(height: AppSpace.lg),
             AppButton(

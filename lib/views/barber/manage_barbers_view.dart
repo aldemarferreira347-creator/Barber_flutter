@@ -13,6 +13,7 @@ import '../widgets/empty_state.dart';
 import '../widgets/error_state.dart';
 import '../widgets/responsive_body.dart';
 import '../widgets/shimmer_box.dart';
+import '../widgets/async_state_view.dart';
 import '../../utils/error_text.dart';
 
 class ManageBarbersView extends StatelessWidget {
@@ -87,12 +88,13 @@ class ManageBarbersView extends StatelessWidget {
         icon: const Icon(Icons.person_add_alt_1),
         label: const Text('Contratar'),
       ),
-      body: StreamBuilder<List<AppUser>>(
+      body: RetryStreamBuilder<List<AppUser>>(
         stream: repo.watchBarbersByBarbershop(barbershopId),
-        builder: (context, snapshot) {
+        builder: (context, snapshot, retry) {
           if (snapshot.hasError) {
             return Center(
               child: ErrorState(
+                onRetry: retry,
                 title: 'No pudimos cargar los barberos',
                 error: snapshot.error,
               ),

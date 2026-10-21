@@ -17,6 +17,7 @@ import '../widgets/empty_state.dart';
 import '../widgets/error_state.dart';
 import '../widgets/responsive_body.dart';
 import '../widgets/shimmer_box.dart';
+import '../widgets/async_state_view.dart';
 import '../../utils/error_text.dart';
 
 bool _isStaffOfShop(AppUser profile, Barbershop shop) {
@@ -40,12 +41,13 @@ class BarbershopReviewsView extends StatelessWidget {
 
     return Scaffold(
       appBar: AppBar(title: const Text('Reseñas')),
-      body: StreamBuilder<Barbershop?>(
+      body: RetryStreamBuilder<Barbershop?>(
         stream: barbershopRepo.watchOne(barbershopId),
-        builder: (context, shopSnapshot) {
+        builder: (context, shopSnapshot, retry) {
           if (shopSnapshot.hasError) {
             return Center(
               child: ErrorState(
+                onRetry: retry,
                 title: 'No pudimos cargar las reseñas',
                 error: shopSnapshot.error,
               ),
@@ -61,14 +63,15 @@ class BarbershopReviewsView extends StatelessWidget {
 
           final isStaff = profile != null && _isStaffOfShop(profile, shop);
 
-          return StreamBuilder<List<Comment>>(
+          return RetryStreamBuilder<List<Comment>>(
             stream: context
                 .read<CommentRepository>()
                 .watchPublishedByBarbershop(barbershopId),
-            builder: (context, commentsSnapshot) {
+            builder: (context, commentsSnapshot, retry) {
               if (commentsSnapshot.hasError) {
                 return Center(
                   child: ErrorState(
+                    onRetry: retry,
                     title: 'No pudimos cargar los comentarios',
                     error: commentsSnapshot.error,
                   ),

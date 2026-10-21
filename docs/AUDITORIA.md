@@ -228,6 +228,32 @@ Eliminar los `Color(0x…)` / `Colors.white|black` restantes de las vistas (logi
 2. **Sin servidor:** mora derivada de fechas (reglas + cliente: una barbería en mora no recibe citas ni compras y sale del catálogo; el dueño no puede autorrenovarse), compras vencidas (la regla impide reclamar tras 24 h), recordatorios locales 1 h y 15 min antes de cada cita aceptada (`flutter_local_notifications`), consultas en vivo compartidas (`SharedStreams`) que eliminan parpadeos y listeners duplicados.
 3. **Ausentes ya cubiertos:** "Mis compras" del cliente (vuelve a ver su código), informe del dueño (citas atendidas, clientes, ingresos Nequi, actividad por barbero), catálogo editable (servicios y productos con foto), quitado el stub "Métodos de pago".
 
+## Fase 9 — Corrección de flujos principales (2026-10-21)
+
+Plan: `docs/superpowers/plans/2026-10-21-correccion-flujos-principales.md`. Origen: pruebas manuales en teléfono con los roles cliente, dueño y administrador.
+
+| Hallazgo | Causa raíz | Corrección | Prueba |
+|---|---|---|---|
+| Fotos de producto/servicio: "el objeto no existe en la referencia" | `putData` sin tipo de archivo: en el teléfono sube como `octet-stream`, `storage.rules` exige `image/*` y rechaza; luego `getDownloadURL` dice "object-not-found". Las pruebas de reglas siempre mandaban `image/png` y no lo veían | `contentType` por extensión (`imageContentType`), tope de 5 MB, verifica el resultado; el producto/servicio se guarda ANTES que la foto (un fallo de foto no pierde nada); en el alta de barbería un fallo de foto no invita a pagar otra vez | `storage.rules.test.ts` (sin tipo = rechazo, con tipo = acepta), `image_content_type_test` |
+| Fotos de reseñas siempre rechazadas | `storage.rules` no tenía regla para `comments/{cita}/...` | Regla: solo el cliente de esa cita | `storage.rules.test.ts` |
+| Pantallas "cargando" para siempre / "error de conexión" en cuentas nuevas | Las pantallas ya separaban vacío de error: el error era una consulta que fallaba de verdad y la app lo ocultaba tras un texto genérico. Además el catálogo dependía de `platformSettings/main` y un solo documento mal formado tumbaba la lista; una consulta fallida quedaba en el registro compartido hasta 20 s | `AsyncStateView` (cargando / vacío / error / datos, con tiempo máximo y Reintentar), `RetryStreamBuilder`, `ErrorState` con la causa real y un código corto ("Código: permission-denied"), `SharedStreams` registra el error y suelta la consulta fallida, `parseDocs` omite documentos dañados, `watchApproved` ya no espera la configuración del admin | `async_state_view_test`, `failure_test`, `firestore_barbershop_service_test` |
+| Reserva sin productos ni horas ocupadas | No existía el paso; las horas ya tomadas por reservas pagadas se ofrecían igual | Paso opcional de productos (stock, tope por producto, compra vinculada a la cita); `AppointmentRepository.takenSlots` apaga las horas ocupadas | `book_appointment_products_test` |
+| Inventario | No existía; el barbero no podía tocar productos | `Product.stock` opcional, `StockMovement`, transacción de entrada/salida, pantalla Inventario, la entrega de una compra descuenta; reglas: el barbero solo cambia `stock` con un movimiento que cuadre; bitácora en colección propia (la subcolección de `barbershops` es legible por cualquier sesión) | `firestore_inventory_service_test`, `inventory_view_test`, `inventory.rules.test.ts` |
+| Cierre de barbería | Exigía fecha final, solo aplazaba citas pagadas y no avisaba a nadie | Sin fecha de regreso = "hasta nuevo aviso" con modal de dos opciones; vista previa del impacto; pagadas se aplazan, sin pago se cancelan; avisos con id determinista a cada cliente con cita o compra abierta; barbería marcada `closure` (catálogo, horas y reglas lo respetan); reabrir | `cloud_shop_closure_service_test`, `close_shop_view_test`, `shopClosureFlow.rules.test.ts` |
+| Fondo y tarjetas casi iguales; emojis | Tokens de color demasiado próximos | Tres capas de color con borde visible, sombra suave en claro, acento claro algo más oscuro (contraste AA), `CatalogTile` con foto grande, etiquetas y precio en píldora; sin emojis | `contrast_test`, `no_emoji_test` |
+| Inicio de sesión que a veces pedía varios intentos | La lectura del perfil tras iniciar sesión podía fallar sin reintento ni aviso y la app se quedaba en "cargando" | Reintentos cortos, pantalla "No pudimos conectar" con Reintentar, mensajes de autenticación en español | `auth_controller_profile_load_test` |
+| Precios | Las reglas aceptaban precio 0 | `price > 0` en productos y servicios | `products.rules.test.ts` |
+
+**Para que todo esto funcione en el teléfono hay que desplegar las reglas y los índices** (la app y las reglas cambiaron juntas; con reglas viejas fallan el inventario, los avisos de cierre, las fotos de reseñas y el bloqueo de reservas durante un cierre):
+
+```
+firebase deploy --only firestore:rules,firestore:indexes,storage --project barber-5082f
+```
+
+El índice nuevo (`stockMovements`: `barbershopId` + `createdAt` descendente) tarda unos minutos en construirse. Si una pantalla muestra "Código: failed-precondition", falta algún índice por terminar. Que las reglas desplegadas en `barber-5082f` estén al día con el repositorio es la causa más probable de que fallaran a la vez catálogo, datos de cobro, compras y citas: se puede comprobar en la consola de Firebase (Firestore > Reglas) o leyendo el "Código" que ahora muestra cada pantalla de error.
+
+**Verificación en este entorno:** `flutter analyze` (solo 3 avisos de estilo ya existentes), `flutter test` 306, Functions build/lint/jest (251), `npm run test:rules` 177 de 180. Los 3 que no pasan aquí son pruebas de `storage.rules` que consultan Firestore desde Storage (`firestore.exists`): fallan igual en el estado anterior de este contenedor (2 ya existentes y 1 nueva con la misma consulta) y no por las reglas; hay que ejecutarlas en una máquina con los emuladores completos. Las reglas del tipo de archivo (sin Firestore) sí se verificaron.
+
 ## Fuera de alcance (necesitan datos de negocio o servicios de pago)
 
 Despliegue con Blaze y Cloud Functions, credenciales reales (Nequi/Twilio/SendGrid), correo y teléfono de soporte reales (`lib/support_info.dart` son marcadores), catálogo de peinados con IA, App Check y restricciones de la clave de API de GCP, envío real de push/SMS/correo, y borrar la cuenta de acceso al eliminar un usuario (requiere Admin SDK: hoy "Eliminar perfil" borra solo los datos de la app).

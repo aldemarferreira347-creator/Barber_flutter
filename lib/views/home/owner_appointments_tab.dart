@@ -11,6 +11,7 @@ import '../widgets/empty_state.dart';
 import '../widgets/error_state.dart';
 import '../widgets/shimmer_box.dart';
 import '../widgets/staff_appointment_card.dart';
+import '../widgets/async_state_view.dart';
 
 /// "Mis citas" del Dueño: las citas que sus clientes agendaron en SUS
 /// barberías (no las que él mismo reserva como cliente — esas están en
@@ -33,14 +34,15 @@ class _OwnerAppointmentsTabState extends State<OwnerAppointmentsTab> {
 
     return Scaffold(
       appBar: AppBar(title: const Text('Mis citas')),
-      body: StreamBuilder<List<Barbershop>>(
+      body: RetryStreamBuilder<List<Barbershop>>(
         stream: profile == null
             ? const Stream<List<Barbershop>>.empty()
             : barbershopService.watchByOwner(profile.uid),
-        builder: (context, snapshot) {
+        builder: (context, snapshot, retry) {
           if (snapshot.hasError) {
             return Center(
               child: ErrorState(
+                onRetry: retry,
                 title: 'No pudimos cargar tus barberías',
                 error: snapshot.error,
               ),
@@ -136,12 +138,13 @@ class _AppointmentsListState extends State<_AppointmentsList> {
   Widget build(BuildContext context) {
     final shopNames = widget.shopNames;
     final showShopName = widget.showShopName;
-    return StreamBuilder<List<Appointment>>(
+    return RetryStreamBuilder<List<Appointment>>(
       stream: _stream,
-      builder: (context, snapshot) {
+      builder: (context, snapshot, retry) {
         if (snapshot.hasError) {
           return Center(
             child: ErrorState(
+              onRetry: retry,
               title: 'No pudimos cargar las citas',
               error: snapshot.error,
             ),

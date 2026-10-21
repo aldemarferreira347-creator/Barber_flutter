@@ -145,3 +145,41 @@ class _AsyncStateViewState<T> extends State<AsyncStateView<T>> {
     return false;
   }
 }
+
+/// `StreamBuilder` que le da a su `builder` una función [retry] para el
+/// botón "Reintentar" de un [ErrorState]: vuelve a suscribirse al stream.
+/// Para las pantallas que ya arman sus estados a mano y solo necesitan poder
+/// reintentar tras un error.
+class RetryStreamBuilder<T> extends StatefulWidget {
+  final Stream<T> stream;
+  final Widget Function(
+    BuildContext context,
+    AsyncSnapshot<T> snapshot,
+    VoidCallback retry,
+  )
+  builder;
+
+  const RetryStreamBuilder({
+    super.key,
+    required this.stream,
+    required this.builder,
+  });
+
+  @override
+  State<RetryStreamBuilder<T>> createState() => _RetryStreamBuilderState<T>();
+}
+
+class _RetryStreamBuilderState<T> extends State<RetryStreamBuilder<T>> {
+  int _attempt = 0;
+
+  void _retry() => setState(() => _attempt++);
+
+  @override
+  Widget build(BuildContext context) {
+    return StreamBuilder<T>(
+      key: ValueKey(_attempt),
+      stream: widget.stream,
+      builder: (context, snapshot) => widget.builder(context, snapshot, _retry),
+    );
+  }
+}

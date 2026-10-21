@@ -8,6 +8,7 @@ import '../widgets/empty_state.dart';
 import '../widgets/error_state.dart';
 import '../widgets/shimmer_box.dart';
 import '../widgets/staff_appointment_card.dart';
+import '../widgets/async_state_view.dart';
 
 class BarberAppointmentsView extends StatelessWidget {
   const BarberAppointmentsView({super.key});
@@ -21,12 +22,13 @@ class BarberAppointmentsView extends StatelessWidget {
       appBar: AppBar(title: const Text('Citas')),
       body: profile == null
           ? const SizedBox.shrink()
-          : StreamBuilder<List<Appointment>>(
+          : RetryStreamBuilder<List<Appointment>>(
               stream: repo.watchByBarber(profile.uid),
-              builder: (context, snapshot) {
+              builder: (context, snapshot, retry) {
                 if (snapshot.hasError) {
                   return Center(
                     child: ErrorState(
+                      onRetry: retry,
                       title: 'No pudimos cargar tus citas',
                       error: snapshot.error,
                     ),

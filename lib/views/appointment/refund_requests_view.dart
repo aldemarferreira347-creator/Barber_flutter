@@ -21,6 +21,7 @@ import '../widgets/payment_status_line.dart';
 import '../widgets/responsive_body.dart';
 import '../widgets/shimmer_box.dart';
 import '../widgets/status_badge.dart';
+import '../widgets/async_state_view.dart';
 import '../../utils/error_text.dart';
 
 /// Panel del dueño para aprobar/rechazar solicitudes de cancelación con
@@ -111,12 +112,13 @@ class RefundRequestsView extends StatelessWidget {
 
     return Scaffold(
       appBar: AppBar(title: const Text('Solicitudes de reembolso')),
-      body: StreamBuilder<List<RefundRequest>>(
+      body: RetryStreamBuilder<List<RefundRequest>>(
         stream: repo.watchByBarbershop(barbershopId),
-        builder: (context, snapshot) {
+        builder: (context, snapshot, retry) {
           if (snapshot.hasError) {
             return Center(
               child: ErrorState(
+                onRetry: retry,
                 title: 'No pudimos cargar las solicitudes',
                 error: snapshot.error,
               ),

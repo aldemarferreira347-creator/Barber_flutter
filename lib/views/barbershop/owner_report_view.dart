@@ -16,6 +16,7 @@ import '../widgets/responsive_body.dart';
 import '../widgets/section_header.dart';
 import '../widgets/shimmer_box.dart';
 import '../widgets/stat_card.dart';
+import '../widgets/async_state_view.dart';
 
 enum _Period {
   today('Hoy'),
@@ -52,12 +53,13 @@ class _OwnerReportViewState extends State<OwnerReportView> {
   Widget build(BuildContext context) {
     return Scaffold(
       appBar: AppBar(title: const Text('Informe')),
-      body: StreamBuilder<List<Barbershop>>(
+      body: RetryStreamBuilder<List<Barbershop>>(
         stream: _shops,
-        builder: (context, shopsSnapshot) {
+        builder: (context, shopsSnapshot, retry) {
           if (shopsSnapshot.hasError) {
             return Center(
               child: ErrorState(
+                onRetry: retry,
                 title: 'No pudimos cargar tus barberías',
                 error: shopsSnapshot.error,
               ),
@@ -136,11 +138,12 @@ class _ReportBodyState extends State<_ReportBody> {
                     widget.onPeriod(selection.first),
               ),
               const SizedBox(height: AppSpace.lg),
-              StreamBuilder<List<Appointment>>(
+              RetryStreamBuilder<List<Appointment>>(
                 stream: _appointments,
-                builder: (context, snapshot) {
+                builder: (context, snapshot, retry) {
                   if (snapshot.hasError) {
                     return ErrorState(
+                      onRetry: retry,
                       title: 'No pudimos cargar las citas',
                       error: snapshot.error,
                     );

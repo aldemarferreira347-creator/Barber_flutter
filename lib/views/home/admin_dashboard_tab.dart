@@ -26,6 +26,7 @@ import '../widgets/error_state.dart';
 import '../widgets/section_header.dart';
 import '../widgets/stat_card.dart';
 import '../widgets/status_badge.dart';
+import '../widgets/async_state_view.dart';
 
 class AdminDashboardTab extends StatefulWidget {
   const AdminDashboardTab({super.key});
@@ -133,11 +134,12 @@ class _AdminDashboardTabState extends State<AdminDashboardTab> {
       ),
       notificationsUid: profile?.uid,
       children: [
-        StreamBuilder<List<AppUser>>(
+        RetryStreamBuilder<List<AppUser>>(
           stream: userService.watchAll(),
-          builder: (context, userSnapshot) {
+          builder: (context, userSnapshot, retry) {
             if (userSnapshot.hasError) {
               return ErrorState(
+                onRetry: retry,
                 title: 'No pudimos cargar las estadísticas',
                 error: userSnapshot.error,
               );
@@ -154,11 +156,12 @@ class _AdminDashboardTabState extends State<AdminDashboardTab> {
                           settingsSnapshot.data ?? PlatformSettings.defaults;
                       final pendingPayments =
                           paymentsSnapshot.data?.length ?? 0;
-                      return StreamBuilder<List<Barbershop>>(
+                      return RetryStreamBuilder<List<Barbershop>>(
                         stream: barbershopService.watchAll(),
-                        builder: (context, shopSnapshot) {
+                        builder: (context, shopSnapshot, retry) {
                           if (shopSnapshot.hasError) {
                             return ErrorState(
+                              onRetry: retry,
                               title: 'No pudimos cargar las estadísticas',
                               error: shopSnapshot.error,
                             );

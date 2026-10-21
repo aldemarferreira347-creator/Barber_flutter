@@ -11,6 +11,8 @@ Lo que sigue en este archivo es el historial de fases anteriores; **esta secció
 
 **Verificado:** `flutter analyze` 0 issues, `flutter test` 242, Functions build/lint/jest (251), `npm run test:rules` 143 en 13 suites (las reglas SÍ se ejecutan ya contra el emulador, con JDK 21), APK debug compila, y recorrido en vivo contra emuladores de cliente, dueña y administrador.
 
+**Actualización 2026-10-21 (rama `claude/barbershop-app-bugs-gpqbr2`):** corregidos los flujos principales reportados en pruebas con teléfono (carga y errores de listas, fotos, reserva con productos, inventario, cierre de barbería con avisos, capas de color, sin emojis, inicio de sesión). Detalle y causas raíz: `docs/AUDITORIA.md` (Fase 9). **Pendiente tuyo: desplegar reglas, índices y Storage** (`firebase deploy --only firestore:rules,firestore:indexes,storage --project barber-5082f`); sin eso las funciones nuevas no escriben.
+
 **Cambios de fondo respecto a lo descrito más abajo:**
 - El cobro **ya no es simulado**: pago Nequi manual (el pagador registra la referencia; el personal de la barbería o el admin la verifica). Nadie confirma su propio pago (reglas).
 - Mora, expiración de compras y recordatorios se resuelven **sin servidor** (estado derivado de fechas, reglas y avisos locales).

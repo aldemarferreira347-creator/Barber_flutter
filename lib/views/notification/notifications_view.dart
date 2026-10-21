@@ -12,6 +12,7 @@ import '../widgets/error_state.dart';
 import '../widgets/responsive_body.dart';
 import '../widgets/scroll_to_top_fab.dart';
 import '../widgets/shimmer_box.dart';
+import '../widgets/async_state_view.dart';
 
 class NotificationsView extends StatefulWidget {
   final String uid;
@@ -53,12 +54,13 @@ class _NotificationsViewState extends State<NotificationsView> {
     return Scaffold(
       appBar: AppBar(title: const Text('Notificaciones')),
       floatingActionButton: ScrollToTopFab(controller: _scrollController),
-      body: StreamBuilder<List<AppNotification>>(
+      body: RetryStreamBuilder<List<AppNotification>>(
         stream: repo.watchForUser(widget.uid),
-        builder: (context, snapshot) {
+        builder: (context, snapshot, retry) {
           if (snapshot.hasError) {
             return Center(
               child: ErrorState(
+                onRetry: retry,
                 title: 'No pudimos cargar las notificaciones',
                 error: snapshot.error,
               ),

@@ -15,6 +15,7 @@ import '../widgets/error_state.dart';
 import '../widgets/responsive_body.dart';
 import '../widgets/scroll_to_top_fab.dart';
 import '../widgets/shimmer_box.dart';
+import '../widgets/async_state_view.dart';
 import 'user_forms.dart';
 import 'user_style.dart';
 import '../../utils/error_text.dart';
@@ -208,12 +209,13 @@ class _ManageUsersViewState extends State<ManageUsersView> {
             ),
             const SizedBox(height: AppSpace.md),
             Expanded(
-              child: StreamBuilder<List<AppUser>>(
+              child: RetryStreamBuilder<List<AppUser>>(
                 stream: _users,
-                builder: (context, snapshot) {
+                builder: (context, snapshot, retry) {
                   if (snapshot.hasError) {
                     return Center(
                       child: ErrorState(
+                        onRetry: retry,
                         title: 'No pudimos cargar los usuarios',
                         error: snapshot.error,
                       ),

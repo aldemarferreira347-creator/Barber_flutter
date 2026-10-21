@@ -21,6 +21,7 @@ import '../widgets/error_state.dart';
 import '../widgets/section_header.dart';
 import '../widgets/shop_avatar.dart';
 import '../widgets/status_badge.dart';
+import '../widgets/async_state_view.dart';
 
 /// Inicio del Dueño: resumen de SUS barberías (spec 12.2: cada una con su
 /// propia aprobación y mensualidad) y de la actividad de hoy en cada una. La
@@ -41,13 +42,14 @@ class OwnerDashboardTab extends StatelessWidget {
       subtitle: 'Tus barberías en buenas manos',
       notificationsUid: profile?.uid,
       children: [
-        StreamBuilder<List<Barbershop>>(
+        RetryStreamBuilder<List<Barbershop>>(
           stream: profile == null
               ? const Stream<List<Barbershop>>.empty()
               : barbershopService.watchByOwner(profile.uid),
-          builder: (context, snapshot) {
+          builder: (context, snapshot, retry) {
             if (snapshot.hasError) {
               return ErrorState(
+                onRetry: retry,
                 title: 'No pudimos cargar tus barberías',
                 error: snapshot.error,
               );

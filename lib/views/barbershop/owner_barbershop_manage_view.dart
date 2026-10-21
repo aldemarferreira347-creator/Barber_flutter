@@ -22,6 +22,7 @@ import '../widgets/responsive_body.dart';
 import '../widgets/section_header.dart';
 import '../widgets/shimmer_box.dart';
 import '../widgets/shop_avatar.dart';
+import '../widgets/async_state_view.dart';
 import 'approval_status_badge.dart';
 import 'barbershop_detail_view.dart';
 import 'barbershop_reviews_view.dart';
@@ -104,12 +105,13 @@ class OwnerBarbershopManageView extends StatelessWidget {
 
     return Scaffold(
       appBar: AppBar(title: const Text('Gestionar barbería')),
-      body: StreamBuilder<Barbershop?>(
+      body: RetryStreamBuilder<Barbershop?>(
         stream: repo.watchOne(barbershopId),
-        builder: (context, snapshot) {
+        builder: (context, snapshot, retry) {
           if (snapshot.hasError) {
             return Center(
               child: ErrorState(
+                onRetry: retry,
                 title: 'No pudimos cargar la barbería',
                 error: snapshot.error,
               ),

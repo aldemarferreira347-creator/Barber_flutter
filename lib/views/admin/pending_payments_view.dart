@@ -18,6 +18,7 @@ import '../widgets/error_state.dart';
 import '../widgets/payment_status_line.dart';
 import '../widgets/responsive_body.dart';
 import '../widgets/shimmer_box.dart';
+import '../widgets/async_state_view.dart';
 import '../../utils/error_text.dart';
 
 /// Mensualidades que los dueños dicen haber transferido al Nequi de la
@@ -32,12 +33,13 @@ class PendingPaymentsView extends StatelessWidget {
   Widget build(BuildContext context) {
     return Scaffold(
       appBar: AppBar(title: const Text('Pagos por verificar')),
-      body: StreamBuilder<List<PaymentRecord>>(
+      body: RetryStreamBuilder<List<PaymentRecord>>(
         stream: context.read<PaymentRepository>().watchPendingSubscriptions(),
-        builder: (context, snapshot) {
+        builder: (context, snapshot, retry) {
           if (snapshot.hasError) {
             return Center(
               child: ErrorState(
+                onRetry: retry,
                 title: 'No pudimos cargar los pagos',
                 error: snapshot.error,
               ),

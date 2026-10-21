@@ -12,6 +12,7 @@ import '../widgets/error_state.dart';
 import '../widgets/responsive_body.dart';
 import '../widgets/shimmer_box.dart';
 import '../widgets/status_badge.dart';
+import '../widgets/async_state_view.dart';
 import 'service_form_sheet.dart';
 
 /// Catálogo de servicios de una barbería. Con [canManage] (dueño) se agregan,
@@ -40,12 +41,13 @@ class ManageServicesView extends StatelessWidget {
               label: const Text('Nuevo servicio'),
             )
           : null,
-      body: StreamBuilder<List<Service>>(
+      body: RetryStreamBuilder<List<Service>>(
         stream: repo.watchByBarbershop(barbershopId),
-        builder: (context, snapshot) {
+        builder: (context, snapshot, retry) {
           if (snapshot.hasError) {
             return Center(
               child: ErrorState(
+                onRetry: retry,
                 title: 'No pudimos cargar los servicios',
                 error: snapshot.error,
               ),

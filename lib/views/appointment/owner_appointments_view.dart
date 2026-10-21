@@ -7,6 +7,7 @@ import '../widgets/staff_appointment_card.dart';
 import '../widgets/empty_state.dart';
 import '../widgets/error_state.dart';
 import '../widgets/shimmer_box.dart';
+import '../widgets/async_state_view.dart';
 
 class OwnerAppointmentsView extends StatelessWidget {
   final String barbershopId;
@@ -19,12 +20,13 @@ class OwnerAppointmentsView extends StatelessWidget {
 
     return Scaffold(
       appBar: AppBar(title: const Text('Citas de la barbería')),
-      body: StreamBuilder<List<Appointment>>(
+      body: RetryStreamBuilder<List<Appointment>>(
         stream: repo.watchByBarbershop(barbershopId),
-        builder: (context, snapshot) {
+        builder: (context, snapshot, retry) {
           if (snapshot.hasError) {
             return Center(
               child: ErrorState(
+                onRetry: retry,
                 title: 'No pudimos cargar las citas',
                 error: snapshot.error,
               ),

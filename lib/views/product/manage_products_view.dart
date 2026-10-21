@@ -12,6 +12,7 @@ import '../widgets/error_state.dart';
 import '../widgets/responsive_body.dart';
 import '../widgets/shimmer_box.dart';
 import '../widgets/status_badge.dart';
+import '../widgets/async_state_view.dart';
 import 'buy_product_view.dart';
 import 'product_form_sheet.dart';
 
@@ -59,12 +60,13 @@ class ManageProductsView extends StatelessWidget {
               label: const Text('Nuevo producto'),
             )
           : null,
-      body: StreamBuilder<List<Product>>(
+      body: RetryStreamBuilder<List<Product>>(
         stream: repo.watchByBarbershop(barbershopId),
-        builder: (context, snapshot) {
+        builder: (context, snapshot, retry) {
           if (snapshot.hasError) {
             return Center(
               child: ErrorState(
+                onRetry: retry,
                 title: 'No pudimos cargar los productos',
                 error: snapshot.error,
               ),

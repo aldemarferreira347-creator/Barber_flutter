@@ -16,6 +16,7 @@ import '../widgets/responsive_body.dart';
 import '../widgets/shimmer_box.dart';
 import '../widgets/shop_avatar.dart';
 import '../widgets/status_badge.dart';
+import '../widgets/async_state_view.dart';
 import 'admin_shop_sheet.dart';
 import 'approval_status_badge.dart';
 import 'barbershop_detail_view.dart';
@@ -233,11 +234,12 @@ class _ManageBarbershopsViewState extends State<ManageBarbershopsView> {
                 ),
                 const SizedBox(height: AppSpace.md),
                 Expanded(
-                  child: StreamBuilder<List<Barbershop>>(
+                  child: RetryStreamBuilder<List<Barbershop>>(
                     stream: _shops,
-                    builder: (context, snapshot) {
+                    builder: (context, snapshot, retry) {
                       if (snapshot.hasError) {
                         return ErrorState(
+                          onRetry: retry,
                           title: 'No pudimos cargar las barberías',
                           error: snapshot.error,
                         );
