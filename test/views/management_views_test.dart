@@ -10,7 +10,6 @@ import 'package:barber/repositories/auth_repository.dart';
 import 'package:barber/repositories/barbershop_repository.dart';
 import 'package:barber/repositories/comment_repository.dart';
 import 'package:barber/repositories/rating_repository.dart';
-import 'package:barber/repositories/shop_closure_repository.dart';
 import 'package:barber/repositories/user_repository.dart';
 import 'package:barber/services/push_notification_service.dart';
 import 'package:barber/views/admin/manage_users_view.dart';
@@ -18,7 +17,6 @@ import 'package:barber/views/admin/user_forms.dart';
 import 'package:barber/views/appointment/paid_appointment_sheets.dart';
 import 'package:barber/views/appointment/rate_appointment_view.dart';
 import 'package:barber/views/barber/manage_barbers_view.dart';
-import 'package:barber/views/barbershop/close_shop_view.dart';
 import 'package:barber/views/barbershop/edit_schedule_view.dart';
 import 'package:firebase_auth/firebase_auth.dart';
 import 'package:flutter/material.dart';
@@ -36,8 +34,6 @@ class MockUserRepository extends Mock implements UserRepository {}
 
 class MockPushNotificationService extends Mock
     implements PushNotificationService {}
-
-class MockShopClosureRepository extends Mock implements ShopClosureRepository {}
 
 class MockBarbershopRepository extends Mock implements BarbershopRepository {}
 
@@ -271,48 +267,6 @@ void main() {
       await tester.pumpAndSettle();
       verify(() => users.hireAsBarber(uid: 'c1', barbershopId: 'shop1'))
           .called(1);
-    });
-  });
-
-  group('CloseShopView', () {
-    testWidgets('sin fechas ni motivo no cierra y lo explica', (tester) async {
-      tall(tester);
-      final closures = MockShopClosureRepository();
-      await tester.pumpWidget(
-        wrap(
-          const CloseShopView(barbershopId: 'shop1'),
-          providers: [Provider<ShopClosureRepository>.value(value: closures)],
-        ),
-      );
-
-      await tester.tap(find.text('Confirmar cierre'));
-      await tester.pumpAndSettle();
-
-      expect(find.textContaining('Elige desde cuándo'), findsOneWidget);
-      verifyNever(
-        () => closures.closeForExternalEvent(
-          barbershopId: any(named: 'barbershopId'),
-          closedFrom: any(named: 'closedFrom'),
-          closedUntil: any(named: 'closedUntil'),
-          reason: any(named: 'reason'),
-        ),
-      );
-    });
-
-    testWidgets('ya no promete avisos que el sistema no envía', (tester) async {
-      tall(tester);
-      await tester.pumpWidget(
-        wrap(
-          const CloseShopView(barbershopId: 'shop1'),
-          providers: [
-            Provider<ShopClosureRepository>.value(
-              value: MockShopClosureRepository(),
-            ),
-          ],
-        ),
-      );
-      expect(find.textContaining('notificó'), findsNothing);
-      expect(find.textContaining('reprogramar'), findsOneWidget);
     });
   });
 
