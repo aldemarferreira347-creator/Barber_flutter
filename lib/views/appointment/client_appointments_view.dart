@@ -16,8 +16,8 @@ import '../widgets/payment_status_line.dart';
 import '../widgets/responsive_body.dart';
 import '../widgets/section_header.dart';
 import '../widgets/empty_state.dart';
-import '../widgets/error_state.dart';
-import '../widgets/shimmer_box.dart';
+import '../barbershop/barbershop_catalog_view.dart';
+import '../widgets/async_state_view.dart';
 import 'paid_appointment_sheets.dart';
 import 'rate_appointment_view.dart';
 import '../../utils/error_text.dart';
@@ -119,31 +119,23 @@ class ClientAppointmentsView extends StatelessWidget {
       appBar: AppBar(title: const Text('Mis citas')),
       body: profile == null
           ? const SizedBox.shrink()
-          : StreamBuilder<List<Appointment>>(
+          : AsyncStateView<List<Appointment>>(
               stream: repo.watchByClient(profile.uid),
-              builder: (context, snapshot) {
-                if (snapshot.hasError) {
-                  return const Center(
-                    child: ErrorState(title: 'No pudimos cargar tus citas'),
-                  );
-                }
-                if (snapshot.connectionState == ConnectionState.waiting) {
-                  return const Padding(
-                    padding: EdgeInsets.all(16),
-                    child: ShimmerList(count: 4),
-                  );
-                }
-                final appointments = snapshot.data ?? [];
-                if (appointments.isEmpty) {
-                  return const Center(
-                    child: EmptyState(
-                      icon: Icons.event_available_outlined,
-                      title: 'No tienes citas programadas',
-                      subtitle: 'Agenda tu primera cita y luce increíble.',
-                    ),
-                  );
-                }
-
+              errorTitle: 'No pudimos cargar tus citas',
+              empty: EmptyState(
+                icon: Icons.event_available_outlined,
+                title: 'Tu primera cita te espera',
+                subtitle:
+                    'Elige una barbería y reserva en menos de un minuto. '
+                    'Aquí verás tus próximas citas y tu historial.',
+                actionLabel: 'Reservar cita',
+                onAction: () => Navigator.of(context).push(
+                  MaterialPageRoute(
+                    builder: (_) => const BarbershopCatalogView(),
+                  ),
+                ),
+              ),
+              builder: (context, appointments) {
                 final upcoming = appointments
                     .where((a) => _kUpcomingStatuses.contains(a.status))
                     .toList();

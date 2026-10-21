@@ -123,7 +123,7 @@ void main() {
     await tester.pumpWidget(wrap());
     await tester.pumpAndSettle();
 
-    expect(find.text('No tienes citas programadas'), findsOneWidget);
+    expect(find.text('Tu primera cita te espera'), findsOneWidget);
   });
 
   testWidgets(

@@ -19,6 +19,7 @@ import '../widgets/app_button.dart';
 import '../widgets/app_card.dart';
 import '../widgets/dashboard_scaffold.dart';
 import '../widgets/section_header.dart';
+import '../widgets/shimmer_box.dart';
 import '../widgets/shop_avatar.dart';
 import '../widgets/status_badge.dart';
 
@@ -187,8 +188,15 @@ class _BookCard extends StatelessWidget {
   }
 }
 
-class _FeaturedShops extends StatelessWidget {
+class _FeaturedShops extends StatefulWidget {
   const _FeaturedShops();
+
+  @override
+  State<_FeaturedShops> createState() => _FeaturedShopsState();
+}
+
+class _FeaturedShopsState extends State<_FeaturedShops> {
+  int _attempt = 0;
 
   @override
   Widget build(BuildContext context) {
@@ -196,18 +204,33 @@ class _FeaturedShops extends StatelessWidget {
     return SizedBox(
       height: 184,
       child: StreamBuilder<List<Barbershop>>(
+        key: ValueKey(_attempt),
         stream: context.read<BarbershopRepository>().watchApproved(),
         builder: (context, snapshot) {
           if (snapshot.hasError) {
             return Center(
-              child: Text(
-                'No se pudieron cargar las barberías',
-                textAlign: TextAlign.center,
-                style: text.secondary,
+              child: Column(
+                mainAxisSize: MainAxisSize.min,
+                children: [
+                  Text(
+                    'No se pudieron cargar las barberías',
+                    textAlign: TextAlign.center,
+                    style: text.secondary,
+                  ),
+                  const SizedBox(height: AppSpace.sm),
+                  AppButton(
+                    variant: AppButtonVariant.text,
+                    expand: false,
+                    icon: Icons.refresh,
+                    onPressed: () => setState(() => _attempt++),
+                    child: const Text('Reintentar'),
+                  ),
+                ],
               ),
             );
           }
-          final shops = [...(snapshot.data ?? const <Barbershop>[])]
+          if (!snapshot.hasData) return const ShimmerBox(height: 184);
+          final shops = [...snapshot.data!]
             ..sort((a, b) {
               final byRating = b.averageRating.compareTo(a.averageRating);
               return byRating != 0 ? byRating : a.name.compareTo(b.name);
@@ -215,7 +238,8 @@ class _FeaturedShops extends StatelessWidget {
           if (shops.isEmpty) {
             return Center(
               child: Text(
-                'Aún no hay barberías activas',
+                'Pronto habrá barberías para reservar',
+                textAlign: TextAlign.center,
                 style: text.secondary,
               ),
             );

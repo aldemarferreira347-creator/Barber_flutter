@@ -11,7 +11,7 @@ import '../widgets/adaptive_card_list.dart';
 import '../widgets/app_card.dart';
 import '../widgets/app_network_image.dart';
 import '../widgets/empty_state.dart';
-import '../widgets/error_state.dart';
+import '../widgets/async_state_view.dart';
 import '../widgets/shimmer_box.dart';
 import 'barbershop_detail_view.dart';
 
@@ -95,29 +95,24 @@ class _BarbershopCatalogViewState extends State<BarbershopCatalogView> {
             ),
             const SizedBox(height: AppSpace.md),
             Expanded(
-              child: StreamBuilder<List<Barbershop>>(
+              child: AsyncStateView<List<Barbershop>>(
                 stream: repo.watchApproved(),
-                builder: (context, snapshot) {
-                  if (snapshot.hasError) {
-                    return const ErrorState(
-                      title: 'No pudimos cargar las barberías',
-                      subtitle: 'Verifica tu conexión e inténtalo de nuevo.',
-                    );
-                  }
-                  if (snapshot.connectionState == ConnectionState.waiting) {
-                    return const ShimmerList(itemHeight: 200);
-                  }
-                  final all = snapshot.data ?? const <Barbershop>[];
+                errorTitle: 'No pudimos cargar las barberías',
+                loading: const ShimmerList(itemHeight: 200),
+                empty: const EmptyState(
+                  icon: Icons.storefront_outlined,
+                  title: 'Pronto habrá barberías aquí',
+                  subtitle:
+                      'Todavía no hay barberías disponibles. Cuando una '
+                      'abra sus puertas en la app, podrás reservar con ella.',
+                ),
+                builder: (context, all) {
                   final shops = _apply(all);
                   if (shops.isEmpty) {
-                    return EmptyState(
-                      icon: Icons.storefront_outlined,
-                      title: all.isEmpty
-                          ? 'Aún no hay barberías'
-                          : 'No encontramos barberías',
-                      subtitle: all.isEmpty
-                          ? 'Cuando se registre una barbería aparecerá aquí.'
-                          : 'Prueba con otra búsqueda o quita los filtros.',
+                    return const EmptyState(
+                      icon: Icons.search_off_outlined,
+                      title: 'No encontramos barberías',
+                      subtitle: 'Prueba con otra búsqueda o quita los filtros.',
                     );
                   }
                   return AdaptiveCardList(

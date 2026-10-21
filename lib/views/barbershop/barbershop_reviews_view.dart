@@ -44,10 +44,10 @@ class BarbershopReviewsView extends StatelessWidget {
         stream: barbershopRepo.watchOne(barbershopId),
         builder: (context, shopSnapshot) {
           if (shopSnapshot.hasError) {
-            return const Center(
+            return Center(
               child: ErrorState(
                 title: 'No pudimos cargar las reseñas',
-                subtitle: 'Verifica tu conexión e inténtalo de nuevo.',
+                error: shopSnapshot.error,
               ),
             );
           }
@@ -67,10 +67,10 @@ class BarbershopReviewsView extends StatelessWidget {
                 .watchPublishedByBarbershop(barbershopId),
             builder: (context, commentsSnapshot) {
               if (commentsSnapshot.hasError) {
-                return const Center(
+                return Center(
                   child: ErrorState(
                     title: 'No pudimos cargar los comentarios',
-                    subtitle: 'Verifica tu conexión e inténtalo de nuevo.',
+                    error: commentsSnapshot.error,
                   ),
                 );
               }

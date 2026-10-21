@@ -9,10 +9,9 @@ import '../../theme/app_tokens.dart';
 import '../widgets/app_card.dart';
 import '../widgets/app_dialog.dart';
 import '../widgets/empty_state.dart';
-import '../widgets/error_state.dart';
+import '../widgets/async_state_view.dart';
 import '../widgets/responsive_body.dart';
 import '../widgets/section_header.dart';
-import '../widgets/shimmer_box.dart';
 import '../widgets/shop_avatar.dart';
 import 'add_barbershop_view.dart';
 import 'approval_status_badge.dart';
@@ -75,113 +74,102 @@ class MyBarbershopsView extends StatelessWidget {
             ),
       body: uid == null
           ? const SizedBox.shrink()
-          : StreamBuilder<List<Barbershop>>(
+          : AsyncStateView<List<Barbershop>>(
               stream: repo.watchByOwner(uid),
-              builder: (context, shopsSnapshot) {
-                return StreamBuilder<List<Barbershop>>(
-                  stream: repo.watchDraftsByOwner(uid),
-                  builder: (context, draftsSnapshot) {
-                    if (shopsSnapshot.hasError || draftsSnapshot.hasError) {
-                      return const Center(
-                        child: ErrorState(
-                          title: 'No pudimos cargar tus barberías',
-                          subtitle:
-                              'Verifica tu conexión e inténtalo de nuevo.',
-                        ),
-                      );
-                    }
-                    if (!shopsSnapshot.hasData || !draftsSnapshot.hasData) {
-                      return const Padding(
-                        padding: EdgeInsets.all(16),
-                        child: ShimmerList(),
-                      );
-                    }
-                    final shops = shopsSnapshot.data!.toList()
-                      ..sort((a, b) => a.name.compareTo(b.name));
-                    final drafts = draftsSnapshot.data!.toList()
-                      ..sort((a, b) => a.name.compareTo(b.name));
-                    if (shops.isEmpty && drafts.isEmpty) {
-                      return const Center(
-                        child: EmptyState(
-                          icon: Icons.storefront_outlined,
-                          title: 'Aún no tienes barberías',
-                          subtitle: 'Registra una pagando la primera mensualidad, o guárdala como borrador para pagar después.',
-                        ),
-                      );
-                    }
-                    return ListView(
-                      padding: const EdgeInsets.only(
-                        top: AppSpace.lg,
-                        bottom: 96,
+              errorTitle: 'No pudimos cargar tus barberías',
+              builder: (context, ownedShops) => AsyncStateView<List<Barbershop>>(
+                stream: repo.watchDraftsByOwner(uid),
+                errorTitle: 'No pudimos cargar tus barberías',
+                builder: (context, ownedDrafts) {
+                  final shopsSnapshot = ownedShops;
+                  final draftsSnapshot = ownedDrafts;
+                  final shops = shopsSnapshot.toList()
+                    ..sort((a, b) => a.name.compareTo(b.name));
+                  final drafts = draftsSnapshot.toList()
+                    ..sort((a, b) => a.name.compareTo(b.name));
+                  if (shops.isEmpty && drafts.isEmpty) {
+                    return Center(
+                      child: EmptyState(
+                        icon: Icons.storefront_outlined,
+                        title: 'Registra tu primera barbería',
+                        subtitle:
+                            'Empieza a recibir reservas y gestiona a tu '
+                            'equipo desde aquí. Puedes pagar la primera '
+                            'mensualidad ahora o guardarla como borrador.',
+                        actionLabel: 'Registrar barbería',
+                        onAction: () => _openForm(context),
                       ),
-                      children: [
-                        ResponsiveBody(
-                          child: Column(
-                            crossAxisAlignment: CrossAxisAlignment.stretch,
-                            children: [
-                              OwnerAlertsSection(shops: shops),
-                              if (shops.isNotEmpty)
-                                SectionHeader(
-                                  title: 'Barberías (${shops.length})',
-                                ),
-                              for (final shop in shops) ...[
-                                _ShopTile(
-                                  shop: shop,
-                                  onTap: () => Navigator.of(context).push(
-                                    MaterialPageRoute(
-                                      builder: (_) => OwnerBarbershopManageView(
-                                        barbershopId: shop.id,
-                                      ),
+                    );
+                  }
+                  return ListView(
+                    padding: const EdgeInsets.only(
+                      top: AppSpace.lg,
+                      bottom: 96,
+                    ),
+                    children: [
+                      ResponsiveBody(
+                        child: Column(
+                          crossAxisAlignment: CrossAxisAlignment.stretch,
+                          children: [
+                            OwnerAlertsSection(shops: shops),
+                            if (shops.isNotEmpty)
+                              SectionHeader(
+                                title: 'Barberías (${shops.length})',
+                              ),
+                            for (final shop in shops) ...[
+                              _ShopTile(
+                                shop: shop,
+                                onTap: () => Navigator.of(context).push(
+                                  MaterialPageRoute(
+                                    builder: (_) => OwnerBarbershopManageView(
+                                      barbershopId: shop.id,
                                     ),
+                                  ),
+                                ),
+                              ),
+                              const SizedBox(height: AppSpace.md),
+                            ],
+                            if (drafts.isNotEmpty) ...[
+                              const SizedBox(height: AppSpace.sm),
+                              SectionHeader(
+                                title:
+                                    'Borradores (${drafts.length}/$kMaxBarbershopDrafts)',
+                              ),
+                              Padding(
+                                padding: const EdgeInsets.only(
+                                  bottom: AppSpace.md,
+                                ),
+                                child: Text(
+                                  'Sin pagar: solo tú los ves. Al pagar la '
+                                  'mensualidad pasan a revisión.',
+                                  style: Theme.of(context).textTheme.bodySmall
+                                      ?.copyWith(
+                                        color: AppColors.textSecondary,
+                                      ),
+                                ),
+                              ),
+                              for (final draft in drafts) ...[
+                                _ShopTile(
+                                  shop: draft,
+                                  onTap: () => _openForm(context, draft: draft),
+                                  trailing: IconButton(
+                                    tooltip: 'Eliminar borrador',
+                                    icon: const Icon(Icons.delete_outline),
+                                    color: AppColors.readable(AppColors.error),
+                                    onPressed: () =>
+                                        _deleteDraft(context, repo, draft),
                                   ),
                                 ),
                                 const SizedBox(height: AppSpace.md),
                               ],
-                              if (drafts.isNotEmpty) ...[
-                                const SizedBox(height: AppSpace.sm),
-                                SectionHeader(
-                                  title:
-                                      'Borradores (${drafts.length}/$kMaxBarbershopDrafts)',
-                                ),
-                                Padding(
-                                  padding: const EdgeInsets.only(
-                                    bottom: AppSpace.md,
-                                  ),
-                                  child: Text(
-                                    'Sin pagar: solo tú los ves. Al pagar la '
-                                    'mensualidad pasan a revisión.',
-                                    style: Theme.of(context).textTheme.bodySmall
-                                        ?.copyWith(
-                                          color: AppColors.textSecondary,
-                                        ),
-                                  ),
-                                ),
-                                for (final draft in drafts) ...[
-                                  _ShopTile(
-                                    shop: draft,
-                                    onTap: () =>
-                                        _openForm(context, draft: draft),
-                                    trailing: IconButton(
-                                      tooltip: 'Eliminar borrador',
-                                      icon: const Icon(Icons.delete_outline),
-                                      color: AppColors.readable(
-                                        AppColors.error,
-                                      ),
-                                      onPressed: () =>
-                                          _deleteDraft(context, repo, draft),
-                                    ),
-                                  ),
-                                  const SizedBox(height: AppSpace.md),
-                                ],
-                              ],
                             ],
-                          ),
+                          ],
                         ),
-                      ],
-                    );
-                  },
-                );
-              },
+                      ),
+                    ],
+                  );
+                },
+              ),
             ),
     );
   }

@@ -6,6 +6,7 @@ import '../models/product.dart';
 import '../repositories/product_repository.dart';
 import '../repositories/storage_repository.dart';
 import '../utils/shared_stream.dart';
+import '../utils/parse_docs.dart';
 
 class FirestoreProductService implements ProductRepository {
   final _shared = SharedStreams();
@@ -31,9 +32,10 @@ class FirestoreProductService implements ProductRepository {
           .orderBy('name')
           .snapshots()
           .map(
-            (snapshot) => snapshot.docs
-                .map((doc) => Product.fromMap(doc.id, barbershopId, doc.data()))
-                .toList(),
+            (snapshot) => parseDocs(
+              snapshot.docs,
+              (doc) => Product.fromMap(doc.id, barbershopId, doc.data()),
+            ),
           );
     });
   }

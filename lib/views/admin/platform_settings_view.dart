@@ -26,8 +26,11 @@ class PlatformSettingsView extends StatelessWidget {
         stream: context.read<PlatformSettingsRepository>().watch(),
         builder: (context, snapshot) {
           if (snapshot.hasError) {
-            return const Center(
-              child: ErrorState(title: 'No pudimos cargar la configuración'),
+            return Center(
+              child: ErrorState(
+                title: 'No pudimos cargar la configuración',
+                error: snapshot.error,
+              ),
             );
           }
           if (!snapshot.hasData) {

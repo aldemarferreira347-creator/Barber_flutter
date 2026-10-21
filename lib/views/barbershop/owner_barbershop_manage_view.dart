@@ -107,10 +107,10 @@ class OwnerBarbershopManageView extends StatelessWidget {
         stream: repo.watchOne(barbershopId),
         builder: (context, snapshot) {
           if (snapshot.hasError) {
-            return const Center(
+            return Center(
               child: ErrorState(
                 title: 'No pudimos cargar la barbería',
-                subtitle: 'Verifica tu conexión e inténtalo de nuevo.',
+                error: snapshot.error,
               ),
             );
           }

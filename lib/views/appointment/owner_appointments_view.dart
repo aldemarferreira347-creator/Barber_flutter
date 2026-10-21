@@ -23,8 +23,11 @@ class OwnerAppointmentsView extends StatelessWidget {
         stream: repo.watchByBarbershop(barbershopId),
         builder: (context, snapshot) {
           if (snapshot.hasError) {
-            return const Center(
-              child: ErrorState(title: 'No pudimos cargar las citas'),
+            return Center(
+              child: ErrorState(
+                title: 'No pudimos cargar las citas',
+                error: snapshot.error,
+              ),
             );
           }
           if (snapshot.connectionState == ConnectionState.waiting) {

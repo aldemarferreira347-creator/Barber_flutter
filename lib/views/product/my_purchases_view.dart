@@ -10,12 +10,12 @@ import '../../theme/app_colors.dart';
 import '../../theme/app_text.dart';
 import '../../theme/app_tokens.dart';
 import '../../utils/date_labels.dart';
+import '../barbershop/barbershop_catalog_view.dart';
 import '../widgets/app_card.dart';
 import '../widgets/empty_state.dart';
-import '../widgets/error_state.dart';
+import '../widgets/async_state_view.dart';
 import '../widgets/payment_status_line.dart';
 import '../widgets/responsive_body.dart';
-import '../widgets/shimmer_box.dart';
 import '../widgets/status_badge.dart';
 import 'claim_code_card.dart';
 
@@ -31,44 +31,33 @@ class MyPurchasesView extends StatelessWidget {
       appBar: AppBar(title: const Text('Mis compras')),
       body: uid == null
           ? const SizedBox.shrink()
-          : StreamBuilder<List<Purchase>>(
+          : AsyncStateView<List<Purchase>>(
               stream: context.read<PurchaseRepository>().watchByBuyer(uid),
-              builder: (context, snapshot) {
-                if (snapshot.hasError) {
-                  return const Center(
-                    child: ErrorState(title: 'No pudimos cargar tus compras'),
-                  );
-                }
-                if (!snapshot.hasData) {
-                  return const Padding(
-                    padding: EdgeInsets.all(AppSpace.lg),
-                    child: ShimmerList(),
-                  );
-                }
-                final purchases = snapshot.data!;
-                if (purchases.isEmpty) {
-                  return const Center(
-                    child: EmptyState(
-                      icon: Icons.shopping_bag_outlined,
-                      title: 'Aún no has comprado productos',
-                      subtitle:
-                          'Entra a una barbería y elige un producto para '
-                          'comprarlo con Nequi.',
-                    ),
-                  );
-                }
-                return ResponsiveBody(
-                  maxWidth: AppLayout.formWidth,
-                  child: ListView.separated(
-                    padding: const EdgeInsets.symmetric(vertical: AppSpace.lg),
-                    itemCount: purchases.length,
-                    separatorBuilder: (_, _) =>
-                        const SizedBox(height: AppSpace.md),
-                    itemBuilder: (context, index) =>
-                        _PurchaseCard(purchase: purchases[index]),
+              errorTitle: 'No pudimos cargar tus compras',
+              empty: EmptyState(
+                icon: Icons.shopping_bag_outlined,
+                title: 'Tu primera compra te espera',
+                subtitle:
+                    'Elige una barbería, escoge un producto y págalo con '
+                    'Nequi. Aquí verás tu código para reclamarlo.',
+                actionLabel: 'Ver barberías',
+                onAction: () => Navigator.of(context).push(
+                  MaterialPageRoute(
+                    builder: (_) => const BarbershopCatalogView(),
                   ),
-                );
-              },
+                ),
+              ),
+              builder: (context, purchases) => ResponsiveBody(
+                maxWidth: AppLayout.formWidth,
+                child: ListView.separated(
+                  padding: const EdgeInsets.symmetric(vertical: AppSpace.lg),
+                  itemCount: purchases.length,
+                  separatorBuilder: (_, _) =>
+                      const SizedBox(height: AppSpace.md),
+                  itemBuilder: (context, index) =>
+                      _PurchaseCard(purchase: purchases[index]),
+                ),
+              ),
             ),
     );
   }

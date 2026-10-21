@@ -1,10 +1,13 @@
 import 'package:firebase_core/firebase_core.dart';
 
+import 'failure.dart';
+
 /// Texto para mostrar al usuario cuando una operación falla. Evita volcar
 /// excepciones crudas ("Error: Dart exception: [cloud_firestore/…]") en un
 /// aviso: traduce los códigos de Firebase más comunes y quita los prefijos
 /// técnicos de las excepciones propias (`Exception('Ese horario ya no…')`).
 String errorText(Object error) {
+  if (error is LoadTimeoutException) return error.toString();
   final code = error is FirebaseException
       ? error.code
       : RegExp(
@@ -27,6 +30,17 @@ String errorText(Object error) {
       case 'aborted':
       case 'failed-precondition':
         return 'Algo cambió mientras lo hacías. Inténtalo de nuevo.';
+      case 'object-not-found':
+        return 'La foto no llegó a subirse. Revisa tu conexión e inténtalo '
+            'de nuevo con otra imagen.';
+      case 'unauthorized':
+        return 'No tienes permiso para subir este archivo. Revisa que tu '
+            'sesión y la barbería sigan activas.';
+      case 'canceled':
+        return 'La subida se canceló. Inténtalo de nuevo.';
+      case 'quota-exceeded':
+      case 'retry-limit-exceeded':
+        return 'No se pudo subir el archivo ahora. Inténtalo más tarde.';
       case 'resource-exhausted':
       case 'too-many-requests':
         return 'Demasiados intentos. Espera un momento e inténtalo de nuevo.';

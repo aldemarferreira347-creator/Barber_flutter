@@ -3,6 +3,7 @@ import 'package:cloud_firestore/cloud_firestore.dart';
 import '../models/payment_record.dart';
 import '../repositories/payment_repository.dart';
 import '../utils/shared_stream.dart';
+import '../utils/parse_docs.dart';
 
 class FirestorePaymentService implements PaymentRepository {
   final _shared = SharedStreams();
@@ -43,11 +44,10 @@ class FirestorePaymentService implements PaymentRepository {
           .limit(_maxPayments)
           .snapshots()
           .map(
-            (snapshot) =>
-                snapshot.docs
-                    .map((doc) => PaymentRecord.fromMap(doc.id, doc.data()))
-                    .toList()
-                  ..sort((a, b) => _newestFirst(b, a)),
+            (snapshot) => parseDocs(
+              snapshot.docs,
+              (doc) => PaymentRecord.fromMap(doc.id, doc.data()),
+            )..sort((a, b) => _newestFirst(b, a)),
           );
     });
   }
@@ -67,11 +67,10 @@ class FirestorePaymentService implements PaymentRepository {
             .limit(_maxPayments)
             .snapshots()
             .map(
-              (snapshot) =>
-                  snapshot.docs
-                      .map((doc) => PaymentRecord.fromMap(doc.id, doc.data()))
-                      .toList()
-                    ..sort(_newestFirst),
+              (snapshot) => parseDocs(
+                snapshot.docs,
+                (doc) => PaymentRecord.fromMap(doc.id, doc.data()),
+              )..sort(_newestFirst),
             );
       },
     );

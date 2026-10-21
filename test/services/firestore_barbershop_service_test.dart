@@ -130,6 +130,18 @@ void main() {
 
       expect(shops.map((s) => s.id), ['vencida']);
     });
+
+    test(
+      'un documento dañado se omite y el resto del catálogo carga',
+      () async {
+        await seed('sana', {});
+        await seed('danada', {'schedule': 'esto no es un mapa'});
+
+        final shops = await service.watchApproved().first;
+
+        expect(shops.map((s) => s.id), ['sana']);
+      },
+    );
   });
 
   group('mensualidad por Nequi', () {

@@ -25,8 +25,11 @@ class BarberAppointmentsView extends StatelessWidget {
               stream: repo.watchByBarber(profile.uid),
               builder: (context, snapshot) {
                 if (snapshot.hasError) {
-                  return const Center(
-                    child: ErrorState(title: 'No pudimos cargar tus citas'),
+                  return Center(
+                    child: ErrorState(
+                      title: 'No pudimos cargar tus citas',
+                      error: snapshot.error,
+                    ),
                   );
                 }
                 if (snapshot.connectionState == ConnectionState.waiting) {

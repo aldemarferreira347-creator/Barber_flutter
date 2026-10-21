@@ -1,7 +1,8 @@
-import 'dart:typed_data';
+import 'dart:async';
 
 import 'package:cloud_firestore/cloud_firestore.dart';
 import 'package:firebase_auth/firebase_auth.dart';
+import 'package:flutter/foundation.dart';
 
 import '../models/barbershop.dart';
 import '../models/day_schedule.dart';
@@ -11,6 +12,7 @@ import '../repositories/barbershop_repository.dart';
 import '../repositories/storage_repository.dart';
 import '../utils/stream_combine.dart';
 import '../utils/shared_stream.dart';
+import '../utils/parse_docs.dart';
 
 class FirestoreBarbershopService implements BarbershopRepository {
   final _shared = SharedStreams();
@@ -39,9 +41,10 @@ class FirestoreBarbershopService implements BarbershopRepository {
           .orderBy('name')
           .snapshots()
           .map(
-            (snapshot) => snapshot.docs
-                .map((doc) => Barbershop.fromMap(doc.id, doc.data()))
-                .toList(),
+            (snapshot) => parseDocs(
+              snapshot.docs,
+              (doc) => Barbershop.fromMap(doc.id, doc.data()),
+            ),
           );
     });
   }
@@ -61,22 +64,52 @@ class FirestoreBarbershopService implements BarbershopRepository {
           .snapshots();
       return combineLatest2<
         QuerySnapshot<Map<String, dynamic>>,
-        DocumentSnapshot<Map<String, dynamic>>,
+        int,
         List<Barbershop>
-      >(shops, _settings.snapshots(), (snapshot, settingsDoc) {
-        final graceDays = PlatformSettings.fromMap(settingsDoc.data())
-            .graceDays;
-        return [
-          for (final doc in snapshot.docs)
-            if (Barbershop.fromMap(
-              doc.id,
-              doc.data(),
-            ).isOperational(graceDays: graceDays))
-              Barbershop.fromMap(doc.id, doc.data()),
-        ];
+      >(shops, _graceDays(), (snapshot, graceDays) {
+        return parseDocs(
+          snapshot.docs,
+          (doc) => Barbershop.fromMap(doc.id, doc.data()),
+        ).where((shop) => shop.isOperational(graceDays: graceDays)).toList();
       });
     });
   }
+
+  /// Días de gracia vigentes. Si la configuración del admin no llega en
+  /// [_settingsWait] (o falla, o no existe) se usa el valor por defecto: el
+  /// catálogo NUNCA se queda esperando ni falla por un documento que el
+  /// cliente no necesita para ver barberías (antes, si
+  /// `platformSettings/main` no cargaba, no cargaba el catálogo).
+  Stream<int> _graceDays() {
+    late StreamController<int> controller;
+    StreamSubscription<DocumentSnapshot<Map<String, dynamic>>>? sub;
+    Timer? fallback;
+    controller = StreamController<int>(
+      onListen: () {
+        fallback = Timer(_settingsWait, () {
+          controller.add(PlatformSettings.kDefaultGraceDays);
+        });
+        sub = _settings.snapshots().listen(
+          (doc) {
+            fallback?.cancel();
+            controller.add(PlatformSettings.fromMap(doc.data()).graceDays);
+          },
+          onError: (Object error) {
+            fallback?.cancel();
+            debugPrint('Días de gracia: valor por defecto ($error)');
+            controller.add(PlatformSettings.kDefaultGraceDays);
+          },
+        );
+      },
+      onCancel: () {
+        fallback?.cancel();
+        return sub?.cancel();
+      },
+    );
+    return controller.stream;
+  }
+
+  static const _settingsWait = Duration(seconds: 2);
 
   @override
   Stream<List<Barbershop>> watchByOwner(String ownerId) {
@@ -85,9 +118,10 @@ class FirestoreBarbershopService implements BarbershopRepository {
           .where('ownerId', isEqualTo: ownerId)
           .snapshots()
           .map(
-            (snapshot) => snapshot.docs
-                .map((doc) => Barbershop.fromMap(doc.id, doc.data()))
-                .toList(),
+            (snapshot) => parseDocs(
+              snapshot.docs,
+              (doc) => Barbershop.fromMap(doc.id, doc.data()),
+            ),
           );
     });
   }
@@ -119,9 +153,10 @@ class FirestoreBarbershopService implements BarbershopRepository {
           .where('ownerId', isEqualTo: ownerId)
           .snapshots()
           .map(
-            (snapshot) => snapshot.docs
-                .map((doc) => Barbershop.fromDraftMap(doc.id, doc.data()))
-                .toList(),
+            (snapshot) => parseDocs(
+              snapshot.docs,
+              (doc) => Barbershop.fromDraftMap(doc.id, doc.data()),
+            ),
           );
     });
   }

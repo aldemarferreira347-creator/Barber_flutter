@@ -6,6 +6,7 @@ import '../models/purchase.dart';
 import '../repositories/purchase_repository.dart';
 import 'claim_code.dart';
 import '../utils/shared_stream.dart';
+import '../utils/parse_docs.dart';
 
 // Nombre histórico (antes llamaba a createPurchase/claimPurchase/
 // refundPurchaseItems, Cloud Functions) — sin plan Blaze escribe Firestore
@@ -148,9 +149,10 @@ class CloudPurchaseService implements PurchaseRepository {
           .limit(_maxListItems)
           .snapshots()
           .map(
-            (snapshot) => snapshot.docs
-                .map((doc) => Purchase.fromMap(doc.id, doc.data()))
-                .toList(),
+            (snapshot) => parseDocs(
+              snapshot.docs,
+              (doc) => Purchase.fromMap(doc.id, doc.data()),
+            ),
           );
     });
   }
@@ -164,9 +166,10 @@ class CloudPurchaseService implements PurchaseRepository {
           .limit(_maxListItems)
           .snapshots()
           .map(
-            (snapshot) => snapshot.docs
-                .map((doc) => Purchase.fromMap(doc.id, doc.data()))
-                .toList(),
+            (snapshot) => parseDocs(
+              snapshot.docs,
+              (doc) => Purchase.fromMap(doc.id, doc.data()),
+            ),
           );
     });
   }

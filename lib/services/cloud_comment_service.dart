@@ -8,6 +8,7 @@ import '../repositories/comment_repository.dart';
 import '../repositories/storage_repository.dart';
 import 'content_moderation_filter.dart';
 import '../utils/shared_stream.dart';
+import '../utils/parse_docs.dart';
 
 const _maxTextLength = 500;
 
@@ -129,9 +130,10 @@ class CloudCommentService implements CommentRepository {
             .limit(_maxPublished)
             .snapshots()
             .map(
-              (snapshot) => snapshot.docs
-                  .map((doc) => Comment.fromMap(doc.id, doc.data()))
-                  .toList(),
+              (snapshot) => parseDocs(
+                snapshot.docs,
+                (doc) => Comment.fromMap(doc.id, doc.data()),
+              ),
             );
       },
     );

@@ -137,9 +137,9 @@ class _AdminDashboardTabState extends State<AdminDashboardTab> {
           stream: userService.watchAll(),
           builder: (context, userSnapshot) {
             if (userSnapshot.hasError) {
-              return const ErrorState(
+              return ErrorState(
                 title: 'No pudimos cargar las estadísticas',
-                subtitle: 'Verifica tu conexión e inténtalo de nuevo.',
+                error: userSnapshot.error,
               );
             }
             final users = userSnapshot.data ?? [];
@@ -158,10 +158,9 @@ class _AdminDashboardTabState extends State<AdminDashboardTab> {
                         stream: barbershopService.watchAll(),
                         builder: (context, shopSnapshot) {
                           if (shopSnapshot.hasError) {
-                            return const ErrorState(
+                            return ErrorState(
                               title: 'No pudimos cargar las estadísticas',
-                              subtitle:
-                                  'Verifica tu conexión e inténtalo de nuevo.',
+                              error: shopSnapshot.error,
                             );
                           }
                           final shops = shopSnapshot.data ?? [];

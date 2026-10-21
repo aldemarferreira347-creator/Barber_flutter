@@ -36,8 +36,11 @@ class PendingPaymentsView extends StatelessWidget {
         stream: context.read<PaymentRepository>().watchPendingSubscriptions(),
         builder: (context, snapshot) {
           if (snapshot.hasError) {
-            return const Center(
-              child: ErrorState(title: 'No pudimos cargar los pagos'),
+            return Center(
+              child: ErrorState(
+                title: 'No pudimos cargar los pagos',
+                error: snapshot.error,
+              ),
             );
           }
           if (!snapshot.hasData) {

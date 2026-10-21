@@ -47,9 +47,9 @@ class OwnerDashboardTab extends StatelessWidget {
               : barbershopService.watchByOwner(profile.uid),
           builder: (context, snapshot) {
             if (snapshot.hasError) {
-              return const ErrorState(
+              return ErrorState(
                 title: 'No pudimos cargar tus barberías',
-                subtitle: 'Verifica tu conexión e inténtalo de nuevo.',
+                error: snapshot.error,
               );
             }
             final shops = [...(snapshot.data ?? const <Barbershop>[])]

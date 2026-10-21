@@ -1,5 +1,9 @@
 import 'dart:async';
 
+import 'package:flutter/foundation.dart';
+
+import 'failure.dart';
+
 /// Comparte una sola consulta en vivo entre todas las pantallas que piden lo
 /// mismo. Cada servicio de datos tiene su propia instancia.
 ///
@@ -90,8 +94,21 @@ class _SharedEntry<T> {
         }
       },
       onError: (Object error, StackTrace stack) {
-        for (final l in _listeners.toList()) {
+        // Queda constancia del código real (permission-denied, índice que
+        // falta...): la pantalla solo muestra un texto genérico.
+        debugPrint('Consulta "$key" falló: ${describeFailure(error)}');
+        final failed = _listeners.toList();
+        // Una consulta que falló no se reutiliza: se suelta para que el
+        // siguiente oyente ("Reintentar", volver a abrir la pantalla) abra
+        // una nueva en vez de quedarse esperando a una fuente muerta.
+        _source?.cancel();
+        _source = null;
+        _hasValue = false;
+        _last = null;
+        _listeners.clear();
+        for (final l in failed) {
           l.addError(error, stack);
+          l.close();
         }
       },
       onDone: () {

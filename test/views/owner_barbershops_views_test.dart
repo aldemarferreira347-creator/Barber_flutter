@@ -154,7 +154,7 @@ void main() {
       await tester.pumpWidget(wrap(const MyBarbershopsView()));
       await tester.pumpAndSettle();
 
-      expect(find.text('Aún no tienes barberías'), findsOneWidget);
+      expect(find.text('Registra tu primera barbería'), findsOneWidget);
       expect(find.text('Nueva barbería'), findsOneWidget);
     });
   });

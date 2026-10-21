@@ -184,8 +184,9 @@ class _BookAppointmentViewState extends State<BookAppointmentView> {
                       stream: _services,
                       builder: (context, snapshot) {
                         if (snapshot.hasError) {
-                          return const ErrorState(
+                          return ErrorState(
                             title: 'No pudimos cargar los servicios',
+                            error: snapshot.error,
                           );
                         }
                         if (snapshot.connectionState ==
@@ -226,8 +227,9 @@ class _BookAppointmentViewState extends State<BookAppointmentView> {
                       stream: _barbers,
                       builder: (context, snapshot) {
                         if (snapshot.hasError) {
-                          return const ErrorState(
+                          return ErrorState(
                             title: 'No pudimos cargar los barberos',
+                            error: snapshot.error,
                           );
                         }
                         if (snapshot.connectionState ==

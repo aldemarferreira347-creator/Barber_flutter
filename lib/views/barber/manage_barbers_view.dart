@@ -91,8 +91,11 @@ class ManageBarbersView extends StatelessWidget {
         stream: repo.watchBarbersByBarbershop(barbershopId),
         builder: (context, snapshot) {
           if (snapshot.hasError) {
-            return const Center(
-              child: ErrorState(title: 'No pudimos cargar los barberos'),
+            return Center(
+              child: ErrorState(
+                title: 'No pudimos cargar los barberos',
+                error: snapshot.error,
+              ),
             );
           }
           if (!snapshot.hasData) {

@@ -8,6 +8,7 @@ import '../models/payment_record.dart';
 import '../repositories/appointment_repository.dart';
 import 'appointment_slot_id.dart';
 import '../utils/shared_stream.dart';
+import '../utils/parse_docs.dart';
 
 // Nota: a diferencia de FirestoreBarbershopService (que sí conserva un
 // método atado a Cloud Functions para cuando el proyecto suba a Blaze),
@@ -210,11 +211,10 @@ class FirestoreAppointmentService implements AppointmentRepository {
 
   static List<Appointment> _toAscendingList(
     QuerySnapshot<Map<String, dynamic>> snapshot,
-  ) => snapshot.docs
-      .map((doc) => Appointment.fromMap(doc.id, doc.data()))
-      .toList()
-      .reversed
-      .toList();
+  ) => parseDocs(
+    snapshot.docs,
+    (doc) => Appointment.fromMap(doc.id, doc.data()),
+  ).reversed.toList();
 
   @override
   Stream<Appointment?> watchOne(String appointmentId) {

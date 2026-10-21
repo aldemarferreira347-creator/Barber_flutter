@@ -79,9 +79,9 @@ class BarberDashboardTab extends StatelessWidget {
             stream: context.read<BarbershopRepository>().watchOne(barbershopId),
             builder: (context, shopSnapshot) {
               if (shopSnapshot.hasError) {
-                return const ErrorState(
+                return ErrorState(
                   title: 'No se pudo cargar tu barbería',
-                  subtitle: 'Verifica tu conexión e inténtalo de nuevo.',
+                  error: shopSnapshot.error,
                 );
               }
               final shop = shopSnapshot.data;

@@ -6,6 +6,7 @@ import '../models/service.dart';
 import '../repositories/service_repository.dart';
 import '../repositories/storage_repository.dart';
 import '../utils/shared_stream.dart';
+import '../utils/parse_docs.dart';
 
 class FirestoreServiceService implements ServiceRepository {
   final _shared = SharedStreams();
@@ -31,9 +32,10 @@ class FirestoreServiceService implements ServiceRepository {
           .orderBy('name')
           .snapshots()
           .map(
-            (snapshot) => snapshot.docs
-                .map((doc) => Service.fromMap(doc.id, barbershopId, doc.data()))
-                .toList(),
+            (snapshot) => parseDocs(
+              snapshot.docs,
+              (doc) => Service.fromMap(doc.id, barbershopId, doc.data()),
+            ),
           );
     });
   }

@@ -237,10 +237,9 @@ class _ManageBarbershopsViewState extends State<ManageBarbershopsView> {
                     stream: _shops,
                     builder: (context, snapshot) {
                       if (snapshot.hasError) {
-                        return const ErrorState(
+                        return ErrorState(
                           title: 'No pudimos cargar las barberías',
-                          subtitle:
-                              'Verifica tu conexión e inténtalo de nuevo.',
+                          error: snapshot.error,
                         );
                       }
                       if (snapshot.connectionState == ConnectionState.waiting) {

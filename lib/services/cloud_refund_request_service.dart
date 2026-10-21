@@ -7,6 +7,7 @@ import '../models/refund_request.dart';
 import '../repositories/refund_request_repository.dart';
 import 'appointment_slot_id.dart';
 import '../utils/shared_stream.dart';
+import '../utils/parse_docs.dart';
 
 // El nombre quedó de cuando `resolve` llamaba a resolveAppointmentRefund
 // (Cloud Function) — sin plan Blaze, ahora escribe Firestore directo (ver
@@ -48,9 +49,10 @@ class CloudRefundRequestService implements RefundRequestRepository {
             .limit(_maxListItems)
             .snapshots()
             .map(
-              (snapshot) => snapshot.docs
-                  .map((doc) => RefundRequest.fromMap(doc.id, doc.data()))
-                  .toList(),
+              (snapshot) => parseDocs(
+                snapshot.docs,
+                (doc) => RefundRequest.fromMap(doc.id, doc.data()),
+              ),
             );
       },
     );
@@ -65,9 +67,10 @@ class CloudRefundRequestService implements RefundRequestRepository {
           .limit(_maxListItems)
           .snapshots()
           .map(
-            (snapshot) => snapshot.docs
-                .map((doc) => RefundRequest.fromMap(doc.id, doc.data()))
-                .toList(),
+            (snapshot) => parseDocs(
+              snapshot.docs,
+              (doc) => RefundRequest.fromMap(doc.id, doc.data()),
+            ),
           );
     });
   }

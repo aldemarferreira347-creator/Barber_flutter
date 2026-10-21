@@ -3,6 +3,7 @@ import 'package:cloud_firestore/cloud_firestore.dart';
 import '../models/app_notification.dart';
 import '../repositories/notification_repository.dart';
 import '../utils/shared_stream.dart';
+import '../utils/parse_docs.dart';
 
 const _maxTitleLength = 120;
 const _maxBodyLength = 1000;
@@ -34,9 +35,10 @@ class FirestoreNotificationService implements NotificationRepository {
           .limit(_maxItems)
           .snapshots()
           .map(
-            (snapshot) => snapshot.docs
-                .map((doc) => AppNotification.fromMap(doc.id, doc.data()))
-                .toList(),
+            (snapshot) => parseDocs(
+              snapshot.docs,
+              (doc) => AppNotification.fromMap(doc.id, doc.data()),
+            ),
           );
     });
   }

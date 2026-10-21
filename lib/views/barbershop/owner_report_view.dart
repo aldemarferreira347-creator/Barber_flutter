@@ -56,8 +56,11 @@ class _OwnerReportViewState extends State<OwnerReportView> {
         stream: _shops,
         builder: (context, shopsSnapshot) {
           if (shopsSnapshot.hasError) {
-            return const Center(
-              child: ErrorState(title: 'No pudimos cargar tus barberías'),
+            return Center(
+              child: ErrorState(
+                title: 'No pudimos cargar tus barberías',
+                error: shopsSnapshot.error,
+              ),
             );
           }
           if (!shopsSnapshot.hasData) {
@@ -137,8 +140,9 @@ class _ReportBodyState extends State<_ReportBody> {
                 stream: _appointments,
                 builder: (context, snapshot) {
                   if (snapshot.hasError) {
-                    return const ErrorState(
+                    return ErrorState(
                       title: 'No pudimos cargar las citas',
+                      error: snapshot.error,
                     );
                   }
                   if (!snapshot.hasData) return const ShimmerList();

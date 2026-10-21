@@ -208,8 +208,9 @@ class _PurchaseStatus extends StatelessWidget {
       stream: repo.watchPurchase(purchaseId),
       builder: (context, snapshot) {
         if (snapshot.hasError) {
-          return const ErrorState(
+          return ErrorState(
             title: 'No pudimos cargar el estado de tu compra',
+            error: snapshot.error,
           );
         }
         final purchase = snapshot.data;

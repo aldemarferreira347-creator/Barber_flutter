@@ -212,9 +212,10 @@ class _ManageUsersViewState extends State<ManageUsersView> {
                 stream: _users,
                 builder: (context, snapshot) {
                   if (snapshot.hasError) {
-                    return const Center(
+                    return Center(
                       child: ErrorState(
                         title: 'No pudimos cargar los usuarios',
+                        error: snapshot.error,
                       ),
                     );
                   }

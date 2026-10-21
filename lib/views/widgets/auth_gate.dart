@@ -186,9 +186,12 @@ class _OwnerGate extends StatelessWidget {
       stream: context.read<BarbershopRepository>().watchByOwner(ownerId),
       builder: (context, snapshot) {
         if (snapshot.hasError) {
-          return const Scaffold(
+          return Scaffold(
             body: Center(
-              child: ErrorState(title: 'No pudimos cargar tu barbería'),
+              child: ErrorState(
+                title: 'No pudimos cargar tu barbería',
+                error: snapshot.error,
+              ),
             ),
           );
         }

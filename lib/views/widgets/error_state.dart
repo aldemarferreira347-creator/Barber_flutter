@@ -3,6 +3,7 @@ import 'package:flutter/material.dart';
 import '../../theme/app_colors.dart';
 import '../../theme/app_text.dart';
 import '../../theme/app_tokens.dart';
+import '../../utils/failure.dart';
 import 'app_button.dart';
 
 /// Estado de error para listas alimentadas por un `StreamBuilder`
@@ -13,15 +14,46 @@ import 'app_button.dart';
 /// consulta explícitamente.
 class ErrorState extends StatelessWidget {
   final String title;
-  final String subtitle;
+  final String? subtitle;
   final VoidCallback? onRetry;
+
+  /// El error que originó este estado. Con él, el texto y el ícono dicen qué
+  /// pasó de verdad (sin conexión, sin permiso...) en lugar de un genérico.
+  final Object? error;
 
   const ErrorState({
     super.key,
     this.title = 'Algo salió mal',
-    this.subtitle = 'No pudimos cargar esta información. Inténtalo de nuevo.',
+    this.subtitle,
     this.onRetry,
+    this.error,
   });
+
+  FailureKind get _kind =>
+      error == null ? FailureKind.unknown : classifyFailure(error!);
+
+  String get _subtitle {
+    if (subtitle != null) return subtitle!;
+    return switch (_kind) {
+      FailureKind.network =>
+        'No hay conexión con el servidor. Revisa tu internet e inténtalo '
+            'de nuevo.',
+      FailureKind.access =>
+        'Tu sesión no tiene acceso a esta información. Cierra sesión y '
+            'vuelve a entrar; si sigue igual, avisa al administrador.',
+      FailureKind.config =>
+        'Estamos terminando de configurar el servicio. Inténtalo de nuevo '
+            'en unos minutos.',
+      FailureKind.unknown =>
+        'No pudimos cargar esta información. Inténtalo de nuevo.',
+    };
+  }
+
+  IconData get _icon => switch (_kind) {
+    FailureKind.network => Icons.wifi_off_outlined,
+    FailureKind.access => Icons.lock_outline,
+    _ => Icons.error_outline,
+  };
 
   @override
   Widget build(BuildContext context) {
@@ -40,7 +72,7 @@ class ErrorState extends StatelessWidget {
               shape: BoxShape.circle,
             ),
             child: Icon(
-              Icons.error_outline,
+              _icon,
               size: 32,
               color: AppColors.readable(AppColors.error),
             ),
@@ -48,7 +80,7 @@ class ErrorState extends StatelessWidget {
           const SizedBox(height: AppSpace.lg),
           Text(title, textAlign: TextAlign.center, style: text.titleMedium),
           const SizedBox(height: AppSpace.xs),
-          Text(subtitle, textAlign: TextAlign.center, style: text.secondary),
+          Text(_subtitle, textAlign: TextAlign.center, style: text.secondary),
           if (onRetry != null) ...[
             const SizedBox(height: AppSpace.lg),
             AppButton(

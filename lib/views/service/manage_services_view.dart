@@ -42,8 +42,11 @@ class ManageServicesView extends StatelessWidget {
         stream: repo.watchByBarbershop(barbershopId),
         builder: (context, snapshot) {
           if (snapshot.hasError) {
-            return const Center(
-              child: ErrorState(title: 'No pudimos cargar los servicios'),
+            return Center(
+              child: ErrorState(
+                title: 'No pudimos cargar los servicios',
+                error: snapshot.error,
+              ),
             );
           }
           if (snapshot.connectionState == ConnectionState.waiting) {

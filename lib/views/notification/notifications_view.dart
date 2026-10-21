@@ -55,8 +55,11 @@ class _NotificationsViewState extends State<NotificationsView> {
         stream: repo.watchForUser(widget.uid),
         builder: (context, snapshot) {
           if (snapshot.hasError) {
-            return const Center(
-              child: ErrorState(title: 'No pudimos cargar las notificaciones'),
+            return Center(
+              child: ErrorState(
+                title: 'No pudimos cargar las notificaciones',
+                error: snapshot.error,
+              ),
             );
           }
           if (!snapshot.hasData) {

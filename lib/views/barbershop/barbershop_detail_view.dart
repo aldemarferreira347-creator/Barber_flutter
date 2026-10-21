@@ -19,7 +19,8 @@ import '../service/manage_services_view.dart';
 import '../widgets/app_button.dart';
 import '../widgets/app_card.dart';
 import '../widgets/app_network_image.dart';
-import '../widgets/error_state.dart';
+import '../widgets/async_state_view.dart';
+import '../widgets/empty_state.dart';
 import '../widgets/responsive_body.dart';
 import '../widgets/section_header.dart';
 import '../widgets/shimmer_box.dart';
@@ -53,32 +54,20 @@ class BarbershopDetailView extends StatelessWidget {
 
     return Scaffold(
       appBar: AppBar(title: const Text('Barbería')),
-      body: StreamBuilder<Barbershop?>(
+      body: AsyncStateView<Barbershop?>(
         stream: service.watchOne(barbershopId),
-        builder: (context, snapshot) {
-          if (snapshot.hasError) {
-            return const Center(
-              child: ErrorState(
-                title: 'No pudimos cargar la barbería',
-                subtitle: 'Verifica tu conexión e inténtalo de nuevo.',
-              ),
-            );
-          }
-          if (snapshot.connectionState == ConnectionState.waiting) {
-            return const Padding(
-              padding: EdgeInsets.all(AppSpace.lg),
-              child: ShimmerList(itemHeight: 120),
-            );
-          }
-          final shop = snapshot.data;
-          if (shop == null) {
-            return Center(
-              child: Text(
-                'Esta barbería ya no existe',
-                style: TextStyle(color: AppColors.textSecondary),
-              ),
-            );
-          }
+        errorTitle: 'No pudimos cargar la barbería',
+        loading: const Padding(
+          padding: EdgeInsets.all(AppSpace.lg),
+          child: ShimmerList(itemHeight: 120),
+        ),
+        empty: const EmptyState(
+          icon: Icons.storefront_outlined,
+          title: 'Esta barbería ya no está disponible',
+          subtitle: 'Puede que se haya cerrado o cambiado de dirección.',
+        ),
+        builder: (context, shop) {
+          if (shop == null) return const SizedBox.shrink();
           final isOwnerOrAdmin =
               profile != null &&
               (profile.role == UserRole.admin || shop.ownerId == profile.uid);

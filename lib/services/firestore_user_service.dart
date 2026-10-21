@@ -5,6 +5,7 @@ import '../models/notification_tone.dart';
 import '../models/user_role.dart';
 import '../repositories/user_repository.dart';
 import '../utils/shared_stream.dart';
+import '../utils/parse_docs.dart';
 
 /// CRUD del documento de perfil/rol en users/{uid}.
 class FirestoreUserService implements UserRepository {
@@ -47,9 +48,10 @@ class FirestoreUserService implements UserRepository {
           .orderBy('name')
           .snapshots()
           .map(
-            (snapshot) => snapshot.docs
-                .map((doc) => AppUser.fromMap(doc.id, doc.data()))
-                .toList(),
+            (snapshot) => parseDocs(
+              snapshot.docs,
+              (doc) => AppUser.fromMap(doc.id, doc.data()),
+            ),
           );
     });
   }
@@ -74,9 +76,10 @@ class FirestoreUserService implements UserRepository {
             .where('role', isEqualTo: UserRole.barber.value)
             .snapshots()
             .map(
-              (snapshot) => snapshot.docs
-                  .map((doc) => AppUser.fromMap(doc.id, doc.data()))
-                  .toList(),
+              (snapshot) => parseDocs(
+                snapshot.docs,
+                (doc) => AppUser.fromMap(doc.id, doc.data()),
+              ),
             );
       },
     );
