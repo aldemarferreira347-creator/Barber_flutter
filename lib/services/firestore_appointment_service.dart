@@ -37,6 +37,26 @@ class FirestoreAppointmentService implements AppointmentRepository {
       _firestore.collection('payments');
 
   @override
+  Future<Set<DateTime>> takenSlots({
+    required String barberId,
+    required List<DateTime> slots,
+  }) async {
+    // Los slots solo se pueden leer por id (nunca listar la agenda de
+    // alguien): una lectura por hora candidata, en paralelo.
+    final checks = await Future.wait(
+      slots.map((slot) async {
+        try {
+          final doc = await _slots.doc(appointmentSlotId(barberId, slot)).get();
+          return doc.exists ? slot : null;
+        } catch (_) {
+          return null;
+        }
+      }),
+    );
+    return {for (final slot in checks) ?slot};
+  }
+
+  @override
   Future<String> create(Appointment appointment) async {
     final doc = await _appointments.add(appointment.toMap());
     return doc.id;

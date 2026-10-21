@@ -1,15 +1,17 @@
 import 'package:flutter/material.dart';
+import 'package:flutter/services.dart';
 import 'package:provider/provider.dart';
 
 import '../../models/barbershop.dart';
 import '../../models/platform_settings.dart';
 import '../../repositories/platform_settings_repository.dart';
+import '../../theme/app_colors.dart';
 import '../../theme/app_text.dart';
 import '../../theme/app_tokens.dart';
 import '../widgets/app_button.dart';
-import '../widgets/error_state.dart';
+import '../widgets/app_card.dart';
+import '../widgets/async_state_view.dart';
 import '../widgets/responsive_body.dart';
-import '../widgets/shimmer_box.dart';
 import '../../utils/error_text.dart';
 
 /// Datos de cobro de la plataforma: a qué Nequi transfieren los dueños su
@@ -22,25 +24,10 @@ class PlatformSettingsView extends StatelessWidget {
   Widget build(BuildContext context) {
     return Scaffold(
       appBar: AppBar(title: const Text('Datos de cobro')),
-      body: StreamBuilder<PlatformSettings>(
+      body: AsyncStateView<PlatformSettings>(
         stream: context.read<PlatformSettingsRepository>().watch(),
-        builder: (context, snapshot) {
-          if (snapshot.hasError) {
-            return Center(
-              child: ErrorState(
-                title: 'No pudimos cargar la configuración',
-                error: snapshot.error,
-              ),
-            );
-          }
-          if (!snapshot.hasData) {
-            return const Padding(
-              padding: EdgeInsets.all(AppSpace.lg),
-              child: ShimmerList(itemHeight: 64),
-            );
-          }
-          return _SettingsForm(settings: snapshot.data!);
-        },
+        errorTitle: 'No pudimos cargar la configuración',
+        builder: (context, settings) => _SettingsForm(settings: settings),
       ),
     );
   }
@@ -57,6 +44,7 @@ class _SettingsForm extends StatefulWidget {
 
 class _SettingsFormState extends State<_SettingsForm> {
   final _formKey = GlobalKey<FormState>();
+  bool _saving = false;
   late final _phone = TextEditingController(
     text: widget.settings.nequiPhone ?? '',
   );
@@ -83,6 +71,7 @@ class _SettingsFormState extends State<_SettingsForm> {
     if (!_formKey.currentState!.validate()) return;
     final repo = context.read<PlatformSettingsRepository>();
     final messenger = ScaffoldMessenger.of(context);
+    setState(() => _saving = true);
     try {
       await repo.save(
         nequiPhone: _phone.text,
@@ -97,6 +86,8 @@ class _SettingsFormState extends State<_SettingsForm> {
       messenger.showSnackBar(
         SnackBar(content: Text('No se pudo guardar: ${errorText(e)}')),
       );
+    } finally {
+      if (mounted) setState(() => _saving = false);
     }
   }
 
@@ -113,6 +104,19 @@ class _SettingsFormState extends State<_SettingsForm> {
             child: Column(
               crossAxisAlignment: CrossAxisAlignment.stretch,
               children: [
+                if (!widget.settings.canCharge) ...[
+                  AppCard(
+                    color: AppColors.tint(AppColors.warning),
+                    borderColor: AppColors.warning,
+                    child: Text(
+                      'Aún no has configurado tu Nequi. Mientras tanto los '
+                      'dueños no pueden pagar su mensualidad. Completa los '
+                      'datos y guarda.',
+                      style: text.secondary,
+                    ),
+                  ),
+                  const SizedBox(height: AppSpace.lg),
+                ],
                 Text(
                   'Los dueños transfieren aquí su mensualidad y registran la '
                   'referencia del comprobante; tú verificas cada pago en tu '
@@ -143,6 +147,7 @@ class _SettingsFormState extends State<_SettingsForm> {
                 TextFormField(
                   controller: _fee,
                   keyboardType: TextInputType.number,
+                  inputFormatters: [FilteringTextInputFormatter.digitsOnly],
                   decoration: const InputDecoration(
                     labelText: 'Mensualidad por barbería (COP)',
                     prefixIcon: Icon(Icons.payments_outlined),
@@ -159,6 +164,7 @@ class _SettingsFormState extends State<_SettingsForm> {
                 TextFormField(
                   controller: _grace,
                   keyboardType: TextInputType.number,
+                  inputFormatters: [FilteringTextInputFormatter.digitsOnly],
                   decoration: const InputDecoration(
                     labelText: 'Días de gracia tras el vencimiento',
                     helperText:
@@ -175,7 +181,8 @@ class _SettingsFormState extends State<_SettingsForm> {
                 ),
                 const SizedBox(height: AppSpace.xl),
                 AppButton(
-                  onPressed: _save,
+                  onPressed: _saving ? null : _save,
+                  loading: _saving,
                   icon: Icons.save_outlined,
                   child: const Text('Guardar'),
                 ),

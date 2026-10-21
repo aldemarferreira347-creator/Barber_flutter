@@ -73,8 +73,10 @@ class _NotificationsViewState extends State<NotificationsView> {
             return const Center(
               child: EmptyState(
                 icon: Icons.notifications_none,
-                title: 'Sin notificaciones',
-                subtitle: 'Aquí verás los avisos del administrador.',
+                title: 'Todo al día',
+                subtitle:
+                    'Aquí verás los avisos de tus reservas, tus pagos y los '
+                    'cierres de las barberías.',
               ),
             );
           }

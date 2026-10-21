@@ -17,6 +17,12 @@ class DayAndTimePicker extends StatelessWidget {
   final ValueChanged<DateTime> onTime;
   final int daysAhead;
 
+  /// Horas que otra reserva pagada ya bloqueó: se muestran sin poder elegirse.
+  final Set<DateTime> disabledSlots;
+
+  /// Se está consultando qué horas están ocupadas.
+  final bool loading;
+
   const DayAndTimePicker({
     super.key,
     required this.shop,
@@ -26,6 +32,8 @@ class DayAndTimePicker extends StatelessWidget {
     required this.onDay,
     required this.onTime,
     this.daysAhead = 14,
+    this.disabledSlots = const {},
+    this.loading = false,
   });
 
   @override
@@ -89,9 +97,24 @@ class DayAndTimePicker extends StatelessWidget {
                 ChoiceChip(
                   label: Text(timeLabel(slot)),
                   selected: dateTime == slot,
-                  onSelected: (_) => onTime(slot),
+                  onSelected: disabledSlots.contains(slot)
+                      ? null
+                      : (_) => onTime(slot),
                 ),
             ],
+          ),
+        if (loading)
+          Padding(
+            padding: const EdgeInsets.only(top: AppSpace.sm),
+            child: Text('Revisando horas ocupadas...', style: text.bodySmall),
+          )
+        else if (disabledSlots.isNotEmpty)
+          Padding(
+            padding: const EdgeInsets.only(top: AppSpace.sm),
+            child: Text(
+              'Las horas apagadas ya están reservadas.',
+              style: text.bodySmall,
+            ),
           ),
         const SizedBox(height: AppSpace.sm),
         Text(

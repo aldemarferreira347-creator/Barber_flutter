@@ -20,6 +20,15 @@ abstract class AppointmentRepository {
     required String reference,
   });
 
+  /// De entre [slots], los horarios del barbero que ya tiene bloqueados una
+  /// reserva pagada. Sirve para no ofrecer en la pantalla de reserva horas
+  /// que van a fallar al confirmar. Si no se puede consultar devuelve vacío:
+  /// la transacción de [createPaid] sigue siendo la que decide.
+  Future<Set<DateTime>> takenSlots({
+    required String barberId,
+    required List<DateTime> slots,
+  });
+
   /// El personal verificó el Nequi: aprueba el pago y acepta la cita, en
   /// una sola escritura.
   Future<void> confirmPayment(String appointmentId);
