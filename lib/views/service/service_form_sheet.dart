@@ -69,32 +69,61 @@ class _ServiceFormState extends State<_ServiceForm> {
     final navigator = Navigator.of(context);
     final messenger = ScaffoldMessenger.of(context);
     setState(() => _saving = true);
+    String? photoProblem;
     try {
-      var photoUrl = widget.service?.photoUrl;
-      if (_photo != null) {
-        photoUrl = await repo.uploadPhoto(
-          barbershopId: widget.barbershopId,
-          fileName: '${DateTime.now().millisecondsSinceEpoch}_${_photo!.name}',
-          bytes: _photo!.bytes,
-        );
-      }
       final description = _description.text.trim();
-      final updated = Service(
+      final base = Service(
         id: widget.service?.id ?? '',
         barbershopId: widget.barbershopId,
         name: _name.text.trim(),
         description: description.isEmpty ? null : description,
         price: double.parse(_price.text.trim()),
         durationMinutes: int.parse(_duration.text.trim()),
-        photoUrl: photoUrl,
+        photoUrl: widget.service?.photoUrl,
         active: widget.service?.active ?? true,
       );
-      if (widget.service == null) {
-        await repo.create(updated);
-      } else {
-        await repo.update(updated);
+      // Primero el servicio y después la foto: si la foto falla, el servicio
+      // queda guardado con su precio y no se pierde nada.
+      final id = widget.service == null
+          ? await repo.create(base)
+          : widget.service!.id;
+      if (widget.service != null) await repo.update(base);
+
+      if (_photo != null) {
+        try {
+          final url = await repo.uploadPhoto(
+            barbershopId: widget.barbershopId,
+            fileName:
+                '${DateTime.now().millisecondsSinceEpoch}_${_photo!.name}',
+            bytes: _photo!.bytes,
+          );
+          await repo.update(
+            Service(
+              id: id,
+              barbershopId: base.barbershopId,
+              name: base.name,
+              description: base.description,
+              price: base.price,
+              durationMinutes: base.durationMinutes,
+              photoUrl: url,
+              active: base.active,
+            ),
+          );
+        } catch (e) {
+          photoProblem = errorText(e);
+        }
       }
       navigator.pop(true);
+      if (photoProblem != null) {
+        messenger.showSnackBar(
+          SnackBar(
+            content: Text(
+              'Servicio guardado, pero la foto no se pudo subir: '
+              '$photoProblem Ábrelo para intentarlo otra vez.',
+            ),
+          ),
+        );
+      }
     } catch (e) {
       messenger.showSnackBar(
         SnackBar(content: Text('No se pudo guardar: ${errorText(e)}')),

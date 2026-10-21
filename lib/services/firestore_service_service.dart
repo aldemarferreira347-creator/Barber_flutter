@@ -5,6 +5,7 @@ import 'package:cloud_firestore/cloud_firestore.dart';
 import '../models/service.dart';
 import '../repositories/service_repository.dart';
 import '../repositories/storage_repository.dart';
+import '../utils/image_content_type.dart';
 import '../utils/shared_stream.dart';
 import '../utils/parse_docs.dart';
 
@@ -41,8 +42,9 @@ class FirestoreServiceService implements ServiceRepository {
   }
 
   @override
-  Future<void> create(Service service) {
-    return _services(service.barbershopId).add(service.toMap());
+  Future<String> create(Service service) async {
+    final doc = await _services(service.barbershopId).add(service.toMap());
+    return doc.id;
   }
 
   @override
@@ -73,7 +75,7 @@ class FirestoreServiceService implements ServiceRepository {
     required Uint8List bytes,
   }) {
     return _storage.uploadBytes(
-      path: 'barbershops/$barbershopId/services/$fileName',
+      path: 'barbershops/$barbershopId/services/${safeFileName(fileName)}',
       bytes: bytes,
     );
   }

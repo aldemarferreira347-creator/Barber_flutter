@@ -55,6 +55,17 @@ service firebase.storage {
         draftId.matches(request.auth.uid + '_[1-5]') && isImageUnder5MB();
     }
 
+    // Foto que el cliente adjunta a su calificación de una cita
+    // (`comments/{appointmentId}/...`): solo el cliente de ESA cita la sube.
+    // Antes no había regla y la foto de una reseña siempre se rechazaba.
+    match /comments/{appointmentId}/{fileName} {
+      allow read: if isSignedIn();
+      allow write: if isSignedIn() &&
+        firestore.exists(/databases/(default)/documents/appointments/$(appointmentId)) &&
+        firestore.get(/databases/(default)/documents/appointments/$(appointmentId)).data.clientId == request.auth.uid &&
+        isImageUnder5MB();
+    }
+
     match /{allPaths=**} {
       allow read, write: if false;
     }

@@ -172,3 +172,64 @@ describe('storage.rules — barbershopDrafts/{uid}_{n}/profile (foto de borrador
     );
   });
 });
+
+describe('storage.rules — tipo de archivo y fotos de reseñas', () => {
+  let testEnv: RulesTestEnvironment;
+
+  beforeAll(async () => {
+    testEnv = await initializeTestEnvironment({
+      projectId: PROJECT_ID,
+      storage: {
+        rules: readFileSync(join(__dirname, '../../../storage.rules'), 'utf8'),
+        host: '127.0.0.1',
+        port: 9199,
+      },
+      firestore: {
+        rules: 'service cloud.firestore { match /databases/{db}/documents { match /{document=**} { allow read, write: if true; } } }',
+        host: '127.0.0.1',
+        port: 8080,
+      },
+    });
+
+    await testEnv.withSecurityRulesDisabled(async (context) => {
+      await context.firestore().doc(`barbershops/${SHOP_ID}`).set({ ownerId: OWNER_UID, name: 'Test Shop' });
+      await context.firestore().doc('appointments/appt1').set({ clientId: 'client1', barbershopId: SHOP_ID });
+    });
+  });
+
+  afterAll(async () => {
+    await testEnv.cleanup();
+  });
+
+  it('rechaza una foto subida SIN tipo de archivo (era el fallo de la app en el teléfono)', async () => {
+    // Ruta de borrador: no depende de consultar Firestore, así que prueba
+    // solo la regla del tipo de archivo.
+    const storage = testEnv.authenticatedContext(OWNER_UID).storage();
+    const fileRef = ref(storage, `barbershopDrafts/${OWNER_UID}_1/profile/sin_tipo.jpg`);
+    await assertFails(uploadBytes(fileRef, new Uint8Array(1024)));
+  });
+
+  it('acepta la misma foto cuando se envía el tipo image/jpeg', async () => {
+    const storage = testEnv.authenticatedContext(OWNER_UID).storage();
+    const fileRef = ref(storage, `barbershopDrafts/${OWNER_UID}_1/profile/con_tipo.jpg`);
+    await assertSucceeds(uploadBytes(fileRef, new Uint8Array(1024), { contentType: 'image/jpeg' }));
+  });
+
+  it('el cliente de la cita puede subir la foto de su reseña', async () => {
+    const storage = testEnv.authenticatedContext('client1').storage();
+    const fileRef = ref(storage, 'comments/appt1/foto.png');
+    await assertSucceeds(uploadBytes(fileRef, fakeImageOfSize(1024)));
+  });
+
+  it('otro usuario no puede subir fotos a la reseña de una cita ajena', async () => {
+    const storage = testEnv.authenticatedContext(OTHER_UID).storage();
+    const fileRef = ref(storage, 'comments/appt1/foto.png');
+    await assertFails(uploadBytes(fileRef, fakeImageOfSize(1024)));
+  });
+
+  it('no se puede subir a la reseña de una cita que no existe', async () => {
+    const storage = testEnv.authenticatedContext('client1').storage();
+    const fileRef = ref(storage, 'comments/nope/foto.png');
+    await assertFails(uploadBytes(fileRef, fakeImageOfSize(1024)));
+  });
+});

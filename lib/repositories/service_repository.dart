@@ -5,7 +5,8 @@ import '../models/service.dart';
 abstract class ServiceRepository {
   Stream<List<Service>> watchByBarbershop(String barbershopId);
 
-  Future<void> create(Service service);
+  /// Crea el registro y devuelve su id.
+  Future<String> create(Service service);
 
   /// Guarda los cambios de un servicio existente (nombre, precio, duración,
   /// foto…). Las citas ya creadas conservan el precio con el que se reservaron.

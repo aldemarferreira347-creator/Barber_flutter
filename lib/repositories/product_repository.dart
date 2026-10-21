@@ -5,7 +5,8 @@ import '../models/product.dart';
 abstract class ProductRepository {
   Stream<List<Product>> watchByBarbershop(String barbershopId);
 
-  Future<void> create(Product product);
+  /// Crea el registro y devuelve su id.
+  Future<String> create(Product product);
 
   /// Guarda los cambios de un producto existente. Las compras ya hechas
   /// conservan el precio con el que se pagaron.

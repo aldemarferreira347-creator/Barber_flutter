@@ -53,6 +53,13 @@ class _AddBarbershopViewState extends State<AddBarbershopView> {
       .read<PlatformSettingsRepository>()
       .watch();
   bool _saving = false;
+
+  /// Motivo por el que no se pudo subir la foto aunque lo demás sí se guardó.
+  String? _photoProblem;
+
+  String _withPhotoNote(String message) => _photoProblem == null
+      ? message
+      : '$message La foto no se pudo subir ($_photoProblem). Edita la barbería para intentarlo otra vez.';
   bool _locating = false;
   bool _paying = false;
   Position? _position;
@@ -173,11 +180,16 @@ class _AddBarbershopViewState extends State<AddBarbershopView> {
       id = await repo.saveDraft(shop);
     }
     if (_photoBytes != null) {
-      await repo.uploadDraftPhoto(
-        id,
-        fileName: _photoFileName,
-        bytes: _photoBytes!,
-      );
+      // Un fallo de la foto no debe hacer creer que el borrador no se guardó.
+      try {
+        await repo.uploadDraftPhoto(
+          id,
+          fileName: _photoFileName,
+          bytes: _photoBytes!,
+        );
+      } catch (e) {
+        _photoProblem = errorText(e);
+      }
     }
     return id;
   }
@@ -187,6 +199,7 @@ class _AddBarbershopViewState extends State<AddBarbershopView> {
     final ownerId = context.read<AuthController>().profile?.uid;
     if (ownerId == null) return;
 
+    _photoProblem = null;
     setState(() => _saving = true);
     final repo = context.read<BarbershopRepository>();
     try {
@@ -194,9 +207,11 @@ class _AddBarbershopViewState extends State<AddBarbershopView> {
       if (mounted) {
         Navigator.of(context).pop();
         ScaffoldMessenger.of(context).showSnackBar(
-          const SnackBar(
+          SnackBar(
             content: Text(
-              'Borrador guardado. Págalo cuando quieras enviarla a revisión.',
+              _withPhotoNote(
+                'Borrador guardado. Págalo cuando quieras enviarla a revisión.',
+              ),
             ),
           ),
         );
@@ -248,11 +263,17 @@ class _AddBarbershopViewState extends State<AddBarbershopView> {
           reference: reference,
         );
         if (_photoBytes != null) {
-          await repo.uploadPhoto(
-            shopId,
-            fileName: _photoFileName,
-            bytes: _photoBytes!,
-          );
+          // El pago ya quedó registrado: si la foto falla NO se debe mostrar
+          // un error que invite a pagar otra vez. Se avisa aparte.
+          try {
+            await repo.uploadPhoto(
+              shopId,
+              fileName: _photoFileName,
+              bytes: _photoBytes!,
+            );
+          } catch (e) {
+            _photoProblem = errorText(e);
+          }
         }
       }
       // Solicitud de rol de Dueño (spec 12.1): sin plan Blaze no hay función
@@ -265,10 +286,12 @@ class _AddBarbershopViewState extends State<AddBarbershopView> {
       if (mounted) {
         Navigator.of(context).pop();
         ScaffoldMessenger.of(context).showSnackBar(
-          const SnackBar(
+          SnackBar(
             content: Text(
-              'Comprobante enviado. El administrador verificará tu pago y '
-              'revisará tu barbería.',
+              _withPhotoNote(
+                'Comprobante enviado. El administrador verificará tu pago y '
+                'revisará tu barbería.',
+              ),
             ),
           ),
         );

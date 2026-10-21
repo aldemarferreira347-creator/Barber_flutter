@@ -5,6 +5,7 @@ import 'package:cloud_firestore/cloud_firestore.dart';
 import '../models/product.dart';
 import '../repositories/product_repository.dart';
 import '../repositories/storage_repository.dart';
+import '../utils/image_content_type.dart';
 import '../utils/shared_stream.dart';
 import '../utils/parse_docs.dart';
 
@@ -41,8 +42,9 @@ class FirestoreProductService implements ProductRepository {
   }
 
   @override
-  Future<void> create(Product product) {
-    return _products(product.barbershopId).add(product.toMap());
+  Future<String> create(Product product) async {
+    final doc = await _products(product.barbershopId).add(product.toMap());
+    return doc.id;
   }
 
   @override
@@ -72,7 +74,7 @@ class FirestoreProductService implements ProductRepository {
     required Uint8List bytes,
   }) {
     return _storage.uploadBytes(
-      path: 'barbershops/$barbershopId/products/$fileName',
+      path: 'barbershops/$barbershopId/products/${safeFileName(fileName)}',
       bytes: bytes,
     );
   }
